@@ -1,66 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    {{ init_meta_header() }}
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
-        rel="stylesheet">
-
-    <!-- Vendor CSS Files -->
-    <link href="{{ template_asset('vendor/aos/aos.css') }}" rel="stylesheet">
-    <link href="{{ template_asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ template_asset('vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
-    <link href="{{ template_asset('vendor/boxicons/css/boxicons.min.css') }}" rel="stylesheet">
-    <link href="{{ template_asset('vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet">
-    <link href="{{ template_asset('vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
-
-    <!-- Template Main CSS File -->
-    <link href="{{ template_asset('css/style.css') }}" rel="stylesheet">
-</head>
-
-<body>
-    <!-- ======= Header ======= -->
-    <header id="header" class="fixed-top d-flex align-items-center">
-        <div class="container d-flex align-items-center justify-content-between">
-
-            <div class="logo">
-                {{-- <h1 class="text-light"><a href="index.html">Serenity</a></h1> --}}
-                <!-- Uncomment below if you prefer to use an image logo -->
-                 <a href="{{ url('/') }}"><img src="{{ url(get_option('logo')) }}" alt="" class="img-fluid"></a>
+    <head>
+     	{{init_meta_header()}}
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="{{template_asset('css/styles.css')}}" rel="stylesheet" />
+    </head>
+    <body>
+        <!-- Responsive navbar-->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="{{url('/')}}"><img src="/{{get_option('logo')}}" height="40"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+						@foreach(get_menu('header') as $row)
+                        <li class="nav-item"><a class="nav-link" href="{{$row->url}}">{{$row->name}}</a></li>
+						@endforeach
+                       
+                    </ul>
+                </div>
             </div>
-
-            <nav id="navbar" class="navbar">
-                <ul>
-                    @foreach (get_menu('header') as $row)
-                    @if ($row->sub)
-                        <li class="dropdown"><a href="#"><span>{{ $row->name }}</span> <i
-                                    class="bi bi-chevron-down"></i></a>
-                            <ul>
-                                @foreach ($row->sub as $row2)
-                                    @if ($row2->sub)
-                                    <li class="dropdown"><a href="#"><span>{{ $row2->name }}</span>
-                                      <i class="bi bi-chevron-right"></i></a>
-                                        <ul>
-                                        @foreach ($row2->sub as $row3)
-                                        <li><a href="{{ $row3->url }}">{{ $row3->name }}</a></li>
-                                        @endforeach
-                                        </ul>
-                                        </li>
-                                        @else
-                                            <li><a href="{{ $row2->url }}">{{ $row2->name }}</a></li>
-                                    @endif
-                                @endforeach
-
-                            </ul>
-                        </li>
-                    @else
-                        <li><a href="{{ $row->url }}">{{ $row->name }}</a></li>
-                    @endif
-                @endforeach
-
-                </ul>
-                <i class="bi bi-list mobile-nav-toggle"></i>
-            </nav><!-- .navbar -->
-
-        </div>
-    </header><!-- End Header -->
+        </nav>
+        <!-- Page header with logo and tagline-->
+		@if(isHomePage())
+        <header class="mb-4">
+			<h1>{{config('modules.version')}}</h1>
+           @if($banner=get_banner('slider'))
+			<img src="/{{$banner->image}}" class="w-100">
+			@endif
+        </header>
+		@else 
+		<br>
+		@endif

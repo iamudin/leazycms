@@ -5,7 +5,7 @@
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="/">Beranda</a></li>
 		   <li class="breadcrumb-item "><a href="{{url($module->name)}}">{{$module->title}}</a></li>
-		   <li class="breadcrumb-item active">Semua Kategori</li>
+    <li class="breadcrumb-item active"  aria-current="page" >{{$category->name}}</li>
   </ol>
 </nav>
 		   <div class="list-content">
