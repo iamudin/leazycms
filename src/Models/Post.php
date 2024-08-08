@@ -70,6 +70,10 @@ class Post extends Model
     {
         return $this->created_at->translatedFormat('d F Y H:i T');
     }
+    public function getVisitedAttribute()
+    {
+        return $this->visitors_count;
+    }
     public function getUpdatedAttribute()
     {
         return $this->updated_at->translatedFormat('d F Y H:i T');
@@ -171,7 +175,7 @@ class Post extends Model
     }
     public function index($type, $paginate = false)
     {
-        return $this->select($this->selected)->with('user', 'category')->whereType($type)->whereStatus('publish')->latest('created_at')->paginate(get_option('post_perpage') ?? 10);
+        return $this->select($this->selected)->withCount('visitors')->with('user', 'category')->whereType($type)->whereStatus('publish')->latest('created_at')->paginate(get_option('post_perpage') ?? 10);
     }
     public function index_popular($type)
     {
@@ -180,7 +184,7 @@ class Post extends Model
 
     function index_pinned($limit, $type = false)
     {
-        return $type ? $this->cachedpost($type)->where('pinned', 1)->take($limit)->values() : $this->select($this->selected)->where('pinned', 1)->whereStatus('publish')->limit($limit)->orderBy('created_at', 'desc')->get();
+        return $type ? $this->cachedpost($type)->where('pinned', 1)->take($limit)->values() : $this->select($this->selected)->withCount('visitors')->where('pinned', 1)->whereStatus('publish')->limit($limit)->orderBy('created_at', 'desc')->get();
     }
     function index_by_category($type, $slug, $limit = false)
     {
