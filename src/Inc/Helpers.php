@@ -11,6 +11,12 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+if (!function_exists('get_leazycms_version')) {
+
+    function get_leazycms_version(){
+        return config('modules.version');
+    }
+    }
 if (!function_exists('leazycms_version')) {
 
 function leazycms_version(){
