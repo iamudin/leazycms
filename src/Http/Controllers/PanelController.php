@@ -239,8 +239,8 @@ public function editorTemplate(Request $request){
             break;
             case 'create_file':
                 $filepath = $request->filepath ?? null;
-                $filename = str($request->filename)->slug().'.blade.php';
-                if(!file_exists($path.'/'.$filename)){
+                $filename = $request->filename == 'index' ? 'index.blade.php' : str($request->filename)->slug().'.blade.php';
+                if(!file_exists($path.$filepath.'/'.$filename)){
                     $myfile = fopen($path.$filepath.'/'.$filename, "w") or die("Unable to open file!");
                     fwrite($myfile, '<h1>You Script Here</h1>');
                     fclose($myfile);

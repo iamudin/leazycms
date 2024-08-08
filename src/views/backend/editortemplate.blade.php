@@ -87,7 +87,7 @@
         var userInput = prompt("File name (without any ekstension) :", "");
         if (userInput != null) {
             $.post('{{ route('appearance.editor') }}', {type:'create_file',filepath:current,filename:userInput,_token:'{{ csrf_token() }}'}, function(response){
-                    location.reload();
+                location.reload();
                 }).fail(function(xhr, status, error) {
                     console.error('Error:', error);
                 });
