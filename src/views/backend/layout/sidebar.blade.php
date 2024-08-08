@@ -42,6 +42,8 @@
             <li title="Pengaturan"><a class="app-menu__item {{ Request::is(admin_path() . '/setting') ? 'active' : '' }}"  href="{{ route('setting') }}"><i class="app-menu__icon fa fa-gears"></i> <span class="app-menu__label">Pengaturan</span></a></li>
         @endif
 
-        <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><small>Build by: </small><b class="text-white">Leazycms</b><sup class="text-danger">{{ get_leazycms_version() }}</sup></li>
+        <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><small>Build by: </small><b class="text-white">Leazycms</b><sup class="text-danger">{{ get_leazycms_version() }}</sup> <a target="_blank" href="https://leazycms.com/docs" class="pull-right"> <i class="fa fa-book"></i> Docs</a>
+
+        </li>
     </ul>
 </aside>

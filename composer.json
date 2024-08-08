@@ -3,6 +3,7 @@
     "description": "Build Easy Cms Laravel",
     "type": "library",
     "license": "MIT",
+    "keywords": ["PHP"],
     "autoload": {
         "psr-4": {
             "Leazycms\\Web\\": "src/"
