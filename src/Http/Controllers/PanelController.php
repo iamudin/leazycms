@@ -211,6 +211,9 @@ public function editorTemplate(Request $request){
     if($file=='/styles.css'){
         $file = '/styles.css';
         $path = public_path('template/'.template());
+        if(!is_dir($path)){
+            mkdir($path);
+        }
         if(!file_exists($path.$file)){
             $myfile = fopen($path.$file, "w") or die("Unable to open file!");
             fwrite($myfile, 'body,html { }');
@@ -219,6 +222,9 @@ public function editorTemplate(Request $request){
     }elseif($file=='/scripts.js'){
         $file = '/scripts.js';
         $path = public_path('template/'.template());
+        if(!is_dir($path)){
+            mkdir($path);
+        }
         if(!file_exists($path.$file)){
             $myfile = fopen($path.$file, "w") or die("Unable to open file!");
             fwrite($myfile, '$( document ).ready(function() {
