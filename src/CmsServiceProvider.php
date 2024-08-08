@@ -134,6 +134,7 @@ class CmsServiceProvider extends ServiceProvider
                 config(['modules.config' => $config]);
             }
         }
+            config(['modules.version' => leazycms_version()]);
     }
     /**
      * Summary of register

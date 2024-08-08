@@ -11,7 +11,25 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+if (!function_exists('leazycms_version')) {
 
+function leazycms_version(){
+    $composerLockPath = base_path('composer.lock');
+
+    $composerLockContents = file_get_contents($composerLockPath);
+
+    $composerData = json_decode($composerLockContents, true);
+
+    $packageVersion = null;
+    foreach ($composerData['packages'] as $package) {
+        if ($package['name'] === 'leazycms/web') {
+            $packageVersion = $package['version'];
+            break;
+        }
+    }
+    return $packageVersion;
+}
+}
 
 if (!function_exists('isNotInSession')) {
     function isNotInSession($request)

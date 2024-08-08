@@ -515,4 +515,5 @@ return [
         'domain'=>null,
         'installed'=>env('APP_INSTALLED',false),
         'public_path'=>env('PUBLIC_PATH',null),
+        'version'=>null,
 ];
