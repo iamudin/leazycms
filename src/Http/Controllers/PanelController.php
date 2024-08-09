@@ -1,44 +1,52 @@
 <?php
+
 namespace Leazycms\Web\Http\Controllers;
-use Leazycms\Web\Models\Post;
+
 use Illuminate\Http\Request;
+use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Visitor;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
+
 class PanelController extends Controller implements HasMiddleware
 {
-    public static function middleware(): array {
+    public static function middleware(): array
+    {
         return [
             new Middleware('auth')
         ];
     }
 
-    protected function toDashboard($request){
-        if(!$request->segment(2))
-        return to_route('panel.dashboard')->send();
+    protected function toDashboard($request)
+    {
+        if (!$request->segment(2))
+            return to_route('panel.dashboard')->send();
     }
-    function index(Request $request){
+    function index(Request $request)
+    {
         $this->toDashboard($request);
         $user = $request->user();
         $da = array();
-        for ($i=0; $i<=6; $i++) {
-          array_push($da,date("Y-m-d", strtotime("-".$i." days")));
+        for ($i = 0; $i <= 6; $i++) {
+            array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
         }
-        $weekago = json_decode(json_encode(collect($da)->sort()),true);
-        $type = collect(get_module())->where('name','!=','media')->pluck('name')->toArray();
-        $lastpublish = Post::select(['created_at','id','user_id','status','type','title'])->with('user')->whereIn('type',$type)->latest('created_at')->limit(5)->get();
-        return view('cms::backend.dashboard',[
-            'latest'=>$lastpublish,
-            'weekago'=>$weekago,
-            'type'=>$user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public',true),
-            'posts'=>$user->posts,
-            'visitor'=> new Visitor,
+        $weekago = json_decode(json_encode(collect($da)->sort()), true);
+        $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
+        $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
+        return view('cms::backend.dashboard', [
+            'latest' => $lastpublish,
+            'weekago' => $weekago,
+            'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
+            'posts' => $user->posts,
+            'visitor' => new Visitor,
         ]);
     }
     public function visitor(Request $request)
@@ -46,12 +54,13 @@ class PanelController extends Controller implements HasMiddleware
         $data = Visitor::query()->latest('created_at');
         return Datatables::of($data)
             ->addIndexColumn()
-            ->filter(function ($instance) use ($request) {
+            ->filter(
+                function ($instance) use ($request) {
 
-                if ($time = $request->timevisit) {
-                    $instance->whereDate('created_at',$time);
+                    if ($time = $request->timevisit) {
+                        $instance->whereDate('created_at', $time);
+                    }
                 }
-            }
             )
             ->addColumn('created_at', function ($row) {
                 return '<code>' . $row->created_at->diffForHumans() . '</code>';
@@ -68,30 +77,31 @@ class PanelController extends Controller implements HasMiddleware
                 return str($row->reference)->limit(70);
             })
             ->addColumn('page', function ($row) {
-                return '<a href="'.$row->page.'">'.str($row->page)->limit( 70).'</a>';
+                return '<a href="' . $row->page . '">' . str($row->page)->limit(70) . '</a>';
             })
             ->rawColumns(['created_at', 'ip_location', 'reference', 'page'])
             ->toJson();
     }
 
-    public function setting(Request $request, Option $option){
+    public function setting(Request $request, Option $option)
+    {
         admin_only();
         $data['web_type'] = config('modules.config.web_type');
         $data['option'] = array_merge(config('modules.config.option') ?? [], [
-            ['Icon','file'],
-            ['Nama','text'],
-            ['Alamat','text'],
-            ['Telepon','text'],
-            ['Whatsapp','text'],
-            ['Fax','text'],
-            ['Email','text'],
-            ['Latitude','text'],
-            ['Longitude','text'],
-            ['Link Maps','text'],
-            ['Facebook','text'],
-            ['Youtube','text'],
-            ['Instagram','text'],
-            ['Twitter','text'],
+            ['Icon', 'file'],
+            ['Nama', 'text'],
+            ['Alamat', 'text'],
+            ['Telepon', 'text'],
+            ['Whatsapp', 'text'],
+            ['Fax', 'text'],
+            ['Email', 'text'],
+            ['Latitude', 'text'],
+            ['Longitude', 'text'],
+            ['Link Maps', 'text'],
+            ['Facebook', 'text'],
+            ['Youtube', 'text'],
+            ['Instagram', 'text'],
+            ['Twitter', 'text'],
         ]);
         $data['site_attribute'] = array(
             ['Alamat Situs Web', 'site_url', 'text'],
@@ -122,7 +132,8 @@ class PanelController extends Controller implements HasMiddleware
             ['Time Limit Login', 'default 10 times'],
             ['Time Limit Reload', 'default 10 times'],
             ['Limit Duration', 'in minute default 1 minute'],
-            ['Roles', 'operator,editor,publisher']);
+            ['Roles', 'operator,editor,publisher']
+        );
 
         $data['home_page'] = Post::whereType('halaman')->whereStatus('publish')->whereMime('html')->select('id', 'title')->get();
         if ($request->isMethod('POST')) {
@@ -133,178 +144,203 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['option'] as $row) {
                 $key = _us($row[0]);
 
-                    if($row[1]=='file'){
-                        $request->validate([$key=>'nullable|file|mimetypes:'.allow_mime()]);
-                        $fid = $option->updateOrCreate(['name'=>$key],['value'=>get_option($key),'autoload'=>1]);
-                        if($request->hasFile($key)){
-                        $fid->update(['value'=> upload_media($fid,$request->file($key),$key,'option')]);
-                        }
-                    }else{
-                        $value = $request->$key;
-                        $fid = $option->updateOrCreate(['name'=>$key],['value'=>strip_tags($value),'autoload'=>1]);
+                if ($row[1] == 'file') {
+                    $request->validate([$key => 'nullable|file|mimetypes:' . allow_mime()]);
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                    if ($request->hasFile($key)) {
+                        $fid->update(['value' => upload_media($fid, $request->file($key), $key, 'option')]);
                     }
-
+                } else {
+                    $value = $request->$key;
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+                }
             }
-            foreach (array_merge($data['security'],[ ['Site Maintenance', '']]) as $row) {
+            foreach (array_merge($data['security'], [['Site Maintenance', '']]) as $row) {
                 $key = _us($row[0]);
                 $value = $request->$key ?? null;
 
-                    if($key=='block_ip'){
-                        $request->validate(['block_ip'=>'nullable|ip']);
-                    }
+                if ($key == 'block_ip') {
+                    $request->validate(['block_ip' => 'nullable|ip']);
+                }
 
-                    $option->updateOrCreate(['name'=> $key],['value' => strip_tags($value), 'autoload' => 1]);
-
-        }
+                $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+            }
 
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
-                    $request->validate([$key=>'nullable|file|mimetypes:'.allow_mime()]);
+                    $request->validate([$key => 'nullable|file|mimetypes:' . allow_mime()]);
 
-                    $fid = $option->updateOrCreate(['name'=>$key],['value'=>get_option($key),'autoload'=>1]);
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
-                     $fid->update(['value'=>upload_media($fid,$request->file($key),$key,'option')]);
+                        $fid->update(['value' => upload_media($fid, $request->file($key), $key, 'option')]);
                     }
                 } else {
-                   $value = $request->$key;
-                   $option->updateOrCreate(['name' => $key],['value' => strip_tags($value), 'autoload' => 1]);
-
+                    $value = $request->$key;
+                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
             foreach ($data['shortcut'] as $row) {
-                   $key = $row[1];
-                   $value = $request->$key;
-                   $option->updateOrCreate(['name' => $key],['value' => strip_tags($value), 'autoload' => 1]);
-
+                $key = $row[1];
+                $value = $request->$key;
+                $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
             }
-            if($val = $request->admin_path){
-                if(in_array($val,['admin','login','adminpanel','webadmin','masuk','sipanel'])){
-                    return back()->with('danger','Login path dengan kata kunci "'.$val.'" tidak diizinkan');
+            if ($val = $request->admin_path) {
+                if (in_array($val, ['admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel'])) {
+                    return back()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
                 }
-                $option->updateOrCreate(['name'=>'admin_path'],['value'=>$val,'autoload'=>1]);
-                if($val!=get_option('admin_path')){
+                $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
+                if ($val != get_option('admin_path')) {
                     recache_option();
                     Artisan::call('route:cache');
                     return to_route('setting')->with('success', 'Berhasil disimpan');
                 }
             }
-            if($app_env = $request->app_env){
-                if($existsenv = get_option('app_env')){
-                    if($existsenv!=$app_env){
-                    $option->updateOrCreate(['name'=>'app_env'],['value'=>$app_env,'autoload'=>1]);
-                    rewrite_env(['APP_ENV'=> $app_env]);
-                    Artisan::call('config:cache');
-                }
-                }else{
-                    $option->updateOrCreate(['name'=>'app_env'],['value'=>$app_env,'autoload'=>1]);
-                    rewrite_env(['APP_ENV'=> $app_env]);
+            if ($app_env = $request->app_env) {
+                if ($existsenv = get_option('app_env')) {
+                    if ($existsenv != $app_env) {
+                        $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
+                        rewrite_env(['APP_ENV' => $app_env]);
+                        Artisan::call('config:cache');
+                    }
+                } else {
+                    $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
+                    rewrite_env(['APP_ENV' => $app_env]);
                     Artisan::call('config:cache');
                 }
             }
             recache_option();
             return  back()->with('success', 'Berhasil disimpan');
         }
-        return view('cms::backend.setting',$data);
-
+        return view('cms::backend.setting', $data);
     }
-public function appearance(Request $request){
-admin_only();
-return view('cms::backend.appearance');
-}
-
-public function editorTemplate(Request $request){
-    admin_only();
-    $path = resource_path('views/template/'.template());
-    if(!file_exists($path.'/home.blade.php')){
-        $myfile = fopen($path.'/home.blade.php', "w") or die("Unable to open file!");
-        fwrite($myfile, '<h1>You Script Here</h1>');
-        fclose($myfile);
+    public function appearance(Request $request)
+    {
+        admin_only();
+        return view('cms::backend.appearance');
     }
-    $file = $request->edit ?? '/home.blade.php';
 
-    if($file=='/styles.css'){
-        $file = '/styles.css';
-        $path = public_path('template/'.template());
-        if(!is_dir($path)){
-            mkdir($path);
-        }
-        if(!file_exists($path.$file)){
-            $myfile = fopen($path.$file, "w") or die("Unable to open file!");
-            fwrite($myfile, 'body,html { }');
+    public function editorTemplate(Request $request)
+    {
+        admin_only();
+        $path = resource_path('views/template/' . template());
+        if (!file_exists($path . '/home.blade.php')) {
+            $myfile = fopen($path . '/home.blade.php', "w") or die("Unable to open file!");
+            fwrite($myfile, '<h1>You Script Here</h1>');
             fclose($myfile);
         }
-    }elseif($file=='/scripts.js'){
-        $file = '/scripts.js';
-        $path = public_path('template/'.template());
-        if(!is_dir($path)){
-            mkdir($path);
-        }
-        if(!file_exists($path.$file)){
-            $myfile = fopen($path.$file, "w") or die("Unable to open file!");
-            fwrite($myfile, '$( document ).ready(function() {
+        $file = $request->edit ?? '/home.blade.php';
+
+        if ($file == '/styles.css') {
+            $file = '/styles.css';
+            $path = public_path('template/' . template());
+            if (!is_dir($path)) {
+                mkdir($path);
+            }
+            if (!file_exists($path . $file)) {
+                $myfile = fopen($path . $file, "w") or die("Unable to open file!");
+                fwrite($myfile, 'body,html { }');
+                fclose($myfile);
+            }
+        } elseif ($file == '/scripts.js') {
+            $file = '/scripts.js';
+            $path = public_path('template/' . template());
+            if (!is_dir($path)) {
+                mkdir($path);
+            }
+            if (!file_exists($path . $file)) {
+                $myfile = fopen($path . $file, "w") or die("Unable to open file!");
+                fwrite($myfile, '$( document ).ready(function() {
         console.log( "document loaded" );
     });');
-            fclose($myfile);
-        }
-    }else{
-    }
-    if($request->isMethod('post')){
-        switch($request->type){
-            case 'create_dir':
-                $dir = str($request->dirname)->slug();
-                if(!is_dir($path.'/'.$dir)){
-                    mkdir($path.'/'.$dir);
-                    return response()->json(['msg'=>'success']);
-                }
-            break;
-            case 'create_file':
-                $filepath = $request->filepath ?? null;
-                $filename = $request->filename == 'index' ? 'index.blade.php' : str($request->filename)->slug().'.blade.php';
-                if(!file_exists($path.$filepath.'/'.$filename)){
-                    $myfile = fopen($path.$filepath.'/'.$filename, "w") or die("Unable to open file!");
-                    fwrite($myfile, '<h1>You Script Here</h1>');
-                    fclose($myfile);
-                    return response()->json(['msg'=>'success']);
-                }
-            break;
-            case 'delete_file':
-                $filename = $request->filename;
-                if(strpos($filename,'modules.blade.php') !==false){
-                    return to_route('appearance')->with('danger','Action denied!');
-                }
-                if(file_exists($path.$filename)){
-                   unlink($path.$filename);
-                return response()->json(['msg'=>'success']);
-                }
-            break;
-            case 'change_file':
-            if($content = $request->file_src){
-                $data = $content;
-                $file = $path  . $file;
-                $myfile = fopen($file, "w") or die("Unable to open file!");
-                fwrite($myfile, $data);
                 fclose($myfile);
-                if(strpos($file,'modules.blade.php') !==false){
-                Artisan::call('optimize');
-                }
             }
-
-            return back()->with('success','Perubahan Tersimpan');
-            break;
+        } else {
         }
+        if ($request->isMethod('post')) {
+            switch ($request->type) {
+                case 'create_dir':
+                    $dir = str($request->dirname)->slug();
+                    if (!is_dir($path . '/' . $dir)) {
+                        mkdir($path . '/' . $dir);
+                        return response()->json(['msg' => 'success']);
+                    }
+                    break;
+                case 'create_file':
+                    $filepath = $request->filepath ?? null;
+                    $filename = $request->filename == 'index' ? 'index.blade.php' : str($request->filename)->slug() . '.blade.php';
+                    if (!file_exists($path . $filepath . '/' . $filename)) {
+                        $myfile = fopen($path . $filepath . '/' . $filename, "w") or die("Unable to open file!");
+                        fwrite($myfile, '<h1>You Script Here</h1>');
+                        fclose($myfile);
+                        return response()->json(['msg' => 'success']);
+                    }
+                    break;
+                case 'delete_file':
+                    $filename = $request->filename;
+                    if (strpos($filename, 'modules.blade.php') !== false) {
+                        return to_route('appearance')->with('danger', 'Action denied!');
+                    }
+                    if (file_exists($path . $filename)) {
+                        unlink($path . $filename);
+                        return response()->json(['msg' => 'success']);
+                    }
+                    break;
+                case 'change_file':
 
-    }
-    $src = $file && file_exists($path.$file) && is_file($path.$file) ? (file_get_contents($path.$file) ? file_get_contents($path.$file) : 'Here You Script') : null;
-    if(!$src){
-        return to_route('appearance.editor')->with('danger','Source tidak ditemukan!');
-    }
-   $type = match(pathinfo($file,PATHINFO_EXTENSION)){
-    'php' => 'application/x-httpd-php',
-    'css'=> 'text/css',
-    'js'=> 'text/javascript'
-   };
+                    if ($content = $request->file_src) {
+                        $data = $content;
+                        $file = $path  . $file;
+                        $ext = pathinfo($file, PATHINFO_EXTENSION);
+                        if($ext=='php'){
+                        if (strpos($file, 'modules.blade.php') !== false) {
+                            Cache::put('tempmodules',file_get_contents($file));
+                            if (file_put_contents($file, $content) !== false) {
+                                $phpCode = File::get($file);
 
-    return view('cms::backend.editortemplate',['view'=>$src,'type'=>$type]);
+                                try {
+                                    ob_start();
+                                    eval('?>' . $phpCode);
+                                    ob_end_clean();
+
+                                } catch (\ParseError $e) {
+                                    File::put($file, Cache::get('tempmodules'));
+                                    return back()->with('danger', 'PHP script modules is wrong!');
+                                }
+                            } else {
+                                return back()->with('danger', 'Failed write modules script!');
+                            }
+                            Artisan::call('optimize');
+                        }else{
+                            try {
+                                    File::put($file, $content);
+
+                                } catch (\Exception $e) {
+                                    return back()->with('danger','Failed write file : '.$e->getMessage());
+                                }
+                        }
+                    }
+                        else {
+                            $myfile = fopen($file, "w") or die("Unable to open file!");
+                            fwrite($myfile, $data);
+                            fclose($myfile);
+                        }
+                    }
+
+                    return back()->with('success', 'Perubahan Tersimpan');
+                    break;
+            }
+        }
+        $src = $file && file_exists($path . $file) && is_file($path . $file) ? (file_get_contents($path . $file) ? file_get_contents($path . $file) : 'Here You Script') : null;
+        if (!$src) {
+            return to_route('appearance.editor')->with('danger', 'Source tidak ditemukan!');
+        }
+        $type = match (pathinfo($file, PATHINFO_EXTENSION)) {
+            'php' => 'application/x-httpd-php',
+            'css' => 'text/css',
+            'js' => 'text/javascript'
+        };
+
+        return view('cms::backend.editortemplate', ['view' => $src, 'type' => $type]);
     }
 }
