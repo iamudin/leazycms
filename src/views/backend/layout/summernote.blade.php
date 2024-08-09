@@ -27,7 +27,7 @@
                 captionText: 'Caption Goes Here.',
                 manageAspectRatio: false
             },
-            lang: 'en-US',
+            lang: 'id-ID',
             popover: {
                 image: [
                     ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
@@ -47,6 +47,7 @@
                 ['insert', ['picture', 'link', 'video', 'hr']],
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help', 'codeview']],
+
             ],
             tableClassName: function() {
                 $(this).addClass('table table-bordered table-hover')

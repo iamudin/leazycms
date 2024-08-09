@@ -144,7 +144,7 @@ class Post extends Model
 
     function index_category($type)
     {
-        if (get_module($type)->cache) {
+        if (get_module($type)?->cache) {
             return collect($this->categories($type)->values());
         } else {
             return Category::withCount('posts')->whereType($type)->whereStatus('publish')->orderBy('sort')->get();
@@ -152,7 +152,7 @@ class Post extends Model
     }
     function index_skip($type, $skip, $limit)
     {
-        if (get_module($type)->cache) {
+        if (get_module($type)?->cache) {
             return collect($this->cachedpost($type)->values())->skip($skip)->take($limit);
         } else {
             return $this->select($this->selected)->whereType($type)->whereStatus('publish')->offset($skip)->limit($limit)->latest()->get();
