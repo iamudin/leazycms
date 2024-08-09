@@ -76,15 +76,6 @@ class PanelController extends Controller implements HasMiddleware
 
     public function setting(Request $request, Option $option){
         admin_only();
-        $process = new Process(['composer', 'update', 'predis/predis']);
-        $process->setTimeout(3600); // Set a timeout in case the process takes too long
-        $process->run();
-
-        // Check if the command was successful
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-        dd($process->getOutput());
         $data['web_type'] = config('modules.config.web_type');
         $data['option'] = array_merge(config('modules.config.option') ?? [], [
             ['Icon','file'],

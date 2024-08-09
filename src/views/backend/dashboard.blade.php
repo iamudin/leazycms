@@ -2,7 +2,15 @@
 @section('content')
 <!-- <link href="https://coderthemes.com/adminox/layouts/vertical/assets/css/icons.min.css" rel="stylesheet" type="text/css" /> -->
 <div class="row">
-<div class="col-lg-12 mb-3"><h3 style="font-weight:normal;"> <i class="fa fa-tachometer"></i> Dashboard </h3>
+<div class="col-lg-12 mb-3">
+    @if($latesv = getLatestVersion() )
+    @if(get_leazycms_version() != $latest)
+    <div class="alert alert-info">
+        <strong> <i class="fa fa-sync"></i> New Version {{ $latesv }} Update Available!</strong> You are currently running version {{ get_leazycms_version()}}
+    </div>
+    @endif
+    @endif
+    <h3 style="font-weight:normal;"> <i class="fa fa-tachometer"></i> Dashboard </h3>
 
 </div>
     <div class="col-lg-12">

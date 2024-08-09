@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
@@ -11,6 +11,26 @@ if (!function_exists('query')) {
     {
         return new \Leazycms\Web\Models\Post;
     }
+}
+if (!function_exists('getLatestVersion')) {
+    function getLatestVersion()
+        {
+    $packageName = 'leazycms/web';
+    // Make a request to the Packagist API
+    $response = Http::get("https://repo.packagist.org/p2/{$packageName}.json");
+
+    // Check if the request was successful
+    if ($response->successful()) {
+        $packageData = $response->json();
+
+        // Get the latest version details
+        $latestVersion = $packageData['packages'][$packageName][0]['version'];
+
+        return  $latestVersion;
+    } else {
+        return null;
+    }
+}
 }
 if (!function_exists('get_leazycms_version')) {
 
