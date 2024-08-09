@@ -43,11 +43,7 @@
 
                     </div>
                     <div class="tab-pane fade" id="profile">
-                        <small for="" class="text-muted">Status Maintenance</small><br>
-                        <input type="radio" name="site_maintenance" value="Y"
-                            {{ get_option('site_maintenance') == 'Y' ? 'checked' : '' }}> <small>Aktif</small>
-                        <input type="radio" name="site_maintenance" value="N"
-                            {{ get_option('site_maintenance') == 'N' ? 'checked' : '' }}> <small>Tidak Aktif</small><br>
+
                         <small>Konten Halaman Utama</small>
                         <select class="form-control form-control-sm" name="home_page">
                             <option value="default">Default</option>
@@ -74,7 +70,7 @@
                                 <input type="text"
                                     @if ($r[2] == 'number') oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" @endif
                                     class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}"
-                                    name="{{ $r[1] }}" value="{{ get_option($r[1]) }}">
+                                    name="{{ $r[1] }}" value="{{ $r[1] == 'site_url' && empty(get_option($r[1])) ? request()->getHttpHost() : get_option($r[1]) }}">
                             @endif
                         @endforeach
                     </div>
@@ -97,10 +93,22 @@
                     <input type="radio" name="{{ $r[1]}}" value="Y"
                         {{ get_option($r[1]) == 'Y' ? 'checked' : '' }}> <small>Deactivate</small><br>
                     @endforeach
+                    <small for="" class="text-muted">Maintenance Status</small><br>
+                        <input type="radio" name="site_maintenance" value="Y"
+                            {{ get_option('site_maintenance') == 'Y' ? 'checked' : '' }}> <small>Activate</small>
+                        <input type="radio" name="site_maintenance" value="N"
+                            {{ get_option('site_maintenance') == 'N' ? 'checked' : '' }}> <small>Deactivate</small><br>
+                            <small for="" class="text-muted">App Environment ( <span class="text-warning">Local status allows the datatable not to work</span> )</small><br>
+                            <input type="radio" name="app_env" value="production"
+                                {{ get_option('app_env') == 'production' ? 'checked' : '' }}> <small>Production</small>
+                            <input type="radio" name="app_env" value="local"
+                                {{ get_option('app_env') == 'local' ? 'checked' : '' }}> <small>Local</small><br>
                     <br>
                     <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i> Login Path</h6>
                     <input type="text" class="form-control form-control-sm" name="admin_path" value="{{get_option('admin_path',true)?->value}}">
                     <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel </b> dan lainnya yang familiar.</small>
+                    <br>
+
 
                 </div>
 

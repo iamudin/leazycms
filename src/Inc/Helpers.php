@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
@@ -356,9 +357,10 @@ if (!function_exists('regenerate_cache')) {
 if (!function_exists('recache_option')) {
     function recache_option()
     {
+
         \Illuminate\Support\Facades\Cache::forget('option');
         \Illuminate\Support\Facades\Cache::rememberForever('option', function () {
-            return \Leazycms\Web\Models\Option::get();
+            return \Leazycms\Web\Models\Option::pluck('value','name');
         });
     }
 }
@@ -446,10 +448,9 @@ if (!function_exists('get_option')) {
 
                 return Leazycms\Web\Models\Option::whereName($val)->first();
             }
-            $c = \Illuminate\Support\Facades\Cache::has('option') ? collect(\Illuminate\Support\Facades\Cache::get('option'))->where('name', $val)->first() : null;
-            return $c ? (isset($c['autoload']) && $c['autoload'] == 1 ? $c['value'] : (Leazycms\Web\Models\Option::whereName($val)->first()?->value ?? null)) : null;
+            return cache()->get('option')[$val] ?? '';
         }
-        return '/';
+        return '';
     }
 }
 

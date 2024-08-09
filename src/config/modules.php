@@ -506,8 +506,9 @@ return [
         ],
         'config'=> [
             'web_type'=> null,
-            'option'=> null,
+            'option'=> array(),
         ],
+        'option'=>array(),
         'used'=> array(),
         'current'=> null,
         'detail_visited'=> false,

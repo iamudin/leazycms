@@ -187,6 +187,19 @@ class PanelController extends Controller implements HasMiddleware
                     return to_route('setting')->with('success', 'Berhasil disimpan');
                 }
             }
+            if($app_env = $request->app_env){
+                if($existsenv = get_option('app_env')){
+                    if($existsenv!=$app_env){
+                    $option->updateOrCreate(['name'=>'app_env'],['value'=>$app_env,'autoload'=>1]);
+                    rewrite_env(['APP_ENV'=> $app_env]);
+                    Artisan::call('config:cache');
+                }
+                }else{
+                    $option->updateOrCreate(['name'=>'app_env'],['value'=>$app_env,'autoload'=>1]);
+                    rewrite_env(['APP_ENV'=> $app_env]);
+                    Artisan::call('config:cache');
+                }
+            }
             recache_option();
             return  back()->with('success', 'Berhasil disimpan');
         }

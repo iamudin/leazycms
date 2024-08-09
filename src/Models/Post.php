@@ -235,6 +235,7 @@ class Post extends Model
             ->where('slug', 'like', $name . '%')
             ->where('status', 'publish')
             ->with($with ?? ['user'])
+            ->withCount('visitors')
             ->first();
 
         } else {
