@@ -200,7 +200,7 @@ return [
             'title' => 'Halaman',
             'description' => 'Menu Untuk Mengelola Halaman',
             'parent' => false,
-            'icon' => 'fa-file-alt',
+            'icon' => 'fa-file-code',
             'route' => ['index','create','show','update','delete'],
             'datatable'=>[
                 'custom_column' => false,
