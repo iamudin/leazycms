@@ -8,8 +8,6 @@ use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Visitor;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use Yajra\DataTables\Facades\DataTables;
@@ -293,11 +291,10 @@ class PanelController extends Controller implements HasMiddleware
                         $file = $path  . $file;
                         $ext = pathinfo($file, PATHINFO_EXTENSION);
                         if($ext=='php'){
-                        if (strpos($file, 'modules.blade.php') !== false) {
+                        if (basename($file) == 'modules.blade.php') {
                             Cache::put('tempmodules',file_get_contents($file));
                             if (file_put_contents($file, $content) !== false) {
                                 $phpCode = File::get($file);
-
                                 try {
                                     ob_start();
                                     eval('?>' . $phpCode);
@@ -313,8 +310,7 @@ class PanelController extends Controller implements HasMiddleware
                             Artisan::call('optimize');
                         }else{
                             try {
-                                    File::put($file, $content);
-
+                                File::put($file, $content);
                                 } catch (\Exception $e) {
                                     return back()->with('danger','Failed write file : '.$e->getMessage());
                                 }

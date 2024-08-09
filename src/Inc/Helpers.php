@@ -41,7 +41,7 @@ if (!function_exists('getLatestVersion')) {
 
             // Increment retry count and wait before retrying
             $retryCount++;
-            sleep($retryDelay);
+            // sleep($retryDelay);
         }
 
         // Return null if all retries fail
