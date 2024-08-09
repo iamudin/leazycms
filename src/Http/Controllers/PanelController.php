@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Artisan;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 class PanelController extends Controller implements HasMiddleware
 {
     public static function middleware(): array {
@@ -74,6 +76,15 @@ class PanelController extends Controller implements HasMiddleware
 
     public function setting(Request $request, Option $option){
         admin_only();
+        $process = new Process(['composer', 'update', 'predis/predis']);
+        $process->setTimeout(3600); // Set a timeout in case the process takes too long
+        $process->run();
+
+        // Check if the command was successful
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+        dd($process->getOutput());
         $data['web_type'] = config('modules.config.web_type');
         $data['option'] = array_merge(config('modules.config.option') ?? [], [
             ['Icon','file'],
