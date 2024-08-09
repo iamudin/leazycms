@@ -17,6 +17,12 @@ class RateLimit
     {
 
         if(!config('modules.installed') && strpos($request->fullUrl(), 'install') === false ){
+            if(env('SESSION_DRIVER')!='file' || env('QUEUE_CONNECTION')!= 'sync' || env('CACHE_STORE')!='file'){
+                $cfg['SESSION_DRIVER'] = 'file';
+                $cfg['QUEUE_CONNECTION'] = 'sync';
+                $cfg['CACHE_STORE'] = 'file';
+                rewrite_env($cfg);
+            }
             return redirect()->route('install');
         }
         $modules = collect(get_module())->where('name', '!=', 'halaman')->where('public', true);

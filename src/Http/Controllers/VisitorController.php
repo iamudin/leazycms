@@ -9,7 +9,7 @@ class VisitorController
     public function visitor_counter()
     {
 
-        // Check for duplicate visitor
+        if(config('modules.installed')){
         if (!$this->isDuplicateVisitor(Session::getId(), url()->full()) && strpos(request()->headers->get('referer'),admin_path()) ===false) {
             $visitorData = [
                 'ip' => request()->ip(),
@@ -44,6 +44,7 @@ class VisitorController
         }
 
         return false;
+    }
     }
 
     public function isDuplicateVisitor($session, $visitedPage, $timestamp = null)

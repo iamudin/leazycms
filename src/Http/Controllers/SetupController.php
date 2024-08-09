@@ -18,12 +18,6 @@ class SetupController extends Controller
         if (config('modules.installed')) {
             return to_route('home');
         }
-        if(env('DB_CONNECTION')!='mysql'){
-            rewrite_env(['CACHE_STORE'=>'file']);
-            rewrite_env(['SESSION_DRIVER'=>'file']);
-            rewrite_env(['QUEUE_CONNECTION'=>'sync']);
-
-        }
         if ($request->isMethod('post')) {
             if (!cache('dbcredential')) {
                 $dbcredential = $request->validate([
