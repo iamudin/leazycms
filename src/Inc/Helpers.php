@@ -13,24 +13,40 @@ if (!function_exists('query')) {
     }
 }
 if (!function_exists('getLatestVersion')) {
-    function getLatestVersion()
-        {
-    $packageName = 'leazycms/web';
-    // Make a request to the Packagist API
-    $response = Http::get("https://repo.packagist.org/p2/{$packageName}.json");
+    function getLatestVersion($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
+    {
+        $url = "https://repo.packagist.org/p2/{$packageName}.json";
+        $retryCount = 0;
 
-    // Check if the request was successful
-    if ($response->successful()) {
-        $packageData = $response->json();
+        while ($retryCount < $maxRetries) {
+            try {
+                // Make a request to the Packagist API
+                $response = Http::get($url);
 
-        // Get the latest version details
-        $latestVersion = $packageData['packages'][$packageName][0]['version'];
+                // Check if the request was successful
+                if ($response->successful()) {
+                    $packageData = $response->json();
 
-        return  $latestVersion;
-    } else {
+                    // Ensure package data and version are available
+                    if (isset($packageData['packages'][$packageName][0]['version'])) {
+                        $latestVersion = $packageData['packages'][$packageName][0]['version'];
+                        return $latestVersion;
+                    } else {
+                        return null;
+                    }
+                } else {
+                }
+            } catch (\Exception $e) {
+            }
+
+            // Increment retry count and wait before retrying
+            $retryCount++;
+            sleep($retryDelay);
+        }
+
+        // Return null if all retries fail
         return null;
     }
-}
 }
 if (!function_exists('get_leazycms_version')) {
 
