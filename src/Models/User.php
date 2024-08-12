@@ -59,7 +59,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class)->select((new Post)->selected);
     }
-    public function getUserphotoAttribute()
+    public function getPhotoUserAttribute()
     {
         return $this->photo ? '/'.$this->photo : noimage();
     }

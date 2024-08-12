@@ -74,13 +74,23 @@ class WebController extends Controller
     }
     public function author(Request $request, $u = null)
     {
-        $user = User::whereSlug($u)->first();
-        abort_if(empty($user), 404);
-        config(['modules.page_name' => 'Author: ' . $user->name]);
-        $data = [
-            'index' => $user->posts()->paginate(10)
-        ];
-        return view('cms::layouts.master', $data);
+        if($u){
+            $user = User::whereSlug($u)->first();
+            abort_if(empty($user), 404);
+            config(['modules.page_name' => 'Author: ' . $user->name]);
+            $data = [
+                'index' => $user->posts()->paginate(10)
+            ];
+            return view('cms::layouts.master', $data);
+        }else{
+            $author = User::whereHas('posts')->where('status','active')->whereNotIn('level',['admin'])->get();
+            config(['modules.page_name' => 'Daftar Author']);
+            $data = [
+                'author' => $author
+            ];
+            return view('cms::layouts.master', $data);
+        }
+
     }
     public function detail(Request $request, Post $post, $slug = false)
     {

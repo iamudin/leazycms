@@ -17,7 +17,7 @@
             target="_blank"><i><u>{{ url($user->url) }}</u></i></a> <span
             title="Klik Untuk Menyalin alamat URL Kategori" data-toggle="tooltip"
             class="pointer copy pull-right badge badge-primary" data-copy="{{ url($user->url) }}"><i
-                class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
+                class="fa fa-copy" aria-hidden></i> <b>Salin </b></span></div>
 @endif
 @include('cms::backend.layout.error')
         <form autocomplete="off" action="{{ $user ?  route('user.update',$user->id): route('user.store')}}" method="post" enctype="multipart/form-data">

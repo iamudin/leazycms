@@ -91,6 +91,26 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
+        if ($request->is('author') || $request->is('author/*')) {
+            if($request->is('author')){
+                $attr['post_type'] = null;
+                $attr['detail_visited'] = false;
+                $attr['view_type'] = 'author.index';
+                $attr['view_path'] = 'author.index';
+                config([
+                    'modules.current' => $attr
+                ]);
+            }else{
+                $attr['post_type'] = null;
+                $attr['detail_visited'] = false;
+                $attr['view_type'] = 'author.detail';
+                $attr['view_path'] = 'author.detail';
+                config([
+                    'modules.current' => $attr
+                ]);
+            }
+
+        }
         if ($request->is('tags/*')) {
             $attr['post_type'] = null;
             $attr['detail_visited'] = false;

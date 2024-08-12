@@ -42,12 +42,11 @@ class UserController extends Controller implements HasMiddleware
                 'password'=>'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
             ]);
             $data['photo'] = $user->photo;
+            $request['media'] =  $user->photo;
+
             if($request->hasFile('photo')){
                 $data['photo'] = upload_media($user,$request->file('photo'),'author_photo','user');
-                Http::withOptions(['verify' => false])->post(route('media.destroy'), [
-                    '_token' => csrf_token(),
-                    'media' => $user->photo,
-                ]);
+                (new \Leazycms\Web\Http\Controllers\MediaController)->destroy($request);
             }
             if($pass = $request->password){
                 $data['password'] = bcrypt($pass);
@@ -136,17 +135,15 @@ public function update(Request $request, User $user){
     $data['slug'] = $slug = str($request->name)->slug();
     $data['url'] = 'author/'.$slug;
     $data['host'] = $request->getHost();
+    $data['password'] = $user->password;
     if($request->password){
     $data['password'] = bcrypt($request->password);
     }
-    $photoold = $user->photo;
+    $request['media'] = $user->photo;
     $user->update($data);
     if($request->hasFile('photo')){
         $user->update(['photo'=>upload_media($user,$request->file('photo'),'author_photo','user')]);
-       Http::post(route('media.destroy'), [
-            '_token' => csrf_token(),
-            'media' => $photoold,
-        ]);
+        (new \Leazycms\Web\Http\Controllers\MediaController)->destroy($request);
 
     }
     return back()->with('success','User  berhasil diupdate');

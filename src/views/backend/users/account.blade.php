@@ -17,7 +17,7 @@
 
   <div class="form-group">
 
-         <center><img class="img-thumbnail w-100" id="thumb" src="{{url($user->photo)}}" /></center><br>
+         <center><img class="img-thumbnail w-100" id="thumb" src="{{$user->photo_user}}" /></center><br>
     <input onchange="readURL(this);"  accept="image/jpeg,image/png"  type="file" class="form-control-file photo" name="photo" >
   </div>
 </div>
