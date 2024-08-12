@@ -47,8 +47,8 @@
                 ['insert', ['picture', 'link', 'video', 'hr']],
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help', 'codeview']],
+        ],
 
-            ],
             tableClassName: function() {
                 $(this).addClass('table table-bordered table-hover')
 
@@ -116,4 +116,6 @@
             }
         });
     }
+
 </script>
+

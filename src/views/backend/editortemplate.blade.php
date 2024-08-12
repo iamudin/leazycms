@@ -10,13 +10,13 @@
     </div>
 
 </div>
-@if(get_option('site_maintenance')=='N')
+@if(get_option('site_maintenance')=='Y')
     <div class="col-lg-12">
         <div class="alert alert-warning">
-           <i class="fa fa-warning"></i> Untuk mengakses fitur ini, silahkan kan Aktifkan <b>Status Maintenance </b> pada menu <b>Pengaturan</b> <i class="fa fa-arrow-right"></i> <b>Situs Web</b>
+           <i class="fa fa-warning"></i> Status Maintenance tidak aktif. Aktifkan pada menu <b>Pengaturan</b> <i class="fa fa-arrow-right"></i> <b>Situs Web</b>
         </div>
     </div>
-@else
+@endif
 <div class="col-lg-3">
 <h6 > <i class="fa fa-folder"></i> /{{ template() }}/ <span class="pull-right text-danger"><i class="fa fa-folder-plus pointer" onclick="folderPrompt()" title="Create Folder"></i> &nbsp;  <i class="fa fa-file-circle-plus  pointer" onclick="filePrompt()" title="Create File"></i> </span></h6>
 <div style="max-height: 74vh;overflow:auto;padding-right:10px">
@@ -35,16 +35,6 @@
 
 
 <div class="col-lg-9">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/clike/clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/php/php.min.js"></script>
-
     <form action="{{ url()->full() }}" class="editorForm" method="post">
         @csrf
         @if($e = request()->edit )
@@ -93,20 +83,13 @@
                 });
         }
     }
-        var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
-            lineNumbers: true,
-            mode: "{{ $type }}",
-            matchBrackets: true,
-            indentUnit: 4,
-            indentWithTabs: true,
-            theme: "default"
-        });
-        $('.CodeMirror').attr('style','height:74vh');
+
     </script>
 
 
 </div>
-@endif
+@include('cms::backend.layout.codemirrorjs')
+
 </div>
 
 </div>

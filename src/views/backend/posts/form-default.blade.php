@@ -33,8 +33,10 @@
 
                 @if ($module->form->editor)
                     <div class="form-group">
-                        @if ($post->mime == 'html')
-                            <textarea style="height:70vh" class="form-control text-white bg-dark" name="content" placeholder="Masukkan Script HTML">{{ get_custom_view($post->id) }}</textarea>
+                    @if($post->type=='docs' || $post->mime == 'html')
+                        <textarea name="content" placeholder="Enter Script..."  id="editor">{{ $post->content }}</textarea>
+                        @php $type= 'application/x-httpd-php'; @endphp
+                        @include('cms::backend.layout.codemirrorjs')
                         @else
                             <textarea name="content" placeholder="Keterangan..." id="editor">{{ $post->content ?? '' }}</textarea>
                         @endif
@@ -220,7 +222,7 @@
             </>
         </div>
     </form>
-    @if ($post->mime != 'html' && $module->form->editor)
+    @if ($post->mime != 'html' && $post->type!='docs' && $module->form->editor)
         @push('styles')
             <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
         @endpush

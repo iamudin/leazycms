@@ -34,9 +34,11 @@ class Web
                 }
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
-            if(get_option('site_maintenance')=='N'){
-                $content = preg_replace('/\s+/', ' ', $content);
-            }
+                if ($request->segment(1) == 'docs') {
+                    $content = isPre($content);
+                } else {
+                    $content = preg_replace('/\s+/', ' ', $content);
+                }
             $footerCredits = '<footer style="text-align:center;background:#000;padding:10px;color:#ccc" class="'.str()->random(5).'_credit"><small>Leazycms <sup>'.get_leazycms_version().'</sup></small></footer>';
             $content = preg_replace('/<\/body>/', $footerCredits . '</body>', $content);
             $response->setContent($content);

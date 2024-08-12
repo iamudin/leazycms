@@ -10,9 +10,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Spatie\Backup\BackupDestination\BackupDestinationFactory;
 
 class PanelController extends Controller implements HasMiddleware
 {
@@ -338,5 +340,62 @@ class PanelController extends Controller implements HasMiddleware
         };
 
         return view('cms::backend.editortemplate', ['view' => $src, 'type' => $type]);
+    }
+
+    function backup_restore(Request $request){
+        return to_route('panel.dashboard');
+        try {
+            Artisan::call('backup:list');
+            $output = Artisan::output();
+
+            // Pisahkan hasil output menjadi baris dan kolom
+            $lines = explode(PHP_EOL, $output);
+            $data = [];
+
+            foreach ($lines as $line) {
+                if (strpos($line, '|') !== false) {
+                    $data[] = array_map('trim', explode('|', $line));
+                }
+            }
+
+            // Simpan ke dalam file atau database, atau kembalikan sebagai hasil command
+            // Storage::put('backup_list.json', json_encode($data));
+
+
+            return $this->downloadLatestBackup();
+
+            return response()->json(['message' => 'Backup successfully created.'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Backup failed: ' . $e->getMessage()], 500);
+        }
+        return view('cms::backend.backup-restore');
+    }
+
+    function downloadLatestBackup()
+    {
+        // Dapatkan semua destinasi backup yang dikonfigurasi
+        $backupDestinations = BackupDestinationFactory::createFromArray(config('backup.backup.destination.disks'));
+
+        // Asumsikan hanya ada satu disk tujuan backup, ambil yang pertama
+        $backupDestination = $backupDestinations[0];
+        $backupFiles = $backupDestination->backupFiles();
+
+        // Dapatkan file backup terbaru
+        $latestBackupFile = $backupFiles->sortByDesc->date()->first();
+
+        if (!$latestBackupFile) {
+            return redirect()->back()->with('error', 'No backup files found.');
+        }
+
+        // Siapkan file untuk diunduh
+        $disk = Storage::disk($backupDestination->diskName());
+        $filePath = $latestBackupFile->path();
+        $fileName = $latestBackupFile->fileName();
+
+        if ($disk->exists($filePath)) {
+            return $disk->download($filePath, $fileName);
+        }
+
+        return redirect()->back()->with('error', 'File not found.');
     }
 }

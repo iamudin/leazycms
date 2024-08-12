@@ -28,8 +28,8 @@
         "yajra/laravel-datatables-oracle": "*",
         "intervention/image": "~2.0",
         "stevebauman/location":"*",
-        "predis/predis": "*",
-        "nesbot/carbon": "*"
+        "nesbot/carbon": "*",
+        "spatie/laravel-backup":"*"
     }
 
 }

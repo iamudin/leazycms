@@ -1,7 +1,10 @@
 <?php
+
 namespace Leazycms\Web\Middleware;
+
 use Closure;
 use Illuminate\Http\Request;
+
 class Panel
 {
     /**
@@ -94,9 +97,11 @@ class Panel
                 }
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
-            if(get_option('site_maintenance')=='N'){
-                $content = preg_replace('/\s+/', ' ', $content);
-            }
+                if (in_array($request->segment(2),['docs','appearance'])) {
+                    $content = isPrePanel($content);
+                } else {
+                    $content = preg_replace('/\s+/', ' ', $content);
+                }
             $response->setContent($content);
         }
         return $response;

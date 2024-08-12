@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Post extends Model
 {
     use HasFactory, SoftDeletes;
-    public $selected = ['id','short_content','type','category_id','user_id','title','created_at','updated_at','parent_id','media','url','data_field','pinned','sort','status'];
+    public $selected = ['id','short_content','type','category_id','user_id','title','created_at','updated_at','parent_id','media','url','data_field','pinned','sort','status','mime'];
 
     protected $userselectcolumn = ['id','name','url','slug'];
     protected $categoryselectcolumn = ['id','name','url','status','slug'];

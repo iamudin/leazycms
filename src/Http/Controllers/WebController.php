@@ -1,9 +1,11 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
+use Illuminate\Http\Request;
 use Leazycms\Web\Models\Tag;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Response;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\User;
-use Illuminate\Http\Request;
 use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
@@ -108,7 +110,15 @@ class WebController extends Controller
         }
 
         if ($detail->mime == 'html') {
-            return view('custom_view.' . _us($request->getHost()) . '.' . $detail->id, compact('detail'));
+            $compiledString = Blade::compileString($detail->content);
+            $data = ['detail' => $detail];
+            ob_start();
+            extract($data, EXTR_SKIP);
+            eval('?>' . $compiledString);
+            $output = ob_get_clean();
+
+            return Response::make($output);
+            // return view('custom_view.' . _us($request->getHost()) . '.' . $detail->id, compact('detail'));
         }
         if ($modul->web->history) {
             $history = $post->history($detail->id, $detail->created_at);

@@ -841,11 +841,46 @@ if (!function_exists('is_day')) {
             return true;
     }
 }
+if (!function_exists('isPrePanel')) {
+
+function isPrePanel($content){
+$parts = preg_split('/(<textarea\b[^>]*id="editor"[^>]*>.*?<\/textarea>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+$beforeEditor = '';
+$insideEditor = '';
+$afterEditor = '';
+$insideEditorFound = false;
+foreach ($parts as $part) {
+    if ($insideEditorFound) {
+        $afterEditor .= $part;
+    } elseif (strpos($part, 'id="editor"') !== false) {
+        $insideEditor .= $part;
+        $insideEditorFound = true;
+    } else {
+        $beforeEditor .= $part;
+    }
+}
+$beforeEditor = preg_replace('/\s+/', ' ', $beforeEditor);
+$afterEditor = preg_replace('/\s+/', ' ', $afterEditor);
+$content = $beforeEditor . $insideEditor . $afterEditor;
+return $content;
+}
+}
+if (!function_exists('isPre')) {
+    function isPre($string){
+        $parts = explode('</pre>', $string);
+        foreach ($parts as &$part) {
+            $subparts = explode('<pre', $part);
+            $subparts[0] = preg_replace('/\s+/', ' ', $subparts[0]);
+            $part = implode('<pre', $subparts);
+        }
+        return implode('</pre>', $parts);
+}
+}
 if (!function_exists('set_header_seo')) {
     function set_header_seo($data)
     {
         return array(
-            'description' => !empty($data->description) ? $data->description : (strlen(strip_tags($data->content)) == 0 ? 'Lihat ' . get_module($data->type)->title . ' ' . $data->title : str(strip_tags($data->content))->limit(350)),
+            'description' => !empty($data->description) ? $data->description : (strlen(strip_tags($data->content)) == 0 ? 'Lihat ' . get_module($data->type)->title . ' ' . $data->title : preg_replace('/\s+/', ' ',str(strip_tags($data->content))->limit(250))),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
             'thumbnail' => $data->media ? url($data->thumbnail) : url(get_option('preview') ?? noimage()),

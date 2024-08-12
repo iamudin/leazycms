@@ -192,9 +192,7 @@ public function update(Request $request, Post $post){
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str(strip_tags($request->content))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
     $data['allow_comment'] =   isset($request->allow_comment) ? 'Y': 'N';
-    if($request->mime=='html'){
-        make_custom_view($post->id,$request->content);
-    }
+
     if($pp = $module->form->post_parent){
         if($pid=$request->parent_id){
             $custom_field[_us($pp[0])] = Post::find($pid)?->title;
@@ -305,7 +303,7 @@ public function recache($type){
                 $category = current_module()->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "<i class='fa fa-tag'></i> <i class='text-warning'>Uncategorized</i>") : '';
                 $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> " . $row->comments->count() : '';
                 $custom = ($row->mime == 'html') ? '<i class="text-muted">_HTML</i>' : '';
-                $tit = (current_module()->web->detail || current_module()->name == 'media') ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ' . $custom :$row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tanpa Judul__</i>');
+                $tit = (current_module()->web->detail || current_module()->name == 'media') ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ' . $custom : $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tanpa Judul__</i>');
 
                 $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
 
