@@ -6,7 +6,7 @@
 </h3>
 <div class="pull-right">
     @if(get_post_type()=='media')
-    <button class="btn btn-outline-primary btn-sm" onclick="$('.upload').click()"> <i class="fa fa-upload"></i> Upload Media</button>
+    <button class="btn btn-primary btn-sm" onclick="$('.upload').click()"> <i class="fa fa-upload"></i> Upload Media</button>
     <form action="{{ route('media.upload') }}" method="POST" class="mediaupload" enctype="multipart/form-data">
     @csrf
     <input accept="{{ allow_mime() }}" type="file" onchange="if(confirm('Upload Media ?')){$('.mediaupload').submit()}" name="media" class="upload d-none">

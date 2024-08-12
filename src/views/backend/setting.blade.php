@@ -4,9 +4,11 @@
         @csrf
         <div class="row">
             <div class="col-lg-12">
-                <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-gears"></i> Pengaturan <button
-                        name="save_setting" value="true" class="btn btn-primary btn-sm pull-right"> <i
-                            class="fa fa-save" aria-hidden></i> Simpan Pengaturan</button></h3>
+                <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-gears"></i> Pengaturan <div class="btn-group pull-right"><button
+                        name="save_setting" value="true" class="btn btn-primary btn-sm"> <i
+                            class="fa fa-save" aria-hidden></i> Simpan Pengaturan</button>
+                            <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
+                        </div></h3>
                 @include('cms::backend.layout.error')
                 <ul class="nav nav-tabs">
                     <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#home"> <i

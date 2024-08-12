@@ -6,8 +6,8 @@
 </h3>
 <div class="pull-right">
     @if(Route::has('user.create'))
-    <a href="{{route('user.create')}}" class="btn btn-outline-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
-    @if(get_option('roles'))<a href="{{route('role')}}" class="btn btn-outline-dark btn-sm"> <i class="fa fa-key" aria-hidden></i> Hak Akses</a> @endif
+    <a href="{{route('user.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
+    @if(get_option('roles'))<a href="{{route('role')}}" class="btn btn-dark btn-sm"> <i class="fa fa-key" aria-hidden></i> Hak Akses</a> @endif
     @endif
 </div>
 </div>

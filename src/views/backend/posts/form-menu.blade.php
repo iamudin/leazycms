@@ -7,7 +7,7 @@
       <div class="col-lg-12">
         <h3 style="font-weight:normal">
             <i class="fa {{ $module->icon }}" aria-hidden="true"></i> {{ get_post_type('title_crud') }}
-            <a href="{{ route(get_post_type()) }}" class="btn btn-outline-danger btn-sm pull-right"
+            <a href="{{ route(get_post_type()) }}" class="btn btn-danger btn-sm pull-right"
                 data-toggle="tooltip" title="Kembali Ke Index Data"> <i class="fa fa-undo" aria-hidden></i>
                 Kembali</a>
         </h3>

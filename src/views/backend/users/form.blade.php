@@ -6,7 +6,7 @@
 </h3>
 <div class="pull-right">
     @if(Route::has('user'))
-    <a href="{{route('user')}}" class="btn btn-outline-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Batal</a>
+    <a href="{{route('user')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Batal</a>
     @endif
 </div>
 </div>

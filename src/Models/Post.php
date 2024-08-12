@@ -138,7 +138,7 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->cachedpost($type)->values())->take($limit);
         } else {
-            return $this->select($this->selected)->with('user', 'category')->where('type', $type)->whereStatus('publish')->latest('created_at')->limit($limit)->get();
+            return $this->withCount('visitors')->select($this->selected)->with('user', 'category')->where('type', $type)->whereStatus('publish')->latest('created_at')->limit($limit)->get();
         }
     }
 
@@ -155,7 +155,7 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->cachedpost($type)->values())->skip($skip)->take($limit);
         } else {
-            return $this->select($this->selected)->whereType($type)->whereStatus('publish')->offset($skip)->limit($limit)->latest()->get();
+            return $this->select($this->selected)->withCount('visitors')->whereType($type)->whereStatus('publish')->offset($skip)->limit($limit)->latest()->get();
         }
     }
     function index_sort($type,$order)
@@ -188,7 +188,6 @@ class Post extends Model
     }
     function index_by_category($type, $slug, $limit = false)
     {
-        // dd(get_module($type)->cache);
         $modul = get_module($type);
         if ($modul && $modul->cache) {
             $cek = $this->categories($type) ? collect($this->categories($type))->where('slug', $slug)->first() : null;

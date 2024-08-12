@@ -9,6 +9,8 @@ use Leazycms\Web\Models\User;
 use Leazycms\Web\Models\Role;
 use Yajra\DataTables\DataTables;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Http;
+
 use Closure;
 class UserController extends Controller implements HasMiddleware
 {
@@ -42,6 +44,10 @@ class UserController extends Controller implements HasMiddleware
             $data['photo'] = $user->photo;
             if($request->hasFile('photo')){
                 $data['photo'] = upload_media($user,$request->file('photo'),'author_photo','user');
+                Http::withOptions(['verify' => false])->post(route('media.destroy'), [
+                    '_token' => csrf_token(),
+                    'media' => $user->photo,
+                ]);
             }
             if($pass = $request->password){
                 $data['password'] = bcrypt($pass);
@@ -133,9 +139,15 @@ public function update(Request $request, User $user){
     if($request->password){
     $data['password'] = bcrypt($request->password);
     }
+    $photoold = $user->photo;
     $user->update($data);
     if($request->hasFile('photo')){
         $user->update(['photo'=>upload_media($user,$request->file('photo'),'author_photo','user')]);
+       Http::post(route('media.destroy'), [
+            '_token' => csrf_token(),
+            'media' => $photoold,
+        ]);
+
     }
     return back()->with('success','User  berhasil diupdate');
 }
