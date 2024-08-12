@@ -12,11 +12,12 @@
     <input accept="{{ allow_mime() }}" type="file" onchange="if(confirm('Upload Media ?')){$('.mediaupload').submit()}" name="media" class="upload d-none">
 </form>
     @endif
+    <div class="btn-group">
     @if(Route::has(get_post_type().'.create'))
-    <a href="{{route(get_post_type().'.create')}}" class="btn btn-outline-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
+    <a href="{{route(get_post_type().'.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
     @endif
-    @if(Route::has(get_post_type().'.category')) <a href="{{route(get_post_type().'.category')}}" class="btn btn-outline-dark btn-sm"> <i class="fa fa-tags" aria-hidden></i> Kategori</a> @endif
-
+    @if(Route::has(get_post_type().'.category')) <a href="{{route(get_post_type().'.category')}}" class="btn btn-dark btn-sm"> <i class="fa fa-tags" aria-hidden></i> Kategori</a> @endif
+</div>
 </div>
 
 </div>

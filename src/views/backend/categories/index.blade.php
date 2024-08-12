@@ -6,7 +6,7 @@
 </h3>
 <div class="pull-right">
 
-    <a href="{{route(get_post_type())}}" class="btn btn-outline-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
+    <a href="{{route(get_post_type())}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
 </div>
 </div>
 <div class="col-lg-4">

@@ -3,7 +3,7 @@
 <form class="" action="{{URL::full()}}" method="post" enctype="multipart/form-data">
   @csrf
 <div class="row">
-<div class="col-lg-12"><h3 style="font-weight:normal"> <i class="fa fa-user" aria-hidden="true"></i> Akun <button name="save" value="true" class="btn btn-outline-primary btn-sm pull-right"> <i class="fa fa-save" aria-hidden></i> Simpan</button></h3>
+<div class="col-lg-12"><h3 style="font-weight:normal"> <i class="fa fa-user" aria-hidden="true"></i> Akun <button name="save" value="true" class="btn btn-primary btn-sm pull-right"> <i class="fa fa-save" aria-hidden></i> Perbaharui</button></h3>
   <br>
   @include('cms::backend.layout.error')
   @if(session('success'))

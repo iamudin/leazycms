@@ -4,10 +4,10 @@
 <div class="col-lg-12 mb-3"><h3 style="font-weight:normal;float: left;"> <i class="fa fa-paint-brush"></i> Edit Template </h3>
     <div class="pull-right">
 
-
-        @if(get_option('site_maintenance') == 'Y') <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-outline-primary btn-sm"> <i class="fa fa-save"></i> Simpan Perubahan</button> @endif
-        <a href="{{route('appearance')}}" class="btn btn-outline-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
-    </div>
+        <div class="btn-group">
+        @if(get_option('site_maintenance') == 'Y') <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan Perubahan</button> @endif
+        <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
+    </div></div>
 
 </div>
 @if(get_option('site_maintenance')=='Y')

@@ -97,7 +97,7 @@ class Panel
                 }
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
-                if (in_array($request->segment(2),['docs','appearance'])) {
+                if (in_array($request->segment(2),['docs','appearance','halaman'])) {
                     $content = isPrePanel($content);
                 } else {
                     $content = preg_replace('/\s+/', ' ', $content);

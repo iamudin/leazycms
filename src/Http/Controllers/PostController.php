@@ -189,7 +189,7 @@ public function update(Request $request, Post $post){
 
     $data = $request->validate($post_field);
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
-    $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str(strip_tags($request->content))->words(25,'...') : null;
+    $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
     $data['allow_comment'] =   isset($request->allow_comment) ? 'Y': 'N';
 
