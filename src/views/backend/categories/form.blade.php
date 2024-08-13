@@ -31,7 +31,7 @@
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Urutan</label>
                 @php
-                $count = \Leazycms\Web\Models\Category::whereStatus('publish')->count()+1;
+                $count = \Leazycms\Web\Models\Category::whereType(current_module()->name)->whereStatus('publish')->count();
                 @endphp
                 <select name="sort" id="" class="form-control form-control-select">
                     <option value="0" >Pilih</option>
