@@ -1,7 +1,5 @@
 <?php
-
 namespace Leazycms\Web\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
@@ -89,7 +87,6 @@ class PanelController extends Controller implements HasMiddleware
         admin_only();
         $data['web_type'] = config('modules.config.web_type');
         $data['option'] = array_merge(config('modules.config.option') ?? [], [
-            ['Icon', 'file'],
             ['Nama', 'text'],
             ['Alamat', 'text'],
             ['Telepon', 'text'],
@@ -103,6 +100,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Youtube', 'text'],
             ['Instagram', 'text'],
             ['Twitter', 'text'],
+            ['Icon', 'file'],
         ]);
         $data['site_attribute'] = array(
             ['Alamat Situs Web', 'site_url', 'text'],
@@ -286,7 +284,6 @@ class PanelController extends Controller implements HasMiddleware
                     }
                     break;
                 case 'change_file':
-
                     if ($content = $request->file_src) {
                         $data = $content;
                         $file = $path  . $file;
@@ -294,13 +291,12 @@ class PanelController extends Controller implements HasMiddleware
                         if($ext=='php'){
                         if (basename($file) == 'modules.blade.php') {
                             Cache::put('tempmodules',file_get_contents($file));
-                            if (file_put_contents($file, $content) !== false) {
+                            if ( File::put($file,  $content)) {
                                 $phpCode = File::get($file);
                                 try {
                                     ob_start();
                                     eval('?>' . $phpCode);
                                     ob_end_clean();
-
                                 } catch (\ParseError $e) {
                                     File::put($file, Cache::get('tempmodules'));
                                     return back()->with('danger', 'PHP script modules is wrong!');

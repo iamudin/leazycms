@@ -10,7 +10,7 @@
     </div></div>
 
 </div>
-@if(get_option('site_maintenance')=='Y')
+@if(get_option('site_maintenance')=='N')
     <div class="col-lg-12">
         <div class="alert alert-warning">
            <i class="fa fa-warning"></i> Status Maintenance tidak aktif. Aktifkan pada menu <b>Pengaturan</b> <i class="fa fa-arrow-right"></i> <b>Situs Web</b>
