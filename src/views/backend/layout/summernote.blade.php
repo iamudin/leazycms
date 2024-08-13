@@ -1,3 +1,34 @@
+<div class="modal fade" id="embedModal" tabindex="-1" role="dialog" aria-labelledby="embedModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="embedModalLabel">Embed URL</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="embed-url">URL</label>
+            <input type="text" class="form-control" id="embed-url" placeholder="Enter URL">
+          </div>
+          <div class="form-group">
+            <label for="embed-width">Width</label>
+            <input type="text" class="form-control" id="embed-width" placeholder="Sample : 100%, 100px or other">
+          </div>
+          <div class="form-group">
+            <label for="embed-height">Height</label>
+            <input type="text" class="form-control" id="embed-height" placeholder="Sample : 100%, 100px or other">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="embedModalSave">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="{{ asset('backend/js/summernote-image-attributes.js') }}"></script>
 <script src="{{ asset('backend/js/en-us.js') }}"></script>
 <script type="text/javascript">
@@ -6,6 +37,8 @@
         $("#editor").summernote({
             placeholder: 'Tulis isi..',
             height: 350,
+            codeviewFilter: false,
+            codeviewIframeFilter: true,
             callbacks: {
                 onFileUpload: function(file) {
                     fileupload(files[0]);
@@ -27,7 +60,7 @@
                 captionText: 'Caption Goes Here.',
                 manageAspectRatio: false
             },
-            lang: 'id-ID',
+            lang: 'en-EN',
             popover: {
                 image: [
                     ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
@@ -35,6 +68,13 @@
                     ['remove', ['removeMedia']],
                     ['custom', ['imageAttributes']],
                 ],
+                link: [
+    ['link', ['linkDialogShow', 'unlink']]
+  ],
+  table: [
+    ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
+    ['delete', ['deleteRow', 'deleteCol', 'deleteTable']],
+  ]
             },
             toolbar: [
                 ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
@@ -44,11 +84,24 @@
                 ['height', ['height']],
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['picture', 'link', 'video', 'hr']],
+                ['insert', ['picture', 'link', 'video', 'hr','embedUrl']],
                 ['table', ['table']],
-                ['view', ['fullscreen', 'help', 'codeview']],
+                ['view', ['fullscreen', 'help','codeview']],
         ],
 
+        buttons: {
+            embedUrl: function() {
+                var ui = $.summernote.ui;
+                var button = ui.button({
+                    contents: '<i class="fa fa-globe"/></i> Embed URL',
+                    tooltip: 'Embed URL',
+                    click: function() {
+                        $('#embedModal').modal('show');
+                    }
+                });
+                return button.render();
+            }
+        },
             tableClassName: function() {
                 $(this).addClass('table table-bordered table-hover')
 
@@ -116,6 +169,21 @@
             }
         });
     }
+    $('#embedModalSave').click(function() {
+        var url = $('#embed-url').val();
+        var width = $('#embed-width').val();
+        var height = $('#embed-height').val();
 
+        if (url && width && height) {
+            var iframeHTML = `
+                <iframe src="${url}" style="width:${width};height:${height}" frameborder="0" allowfullscreen></iframe>
+            `;
+            $('#editor').summernote('pasteHTML', iframeHTML);
+            $('#embedModal').modal('hide');
+        } else {
+            alert("Please fill out all fields.");
+        }
+    });
 </script>
+<!-- Modal -->
 

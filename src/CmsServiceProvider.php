@@ -91,8 +91,7 @@ class CmsServiceProvider extends ServiceProvider
     }
     protected function cmsHandler()
     {
-        Carbon::setLocale(config('app.locale'));
-        Carbon::setFallbackLocale(config('app.fallback_locale'));
+        Carbon::setLocale('ID');
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
         if (DB::connection()->getPDO() && $this->checkAllTables()) {

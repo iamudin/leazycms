@@ -46,14 +46,7 @@
                     </div>
                     <div class="tab-pane fade" id="profile">
 
-                        <small>Konten Halaman Utama</small>
-                        <select class="form-control form-control-sm" name="home_page">
-                            <option value="default">Default</option>
-                            @foreach ($home_page as $r)
-                                <option value="{{ $r->id }}"
-                                    {{ $r->id == get_option('home_page') ? 'selected' : '' }}>{{ $r->title }}</option>
-                            @endforeach
-                        </select>
+
                         @foreach ($site_attribute as $r)
                             @if ($r[2] == 'file')
                                 <small for="" class="text-muted">{{ $r[0] }}</small>

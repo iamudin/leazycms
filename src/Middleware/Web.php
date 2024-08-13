@@ -40,7 +40,8 @@ class Web
                     $content = preg_replace('/\s+/', ' ', $content);
                 }
             $footerCredits = '<footer style="text-align:center;background:#000;padding:10px;color:#ccc" class="'.str()->random(5).'_credit"><small>Leazycms <sup>'.get_leazycms_version().'</sup></small></footer>';
-            $content = preg_replace('/<\/body>/', $footerCredits . '</body>', $content);
+            $lazy = '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>';
+            $content = preg_replace('/<\/body>/', $footerCredits .$lazy. '</body>', $content);
             $response->setContent($content);
         }
         $this->securityHeaders($response,$request);

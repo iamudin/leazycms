@@ -844,7 +844,7 @@ if (!function_exists('is_day')) {
 if (!function_exists('isPrePanel')) {
 
 function isPrePanel($content){
-$parts = preg_split('/(<textarea\b[^>]*id="editor"[^>]*>.*?<\/textarea>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+$parts = preg_split('/(<textarea\b[^>]*class="custom_html"[^>]*>.*?<\/textarea>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
 $beforeEditor = '';
 $insideEditor = '';
 $afterEditor = '';
@@ -852,7 +852,7 @@ $insideEditorFound = false;
 foreach ($parts as $part) {
     if ($insideEditorFound) {
         $afterEditor .= $part;
-    } elseif (strpos($part, 'id="editor"') !== false) {
+    } elseif (strpos($part, 'class="custom_html"') !== false) {
         $insideEditor .= $part;
         $insideEditorFound = true;
     } else {

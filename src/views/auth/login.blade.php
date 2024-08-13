@@ -32,7 +32,6 @@
 
             @if(get_option('site_maintenance')=='Y')
             <p class="badge badge-danger">Modus Perbaikan Aktif</p>
-
             @endif
           </center>
                 @if (session()->has('error'))

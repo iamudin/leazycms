@@ -5,7 +5,7 @@
     <div class="pull-right">
 
         <div class="btn-group">
-        @if(get_option('site_maintenance') == 'Y') <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan Perubahan</button> @endif
+      <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan Perubahan</button>
         <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
     </div></div>
 
@@ -45,7 +45,7 @@
     @endif
     <input type="hidden" name="type" value="change_file">
 
-    <textarea id="editor" name="file_src" >
+    <textarea id="editor" name="file_src" class="custom_html" >
     {{ $view }}
     </textarea>
 </form>

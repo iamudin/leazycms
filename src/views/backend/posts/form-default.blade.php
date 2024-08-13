@@ -33,13 +33,14 @@
 
                 @if ($module->form->editor)
                     <div class="form-group">
-                    @if($post->type=='docs' || $post->mime == 'html')
-                        <textarea name="content" placeholder="Enter Script..."  id="editor">{{ $post->content }}</textarea>
-                        @php $type= 'application/x-httpd-php'; @endphp
-                        @include('cms::backend.layout.codemirrorjs')
-                        @else
+
+                          @if($post->type=='docs')
+                          @php $type = "application/x-httpd-php"; @endphp
+                          <textarea name="content" placeholder="Dokumentasi" id="editor" class="custom_html">{{ $post->content ?? '' }}</textarea>
+                          @include('cms::backend.layout.codemirrorjs')
+                          @else
                             <textarea name="content" placeholder="Keterangan..." id="editor">{{ $post->content ?? '' }}</textarea>
-                        @endif
+                          @endif
                     </div>
                 @endif
 
@@ -86,7 +87,7 @@
                 @endif
 
 
-                @if (get_module_info('looping') || (get_post_type() == 'halaman' && $post->mime_type == 'html'))
+                @if (get_module_info('looping'))
                     <br>
                     <h6 style="border-bottom:1px dashed #000;font-weight:normal"><b>{{ get_module_info('looping') }}</b>
                         <span class="text-muted pull-right">{{ get_module_info('looping_for') }}</span> </h6>
@@ -121,14 +122,7 @@
                     </div>
 
                 @endif
-                @if (get_post_type() == 'halaman')
-                    <small>Jenis Halaman {!! help('Default (Halaman standar), Custom HTML (Source Code HTML dinamis / static / copy paster sumber lain)') !!}</small>
-                    <select class="form-control form-control-sm" name="mime">
-                        <option value="">Default</option>
-                        <option value="html" {{ $post && $post->mime == 'html' ? 'selected' : '' }}>Custom HTML</option>
-                    </select>
 
-                @endif
                 @if ($module->web->detail || $modname = $module->name=='banner')
                     <small>Pengalihan URL {!! help('Opsi Jika Ingin Mengalihkan Konten Ini ke suatu halaman web atau url') !!} </small>
                     <input type="text" class="form-control form-control-sm" name="redirect_to"

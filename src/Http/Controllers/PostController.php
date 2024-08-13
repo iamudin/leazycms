@@ -173,7 +173,11 @@ public function update(Request $request, Post $post){
     $post_field =  [
         'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5|'. Rule::unique('posts')->where('type',$post->type)->whereNull('deleted_at')->ignore($post->id),
         'media'=> 'nullable|file|mimetypes:image/jpeg,image/png',
-        'content'=> 'nullable',
+        'content'=> ['nullable',function ($attribute, $value, $fail) {
+            if (strpos($value, '<?php') !== false) {
+                $fail("The $attribute field contains invalid content.");
+            }
+        }],
         'sort'=> 'nullable|numeric',
         'parent_id'=> 'nullable|exists:posts,id',
         'keyword'=> 'nullable|string|regex:/^[a-zA-Z,]+$/u',
@@ -184,10 +188,12 @@ public function update(Request $request, Post $post){
         'pinned'=> 'nullable|in:N,Y',
         'allow_comment'=> 'nullable|in:N,Y',
         'status'=> 'required|string',
-        'mime'=> 'nullable|in:html,'.allow_mime(),
+        'mime'=> 'nullable|in:embed,api'
     ];
 
+
     $data = $request->validate($post_field);
+
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);

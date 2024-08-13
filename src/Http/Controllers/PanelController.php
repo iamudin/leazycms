@@ -85,6 +85,7 @@ class PanelController extends Controller implements HasMiddleware
 
     public function setting(Request $request, Option $option)
     {
+
         admin_only();
         $data['web_type'] = config('modules.config.web_type');
         $data['option'] = array_merge(config('modules.config.option') ?? [], [
@@ -135,12 +136,10 @@ class PanelController extends Controller implements HasMiddleware
             ['Roles', 'operator,editor,publisher']
         );
 
-        $data['home_page'] = Post::whereType('halaman')->whereStatus('publish')->whereMime('html')->select('id', 'title')->get();
+
         if ($request->isMethod('POST')) {
 
-            if ($value = $request->home_page) {
-                Option::updateOrCreate(['name' => 'home_page'], ['value' => $value]);
-            }
+
             foreach ($data['option'] as $row) {
                 $key = _us($row[0]);
 

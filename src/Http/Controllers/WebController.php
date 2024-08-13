@@ -21,9 +21,9 @@ class WebController extends Controller
         }
     }
 
-    public function home(Request $req)
+    public function home()
     {
-        return get_option('home_page') && get_option('home_page') != 'default' && View::exists('custom_view.' . get_option('home_page')) ? view('custom_view.' . get_option('home_page')) : view('cms::layouts.master');
+        return view('cms::layouts.master');
     }
 
     public function api(Request $req, Post $post, $id = null)
@@ -119,17 +119,41 @@ class WebController extends Controller
             return redirect($detail->redirect_to);
         }
 
-        if ($detail->mime == 'html') {
-            $compiledString = Blade::compileString($detail->content);
+      /*  if ($mime = $detail->mime) {
+            if($mime=='embed'){
+                $bladeembed = "@extends('cms::layouts.blank_layout')
+                @section('content')
+                <iframe id='myIframe'  src='https://bapokting.bengkaliskab.go.id' style='width:100%;'
+            <script>
+        function adjustIframeHeight() {
+            const iframe = document.getElementById('myIframe');
+            iframe.onload = function() {
+                iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
+            };
+        }
+
+        window.addEventListener('load', adjustIframeHeight);
+    </script>
+               @endsection";
+            $output = Blade::render($bladeembed);
+
+                return Response::make($output, 200)
+               ->header('Content-Type', 'text/html');
+            }elseif($mime=='api'){
+                $view = view('template.'.template().'.'.$detail->type.'.api',['detail'=>$detail]);
+
+                return view()->make('cms::layouts.layout')->with('content', $view);
+                // return view('template.'.template().'.'.$detail->type.'.api');
+            }
+           $compiledString = Blade::compileString($detail->content);
             $data = ['detail' => $detail];
             ob_start();
             extract($data, EXTR_SKIP);
             eval('?>' . $compiledString);
             $output = ob_get_clean();
-
             return Response::make($output);
-            // return view('custom_view.' . _us($request->getHost()) . '.' . $detail->id, compact('detail'));
-        }
+            return view('custom_view.' . _us($request->getHost()) . '.' . $detail->id, compact('detail'));
+        }*/
         if ($modul->web->history) {
             $history = $post->history($detail->id, $detail->created_at);
         }

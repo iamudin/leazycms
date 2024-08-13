@@ -54,8 +54,6 @@ class SetupController extends Controller
                 Cache::put('usercredential',$usercredential);
                 Cache::put('option',$option);
                 $db['APP_URL'] = 'http://' . $request->getHttpHost();
-                $db['APP_LOCALE'] = 'ID';
-                $db['APP_FALLBACK_LOCALE'] = 'ID';
                 $db['DB_CONNECTION'] = 'mysql';
                 $db['APP_TIMEZONE'] = '"Asia/Jakarta"';
                 foreach (cache('dbcredential') as $k => $row) {
