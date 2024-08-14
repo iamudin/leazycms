@@ -210,11 +210,17 @@ class PanelController extends Controller implements HasMiddleware
                     $isconfg=   Artisan::call('config:cache');
                 }
             }
-            if(!isset($isconfg)){
-                Artisan::call('config:cache');
+            if(isset($isconfg)){
+                if($isconfg===0){
+                    return back()->with('success', 'Berhasil disimpan');
+                }
+
+            }else{
+                $isconfg = Artisan::call('config:cache');
+                if($isconfg===0){
+                    return back()->with('success', 'Berhasil disimpan');
+                }
             }
-            session()->flash('success', 'Berhasil disimpan');
-            return  redirect(route('setting'));
         }
         return view('cms::backend.setting', $data);
     }
