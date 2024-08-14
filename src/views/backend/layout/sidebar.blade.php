@@ -1,12 +1,13 @@
 <!-- Sidebar menu-->
 <div class="app-sidebar__overlay" data-toggle="sidebar"></div>
+@php $userprofile = Auth::user() @endphp
 <aside class="app-sidebar" style="background:#1D2327;font-size:12px;">
     <div class="app-sidebar__user" style="cursor:pointer;margin-bottom:0">
-        <img class="app-sidebar__user-avatar" style="width:30px;height:30px" src="{{ request()->user()->user_photo }}"
+        <img class="app-sidebar__user-avatar" style="width:30px;height:30px" src="{{ $userprofile->photo_user }}"
             alt="User Image">
         <div>
-            <p class="app-sidebar__user-name">{{ Auth::user()->name }}</p>
-            <p class="app-sidebar__user-designation">{{ ucfirst(Auth::user()->level) }}</p>
+            <p class="app-sidebar__user-name">{{ $userprofile->name }}</p>
+            <p class="app-sidebar__user-designation">{{ ucfirst($userprofile->level) }}</p>
         </div>
     </div>
 
@@ -18,9 +19,9 @@
                 href="{{ route('panel.dashboard') }}"><i class="app-menu__icon fa fa-tachometer"></i> <span
                     class="app-menu__label">Dahsboard</span></a>
         </li>
-        @foreach (request()->user()->isAdmin()
+        @foreach ($userprofile->isAdmin()
         ? collect(get_module())->sortBy('position')
-        : collect(get_module())->sortBy('position')->whereIn('name', request()->user()->get_modules->pluck('module')->toArray()) as $row)
+        : collect(get_module())->sortBy('position')->whereIn('name', $userprofile->get_modules->pluck('module')->toArray()) as $row)
             <li title="">
                 <a class="app-menu__item {{ active_item($row->name) }}" href="{{ route($row->name) }}">
                     <i class="app-menu__icon fa {{ $row->icon }}"></i>
@@ -33,7 +34,7 @@
                 class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
                 href="{{ admin_url('comments') }}"><i class="app-menu__icon fa fa-comments"></i> <span
                     class="app-menu__label">Tanggapan</span></a></li> --}}
-        @if (Auth::user()->level == 'admin')
+        @if ($userprofile->level == 'admin')
             <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><i class="fa fa-lock"
                     aria-hidden="true"></i> &nbsp; ADMINISTRATOR</li>
             <li><a class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
