@@ -23,6 +23,11 @@ class WebController extends Controller
 
     public function home()
     {
+        $hp = get_option('home_page');
+
+        if($hp!='default' && View::exists('template.'.template().'.'.str_replace('.blade.php','',$hp))){
+            return view('template.'.template().'.'.str_replace('.blade.php','',$hp));
+        }
         return view('cms::layouts.master');
     }
 

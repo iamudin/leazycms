@@ -56,17 +56,33 @@ class MediaController extends Controller implements HasMiddleware
         }
         }
     public function stream_by_id($slug){
-        if (strpos(request()->getRequestUri(), 'index.php') !== false) {
-            return redirect('http://' . request()->getHost() . str_replace('/index.php', '', request()->getRequestUri()));
-        }
-        $media = Cache::get('media')[$slug] ?? null;
-        abort_if(empty($media),404);
+        // if (strpos(request()->getRequestUri(), 'index.php') !== false) {
+        //     return redirect('http://' . request()->getHost() . str_replace('/index.php', '', request()->getRequestUri()));
+        // }
+        // $media = Cache::get('media')[$slug] ?? null;
+        // abort_if(empty($media),404);
+        // $filePath = $media['media'];
+        // $mime = $media['mime'];
+        // abort_if(!Storage::exists($filePath),404);
+
+        // return response()->stream(function () use ($filePath) {
+        //     $stream = Storage::readStream($filePath);
+        //     fpassthru($stream);
+        //     fclose($stream);
+        // }, 200, [
+        //     'Content-Type' => $mime,
+        //     'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
+        // ]);
+
+        $media = Cache::get("media_{$slug}");
+        abort_if(empty($media), 404);
+
         $filePath = $media['media'];
         $mime = $media['mime'];
-        abort_if(!Storage::exists($filePath),404);
-
+        // Optimisasi dengan mencoba membuka stream langsung
         return response()->stream(function () use ($filePath) {
             $stream = Storage::readStream($filePath);
+            abort_if($stream === false, 404);
             fpassthru($stream);
             fclose($stream);
         }, 200, [

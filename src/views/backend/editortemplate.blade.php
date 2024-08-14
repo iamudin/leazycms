@@ -38,7 +38,7 @@
     <form action="{{ url()->full() }}" class="editorForm" method="post">
         @csrf
         @if($e = request()->edit )
-    <h6> <i class="fa fa-edit"></i> {{  'Edit : '.$e  }} @if(!str($e)->contains(['modules','home','header','footer','styles','scripts']))<i onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer" title="Delete this file "></i>@endif</h6>
+    <h6> <i class="fa fa-edit"></i> {{  'Edit : '.$e  }} @if(!str($e)->contains(['modules','home.','header','footer','styles','scripts']))<i onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer" title="Delete this file "></i>@endif</h6>
     @else
     <h6> <i class="fa fa-edit"></i> {{  'Edit : /home.blade.php'  }}</h6>
 

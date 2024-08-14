@@ -134,10 +134,14 @@ class PanelController extends Controller implements HasMiddleware
             ['Roles', 'operator,editor,publisher']
         );
 
-
+       $data['home'] = array_map([File::class, 'basename'], File::glob(resource_path('views/template/'.template().'/home-*.blade.php')));
         if ($request->isMethod('POST')) {
 
-
+            if($hp = $request->home_page){
+                if(in_array($hp,array_merge(['default'],$data['home']))){
+                    $fid = $option->updateOrCreate(['name' => 'home_page'], ['value' => $hp, 'autoload' => 1]);
+                }
+            }
             foreach ($data['option'] as $row) {
                 $key = _us($row[0]);
 

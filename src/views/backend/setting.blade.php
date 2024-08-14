@@ -46,7 +46,14 @@
                     </div>
                     <div class="tab-pane fade" id="profile">
 
-
+                        <small>Konten Halaman Utama</small>
+                        <select class="form-control form-control-sm" name="home_page">
+                            <option value="default">Default</option>
+                            @foreach ($home as $r)
+                                <option value="{{ $r }}"
+                                    {{ $r == get_option('home_page') ? 'selected' : '' }}>{{ str(str_replace('.blade.php','',$r))->upper(); }}</option>
+                            @endforeach
+                        </select>
                         @foreach ($site_attribute as $r)
                             @if ($r[2] == 'file')
                                 <small for="" class="text-muted">{{ $r[0] }}</small>
@@ -61,6 +68,7 @@
                                         class="form-control-sm form-control-file" name="{{ $r[1] }}">
                                 @endif
                             @else
+
                                 <small for="" class="text-muted">{{ $r[0] }}</small>
                                 <input type="text"
                                     @if ($r[2] == 'number') oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" @endif
@@ -68,6 +76,7 @@
                                     name="{{ $r[1] }}" value="{{ $r[1] == 'site_url' && empty(get_option($r[1])) ? request()->getHttpHost() : get_option($r[1]) }}">
                             @endif
                         @endforeach
+
                     </div>
                     <div class="tab-pane fade" id="keamanan">
                         <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-lock"></i> Keamanan</h6>

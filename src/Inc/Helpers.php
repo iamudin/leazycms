@@ -931,7 +931,7 @@ if (!function_exists('init_meta_header')) {
                 'url' => request()->fullUrl(),
             ];
 
-            return \Illuminate\Support\Facades\View::make('cms::layouts.seo', $data ?? [null]);
+            return \Illuminate\Support\Facades\View::make('cms::layouts.seo', $data ?? [null])->render();
         }
     }
 }
@@ -1042,7 +1042,7 @@ if (!function_exists('allow_mime')) {
 if (!function_exists('media_exists')) {
     function media_exists($media)
     {
-        $media_exists =  \Illuminate\Support\Facades\Cache::get('media')[basename($media)] ?? null;
+        $media_exists =  \Illuminate\Support\Facades\Cache::get("media_".basename($media)) ?? null;
         return $media_exists && \Illuminate\Support\Facades\Storage::exists($media_exists['media']) ? true : false;
     }
 }
@@ -1077,7 +1077,7 @@ if (!function_exists('upload_media')) {
                 'mime' => \Illuminate\Support\Facades\Storage::mimeType($file)
             ]);
 
-            recache_media('media');
+            recache_media();
             return str_replace(url('/') . '/', '', route('stream', basename($result->media)));
         }
     }
@@ -1086,9 +1086,7 @@ if (!function_exists('upload_media')) {
 if (!function_exists('recache_media')) {
     function recache_media()
     {
-        \Illuminate\Support\Facades\Cache::forget('media');
-        \Illuminate\Support\Facades\Cache::rememberForever('media', function () {
-            return \Leazycms\Web\Models\Post::where('status', 'publish')
+            $mediaItems =  \Leazycms\Web\Models\Post::where('status', 'publish')
                 ->where('type', 'media')
                 ->select('slug', 'mime', 'media')
                 ->get()
@@ -1096,7 +1094,12 @@ if (!function_exists('recache_media')) {
                     return [$item['slug'] => ['mime' => $item['mime'], 'media' => $item['media']]];
                 })
                 ->toArray();
-        });
+                foreach ($mediaItems as $slug => $data) {
+                    \Illuminate\Support\Facades\Cache::forget("media_{$slug}");
+                    \Illuminate\Support\Facades\Cache::rememberForever("media_{$slug}", function () use ($data) {
+                        return $data;
+                    });
+                }
     }
 }
 if (!function_exists('recache_banner')) {
