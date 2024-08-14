@@ -64,14 +64,9 @@ class Web
         $response->headers->set('Cache-Control', 'public, max-age=2592000');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         if(get_option('frame_embed') && get_option('frame_embed')=='Y' && !Auth::check()){
-        // Set X-Frame-Options Header
         $response->headers->set('X-Frame-Options', 'DENY');
          }
-
-        // Set X-XSS-Protection Header
         $response->headers->set('X-XSS-Protection', '1; mode=block');
-
-        // Set Content-Security-Policy Header
         $response->headers->set('Content-Security-Policy', " base-uri 'self'; form-action 'self';");
 
 

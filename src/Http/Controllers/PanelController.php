@@ -192,7 +192,7 @@ class PanelController extends Controller implements HasMiddleware
                 }
                 $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
                 if ($val != get_option('admin_path')) {
-                    recache_option();
+                  $isconfg=  Artisan::call('config:cache');
                     Artisan::call('route:cache');
                     return to_route('setting')->with('success', 'Berhasil disimpan');
                 }
@@ -202,16 +202,19 @@ class PanelController extends Controller implements HasMiddleware
                     if ($existsenv != $app_env) {
                         $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
                         rewrite_env(['APP_ENV' => $app_env]);
-                        Artisan::call('config:cache');
+                        $isconfg =     Artisan::call('config:cache');
                     }
                 } else {
                     $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
                     rewrite_env(['APP_ENV' => $app_env]);
-                    Artisan::call('config:cache');
+                    $isconfg=   Artisan::call('config:cache');
                 }
             }
-            recache_option();
-            return  back()->with('success', 'Berhasil disimpan');
+            if(!isset($isconfg)){
+                Artisan::call('config:cache');
+            }
+            session()->flash('success', 'Berhasil disimpan');
+            return  redirect(route('setting'));
         }
         return view('cms::backend.setting', $data);
     }

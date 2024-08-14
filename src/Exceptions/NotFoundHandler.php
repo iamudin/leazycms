@@ -36,6 +36,13 @@ class NotFoundHandler extends ExceptionHandler
                 config(['modules.current' => $attr]);
                 $view = View::exists(get_view(get_view())) ? 'cms::layouts.master' : 'cms::errors.404';
             $content = view($view)->render();
+            if (strpos($content, '<head>') !== false) {
+                $content = str_replace(
+                    '<head>',
+                    '<head>' . init_meta_header(),
+                    $content
+                );
+            }
                 $minifiedContent = preg_replace('/\s+/', ' ', $content);
                 return response($minifiedContent, 404)->header('Content-Type', 'text/html; charset=UTF-8');
             }

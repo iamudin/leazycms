@@ -396,7 +396,7 @@ if (!function_exists('recache_option')) {
 
         \Illuminate\Support\Facades\Cache::forget('option');
         \Illuminate\Support\Facades\Cache::rememberForever('option', function () {
-            return \Leazycms\Web\Models\Option::pluck('value','name');
+            return \Leazycms\Web\Models\Option::pluck('value','name')->toArray();
         });
     }
 }
@@ -484,7 +484,7 @@ if (!function_exists('get_option')) {
 
                 return Leazycms\Web\Models\Option::whereName($val)->first();
             }
-            return cache()->get('option')[$val] ?? '';
+            return config('modules.option.'.$val) ?? '';
         }
         return '';
     }
@@ -1095,7 +1095,6 @@ if (!function_exists('recache_media')) {
                 })
                 ->toArray();
                 foreach ($mediaItems as $slug => $data) {
-                    \Illuminate\Support\Facades\Cache::forget("media_{$slug}");
                     \Illuminate\Support\Facades\Cache::rememberForever("media_{$slug}", function () use ($data) {
                         return $data;
                     });

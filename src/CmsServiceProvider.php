@@ -1,19 +1,24 @@
 <?php
+
 namespace Leazycms\Web;
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Leazycms\Web\Middleware\Web;
-use Leazycms\Web\Middleware\Panel;
 use Illuminate\Support\Facades\DB;
+use Leazycms\Web\Middleware\Panel;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
+use Leazycms\Web\Middleware\RateLimit;
 use Illuminate\Support\ServiceProvider;
 use Leazycms\Web\Exceptions\NotFoundHandler;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-use Leazycms\Web\Middleware\RateLimit;
+use Illuminate\Support\Facades\Artisan;
 
 class CmsServiceProvider extends ServiceProvider
 {
@@ -72,7 +77,6 @@ class CmsServiceProvider extends ServiceProvider
         $this->defineAssetPublishing();
         $this->cmsHandler($req);
         $this->registerRoutes();
-
     }
     public function register()
     {
@@ -82,7 +86,6 @@ class CmsServiceProvider extends ServiceProvider
         if (config('modules.public_path')) {
             $this->app->usePublicPath(base_path() . '/' . config('modules.public_path'));
         }
-
     }
     protected function registerMiddleware()
     {
@@ -95,16 +98,16 @@ class CmsServiceProvider extends ServiceProvider
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
         if (DB::connection()->getPDO() && $this->checkAllTables()) {
-            if (empty(Cache::get('option'))) {
-                recache_option();
+            if(!config('modules.option')){
+                $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
+                config(['modules.option' => $options]);
             }
+
+
             if (empty(Cache::has('menu'))) {
                 recache_menu();
             }
-            if (empty(Cache::has('media'))) {
-                recache_media();
-            }
-            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && env('APP_DEBUG')==true)) {
+            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && env('APP_DEBUG') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
                 Config::set(['app.debug' => false]);
@@ -113,7 +116,6 @@ class CmsServiceProvider extends ServiceProvider
                 Config::set('modules.domain', $domain);
             }
             $this->loadTemplateConfig();
-
         }
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
@@ -133,7 +135,7 @@ class CmsServiceProvider extends ServiceProvider
                 config(['modules.config' => $config]);
             }
         }
-            config(['modules.version' => leazycms_version()]);
+        config(['modules.version' => leazycms_version()]);
     }
     /**
      * Summary of register
