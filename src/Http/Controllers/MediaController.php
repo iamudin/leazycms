@@ -88,7 +88,7 @@ class MediaController extends Controller implements HasMiddleware
         }, 200, [
             'Content-Type' => $mime,
             'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
-            'Cache-Control' => 'public, max-age=3600'
+            'Cache-Control' => 'public, max-age=31536000, immutable'
         ]);
     }
 }
