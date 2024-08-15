@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
@@ -210,16 +211,12 @@ class PanelController extends Controller implements HasMiddleware
                     $isconfg=   Artisan::call('config:cache');
                 }
             }
-            if(isset($isconfg)){
-                if($isconfg===0){
-                    return back()->with('success', 'Berhasil disimpan');
-                }
-
-            }else{
+            if(!isset($isconfg)){
                 $isconfg = Artisan::call('config:cache');
-                if($isconfg===0){
-                    return back()->with('success', 'Berhasil disimpan');
-                }
+            }
+            if($isconfg === 0 && config('modules.option')== \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray()){
+
+                return back()->send()->with('success','dff');
             }
         }
         return view('cms::backend.setting', $data);

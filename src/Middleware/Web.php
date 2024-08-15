@@ -46,11 +46,11 @@ class Web
                 } else {
                     $content = preg_replace('/\s+/', ' ', $content);
                 }
-            $footer = '';
-            if($request->getHost()!='leazycms.com'){
-                $footer .= '<footer style="text-align:center;background:#000;padding:10px;color:#ccc" class="'.str()->random(5).'_credit"><small>Leazycms <sup>'.get_leazycms_version().'</sup></small></footer>';
-            }
-            $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>';
+            // $footer = '';
+            // if($request->getHost()!='leazycms.com'){
+            //     $footer .= '<footer style="text-align:center;background:#000;padding:10px;color:#ccc" class="'.str()->random(5).'_credit"><small>Leazycms <sup>'.get_leazycms_version().'</sup></small></footer>';
+            // }
+            $footer = '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>';
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
 
