@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="{{template_asset('css/styles.css')}}" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+
 	</head>
     <body>
         <!-- Responsive navbar-->
