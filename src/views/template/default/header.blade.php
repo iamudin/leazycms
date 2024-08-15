@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-     	{{init_meta_header()}}
+
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="{{template_asset('css/styles.css')}}" rel="stylesheet" />
-    </head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+	</head>
     <body>
         <!-- Responsive navbar-->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -16,7 +17,7 @@
 						@foreach(get_menu('header') as $row)
                         <li class="nav-item"><a class="nav-link" href="{{$row->url}}">{{$row->name}}</a></li>
 						@endforeach
-                       
+
                     </ul>
                 </div>
             </div>
@@ -29,6 +30,6 @@
 			<img src="/{{$banner->image}}" class="w-100">
 			@endif
         </header>
-		@else 
+		@else
 		<br>
 		@endif

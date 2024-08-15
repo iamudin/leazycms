@@ -12,7 +12,9 @@
 <span class="">{{$detail->created}}</span>
 		   <img src="{{$detail->thumbnail}}" class="img-thumbnail w-100 my-2">
 		   <div class="content">
-		   {!!$detail->content!!}
+<pre><code class="theme-androidstudio language-php hljs">
+{!! $detail->content !!}
+        </code></pre>
 		   </div>
 		   <div class="pb-5">
 		   {{share_button()}}
@@ -22,3 +24,9 @@
 	   </div>
 	</div>
 </div>
+<script>
+    window.onload = function() {
+        const height = document.body.scrollHeight;
+        window.parent.postMessage({ type: 'iframeHeight', height: height }, '*');
+    };
+</script>

@@ -15,7 +15,7 @@
 
                         <div class="col-lg-6">
                             <!-- Blog post-->
-                        
+
                             <!-- Blog post-->
                             <div class="card mb-4">
                                 <a href="#!"><img class="card-img-top" src="{{$row->thumbnail}}" alt="..." /></a>
@@ -29,7 +29,9 @@
                         </div>
 				@endforeach
 
-                  
+                <div class="col-12">
+                    {{$index->links('vendor.pagination.bootstrap-5')}}
+                  </div>
                     </div>
 		   </div>
 	   </div>
