@@ -1,5 +1,5 @@
 <?php
-if(!function_exists('dataku')){
+if(!function_exists('somefunction')){
 function somefunction(){
 	return true;
 }

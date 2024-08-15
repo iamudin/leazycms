@@ -24,7 +24,6 @@
         <!-- Page header with logo and tagline-->
 		@if(isHomePage())
         <header class="mb-4">
-			<h1>{{config('modules.version')}}</h1>
            @if($banner=get_banner('slider'))
 			<img src="/{{$banner->image}}" class="w-100">
 			@endif

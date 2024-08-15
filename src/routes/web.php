@@ -6,7 +6,6 @@ use Leazycms\Web\Http\Controllers\MediaController;
 use Leazycms\Web\Http\Controllers\SetupController;
 
 // Route::get('setup', [Leazycms\Web\Http\Controllers\SetupController::class, 'index']);
-if (!config('modules.domain')){
 
 $modules = collect(get_module())->where('name','!=','halaman')->where('active', true)->where('public', true);
     foreach($modules as $modul)
@@ -49,7 +48,6 @@ Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')-
 Route::match(['get', 'post'],'install', [SetupController::class, 'index'])->name('install');
 Route::match(['get', 'post'],'install/initializing', [SetupController::class, 'initializing'])->name('initializing');
 
-}
 Route::match(['get', 'post'],'media/{slug}', [MediaController::class, 'stream_by_id'])->name('stream');
 Route::match(['get', 'post'],'download/{slug}', [MediaController::class, 'download_by_id'])->name('download');
 

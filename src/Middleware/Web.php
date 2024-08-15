@@ -46,11 +46,11 @@ class Web
                 } else {
                     $content = preg_replace('/\s+/', ' ', $content);
                 }
-            // $footer = '';
-            // if($request->getHost()!='leazycms.com'){
-            //     $footer .= '<footer style="text-align:center;background:#000;padding:10px;color:#ccc" class="'.str()->random(5).'_credit"><small>Leazycms <sup>'.get_leazycms_version().'</sup></small></footer>';
-            // }
-            $footer = '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
+            $footer = '';
+            if($request->getHost()!='leazycms.com'){
+                $footer .= '<footer style="text-align:center;background:#000;padding:10px;color:#ccc" class="'.str()->random(5).'_credit"><small>Build with LeazyCMS</small></footer>';
+            }
+            $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
             if(file_exists(public_path('template/'.template().'/scripts.js'))){
             $footer .= '<script src="'.url('template/'.template().'/scripts.js').'" async></script>';
             }

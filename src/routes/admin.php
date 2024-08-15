@@ -8,12 +8,11 @@ use Leazycms\Web\Http\Controllers\CommentController;
 use Leazycms\Web\Http\Controllers\CategoryController;
 use Leazycms\Web\Http\Controllers\MediaController;
 
-$admin_path = admin_path();
 Route::post('media/destroy', [MediaController::class, 'destroy'])->name('media.destroy');
 Route::match(['post'],'media/upload', [MediaController::class, 'upload'])->name('media.upload');
 Route::post('media/imagesummernoteupload', [MediaController::class, 'uploadImageSummernote'])->name('media.imagesummernoteupload');
      foreach (get_module() as $value) {
-         Route::controller(PostController::class)->group(function () use ($value, $admin_path) {
+         Route::controller(PostController::class)->group(function () use ($value) {
              if (in_array('index', $value->route)) {
                  Route::get($value->name, 'index')->name($value->name);
                  Route::post($value->name, 'datatable')->name($value->name . '.datatable');
@@ -51,8 +50,6 @@ Route::post('media/imagesummernoteupload', [MediaController::class, 'uploadImage
                  Route::delete($value->name . '/category/{category}/edit', 'destroy')->name($value->name . '.category.destroy');
              });
          }
-
-
      }
      Route::controller(PanelController::class)->group(function () {
          Route::get('dashboard', 'index')->name('panel.dashboard');
@@ -91,8 +88,6 @@ Route::post('media/imagesummernoteupload', [MediaController::class, 'uploadImage
          Route::put('comments/{comment}/update', 'update')->name('comment.update');
          Route::delete('comments/{comment}/delete', 'destroy')->name('comment.destroy');
      });
-
-
      Route::get('/',function(){
         return to_route('login');
      });

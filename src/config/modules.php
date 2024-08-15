@@ -512,6 +512,9 @@ return [
         'option_cached'=> null,
         'used'=> array(),
         'current'=> null,
+        'extension_module'=> [
+            'data'=>'ok'
+        ],
         'detail_visited'=> false,
         'data'=> null,
         'domain'=>null,

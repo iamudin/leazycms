@@ -68,14 +68,14 @@ class CmsServiceProvider extends ServiceProvider
             __DIR__ . '/views/template' => resource_path('views/template')
         ], 'cms');
     }
-    public function boot(Request $req)
+    public function boot()
     {
         load_default_module();
         $this->registerMiddleware();
         $this->registerResources();
         $this->registerMigrations();
         $this->defineAssetPublishing();
-        $this->cmsHandler($req);
+        $this->cmsHandler();
         $this->registerRoutes();
     }
     public function register()
@@ -110,7 +110,7 @@ class CmsServiceProvider extends ServiceProvider
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && env('APP_DEBUG') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
-                Config::set(['app.debug' => false]);
+                Config::set(['app.debug' => true]);
             }
             if (get_module('domain') && $domain = query()->detail_by_title('domain', (new Request)->getHttpHost())) {
                 Config::set('modules.domain', $domain);

@@ -1507,3 +1507,9 @@ if (!function_exists('getRateLimiterKey')) {
         return md5($req->ip() . '|' . $req->userAgent() . '|' . request()->fullUrl() . '|' . $req->header('referer'));
     }
 }
+if (!function_exists('add_extension')) {
+    function add_extension($arr){
+        $exist_extension = config('modules.extension_module') ?? [];
+        array_push($exist_extension,$arr);
+    }
+}
