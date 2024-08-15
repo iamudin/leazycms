@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
     <!-- Main CSS-->
     <link rel="stylesheet" type="text/css" href="{{url('backend/css/main.css')}}">
     <!-- Font-icon css-->
@@ -22,9 +23,8 @@
 
         <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{route('login.submit') }}">
           @csrf
-
           <center>
-            <img height="80" src="{{url(get_option('icon') ?? noiomage())}}">
+            <img height="80" src="{{!empty(get_option('icon')) ? url(get_option('icon')) : noimage()}}">
             <br>
             <br>
             <h4 class="text-warning">{{get_option('site_title') ?? 'Web Title'}}</h4>
@@ -61,7 +61,7 @@
       </div>
     </section>
     <!-- Essential javascripts for application to work-->
-    <script src="{{url('backend/js/jquery-3.3.1.min.js')}}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="{{url('backend/js/popper.min.js')}}"></script>
     <script src="{{url('backend/js/bootstrap.min.js')}}"></script>
     <script src="{{url('backend/js/main.js')}}"></script>

@@ -84,13 +84,13 @@ class SetupController extends Controller
                 ], ['value' => $row, 'autoload' => 1]);
             }
             regenerate_cache();
-            recache_option();
+
             clear_route();
             if ($this->createEnvConfig(['APP_INSTALLED' => true])) {
                 Artisan::call('vendor:publish --tag=cms');
+                Artisan::call('vendor:publish --tag=laravel-pagination');
                 Artisan::call('optimize');
                 Cache::forget('dbcredential');
-                Cache::forget('option');
                 Cache::forget('usercredential');
                 return to_route('login');
             }

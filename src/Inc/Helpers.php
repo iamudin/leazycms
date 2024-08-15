@@ -390,16 +390,7 @@ if (!function_exists('regenerate_cache')) {
     }
 }
 
-if (!function_exists('recache_option')) {
-    function recache_option()
-    {
 
-        \Illuminate\Support\Facades\Cache::forget('option');
-        \Illuminate\Support\Facades\Cache::rememberForever('option', function () {
-            return \Leazycms\Web\Models\Option::pluck('value','name')->toArray();
-        });
-    }
-}
 
 if (!function_exists('fcm_send_notification')) {
     function fcm_send_notification($r)
@@ -477,14 +468,14 @@ if (!function_exists('rewrite_env')) {
 }
 
 if (!function_exists('get_option')) {
-    function get_option($val = false, $host = false)
+    function get_option($val = false, $fromdb = false)
     {
         if ($val) {
-            if ($host) {
+            if ($fromdb) {
 
                 return Leazycms\Web\Models\Option::whereName($val)->first();
             }
-            return config('modules.option.'.$val) ?? '';
+            return config('modules.option.'.$val) ?? null;
         }
         return '';
     }
