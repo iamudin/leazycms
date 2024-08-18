@@ -119,17 +119,18 @@
 
     function uploadImage(file) {
         if (file) {
-            var allowedTypes = ['image/jpeg', 'image/png','image/gif'];
+            var allowedTypes = ['image/jpeg', 'image/png'];
             if (!allowedTypes.includes(file.type)) {
-                alert('Pilih hanya format gambar: jpg,png atau gif.');
+                alert('Pilih hanya format gambar: jpg atau png.');
             }else{
                 var placeholderImageUrl = '/backend/images/load.gif';
         $('#editor').summernote('editor.insertImage', placeholderImageUrl);
         var data = new FormData();
         data.append("file", file);
+        data.append("post","{{ $post?->id }}");
         data.append("_token", "{{ csrf_token() }}");
         $.ajax({
-            url: "{{ route('media.imagesummernoteupload') }}",
+            url: "{{ route('upload_image_summernote') }}",
             type: 'POST',
             data: data,
             contentType: false,

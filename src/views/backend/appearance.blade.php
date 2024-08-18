@@ -6,9 +6,9 @@
     <div class="pull-right">
 
 
-        <form action="" style="display:inline" method="post" enctype="multipart/form-data">
+        <form action="{{ url()->full() }}" style="display:inline" method="post" enctype="multipart/form-data">
             @csrf
-        <input type="file" class="template" name="template" style="display: none">
+        <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file" accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
         <div class="btn-group">
         <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm"> <i class="fa fa-upload"></i> Upload Template</button>
         </form>
@@ -52,6 +52,13 @@
 
               </li>
               @endif
+              @if($row->web->archive)
+              @php $archive = query()->detail($row->name) @endphp
+              <li>
+                <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($row->name.'/archive/'.($archive ? $archive->created_at->format('Y') : date('Y'))) }}')">Archive</a>
+
+              </li>
+              @endif
             </ul>
             </div>
           </div>
@@ -83,5 +90,5 @@
 </div>
 
 </div>
-
+@include('cms::backend.layout.js')
 @endsection

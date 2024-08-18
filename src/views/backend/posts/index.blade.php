@@ -5,13 +5,6 @@
   <h3 style="font-weight:normal;float:left;" ><i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i> {{get_post_type('title_crud')}}
 </h3>
 <div class="pull-right">
-    @if(get_post_type()=='media')
-    <button class="btn btn-primary btn-sm" onclick="$('.upload').click()"> <i class="fa fa-upload"></i> Upload Media</button>
-    <form action="{{ route('media.upload') }}" method="POST" class="mediaupload" enctype="multipart/form-data">
-    @csrf
-    <input accept="{{ allow_mime() }}" type="file" onchange="if(confirm('Upload Media ?')){$('.mediaupload').submit()}" name="media" class="upload d-none">
-</form>
-    @endif
     <div class="btn-group">
     @if(Route::has(get_post_type().'.create'))
     <a href="{{route(get_post_type().'.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>

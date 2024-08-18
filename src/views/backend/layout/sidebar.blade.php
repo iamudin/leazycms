@@ -13,15 +13,13 @@
 
     <ul class="app-menu">
         <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"> <i class="fa fa-list"
-                aria-hidden="true"></i> MENU</li>
+                aria-hidden="true"></i> MENU UTAMA</li>
         <li>
             <a class="app-menu__item {{ Request::is(admin_path() . '/dashboard') ? 'active' : '' }}"
                 href="{{ route('panel.dashboard') }}"><i class="app-menu__icon fa fa-tachometer"></i> <span
                     class="app-menu__label">Dahsboard</span></a>
         </li>
-        @foreach ($userprofile->isAdmin()
-        ? collect(get_module())->sortBy('position')
-        : collect(get_module())->sortBy('position')->whereIn('name', $userprofile->get_modules->pluck('module')->toArray()) as $row)
+        @foreach ($userprofile->isAdmin() ? collect(get_module())->sortBy('position') : collect(get_module())->sortBy('position')->whereIn('name', $userprofile->get_modules->pluck('module')->toArray()) as $row)
             <li title="">
                 <a class="app-menu__item {{ active_item($row->name) }}" href="{{ route($row->name) }}">
                     <i class="app-menu__icon fa {{ $row->icon }}"></i>
@@ -29,7 +27,31 @@
                 </a>
             </li>
         @endforeach
+        <li><a class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
+                href="{{ admin_url('tags') }}"><i class="app-menu__icon fa fa-hashtag"></i> <span
+                    class="app-menu__label">Tags</span></a></li>
+        <li><a class="app-menu__item {{ Request::is(admin_path() . '/files') ? 'active' : '' }}"
+                href="{{ admin_url('files') }}"><i class="app-menu__icon fa fa-folder"></i> <span
+                    class="app-menu__label">File Manager</span></a></li>
+        @if ($ext = config('modules.extension_module'))
+            <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><i
+                    class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; MENU EXTRA</li>
 
+            @foreach (json_decode(json_encode($ext)) as $row)
+                <li class="treeview"><a title="{{ $row->description }}" class="app-menu__item" href="#"
+                        data-toggle="treeview"><i class="app-menu__icon fa {{ $row->icon }}"></i><span
+                            class="app-menu__label">{{ $row->name }}</span><i
+                            class="treeview-indicator fa fa-chevron-right"></i></a>
+                    <ul class="treeview-menu">
+                        @foreach ($row->module as $module)
+                            <li><a class="treeview-item" href="{{ route($module->route) }}"><i
+                                        class="icon fa fa-arrow-right"></i> {{ $module->name }}</a></li>
+                        @endforeach
+
+                    </ul>
+                </li>
+            @endforeach
+        @endif
         {{-- <li title="Komentar Pengunjung"><a
                 class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
                 href="{{ admin_url('comments') }}"><i class="app-menu__icon fa fa-comments"></i> <span
@@ -37,9 +59,7 @@
         @if ($userprofile->level == 'admin')
             <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><i class="fa fa-lock"
                     aria-hidden="true"></i> &nbsp; ADMINISTRATOR</li>
-            <li><a class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
-                    href="{{ admin_url('tags') }}"><i class="app-menu__icon fa fa-hashtag"></i> <span
-                        class="app-menu__label">Tags</span></a></li>
+
 
             <li title="Pengguna"><a
                     class="app-menu__item {{ Request::is(admin_path() . '/appearance') ? 'active' : '' }}"

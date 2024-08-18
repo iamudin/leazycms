@@ -1030,11 +1030,38 @@ if (!function_exists('allow_mime')) {
         return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream';
     }
 }
+if (!function_exists('mime_thumbnail')) {
+    function mime_thumbnail($file)
+    {
+        $mimeArray = Symfony\Component\Mime\MimeTypes::getDefault()->getMimeTypes(pathinfo($file, PATHINFO_EXTENSION));
+        $mime = $mimeArray[0] ?? 'default'; // Ambil MIME type pertama atau 'default' jika array kosong
+
+        return match($mime) {
+            'application/x-zip-compressed',
+            'application/zip' => '/backend/images/archive.png',
+
+            'image/jpeg',
+            'image/png' => '/media/'.$file,
+
+            'application/pdf' => '/backend/images/pdf.png',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => '/backend/images/word.png',
+
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => '/backend/images/excel.png',
+
+            'application/octet-stream' => '/backend/images/unknown.png',
+
+            default => '/backend/images/default.png',
+        };
+    }
+}
+
 if (!function_exists('media_exists')) {
     function media_exists($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_".basename($media)) ?? null;
-        return $media_exists && \Illuminate\Support\Facades\Storage::exists($media_exists['media']) ? true : false;
+        return $media_exists && isset($media_exists->file_path) &&\Illuminate\Support\Facades\Storage::exists($media_exists->file_path) ? true : false;
     }
 }
 if (!function_exists('upload_media')) {
@@ -1508,8 +1535,16 @@ if (!function_exists('getRateLimiterKey')) {
     }
 }
 if (!function_exists('add_extension')) {
-    function add_extension($arr){
-        $exist_extension = config('modules.extension_module') ?? [];
-        array_push($exist_extension,$arr);
-    }
+function add_extension($arr) {
+    // Mengambil array yang sudah ada di konfigurasi
+    $exist_extension = config('modules.extension_module', []);
+
+    // Menambahkan elemen baru ke array yang sudah ada
+    $exist_extension[] = $arr; // Bisa juga menggunakan array_push
+
+    // Mengupdate konfigurasi secara runtime
+    config(['modules.extension_module' => $exist_extension]);
+
+    // Mengembalikan array yang sudah diperbarui jika diperlukan
+}
 }

@@ -1,5 +1,6 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
+use ZipArchive;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
@@ -150,7 +151,13 @@ class PanelController extends Controller implements HasMiddleware
                     $request->validate([$key => 'nullable|file|mimetypes:' . allow_mime()]);
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($request->hasFile($key)) {
-                        $fid->update(['value' => upload_media($fid, $request->file($key), $key, 'option')]);
+                        $fid->update([
+                            'value' => $fid->addFile([
+                                'file'=> $request->file($key),
+                                'purpose'=>$key,
+                                'mime_type'=>['image/png','image/jpeg'],
+                                ])
+                        ]);
                     }
                 } else {
                     $value = $request->$key;
@@ -175,7 +182,13 @@ class PanelController extends Controller implements HasMiddleware
 
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
-                        $fid->update(['value' => upload_media($fid, $request->file($key), $key, 'option')]);
+                        $fid->update([
+                            'value' =>$fid->addFile([
+                                'file'=> $request->file($key),
+                                'purpose'=>$key,
+                                'mime_type'=>['image/png','image/jpeg'],
+                                ])
+                             ]);
                     }
                 } else {
                     $value = $request->$key;
@@ -224,9 +237,94 @@ class PanelController extends Controller implements HasMiddleware
     public function appearance(Request $request)
     {
         admin_only();
+        if($request->isMethod('post')){
+        if($file = $request->file('template')){
+           $request->validate([
+            'template' => 'required|file|mimes:zip',
+        ]);
+        return $this->template_uploader($file);
+        }
+        }
         return view('cms::backend.appearance');
     }
+    public function template_uploader($file){
+              // Simpan file zip secara sementara
+        $zipFilePath = $file->getRealPath();
 
+        $zip = new ZipArchive;
+        if ($zip->open($zipFilePath) === TRUE) {
+            // Ekstrak file ZIP ke direktori sementara
+            $extractPath = storage_path('app/temp');
+            $zip->extractTo($extractPath);
+            $zip->close();
+
+            // Dapatkan nama folder utama di dalam ZIP (temaku)
+            $mainFolderName = '';
+            $extractedFolder = scandir($extractPath);
+            foreach ($extractedFolder as $folder) {
+                if ($folder !== '.' && $folder !== '..') {
+                    $mainFolderName = $folder;
+                    break;
+                }
+            }
+
+            // Cek apakah folder induk dan subfolder assets ada
+            if (empty($mainFolderName) || !File::exists($extractPath . '/' . $mainFolderName . '/assets')) {
+                // Hapus folder sementara
+                File::deleteDirectory($extractPath);
+
+                // Batalkan upload dan kembalikan respon error
+                return back()->with('danger','File Template Tidak Valid');
+            }
+
+            // Path sumber dari folder temaku
+            $sourcePath = $extractPath . '/' . $mainFolderName;
+
+            // Path tujuan untuk resource_path
+            $templatePath = resource_path('views/template');
+
+            // Pastikan direktori target ada
+            File::ensureDirectoryExists($templatePath);
+
+            // Pindahkan semua file dan folder kecuali "assets" ke resource_path('template')
+            $items = new \FilesystemIterator($sourcePath);
+            foreach ($items as $item) {
+                $itemName = $item->getFilename();
+                if ($itemName !== 'assets') {
+                    $targetPath = $templatePath . '/' . $itemName;
+                    if ($item->isDir()) {
+                        File::copyDirectory($item->getPathname(), $targetPath);
+                    } else {
+                        File::copy($item->getPathname(), $targetPath);
+                    }
+                }
+            }
+
+            // Pindahkan isi folder assets ke public_path('template/temaku')
+            $assetsSourcePath = $sourcePath . '/assets';
+            $assetsDestinationPath = public_path('template/' . $mainFolderName);
+
+            if (File::exists($assetsSourcePath)) {
+                File::ensureDirectoryExists($assetsDestinationPath);
+                File::copyDirectory($assetsSourcePath, $assetsDestinationPath);
+            }
+
+            // Hapus file sementara dan folder setelah pemindahan
+            File::deleteDirectory($extractPath);
+
+            $current_template_name = get_option('template',true);
+            if($current_template_name->value != $mainFolderName){
+                $current_template_name->update([
+                    'value'=>$mainFolderName
+                ]);
+            }
+            Artisan::call('optimize');
+            return back()->with('success','Template Berhasil Upload');
+        } else {
+            return back()->with('danger','Template Gagal Diupload');
+
+        }
+    }
     public function editorTemplate(Request $request)
     {
         admin_only();

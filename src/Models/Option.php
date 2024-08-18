@@ -1,8 +1,10 @@
 <?php
 namespace Leazycms\Web\Models;
 use Illuminate\Database\Eloquent\Model;
+use Leazycms\Web\Traits\Fileable;
 class Option extends Model
 {
+    use Fileable;
     public $timestamps = false;
     protected $fillable = ['name','value','autoload'];
     public function medias()

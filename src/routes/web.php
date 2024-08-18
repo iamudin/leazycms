@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Leazycms\Web\Http\Controllers\WebController;
-use Leazycms\Web\Http\Controllers\MediaController;
+use Leazycms\Web\Http\Controllers\FileController;
 use Leazycms\Web\Http\Controllers\SetupController;
 
 // Route::get('setup', [Leazycms\Web\Http\Controllers\SetupController::class, 'index']);
@@ -48,7 +48,6 @@ Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')-
 Route::match(['get', 'post'],'install', [SetupController::class, 'index'])->name('install');
 Route::match(['get', 'post'],'install/initializing', [SetupController::class, 'initializing'])->name('initializing');
 
-Route::match(['get', 'post'],'media/{slug}', [MediaController::class, 'stream_by_id'])->name('stream');
-Route::match(['get', 'post'],'download/{slug}', [MediaController::class, 'download_by_id'])->name('download');
+Route::match(['get', 'post'],'media/{slug}', [FileController::class, 'stream_by_id'])->name('stream');
 
 

@@ -4,12 +4,12 @@ namespace Leazycms\Web\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Leazycms\Web\Traits\Fileable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes,Fileable;
     public $selected = ['id','short_content','type','category_id','user_id','title','created_at','updated_at','parent_id','media','url','slug','data_field','pinned','sort','status','mime'];
 
     protected $userselectcolumn = ['id','name','url','slug'];
@@ -64,7 +64,7 @@ class Post extends Model
     }
     public function getThumbnailAttribute()
     {
-        return $this->media ? '/'.$this->media : noimage();
+        return $this->media ? $this->media : noimage();
     }
     public function getCreatedAttribute()
     {

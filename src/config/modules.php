@@ -429,44 +429,7 @@ return [
             'cache' => false,
             'active' => true,
         ],
-        'media' => [
-            'position' => 12,
-            'name' => 'media',
-            'title' => 'Media',
-            'description' => 'Menu Untuk Melihat Media',
-            'parent' => false,
-            'icon' => 'fa-users',
-            'route' => ['index','update','delete'],
-            'datatable'=>[
-                'custom_column' => 'Ukuran',
-                'data_title' => 'Nama Media',
-            ],
-            'form'=>[
-                'unique_title' => false,
-                'post_parent' => false,
-                'thumbnail' => false,
-                'editor' => false,
-                'category' => false,
-                'tag' => false,
-                'looping_name'=>'Daftar Menu',
-                'looping_data' => false,
-                'custom_field' => array(
-                    ['Ukuran','text'],
-                ),
-            ],
-            'web'=>[
-                'api' => false,
-                'archive' => false,
-                'index' => false,
-                'detail' => false,
-                'history' => false,
-                'auto_query' => false,
-                'sortable'=>false,
-            ],
-            'public' => true,
-            'cache' => false,
-            'active' => true,
-        ],
+
         'banner' => [
             'position' => 11,
             'name' => 'banner',
@@ -512,9 +475,7 @@ return [
         'option_cached'=> null,
         'used'=> array(),
         'current'=> null,
-        'extension_module'=> [
-            'data'=>'ok'
-        ],
+        'extension_module'=> array(),
         'detail_visited'=> false,
         'data'=> null,
         'domain'=>null,

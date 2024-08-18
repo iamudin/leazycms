@@ -58,7 +58,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || request()->is(admin_path().'/tags') || request()->is(admin_path().'/user'))
+@if(get_post_type() || request()->is(admin_path().'/tags') || request()->is(admin_path().'/user') || request()->is(admin_path().'/files'))
 <script>
 function deleteAlert(url) {
     swal(

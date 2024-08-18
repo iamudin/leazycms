@@ -6,7 +6,7 @@
             <div class="col-lg-12">
                 <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-gears"></i> Pengaturan <div class="btn-group pull-right"><button
                         name="save_setting" value="true" class="btn btn-primary btn-sm"> <i
-                            class="fa fa-save" aria-hidden></i> Simpan Pengaturan</button>
+                            class="fa fa-save" aria-hidden></i> Simpan</button>
                             <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
                         </div></h3>
                 @include('cms::backend.layout.error')

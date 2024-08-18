@@ -5,7 +5,7 @@
     <div class="pull-right">
 
         <div class="btn-group">
-      <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan Perubahan</button>
+      <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan</button>
         <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
     </div></div>
 

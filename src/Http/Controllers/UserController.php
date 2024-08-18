@@ -45,8 +45,7 @@ class UserController extends Controller implements HasMiddleware
             $request['media'] =  $user->photo;
 
             if($request->hasFile('photo')){
-                $data['photo'] = upload_media($user,$request->file('photo'),'author_photo','user');
-                (new \Leazycms\Web\Http\Controllers\MediaController)->destroy($request);
+                $data['photo'] = $user->addFile(['file'=>$request->file('photo'),'purpose'=>'author_photo','mime_type'=>['image/png','image/jpeg']]);
             }
             if($pass = $request->password){
                 $data['password'] = bcrypt($pass);
@@ -115,7 +114,7 @@ public function store(Request $request){
     $data['host'] = $request->getHost();
     $data = User::create($data);
     if($request->hasFile('photo')){
-        $data->update(['photo'=>upload_media($data,$request->file('photo'),'author_photo','user')]);
+        $data->update(['photo'=>$data->addFile(['file'=>$request->file('photo'),'purpose'=>'author_photo','mime_type'=>['image/png','image/jpeg']])]);
     }
     return to_route('user.edit',$data->id)->with('success','User berhasil ditambah');
 }
@@ -142,9 +141,7 @@ public function update(Request $request, User $user){
     $request['media'] = $user->photo;
     $user->update($data);
     if($request->hasFile('photo')){
-        $user->update(['photo'=>upload_media($user,$request->file('photo'),'author_photo','user')]);
-        (new \Leazycms\Web\Http\Controllers\MediaController)->destroy($request);
-
+        $user->update(['photo'=>$user->addFile(['file'=>$request->file('photo'),'purpose'=>'author_photo','mime_type'=>['image/png','image/jpeg']])]);
     }
     return back()->with('success','User  berhasil diupdate');
 }

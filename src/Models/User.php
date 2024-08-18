@@ -1,16 +1,13 @@
 <?php
 namespace Leazycms\Web\Models;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Redirect;
+use Leazycms\Web\Traits\Fileable;
 
 
 class User extends Authenticatable
 {
-    use  HasFactory, Notifiable,SoftDeletes;
+    use SoftDeletes,Fileable;
 
     /**
      * The attributes that are mass assignable.
@@ -61,7 +58,7 @@ class User extends Authenticatable
     }
     public function getPhotoUserAttribute()
     {
-        return $this->photo ? '/'.$this->photo : noimage();
+        return $this->photo ? $this->photo : noimage();
     }
     public function logs()
     {

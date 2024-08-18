@@ -6,11 +6,13 @@ use Leazycms\Web\Http\Controllers\UserController;
 use Leazycms\Web\Http\Controllers\PanelController;
 use Leazycms\Web\Http\Controllers\CommentController;
 use Leazycms\Web\Http\Controllers\CategoryController;
-use Leazycms\Web\Http\Controllers\MediaController;
+use Leazycms\Web\Http\Controllers\FileController;
 
-Route::post('media/destroy', [MediaController::class, 'destroy'])->name('media.destroy');
-Route::match(['post'],'media/upload', [MediaController::class, 'upload'])->name('media.upload');
-Route::post('media/imagesummernoteupload', [MediaController::class, 'uploadImageSummernote'])->name('media.imagesummernoteupload');
+Route::post('files/destroy', [FileController::class, 'destroy'])->name('media.destroy');
+Route::match(['post'],'files/upload', [FileController::class, 'upload'])->name('media.upload');
+Route::get('files', [FileController::class, 'index'])->name('files.index');
+Route::post('files', [FileController::class, 'datatable'])->name('files.data');
+Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
      foreach (get_module() as $value) {
          Route::controller(PostController::class)->group(function () use ($value) {
              if (in_array('index', $value->route)) {

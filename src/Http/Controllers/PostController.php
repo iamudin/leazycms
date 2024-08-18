@@ -31,7 +31,15 @@ class PostController extends Controller implements HasMiddleware
         $request->user()->hasRole(get_post_type(),__FUNCTION__);
         return view('cms::backend.posts.index');
     }
-
+    public function uploadImageSummernote(Request $request){
+        $post = Post::findOrFail($request->post);
+        $result = $post->addFile([
+            'file'=>$request->file('file'),
+            'purpose'=>'image from summernote',
+            'child_id'=>Str::random(6),
+            'mime_type'=>['image/jpeg','image/png']]);
+        return response()->json(['status'=>'success','url'=>$result]);
+    }
     public function comments(Request $req)
     {
         if ($req->status) {
@@ -47,52 +55,6 @@ class PostController extends Controller implements HasMiddleware
         $data['comments'] = Comment::withwherehas('post')->orderBy('created_at', 'desc')->get();
 
         return view('views::backend.comments', $data);
-    }
-    public function summer_file_upload(Request $req)
-    {
-        if ($files = $req->file('file')) {
-            $id = $req->id;
-            if (!is_dir(public_path('upload/' . get_post_type()))) {
-                mkdir(public_path('upload/' . get_post_type()));
-            }
-            $date = Post::wherePostId($id)->first()->created_at;
-            $per = array($this->dirpost($date)->y, $this->dirpost($date)->y . '/' . $id);
-            foreach ($per as $value) {
-                if (!is_dir(public_path('upload/' . get_post_type() . '/' . $value))) {
-                    mkdir(public_path('upload/' . get_post_type() . '/' . $value));
-                }
-            }
-            $dir = 'upload/' . get_post_type() . '/' . $this->dirpost($date)->y . '/' . $id . '/';
-            $path = public_path($dir);
-            $type = allowed_ext($req->file->getClientOriginalExtension());
-            $mime = $req->file->getClientMimeType();
-            abort_if(!allow_mime($mime), '403');
-            $namewithextension = $req->file->getClientOriginalName(); //Name with extension 'filename.jpg'
-            $fname = explode('.', $namewithextension)[0];
-            $name = Str::slug(now() . ' ' . $fname) . '.' . $req->file->getClientOriginalExtension();
-            if ($type):
-                if ($type == 'image'):
-                    $img = Image::make($files);
-                    $img->resize(null, 1200, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                    $img = $img->save($path . $name);
-                    $filename = url($dir . $name);
-                    $namepath = $dir . $name;
-
-                else:
-                    $req->file->move($path, $name);
-                    $filename = url($dir . $name);
-                    $namepath = $dir . $name;
-                endif;
-                $this->media_store($id, $mime, $namepath, $name, $fname);
-                return response()->json(['status' => true, 'msg' => 'Berhasil diupload', 'filename' => $filename]);
-            else:
-                return response()->json(['status' => false, 'msg' => 'Format file tidak didukung', 'filename' => null]);
-
-            endif;
-        }
     }
 
 public function create(Request $request){
@@ -211,7 +173,7 @@ public function update(Request $request, Post $post){
         switch ($value[1]) {
             case 'file':
                 $custom_field[$fieldname] = $request->hasFile($fieldname) ?
-                upload_media($post,$request->file($fieldname),$fieldname,'post') : strip_tags($request->$fieldname);
+                $post->addFile(['file'=>$request->file($fieldname),'purpose'=>$fieldname,'mime_type'=>explode(',',allow_mime())]) : strip_tags($request->$fieldname);
             break;
             default:
                 $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;
@@ -224,7 +186,11 @@ public function update(Request $request, Post $post){
     }
 
     if($request->hasFile('media')){
-        $data['media'] = upload_media($post,$request->file('media'),'thumbnail','post');
+        $data['media'] = $post->addFile([
+            'file'=> $request->file('media'),
+            'purpose'=>'thumbnail',
+            'mime_type'=> ['image/png','image/jpeg']
+        ]);
     }
     if($request->has('tanggal_entry')){
         $timedate = $request->tanggal_entry ?? date('Y-m-d H:i:s');
@@ -252,7 +218,7 @@ public function update(Request $request, Post $post){
                 $as = $request->$r;
                 if (isset($as[$i])) {
 
-                    $h[$r] = ($y[1] == 'file') ? (is_file($as[$i]) ?  upload_media($post,$as[$i],$r.$i,'post') : $as[$i]) : strip_tags($as[$i]);
+                    $h[$r] = ($y[1] == 'file') ? (is_file($as[$i]) ?  $post->addFile(['file'=>$as[$i],'purpose'=>$r,'child_id'=>$i,'mime_type'=>explode(',',allow_mime())]) : $as[$i]) : strip_tags($as[$i]);
                 } else {
                     $h[$r] = null;
                 }
@@ -291,7 +257,7 @@ public function recache($type){
 }
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category', 'comments')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category', 'comments')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
         return DataTables::of($data)
             ->addIndexColumn()
             ->order(function ($query) use ($req) {
@@ -307,7 +273,7 @@ public function recache($type){
             ->addColumn('title', function ($row) {
 
                 $category = current_module()->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "<i class='fa fa-tag'></i> <i class='text-warning'>Uncategorized</i>") : '';
-                $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> " . $row->comments->count() : '';
+                $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> "  : '';
                 $custom = ($row->mime == 'html') ? '<i class="text-muted">_HTML</i>' : '';
                 $tit = (current_module()->web->detail || current_module()->name == 'media') ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ' . $custom : $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tanpa Judul__</i>');
 
