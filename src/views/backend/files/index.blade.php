@@ -10,7 +10,7 @@
             </div>
         </div>
         <div class="col-lg-12">
-            {{ lw_file_manager() }}
+            {{ flc_file_manager() }}
         </div>
     </div>
 @include('cms::backend.layout.js')

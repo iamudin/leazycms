@@ -25,7 +25,7 @@
     },
     "minimum-stability": "stable",
     "require": {
-        "leazycms/file-manager": "*",
+        "leazycms/flc": "*",
         "yajra/laravel-datatables-oracle": "*",
         "intervention/image": "~2.0",
         "stevebauman/location":"*",
