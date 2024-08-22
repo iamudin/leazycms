@@ -295,7 +295,7 @@ public function recache($type){
                 return ($row->updated_at) ? '<small class="badge text-muted">' . date('d-m-Y H:i:s', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
             })
             ->addColumn('thumbnail', function ($row) {
-                return '<img class="rounded lazyload" src="/shimmer.gif" height="50" width="70" data-src="' . $row->thumbnail . '"/>';
+                return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '"/>';
             })
             ->addColumn('data_field', function ($row) {
                 $custom = _us( current_module()->datatable->custom_column);

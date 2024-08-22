@@ -4,8 +4,8 @@ namespace Leazycms\Web\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use Leazycms\Web\Traits\Fileable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Leazycms\FileManager\Traits\Fileable;
 
 class Post extends Model
 {

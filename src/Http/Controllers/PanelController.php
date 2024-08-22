@@ -32,7 +32,7 @@ class PanelController extends Controller implements HasMiddleware
     }
     function index(Request $request)
     {
-        $this->toDashboard($request);
+        // $this->toDashboard($request);
         $user = $request->user();
         $da = array();
         for ($i = 0; $i <= 6; $i++) {

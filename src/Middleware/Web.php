@@ -15,9 +15,9 @@ class Web
     public function handle(Request $request, Closure $next)
     {
 
-        if (strpos($request->getRequestUri(), 'index.php') !== false || $request->getHost()!=str_replace('http://','',config('app.url'))) {
-            return redirect( config('app.url') . str_replace('/index.php', '', $request->getRequestUri()));
-        }
+        // if (strpos($request->getRequestUri(), 'index.php') !== false || $request->getHost()!=str_replace('http://','',config('app.url'))) {
+        //     return redirect( config('app.url') . str_replace('/index.php', '', $request->getRequestUri()));
+        // }
         $response = $next($request);
         if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
             return undermaintenance();

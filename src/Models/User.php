@@ -2,7 +2,8 @@
 namespace Leazycms\Web\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Leazycms\Web\Traits\Fileable;
+use Leazycms\FileManager\Traits\Fileable;
+
 
 
 class User extends Authenticatable

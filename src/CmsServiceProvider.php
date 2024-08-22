@@ -24,22 +24,23 @@ class CmsServiceProvider extends ServiceProvider
 {
     protected function registerRoutes()
     {
+        Route::prefix(admin_path())
+        ->middleware(['web', 'admin'])
+        ->domain(parse_url(config('app.url'), PHP_URL_HOST)) // Mengambil domain dari APP_URL
+        ->group(function () {
+            $this->loadRoutesFrom(__DIR__.'/routes/admin.php');
+        });
 
-        Route::group([
-            'prefix' => admin_path(),
-            'middleware' => ['web', 'admin'],
-        ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
+        Route::middleware(['web'])
+        ->domain(parse_url(config('app.url'), PHP_URL_HOST))
+        ->group(function () {
+            $this->loadRoutesFrom(__DIR__.'/routes/auth.php');
         });
-        Route::group([
-            'middleware' => 'web',
-        ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/routes/auth.php');
-        });
-        Route::group([
-            'middleware' => 'web',
-        ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
+
+        Route::middleware(['web'])
+        ->domain(parse_url(config('app.url'), PHP_URL_HOST))
+        ->group(function () {
+            $this->loadRoutesFrom(__DIR__.'/routes/web.php');
         });
     }
     protected function registerResources()
@@ -110,10 +111,7 @@ class CmsServiceProvider extends ServiceProvider
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && env('APP_DEBUG') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
-                Config::set(['app.debug' => false]);
-            }
-            if (get_module('domain') && $domain = query()->detail_by_title('domain', (new Request)->getHttpHost())) {
-                Config::set('modules.domain', $domain);
+                Config::set(['app.debug' => true]);
             }
             $this->loadTemplateConfig();
         }

@@ -27,7 +27,7 @@ $modules = collect(get_module())->where('name','!=','halaman')->where('active', 
                         Route::match(['get', 'post'], '/{slug}', 'detail');
                     }
                     if ($modul->web->archive){
-                        Route::match(['get', 'post'],'archive/{year?}/{month?}/{date?}', 'archive')->name($modul->name.'.archive');
+                        Route::match(['get', 'post'],'archive/{year?}/{month?}/{date?}', 'archive');
                     }
                     if ($modul->form->category) {
                         Route::match(['get', 'post'], 'category/{slug}','category');
@@ -48,6 +48,5 @@ Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')-
 Route::match(['get', 'post'],'install', [SetupController::class, 'index'])->name('install');
 Route::match(['get', 'post'],'install/initializing', [SetupController::class, 'initializing'])->name('initializing');
 
-Route::match(['get', 'post'],'media/{slug}', [FileController::class, 'stream_by_id'])->name('stream');
 
 

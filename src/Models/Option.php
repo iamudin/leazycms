@@ -1,7 +1,7 @@
 <?php
 namespace Leazycms\Web\Models;
 use Illuminate\Database\Eloquent\Model;
-use Leazycms\Web\Traits\Fileable;
+use Leazycms\FileManager\Traits\Fileable;
 class Option extends Model
 {
     use Fileable;
