@@ -281,7 +281,7 @@ class PanelController extends Controller implements HasMiddleware
             $sourcePath = $extractPath . '/' . $mainFolderName;
 
             // Path tujuan untuk resource_path
-            $templatePath = resource_path('views/template');
+            $templatePath = resource_path('views/template/'.$mainFolderName.'/');
 
             // Pastikan direktori target ada
             File::ensureDirectoryExists($templatePath);
@@ -330,9 +330,7 @@ class PanelController extends Controller implements HasMiddleware
         admin_only();
         $path = resource_path('views/template/' . template());
         if (!file_exists($path . '/home.blade.php')) {
-            $myfile = fopen($path . '/home.blade.php', "w") or die("Unable to open file!");
-            fwrite($myfile, '<h1>You Script Here</h1>');
-            fclose($myfile);
+            File::put($path . '/home.blade.php','<h1>Your Script Here</h1>');
         }
         $file = $request->edit ?? '/home.blade.php';
 
@@ -343,9 +341,8 @@ class PanelController extends Controller implements HasMiddleware
                 mkdir($path);
             }
             if (!file_exists($path . $file)) {
-                $myfile = fopen($path . $file, "w") or die("Unable to open file!");
-                fwrite($myfile, 'body,html { }');
-                fclose($myfile);
+                File::put($path .$file,'html,body{}');
+
             }
         } elseif ($file == '/scripts.js') {
             $file = '/scripts.js';
@@ -354,11 +351,7 @@ class PanelController extends Controller implements HasMiddleware
                 mkdir($path);
             }
             if (!file_exists($path . $file)) {
-                $myfile = fopen($path . $file, "w") or die("Unable to open file!");
-                fwrite($myfile, '$( document ).ready(function() {
-        console.log( "document loaded" );
-    });');
-                fclose($myfile);
+                File::put($path .$file,'$( document ).ready(function() { console.log( "document loaded" );});');
             }
         } else {
         }
@@ -378,6 +371,8 @@ class PanelController extends Controller implements HasMiddleware
                         $myfile = fopen($path . $filepath . '/' . $filename, "w") or die("Unable to open file!");
                         fwrite($myfile, '<h1>You Script Here</h1>');
                         fclose($myfile);
+                        File::put($path . $filepath . '/' . $filename,'You Script Here');
+
                         return response()->json(['msg' => 'success']);
                     }
                     break;
@@ -439,7 +434,8 @@ class PanelController extends Controller implements HasMiddleware
         $type = match (pathinfo($file, PATHINFO_EXTENSION)) {
             'php' => 'application/x-httpd-php',
             'css' => 'text/css',
-            'js' => 'text/javascript'
+            'js' => 'text/javascript',
+            default=>'application/x-httpd-php'
         };
 
         return view('cms::backend.editortemplate', ['view' => $src, 'type' => $type]);
