@@ -72,7 +72,7 @@ abort_if(!is_numeric($id),'403');
 $request->user()->hasRole(get_post_type(),'update');
 $module = current_module();
 
-$data = $request->user()->isAdmin() ? $post->with('category','user','medias')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category','user','medias')->whereType(get_post_type())->find($id);
+$data = $request->user()->isAdmin() ? $post->with('category','user')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category','user')->whereType(get_post_type())->find($id);
 if (!$data) {
     return redirect(admin_url(get_post_type()))->with('danger', get_module_info('title') . ' Tidak Ditemukan');
 }
@@ -89,10 +89,10 @@ return view('cms::backend.posts.form',[
 }
 public function destroy(Request $request,Post $post){
     $request->user()->hasRole(get_post_type(),'delete');
-    if($post->medias->count()){
-        Post::whereParentId($post->id)->whereParentType('post')->whereType('media')->delete();
-        recache_media();
-    }
+    // if($post->medias->count()){
+    //     Post::whereParentId($post->id)->whereParentType('post')->whereType('media')->delete();
+    //     recache_media();
+    // }
     $post->delete();
     switch(get_post_type()){
         case 'banner':
@@ -325,7 +325,7 @@ public function recache($type){
                 $btn .= $row->type=='media' && $row->id == $row->parent_id ? '<button title="Hapus Media" class="btn btn-sm btn-danger fa fa-trash" onclick="deleteAlert(\''.basename($row->media).'\')"></button>' : '';
 
 
-                $btn .= ($row->type != 'media' && Route::has($row->type . '.destroyer') && empty($row->childs_count)) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '<button onclick="deleteAlert(\''.route($row->type.'.destroyer',$row->id).'\')" class="btn btn-danger btn-sm fa fa-trash-o"></button>' ) :'';
+                $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '<button onclick="deleteAlert(\''.route($row->type.'.destroyer',$row->id).'\')" class="btn btn-danger btn-sm fa fa-trash-o"></button>' ) :'';
                 $btn .= '</div></div>';
                 return $btn;
             })

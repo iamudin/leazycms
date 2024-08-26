@@ -16,10 +16,17 @@ class Category extends Model
     }
     function scopeWithCountPosts($query)
     {
-        return $query->withCount('posts',function($q){
+        return $query->withCount(['posts' => function($q) {
             $q->published();
-        });
+        }]);
     }
-
+    function scopeOnType($query,$type)
+    {
+        return $query->whereType($type);
+    }
+    function scopePublished($query)
+    {
+        return $query->whereStatus('publish');
+    }
 
 }
