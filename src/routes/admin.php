@@ -59,6 +59,7 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'appearance', 'appearance')->name('appearance');
     Route::match(['get', 'post'], 'appearance/editor', 'editorTemplate')->name('appearance.editor');
     Route::match(['get', 'post'], 'setting', 'setting')->name('setting');
+    Route::match(['get', 'post'], 'option', 'option')->name('option');
     Route::match(['get', 'post'], 'backup', 'backup_restore')->name('backup');
 });
 Route::controller(UserController::class)->group(function () {

@@ -33,6 +33,11 @@
         <li><a class="app-menu__item {{ Request::is(admin_path() . '/files') ? 'active' : '' }}"
                 href="{{ admin_url('files') }}"><i class="app-menu__icon fa fa-folder"></i> <span
                     class="app-menu__label">File Manager</span></a></li>
+        @if ($option = config('modules.config.option'))
+        <li><a class="app-menu__item {{ Request::is(admin_path() . '/option') ? 'active' : '' }}"
+            href="{{ admin_url('option') }}"><i class="app-menu__icon fa fa-table"></i> <span
+                class="app-menu__label">Data Web</span></a></li>
+        @endif
         @if ($ext = config('modules.extension_module'))
             <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><i
                     class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; MENU EXTRA</li>

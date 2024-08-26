@@ -82,13 +82,31 @@ class PanelController extends Controller implements HasMiddleware
             ->rawColumns(['created_at', 'ip_location', 'reference', 'page'])
             ->toJson();
     }
-
+    public function option(Request $request, Option $option)
+    {
+        if(empty(config('modules.config.option'))){
+            return to_route('panel.dashboard');
+        }
+        if($request->isMethod('post')){
+            foreach(config('modules.config.option') as $row){
+                foreach($row as $field){
+                    $key = _us($field[0]);
+                    if($value = $request->$key){
+                        $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                    }
+                }
+            }
+            Artisan::call('config:cache');
+            return back()->with('success','Berhasil Diupdate');
+        }
+        return view('cms::backend.option');
+    }
     public function setting(Request $request, Option $option)
     {
 
         admin_only();
         $data['web_type'] = config('modules.config.web_type');
-        $data['option'] = array_merge(config('modules.config.option') ?? [], [
+        $data['option'] =  [
             ['Nama', 'text'],
             ['Alamat', 'text'],
             ['Telepon', 'text'],
@@ -103,7 +121,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Instagram', 'text'],
             ['Twitter', 'text'],
             ['Icon', 'file'],
-        ]);
+        ];
         $data['site_attribute'] = array(
             ['Alamat Situs Web', 'site_url', 'text'],
             ['Nama Situs Web', 'site_title', 'text'],
