@@ -56,7 +56,7 @@ return [
                 'thumbnail' => true,
                 'editor' => true,
                 'category' => true,
-                'tag' => false,
+                'tag' => true,
                 'looping_name'=>'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(['Link Video','text']),

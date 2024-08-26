@@ -10,10 +10,10 @@ use Leazycms\FLC\Traits\Fileable;
 class Post extends Model
 {
     use SoftDeletes,Fileable;
-    public $selected = ['id','short_content','type','category_id','user_id','title','created_at','updated_at','parent_id','media','url','slug','data_field','pinned','sort','status','mime'];
+    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','mime'];
 
-    protected $userselectcolumn = ['id','name','url','slug'];
-    protected $categoryselectcolumn = ['id','name','url','status','slug'];
+    protected $userselectcolumn = ['id','name','url'];
+    protected $categoryselectcolumn = ['id','name','url'];
     protected $fillable = [
         'short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable'
     ];
@@ -41,7 +41,7 @@ class Post extends Model
     {
         return $this->hasMany(Visitor::class);
     }
-    public function post_parent()
+    public function parent()
     {
         return $this->belongsTo(Post::class, 'parent_id', 'id');
     }
@@ -52,19 +52,20 @@ class Post extends Model
 
     public function childs()
     {
-        return $this->hasMany(Post::class, 'parent_id', 'id')->select($this->selected)->whereNotIn('type', ['media']);
+        return $this->hasMany(Post::class, 'parent_id', 'id')->select($this->selected);
     }
-    public function medias()
+    public function child()
     {
-        return $this->hasMany(Post::class, 'parent_id', 'id')->whereType('media')->whereParentType('post');
+        return $this->hasOne(Post::class, 'parent_id', 'id')->select($this->selected);
     }
-    public function get_media($slug)
-    {
-        return collect(Cache::get('media'))->where('slug', $slug)->first();
-    }
+
     public function getThumbnailAttribute()
     {
         return $this->media ? $this->media : noimage();
+    }
+    public function getThumbnailTextAttribute()
+    {
+        return $this->media_description ? $this->media_description : null;
     }
     public function getCreatedAttribute()
     {
@@ -109,7 +110,32 @@ class Post extends Model
 
     function count($type)
     {
-        return $this->whereType($type)->whereStatus('publish')->count();
+        return $this->onType($type)->published()->count();
+    }
+    function scopeOnType($query,$type)
+    {
+        return $query->whereType($type);
+    }
+    function scopePublished($query)
+    {
+        return $query->whereStatus('publish');
+    }
+    function scopePinned($query)
+    {
+        return $query->wherePinned(1);
+    }
+    function scopeWithCountVisitors($query)
+    {
+        return $query->withCount('visitors');
+    }
+
+    function scopeSelectedColumn($query)
+    {
+        return $query->select($this->selected);
+    }
+    function scopeLikeSlug($query,$slug)
+    {
+        return $query->where('slug','like',$slug.'%');
     }
     function cachedpost($type = false)
     {
@@ -138,7 +164,14 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->cachedpost($type)->values())->take($limit);
         } else {
-            return $this->withCount('visitors')->select($this->selected)->with('user', 'category')->where('type', $type)->whereStatus('publish')->latest('created_at')->limit($limit)->get();
+            return $this->withCountVisitors()
+            ->selectedColumn()
+            ->with('user', 'category')
+            ->onType($type)
+            ->published()
+            ->latest('created_at')
+            ->limit($limit)
+            ->get();
         }
     }
 
@@ -147,7 +180,11 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->categories($type)->values());
         } else {
-            return Category::withCount('posts')->whereType($type)->whereStatus('publish')->orderBy('sort')->get();
+            return Category::withCountPosts()
+            ->onType($type)
+            ->published()
+            ->orderBy('sort','ASC')
+            ->get();
         }
     }
     function index_skip($type, $skip, $limit)
@@ -155,36 +192,65 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->cachedpost($type)->values())->skip($skip)->take($limit);
         } else {
-            return $this->select($this->selected)->withCount('visitors')->whereType($type)->whereStatus('publish')->offset($skip)->limit($limit)->latest()->get();
+            return $this->selectedColumn()
+            ->withCountVisitors()
+            ->onType($type)
+            ->published()
+            ->latest()
+            ->skip($skip)
+            ->take($limit)
+            ->get();
         }
     }
-    function index_sort($type,$order)
+    function index_sort($type,$order='asc')
     {
         if (get_module($type)?->cache) {
             return $order=='asc'? collect($this->cachedpost($type)->values())->sortBy($order) : collect($this->cachedpost($type)->values())->sortByDesc($order);
         } else {
-            $order = in_array(str($order)->lower(),['asc','desc']) ? $order : 'asc';
-            return $this->select($this->selected)->whereType($type)->whereStatus('publish')->orderBy('sort',$order)->get();
+            $order = $order!='asc' ? 'desc':'asc';
+            return $this->selectedColumn()->onType($type)->published()->orderBy('sort',$order)->get();
         }
     }
-    function index_sort_by_parent($type,$order=false)
+    function index_sort_by_parent($type,$order='asc')
     {
-        $order = $order && in_array(str($order)->lower(),['asc','desc']) ? $order : null;
-            return $this->select('id','user_id')->with('childs','user')->whereType($type)->whereStatus('publish')->orderBy('sort',$order ?? 'desc')->get();
+            $order = $order!='asc' ? 'desc':'asc';
+            return $this->select('id','user_id')
+            ->with('childs','user')
+            ->onType($type)
+            ->published()
+            ->orderBy('sort',$order)->get();
 
     }
-    public function index($type, $paginate = false)
+    public function index($type, $paginate = null)
     {
-        return $this->select($this->selected)->withCount('visitors')->with('user', 'category')->whereType($type)->whereStatus('publish')->latest('created_at')->paginate(get_option('post_perpage') ?? 10);
+        $q = $this->selectedColumn()
+        ->withCountVisitors()
+        ->with('user', 'category')
+        ->onType($type)
+        ->published()
+        ->latest('created_at');
+        if ($paginate===null)
+        return $q->get();
+        return $q->paginate($paginate);
+
     }
     public function index_popular($type)
     {
-        return $this->select($this->selected)->withCount('visitors')->whereType($type)->whereStatus('publish')->orderBy('visitors_count', 'desc')->limit('5')->get();
+        return $this->selectedColumn()
+        ->withCountVisitors()
+        ->onType($type)
+        ->published()
+        ->orderBy('visitors_count', 'desc')->take('5')->get();
     }
 
     function index_pinned($limit, $type = false)
     {
-        return $type ? $this->cachedpost($type)->where('pinned', 1)->take($limit)->values() : $this->select($this->selected)->withCount('visitors')->where('pinned', 1)->whereStatus('publish')->limit($limit)->orderBy('created_at', 'desc')->get();
+        return $this->selectedColumn()
+        ->pinnded()
+        ->published()
+        ->take($limit)
+        ->latest()
+        ->get();
     }
     function index_by_category($type, $slug, $limit = false)
     {
@@ -193,12 +259,14 @@ class Post extends Model
             $cek = $this->categories($type) ? collect($this->categories($type))->where('slug', $slug)->first() : null;
             return $cek && collect($cek->posts)->count() > 0 ? ($limit ? collect($cek->posts)->take($limit)->sortByDesc('created_at') : collect($cek->posts))->sortByDesc('created_at') : collect([]);
         } else {
-            return $limit ? $this->select($this->selected)->with('user')->WhereHas('category', function ($q) use ($slug,$type) {
+            return $limit ? $this->selectedColumn()->with('user')
+            ->whereHas('category', function ($q) use ($slug,$type) {
                 $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
-            })->whereType($type)->whereStatus('publish')->latest('created_at')->limit($limit)->get() :
-            $this->select($this->selected)->with('user')->WhereHas('category', function ($q) use ($slug,$type) {
+            })->onType($type)->published()->latest('created_at')->take($limit)->get() :
+            $this->selectedColumn()->with('user')->WhereHas('category', function ($q) use ($slug,$type) {
                     $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
-                })->whereType($type)->whereStatus('publish')->latest('created_at')->paginate(get_option('post_perpage'));
+                })->onType($type)->published()->latest('created_at')
+                ->paginate(get_option('post_perpage'));
         }
     }
 
@@ -207,7 +275,11 @@ class Post extends Model
         if (get_module($type)->cache) {
             return $except ? $this->cachedpost($type)->whereNotIn('id', [$except])->take(5) : $this->cachedpost($type)->take(5);
         } else {
-            return $except ? $this->select($this->selected)->whereType($type)->whereStatus('publish')->whereNotIn('id', [$except])->latest('id')->limit(5)->get() : $this->select($this->selected)->whereType($type)->whereStatus('publish')->latest('id')->limit(5)->get();
+            $query = $this->selectedColumn()->onType($type)->published();
+            if($except){
+                $query = $query->whereNotIn('id', [$except]);
+            }
+            return $query->latest('created_at')->take(5)->get();
         }
     }
 
@@ -216,12 +288,17 @@ class Post extends Model
         if (get_module($type)->cache) {
             return $this->cachedpost($type)->where('parent_id', $id);
         } else {
-            return $this->select($this->selected)->whereType($type)->whereStatus('publish')->where('parent_id', $id)->latest('created_at')->get();
+            return $this->selectedColumn()
+            ->onType($type)
+            ->published()
+            ->where('parent_id', $id)
+            ->latest('created_at')
+            ->get();
         }
     }
     function detail_by_title($type, $title)
     {
-        return $this->where('title', $title)->whereType($type)->whereStatus('publish')->first();
+        return $this->whereTitle($title)->onType($type)->published()->first();
     }
     function detail($type, $name = false)
     {
@@ -231,17 +308,17 @@ class Post extends Model
                 $with[] = 'user';
             }
             return $this->where('type', $type)
-            ->where('slug', 'like', $name . '%')
-            ->where('status', 'publish')
+            ->likeSlug($name)
+            ->published()
             ->with($with ?? ['user'])
-            ->withCount('visitors')
+            ->withCountVisitors()
             ->first();
 
         } else {
             if (get_module($type)->cache) {
                 return collect($this->cachedpost($type))->first();
             } else {
-                return $this->whereType($type)->whereStatus('publish')->latest('id')->first();
+                return $this->onType($type)->published()->first();
             }
         }
     }

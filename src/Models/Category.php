@@ -14,9 +14,12 @@ class Category extends Model
     {
     return $this->hasMany(Post::class);
     }
-    public function medias()
+    function scopeWithCountPosts($query)
     {
-        return $this->hasMany(Post::class, 'parent_id', 'id')->whereType('media');
+        return $query->withCount('posts',function($q){
+            $q->published();
+        });
     }
+
 
 }

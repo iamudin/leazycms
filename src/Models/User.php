@@ -48,10 +48,6 @@ class User extends Authenticatable
         'user_data' => 'array',
 
     ];
-    public function medias()
-    {
-        return $this->hasMany(Post::class, 'parent_id', 'id')->whereParentType('users')->whereType('media')->whereParentType('user');
-    }
 
     public function posts()
     {
