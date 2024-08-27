@@ -1123,8 +1123,8 @@ if (!function_exists('recache_banner')) {
     function recache_banner()
     {
         $posts = \Leazycms\Web\Models\Post::with('category')
-            ->where('type', 'banner')
-            ->where('status', 'publish')
+            ->onType('banner')
+            ->published()
             ->select('media', 'redirect_to', 'title', 'category_id') // Pastikan 'category_id' dipilih untuk relasi
             ->get();
 
@@ -1219,25 +1219,7 @@ if (!function_exists('banner_here')) {
     {
     }
 }
-if (!function_exists('get_banner')) {
-    function get_banner($params)
-    {
-        $data['name'] = $params['name'] ?? null;
-        $data['limit'] = $params['limit'] ?? 1;
 
-        if ($data['name'] && $cek = \Illuminate\Support\Facades\Cache::get('banner')[$data['name']] ?? null) {
-            $data['result'] =  collect(json_decode(json_encode($cek)));
-            if ($data['limit'] > 1) {
-                $banner = $data['result']->take($data['limit']);
-            } else {
-                $banner = $data['result']->first();
-            }
-            return $banner;
-        } else {
-            return $data['limit'] > 1 ? [] : noimage();
-        }
-    }
-}
 
 
 if (!function_exists('get_ip_info')) {
