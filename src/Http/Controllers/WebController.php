@@ -51,16 +51,16 @@ class WebController extends Controller
     }
     public function manifest(){
         $manifest = [
-            'name' => 'Nama Aplikasi',
-            'short_name' => 'Nama Singkat',
+            'name' => get_option('nama'),
+            'short_name' => get_option('nama'),
             'description' => 'Deskripsi Aplikasi',
-            'start_url' => '/',
+            'start_url' => url('/'),
             'display' => 'standalone',
             'background_color' => '#ffffff',
             'theme_color' => '#000000',
             'icons' => [
                 [
-                    'src' =>  get_option('favicon'),
+                    'src' =>  url(get_option('favicon')),
                     'sizes' => '200x252',
                     'type' => 'image/png'
                 ]
