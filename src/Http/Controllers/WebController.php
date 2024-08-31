@@ -21,23 +21,27 @@ class WebController extends Controller
         }
     }
     public function sitemap_xml(){
+
             $type = collect(get_module())->where('active',true)->where('public',true)->where('web.detail',true);
+            $post = Post::whereIn('type',$type->pluck('name')->toArray())->published()->select('updated_at','url','type')->get();
+            $lastmod = Post::select('updated_at')->latest('updated_at')->first()?->updated_at;
+
             $type_index = [
                 [
                     'loc'=>url('/'),
                     'priority'=>'1.0',
-                    'lastmod' => null
+                    'lastmod' => $lastmod->toIso8601String()
                 ]
             ];
             foreach($type as $row){
             if($row->web->index){
+                $lst = $post->where('type',$row->name)->sortByDesc('updated_at')->first();
                 $a['loc'] = url($row->name);
                 $a['priority'] = '0.80';
-                $a['lastmod'] = null;
+                $a['lastmod'] = $lst ? $lst->updated_at->toIso8601String() : $lastmod->toIso8601String();
+                $type_index[] = $a;
             }
-            $type_index[] = $a;
             }
-            $post = Post::whereIn('type',$type->pluck('name')->toArray())->published()->select('updated_at','url','type')->get();
             $post_index = [];
             foreach($post as $row){
                     $a['loc'] = url($row->url);
