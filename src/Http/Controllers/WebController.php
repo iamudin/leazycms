@@ -32,7 +32,7 @@ class WebController extends Controller
             foreach($type as $row){
             if($row->web->index){
                 $a['loc'] = url($row->name);
-                $a['priority'] = 0.80;
+                $a['priority'] = '0.80';
                 $a['lastmod'] = null;
             }
             $type_index[] = $a;
