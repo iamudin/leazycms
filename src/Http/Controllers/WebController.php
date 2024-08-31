@@ -42,7 +42,7 @@ class WebController extends Controller
             foreach($post as $row){
                     $a['loc'] = url($row->url);
                     $a['priority'] = $row->type=='halaman' ? '0.64' : '0.80';
-                    $a['lastmod'] = $row->updated_at->format('Y-m-d H:i:s');
+                    $a['lastmod'] = $row->updated_at->timezone('UTC')->toIso8601String();
                 $post_index[] = $a;
             }
             $urls = array_merge($type_index,$post_index);
