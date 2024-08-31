@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>{{request()->is('/') ? $title : $title.' - '.get_option('site_title')}}</title>
+<title>{{request()->is('/') ? $title : $title.' | '.get_option('site_title')}}</title>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, shrink-to-fit=no">
 <meta name="author" content="Abu Umar's House">
