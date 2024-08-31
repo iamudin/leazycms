@@ -38,6 +38,8 @@ $modules = collect(get_module())->where('name','!=','halaman')->where('active', 
     Route::match(['get', 'post'], 'tags/{slug}', [WebController::class, 'tags'])->middleware(['public']);
     Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->middleware(['public']);
     Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->middleware(['public']);
+Route::match(['get', 'post'],'/sitemap.xml', [WebController::class, 'sitemap_xml'])->name('sitemap');
+
     Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
 ->where('slug', '(?!' . implode('|', array_merge([admin_path(),'search','tags','install','author'],$modules->pluck('name')
 ->toArray())) . ')[a-zA-Z0-9-_]+')->middleware(['public']);

@@ -20,7 +20,36 @@ class WebController extends Controller
             $this->visited = (new VisitorController)->visitor_counter();
         }
     }
+    public function sitemap_xml(){
+            $type = collect(get_module())->where('active',true)->where('public',true)->where('web.detail',true);
+            $type_index = [
+                [
+                    'loc'=>url('/'),
+                    'priority'=>'1.0',
+                    'lastmod' => null
+                ]
+            ];
+            foreach($type as $row){
+            if($row->web->index){
+                $a['loc'] = url($row->name);
+                $a['priority'] = 0.80;
+                $a['lastmod'] = null;
+            }
+            $type_index[] = $a;
+            }
+            $post = Post::whereIn('type',$type->pluck('name')->toArray())->select('updated_at','url','type')->get();
+            $post_index = [];
+            foreach($post as $row){
+                    $a['loc'] = url($row->url);
+                    $a['priority'] = $row->type=='halaman' ? '0.64' : '0.80';
+                    $a['lastmod'] = $row->updated_at->format('Y-m-d H:i:s');
+                $post_index[] = $a;
+            }
+            $urls = array_merge($type_index,$post_index);
+            $sitemap = view('cms::layouts.sitemap-xml', compact('urls'))->render();
 
+            return response($sitemap, 200)->header('Content-Type', 'application/xml');
+    }
     public function home()
     {
 

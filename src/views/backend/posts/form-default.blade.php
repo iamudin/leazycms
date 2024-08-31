@@ -212,7 +212,7 @@
                         </label>
                     </div>
                 </div>
-                <button type="submit" data-toggle="tooltip" title="Simpan Perubahan"  class="btn btn-md btn-outline-primary w-100 add">SIMPAN</button><br><br>
+                <button type="submit" data-toggle="tooltip" title="Simpan Perubahan"  class="btn btn-md btn-primary w-100 add">SIMPAN</button><br><br>
             </>
         </div>
     </form>

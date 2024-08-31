@@ -166,7 +166,6 @@ class Post extends Model
         } else {
             return $this->withCountVisitors()
             ->selectedColumn()
-            ->with('user', 'category')
             ->onType($type)
             ->published()
             ->latest('created_at')
@@ -215,7 +214,7 @@ class Post extends Model
     {
             $order = $order!='asc' ? 'desc':'asc';
             return $this->select('id','user_id')
-            ->with('childs','user')
+            ->with('childs')
             ->onType($type)
             ->published()
             ->orderBy('sort',$order)->get();

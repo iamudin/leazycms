@@ -120,6 +120,12 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
+        if ($request->is('sitemap.xml')) {
+            $attr['detail_visited'] = false;
+            config([
+                'modules.current' => $attr
+            ]);
+        }
         if ($request->is('/')) {
             $attr['post_type'] = null;
             $attr['detail_visited'] = false;
@@ -129,7 +135,7 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
-        if(config('modules.current.detail_visited')){
+        if($o = config('modules.current.detail_visited')){
             ratelimiter($request,get_option('time_limit_reload'));
     }
     forbidden($request,config('modules.current.detail_visited'));

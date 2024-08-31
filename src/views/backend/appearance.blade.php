@@ -32,30 +32,30 @@
           </div>
 
           <div id="{{ $row->name }}" class="collapse {{ $loop->first ? 'show':'' }}" aria-labelledby="heading{{ $row->name }}" data-parent="#accordionExample">
-            <div class="card-body py-2" >
-                <ul style="margin:0;padding:0;">
+            <div class="card-body py-2 pl-3" >
+                <ul style="margin:0;padding:0;list-style:none">
               @if($row->web->index)
               <li>
-                <a href="javascript::void(0)" onclick="$('.preview').attr('src','{{ url($row->name) }}')">View INDEX</a>
+                <a href="javascript::void(0)" onclick="$('.preview').attr('src','{{ url($row->name) }}')"> <i class="fa fa-arrow-right"></i> View INDEX</a>
               </li>
               @endif
               @if($row->web->detail)
               <li>
                 @php $detail = query()->detail($row->name) @endphp
-                <a href="javascript::void(0)" onclick="$('.preview').attr('src','{{ url($detail->url ?? '/') }}')">View DETAIL</a>
+                <a href="javascript::void(0)" onclick="$('.preview').attr('src','{{ url($detail->url ?? '/') }}')"> <i class="fa fa-arrow-right"></i> View DETAIL</a>
             </li>
               @endif
               @if($row->form->category)
               @php $category = query()->index_category($row->name)->first() @endphp
               <li>
-                <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($category->url ?? '/') }}')">View CATEGORY</a>
+                <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($category->url ?? '/') }}')"> <i class="fa fa-arrow-right"></i>  View CATEGORY</a>
 
               </li>
               @endif
               @if($row->web->archive)
               @php $archive = query()->detail($row->name) @endphp
               <li>
-                <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($row->name.'/archive/'.($archive ? $archive->created_at->format('Y') : date('Y'))) }}')">Archive</a>
+                <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($row->name.'/archive/'.($archive ? $archive->created_at->format('Y') : date('Y'))) }}')"> <i class="fa fa-arrow-right"></i>    Archive</a>
 
               </li>
               @endif
