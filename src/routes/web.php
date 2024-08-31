@@ -38,10 +38,12 @@ $modules = collect(get_module())->where('name','!=','halaman')->where('active', 
     Route::match(['get', 'post'], 'tags/{slug}', [WebController::class, 'tags'])->middleware(['public']);
     Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->middleware(['public']);
     Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->middleware(['public']);
-Route::match(['get', 'post'],'/sitemap.xml', [WebController::class, 'sitemap_xml'])->name('sitemap');
+    Route::match(['get', 'post'],'sitemap.xml', [WebController::class, 'sitemap_xml'])->name('sitemap');
+    Route::match(['get', 'post'],'manifest.json', [WebController::class, 'manifest'])->name('manifest');
+    Route::match(['get', 'post'],'service-worker.js', [WebController::class, 'service_worker'])->name('serviceworker');
 
     Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
-->where('slug', '(?!' . implode('|', array_merge([admin_path(),'search','tags','install','author'],$modules->pluck('name')
+->where('slug', '(?!' . implode('|', array_merge([admin_path(),'search','tags','install','author','sitemap.xml','manifest.json','service-worker.js'],$modules->pluck('name')
 ->toArray())) . ')[a-zA-Z0-9-_]+')->middleware(['public']);
 
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public']);
