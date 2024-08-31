@@ -37,12 +37,12 @@ class WebController extends Controller
             }
             $type_index[] = $a;
             }
-            $post = Post::whereIn('type',$type->pluck('name')->toArray())->select('updated_at','url','type')->get();
+            $post = Post::whereIn('type',$type->pluck('name')->toArray())->published()->select('updated_at','url','type')->get();
             $post_index = [];
             foreach($post as $row){
                     $a['loc'] = url($row->url);
                     $a['priority'] = $row->type=='halaman' ? '0.64' : '0.80';
-                    $a['lastmod'] = $row->updated_at->timezone('UTC')->toIso8601String();
+                    $a['lastmod'] = $row->updated_at->toIso8601String();
                 $post_index[] = $a;
             }
             $urls = array_merge($type_index,$post_index);
