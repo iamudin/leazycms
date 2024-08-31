@@ -21,32 +21,7 @@ class WebController extends Controller
         }
     }
     public function service_worker(){
-        $script = "
-        const CACHE_NAME = 'my-cache-v1';
-        const urlsToCache = [
-            '/',
-            '".get_option('favicon')."'
-        ];
-
-        self.addEventListener('install', (event) => {
-            event.waitUntil(
-                caches.open(CACHE_NAME)
-                .then((cache) => {
-                    console.log('Opened cache');
-                    return cache.addAll(urlsToCache);
-                })
-            );
-        });
-
-        self.addEventListener('fetch', (event) => {
-            event.respondWith(
-                caches.match(event.request)
-                .then((response) => {
-                    return response || fetch(event.request);
-                })
-            );
-        });
-    ";
+        $script = view('cms::layouts.sw')->render();
     return Response::make($script, 200, ['Content-Type' => 'application/javascript']);
     }
     public function manifest(){
@@ -55,14 +30,15 @@ class WebController extends Controller
             'short_name' => get_option('nama'),
             'description' => 'Deskripsi Aplikasi',
             'start_url' => url('/'),
-            'display' => 'standalone',
+            'display' => 'fullscreen',
             'background_color' => '#ffffff',
             'theme_color' => '#000000',
             'icons' => [
                 [
                     'src' =>  url(get_option('favicon')),
                     'sizes' => '200x252',
-                    'type' => 'image/png'
+                    'type' => 'image/png',
+                    'purpose' => 'any maskable'
                 ]
             ]
         ];

@@ -21,27 +21,11 @@
 <meta name="google-site-verification" content="{{ $gvc}}">
 @endif
   <link rel="icon" href="{{get_option('favicon') ?? noimage() }}" type="image/x-icon" />
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-touch-fullscreen" content="yes">
-  <meta name="theme-color" content="#07c">
-  <link rel="apple-touch-icon" href="{{get_option('favicon') ?? noimage()}}"/>
+  <meta name="theme-color" color="#000000"/>
+  <link rel="apple-touch-icon" href="{{ asset('logo.PNG') }}">
+  <link rel="manifest" href="{{ asset('/manifest.json') }}">
   <meta name="HandheldFriendly" content="True">
-  <link rel="apple-touch-startup-image" href="{{get_option('favicon')?? noimage()}}">
-  <meta name="application-name" content="{{get_option('site_title') ?? 'Web'}}">
-  <link rel="manifest" href="{{ url('manifest.json') }}">
-  <script>
-      if ('serviceWorker' in navigator) {
-          window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/service-worker.js')
-              .then(function(registration) {
-                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
-              }, function(err) {
-                  console.log('ServiceWorker registration failed: ', err);
-              });
-          });
-      }
-  </script>
+
   @if($gac = get_option('google_analytics_code'))
 <script async src="https://www.googletagmanager.com/gtag/js?id={{$gac}}"></script>
 <script>
