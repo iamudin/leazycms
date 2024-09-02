@@ -1,53 +1,43 @@
-self.addEventListener("install", function (event) {
-    event.waitUntil(preLoad());
-});
-
+var staticCacheName = "pwa-v" + new Date().getTime();
 var filesToCache = [
-    '/',
-    '/offline.html'
+    '/offline.html',
+
 ];
 
-var preLoad = function () {
-    return caches.open("offline").then(function (cache) {
-        return cache.addAll(filesToCache);
-    });
-};
-
-self.addEventListener("fetch", function (event) {
-    event.respondWith(checkResponse(event.request).catch(function () {
-        return returnFromCache(event.request);
-    }));
-    event.waitUntil(addToCache(event.request));
+// Cache on install
+self.addEventListener("install", event => {
+    this.skipWaiting();
+    event.waitUntil(
+        caches.open(staticCacheName)
+            .then(cache => {
+                return cache.addAll(filesToCache);
+            })
+    )
 });
 
-var checkResponse = function (request) {
-    return new Promise(function (fulfill, reject) {
-        fetch(request).then(function (response) {
-            if (response.status !== 404) {
-                fulfill(response);
-            } else {
-                reject();
-            }
-        }, reject);
-    });
-};
+// Clear cache on activate
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames
+                    .filter(cacheName => (cacheName.startsWith("pwa-")))
+                    .filter(cacheName => (cacheName !== staticCacheName))
+                    .map(cacheName => caches.delete(cacheName))
+            );
+        })
+    );
+});
 
-var addToCache = function (request) {
-    return caches.open("offline").then(function (cache) {
-        return fetch(request).then(function (response) {
-            return cache.put(request, response);
-        });
-    });
-};
-
-var returnFromCache = function (request) {
-    return caches.open("offline").then(function (cache) {
-        return cache.match(request).then(function (matching) {
-            if (!matching || matching.status == 404) {
-                return cache.match("offline.html");
-            } else {
-                return matching;
-            }
-        });
-    });
-};
+// Serve from Cache
+self.addEventListener("fetch", event => {
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                return response || fetch(event.request);
+            })
+            .catch(() => {
+                return caches.match('offline');
+            })
+    )
+});

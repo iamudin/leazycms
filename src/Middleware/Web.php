@@ -49,11 +49,11 @@ class Web
             if(file_exists(public_path('template/'.template().'/scripts.js'))){
             $footer .= '<script src="'.url('template/'.template().'/scripts.js').'" async></script>';
             }
-            $footer .= '<script src="'.url('service-worker.js').'"></script><script>if (!navigator.serviceWorker.controller) {
+            /*$footer .= '<script src="'.url('service-worker.js').'"></script><script>if (!navigator.serviceWorker.controller) {
         navigator.serviceWorker.register("'.url('service-worker.js').'").then(function (reg) {
         });
     }
-        </script>';
+        </script>';*/
 
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);

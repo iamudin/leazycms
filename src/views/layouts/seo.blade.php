@@ -4,6 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="MobileOptimized" content="width" />
 <meta name="HandheldFriendly" content="true" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <link href="{{ url('/') }}" rel="home" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -31,14 +32,27 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ get_option('pwa_icon_32')  ?? noimage()}}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ get_option('pwa_icon_16') ?? noimage()}}">
 <link rel="manifest" href="/manifest.json">
-<meta id="theme-color-meta" name="theme-color" content="#ffffff">
-<meta name="apple-mobile-web-app-title" content="{{ get_option('site_title') ?? 'Official Website' }}">
-<meta name="application-name"content="{{ get_option('site_title') ?? 'Official Website' }}">
+<met name="theme-color" content="#ffffff">
+
+<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ??  get_option('site_title') }}">
+<meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
+<meta name="application-name"content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
+
 <meta name="msapplication-TileColor" content="#0068df">
 <meta name="msapplication-TileImage" content="{{ get_option('favicon') ?? nomimage() }}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
 <link rel="icon" href="{{get_option('favicon') ?? noimage() }}" type="image/x-icon" />
-<link rel="manifest" href="{{ url('manifest.json') }}">
+<script type="text/javascript">
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js', {
+            scope: '.'
+        }).then(function (registration) {
+            console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
+        }, function (err) {
+            console.log('Laravel PWA: ServiceWorker registration failed: ', err);
+        });
+    }
+</script>
 @if($gvc = get_option('google_verification_code'))
 <meta name="google-site-verification" content="{{ $gvc}}">
 @endif
