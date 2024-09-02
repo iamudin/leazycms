@@ -41,11 +41,6 @@ class Web
                     $content
                 );
             }
-                if ($request->segment(1) == 'docs') {
-                    $content = isPre($content);
-                } else {
-                    $content = preg_replace('/\s+/', ' ', $content);
-                }
             $footer = '';
             if($request->getHost()!='leazycms.com'){
                 $footer .= '<footer style="text-align:center;background:#000;padding:7px;color:#ccc" class="'.str()->random(5).'_credit"><small style="font-size:13px">Build with LeazyCMS</small></footer>';
@@ -54,9 +49,20 @@ class Web
             if(file_exists(public_path('template/'.template().'/scripts.js'))){
             $footer .= '<script src="'.url('template/'.template().'/scripts.js').'" async></script>';
             }
+            $footer .= '<script src="'.url('service-worker.js').'"></script><script>if (!navigator.serviceWorker.controller) {
+        navigator.serviceWorker.register("'.url('service-worker.js').'").then(function (reg) {
+        });
+    }
+        </script>';
 
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
+                if ($request->segment(1) == 'docs') {
+                    $content = isPre($content);
+                } else {
+                    $content = preg_replace('/\s+/', ' ', $content);
+                }
+
 
             $response->setContent($content);
         }

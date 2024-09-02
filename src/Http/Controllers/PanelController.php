@@ -134,6 +134,17 @@ class PanelController extends Controller implements HasMiddleware
             ['Favicon', 'favicon', 'file'],
             ['Preview', 'preview', 'file'],
         );
+        $data['pwa'] = array(
+            ['Nama Aplikasi', 'pwa_name', 'text'],
+            ['Singkatan', 'pwa_short_name', 'text'],
+            ['Deskripsi', 'pwa_description', 'text'],
+            ['Warna Background', 'pwa_background_color', 'text'],
+            ['Warna Tema', 'pwa_theme_color', 'text'],
+            ['Icon (format png ukuran 512px * 512px)', 'pwa_icon_512', 'file'],
+            ['Icon (format png ukuran 180px * 180px)', 'pwa_icon_180', 'file'],
+            ['Icon (format png ukuran 32px * 32px)', 'pwa_icon_32', 'file'],
+            ['Icon (format png ukuran 16px * 16px)', 'pwa_icon_16', 'file'],
+        );
         $data['shortcut'] = array(
             ['Control + F5', 'ctrl_f5'],
             ['Control + U', 'ctrl_u'],
@@ -206,6 +217,31 @@ class PanelController extends Controller implements HasMiddleware
                                 'purpose'=>$key,
                                 'mime_type'=>['image/png','image/jpeg'],
                                 ])
+                             ]);
+                    }
+                } else {
+                    $value = $request->$key;
+                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+                }
+            }
+
+            foreach ($data['pwa'] as $row) {
+                $key = $row[1];
+                if ($row[2] == 'file') {
+                    $request->validate([$key => 'nullable|file|mimetypes:image/png']);
+
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                    if ($value = $request->hasFile($key)) {
+                        $res = explode('_',$key)[count(explode('_',$key))-1];
+                        $filename = $fid->addFile([
+                            'file'=> $request->file($key),
+                            'purpose'=>$key,
+                            'mime_type'=>['image/png'],
+                            'width'=> $res,
+                            'height'=> $res
+                        ]);
+                        $fid->update([
+                            'value' => $filename
                              ]);
                     }
                 } else {

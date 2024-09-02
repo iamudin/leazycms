@@ -18,7 +18,8 @@
                             Situs Web</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#keamanan"> <i class="fa fa-gears"></i>
                             Lainnya</a></li>
-
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pwa"> <i class="fa fa-mobile-alt"></i>
+                                PWA</a></li>
                 </ul>
                 <div class="tab-content pt-2" id="myTabContent">
                     <div class="tab-pane fade active show" id="home">
@@ -115,7 +116,34 @@
 
 
                 </div>
+                <div class="tab-pane fade" id="pwa">
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> Untuk semua icon, usahakan sesuai keterangan resolusi atau cukup gambar dengan rasio 1:1 dan minimal resolusi 512px * 512px
+                    </div>
+                    @foreach ($pwa as $r)
+                        @if ($r[2] == 'file')
+                            <small for="" class="text-muted">{{ $r[0] }}</small>
+                            @if (get_option($r[1]) && media_exists(get_option($r[1])))
+                                <br><img height="60" src="{{ url(get_option($r[1])) }}"
+                                    onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
+                                    href="javascript:void(0)" onclick="media_destroy('{{ get_option($r[1]) }}')"
+                                    class=" btn-sm text-danger"> <i class="fa fa-trash"></i> </a>
+                                <br>
+                            @else
+                                <input accept="image/png,imgage/jpeg" type="file"
+                                    class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                            @endif
+                        @else
 
+                            <small for="" class="text-muted">{{ $r[0] }}</small>
+                            <input type="text"
+                                @if ($r[2] == 'number') oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" @endif
+                                class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}"
+                                name="{{ $r[1] }}" value="{{ $r[1] == 'site_url' && empty(get_option($r[1])) ? request()->getHttpHost() : get_option($r[1]) }}">
+                        @endif
+                    @endforeach
+
+                </div>
 
                 </div>
             </div>

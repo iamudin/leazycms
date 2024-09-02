@@ -1,31 +1,47 @@
 <meta charset="utf-8">
-<title>{{request()->is('/') ? $title : $title.' | '.get_option('site_title')}}</title>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, shrink-to-fit=no">
-<meta name="author" content="Abu Umar's House">
-<meta name="language" content="Indonesia" />
-<meta name="revisit-after" content="7" />
-<meta name="webcrawlers" content="all" />
-<meta name="rating" content="general" />
-<meta name="spiders" content="all" />
-<meta name="robots" content="all" />
-<meta property="og:url" content="{{$url ?? url('/')}}" />
-<meta property="og:type" content="article" />
-<meta property="og:title" content="{{$title ?? 'Web Title'}}" />
-<meta property="og:image" content="{{$thumbnail ?? noimage()}}" />
-<meta property="og:site_name" content="{{get_option('site_title') ?? 'Web'}}" />
-<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}" />
-<meta name="description" content="{{ $description ?? 'The Website By Laravel'}}">
-<meta name="keywords" content="{{ $keywords ?? 'The Website By Laravel'}}">
+<meta http-equiv="content-language" content="en">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="MobileOptimized" content="width" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<link href="{{ url('/') }}" rel="home" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="canonical" href="{{ url('/') }}" >
+<title>{{request()->is('/') ? $title : $title.' | '.get_option('site_title')}}</title>
+<meta name="robots" content="index,follow"
+<meta name="distribution" content="global" >
+<meta name="rating" content="general">
+<meta name="title" content="{{$title ?? 'Official Website - LeazyCMS'}}" >
+<meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
+<meta property="og:type" content="website">
+<meta property="og:url"  content="{{$url ?? url('/')}}">
+<meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}">
+<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}">
+<meta property="og:image" content="{{$thumbnail ?? noimage()}}">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="{{$url ?? url('/')}}">
+<meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
+<meta property="twitter:description" content="{{ $description ?? 'The Website By Laravel'}}">
+<meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
+<meta property="twitter:site" content="@parsintalabs">
+<meta name="author" content="Abu Umar">
+<meta property="og:locale" content="id" />
+<link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ?? noimage()}}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ get_option('pwa_icon_32')  ?? noimage()}}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ get_option('pwa_icon_16') ?? noimage()}}">
+<link rel="manifest" href="/manifest.json">
+<meta id="theme-color-meta" name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-title" content="{{ get_option('site_title') ?? 'Official Website' }}">
+<meta name="application-name"content="{{ get_option('site_title') ?? 'Official Website' }}">
+<meta name="msapplication-TileColor" content="#0068df">
+<meta name="msapplication-TileImage" content="{{ get_option('favicon') ?? nomimage() }}">
+<meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
+<link rel="icon" href="{{get_option('favicon') ?? noimage() }}" type="image/x-icon" />
+<link rel="manifest" href="{{ url('manifest.json') }}">
 @if($gvc = get_option('google_verification_code'))
 <meta name="google-site-verification" content="{{ $gvc}}">
 @endif
-  <link rel="icon" href="{{get_option('favicon') ?? noimage() }}" type="image/x-icon" />
-  <meta name="theme-color" color="#000000"/>
-  <link rel="apple-touch-icon" href="{{ asset('logo.PNG') }}">
-  <link rel="manifest" href="{{ asset('/manifest.json') }}">
-  <meta name="HandheldFriendly" content="True">
-
   @if($gac = get_option('google_analytics_code'))
 <script async src="https://www.googletagmanager.com/gtag/js?id={{$gac}}"></script>
 <script>

@@ -26,22 +26,23 @@ class WebController extends Controller
     }
     public function manifest(){
         $manifest = [
-            'name' => get_option('nama'),
-            'short_name' => get_option('nama'),
-            'description' => 'Deskripsi Aplikasi',
+            'name' => get_option('pwa_name'),
+            'short_name' => get_option('pwa_short_name'),
+            'description' => get_option('pwa_description'),
             'start_url' => url('/'),
-            'display' => 'fullscreen',
+            'display' => 'standalone',
             'background_color' => '#ffffff',
             'theme_color' => '#000000',
             'icons' => [
                 [
-                    'src' =>  url(get_option('favicon')),
-                    'sizes' => '200x252',
+                    'src' =>  get_option('pwa_icon_512') ?? noimage(),
+                    'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any maskable'
                 ]
             ]
         ];
+
         return Response::json($manifest)->header('Content-Type', 'application/json');
     }
     public function sitemap_xml(){
