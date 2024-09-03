@@ -18,9 +18,6 @@ class Web
         if (strpos($request->getRequestUri(), 'index.php') !== false || $request->getHost()!=str_replace('http://','',config('app.url'))) {
             return redirect( config('app.url') . str_replace('/index.php', '', $request->getRequestUri()));
         }
-        if(app()->environment('production') && strpos($request->fullUrl(), 'https://')===false ){
-            return redirect(str_replace('http','https',$request->fullUrl()));
-        }
         $response = $next($request);
         if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
             return undermaintenance();
