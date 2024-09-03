@@ -307,7 +307,15 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function appearance(Request $request)
     {
+
         admin_only();
+        if($request->optimize){
+            Artisan::call('optimize:clear');
+            Artisan::call('optimize');
+             return to_route('appearance');
+
+
+         }
         if($request->isMethod('post')){
         if($file = $request->file('template')){
            $request->validate([
@@ -379,7 +387,10 @@ class PanelController extends Controller implements HasMiddleware
                 File::ensureDirectoryExists($assetsDestinationPath);
                 File::copyDirectory($assetsSourcePath, $assetsDestinationPath);
             }
-
+            $assetsResourcePath = $templatePath . '/assets';
+            if (File::exists($assetsResourcePath)) {
+                File::deleteDirectory($assetsResourcePath);
+            }
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
 
@@ -389,8 +400,7 @@ class PanelController extends Controller implements HasMiddleware
                     'value'=>$mainFolderName
                 ]);
             }
-            Artisan::call('optimize');
-            return back()->with('success','Template Berhasil Upload');
+            return redirect(route('appearance').'?optimize=true');
         } else {
             return back()->with('danger','Template Gagal Diupload');
 

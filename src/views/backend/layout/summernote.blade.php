@@ -140,6 +140,7 @@
                 var alls = $('#editor').summernote("code");
                 $('#editor').summernote("code", alls.replace(placeholderImageUrl, actualImageUrl));
 
+
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error('Error uploading image: ', textStatus, errorThrown);
