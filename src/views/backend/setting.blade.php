@@ -58,6 +58,13 @@
                         @foreach ($site_attribute as $r)
                             @if ($r[2] == 'file')
                                 <small for="" class="text-muted">{{ $r[0] }}</small>
+                                @if($r[1]=='favicon')
+                                <br><img height="60" src="/favicon.ico"
+                                onerror="{{ noimage() }}">
+                            <br>
+                                <input accept="image/png,imgage/jpeg" type="file"
+                                class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                                @else
                                 @if (get_option($r[1]) && media_exists(get_option($r[1])))
                                     <br><img height="60" src="{{ url(get_option($r[1])) }}"
                                         onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
@@ -67,6 +74,7 @@
                                 @else
                                     <input accept="image/png,imgage/jpeg" type="file"
                                         class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                                @endif
                                 @endif
                             @else
 

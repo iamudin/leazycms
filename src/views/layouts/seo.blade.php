@@ -30,11 +30,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
 <meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
 <meta name="msapplication-TileColor" content="#0068df">
-<meta name="msapplication-TileImage" content="{{ get_option('favicon') ?? nomimage() }}">
+<meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ?? nomimage() }}">
 <link rel="canonical" href="{{$url ?? url('/')}}" >
 <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ?? noimage()}}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ get_option('pwa_icon_32')  ?? noimage()}}">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ get_option('pwa_icon_16') ?? noimage()}}">
+@php $ic32 = get_option('pwa_icon_32'); $ic16=get_option('pwa_icon_32'); @endphp
+@if($ic32 && $ic16 && media_exists($ic32) && media_exists($ic16)  )
+<link rel="icon" type="image/png" sizes="32x32" href="{{ $ic32}}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ $ic16}}">
+@endif
 <link rel="manifest" href="/site.manifest">
 <script type="text/javascript">
     if ('serviceWorker' in navigator) {

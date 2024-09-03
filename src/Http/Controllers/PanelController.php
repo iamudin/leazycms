@@ -8,6 +8,7 @@ use Leazycms\Web\Models\Visitor;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -131,7 +132,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Google Analytics Code', 'google_analytics_code', 'text'],
             ['Postingan Perhalaman', 'post_perpage', 'number'],
             ['Logo', 'logo', 'file'],
-            ['Favicon', 'favicon', 'file'],
+            ['Favicon (Gambar PNG/JPG rasio 1:1 maks 2mb)', 'favicon', 'file'],
             ['Preview', 'preview', 'file'],
         );
         $data['pwa'] = array(
@@ -207,10 +208,24 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
-                    $request->validate([$key => 'nullable|file|mimetypes:' . allow_mime()]);
-
+                    $request->validate([$key => 'nullable|file|mimetypes:image/png,image/jpeg|max:2048']);
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
+
+                    if($key=='favicon'){
+                        $outputPath = public_path('favicon.png');
+                        if(file_exists($outputPath)){
+                            unlink($outputPath);
+                        }
+                        $image = Image::make($request->file('favicon')->getRealPath())
+                                      ->resize(16, 16);
+                        $image->save($outputPath);
+                        if (file_exists($outputPath)) {
+                            rename($outputPath, public_path('favicon.ico'));
+                        }
+
+                    }else{
+
                         $fid->update([
                             'value' =>$fid->addFile([
                                 'file'=> $request->file($key),
@@ -219,6 +234,8 @@ class PanelController extends Controller implements HasMiddleware
                                 ])
                              ]);
                     }
+                }
+
                 } else {
                     $value = $request->$key;
                     $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
@@ -405,7 +422,7 @@ class PanelController extends Controller implements HasMiddleware
                 mkdir($path);
             }
             if (!file_exists($path . $file)) {
-                File::put($path .$file,'$( document ).ready(function() { console.log( "document loaded" );});');
+                File::put($path .$file,'/*You JS Here*/');
             }
         } else {
         }
