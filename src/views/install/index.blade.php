@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>{{ !session('dbcredential')  ? 'Database Credential > ':'User & Site > '}}Setup</title>
+        <title>{{ !session('dbcredential')  ? 'Database Credential > ':'User & Site > '}} LeazyCMS</title>
         <!-- Required meta tags -->
         <meta charset="utf-8" />
         <meta
@@ -27,7 +27,7 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header text-center bg-warning">
-                            <h3> <i class="bi bi-gear"></i> CMS Setup</h3>
+                            <h3> <i class="bi bi-gear"></i> LeazyCMS Setup</h3>
                         </div>
                         <div class="card-body">
                             @if ($errors->any())
@@ -133,9 +133,9 @@
                                 </div>
                             </form>
                         </div>
-                        {{-- <div class="card-footer text-center">
-                            <small>&copy; Laradesk.id</small>
-                        </div> --}}
+                        <div class="card-footer text-center">
+                            <small>&copy; LeazyCMS v.{{ get_leazycms_version() }}</small>
+                        </div>
                     </div>
                 </div>
             </div>
