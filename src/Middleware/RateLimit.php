@@ -120,7 +120,7 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
-        if ($request->is(['sitemap.xml','service-worker.js','manifest.json'])) {
+        if ($request->is(['sitemap.xml','swk.js','site.manifest'])) {
             $attr['detail_visited'] = false;
             config([
                 'modules.current' => $attr

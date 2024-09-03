@@ -29,7 +29,9 @@ class ExtController extends Controller
             ]
         ];
 
-        return Response::json($manifest)->header('Content-Type', 'application/json');
+        return Response::json($manifest)
+    ->header('Content-Type', 'application/json')
+    ->header('Content-Disposition', 'attachment; filename="site.manifest"');
     }
     public function sitemap_xml(){
 

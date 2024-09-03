@@ -47,9 +47,6 @@ class Web
                 }
 
             $footer = '';
-            if($request->getHost()!='leazycms.com'){
-                $footer .= '<footer style="text-align:center;background:#000;padding:7px;color:#ccc" class="'.str()->random(5).'_credit"><small style="font-size:13px">Build with LeazyCMS</small></footer>';
-            }
             $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
             if(file_exists(public_path('template/'.template().'/scripts.js'))){
             $footer .= '<script src="'.url('template/'.template().'/scripts.js').'"></script>';
