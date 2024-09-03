@@ -7,16 +7,12 @@ use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Validation\Rule;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Leazycms\Web\Models\Category;
-use Leazycms\Web\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
-use Carbon\Carbon;
-use PhpParser\Node\Stmt\Break_;
 
 class PostController extends Controller implements HasMiddleware
 {

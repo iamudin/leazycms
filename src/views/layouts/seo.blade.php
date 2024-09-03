@@ -1,20 +1,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
+<meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
+<title>{{request()->is('/') ? $title : $title.' | '.get_option('site_title')}}</title>
 <meta http-equiv="content-language" content="en">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="MobileOptimized" content="width" />
-<meta name="HandheldFriendly" content="true" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<link href="{{ url('/') }}" rel="home" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<link rel="canonical" href="{{ url('/') }}" >
-<title>{{request()->is('/') ? $title : $title.' | '.get_option('site_title')}}</title>
-<meta name="robots" content="index,follow"
+<meta name="robots" content="index,follow">
 <meta name="distribution" content="global" >
 <meta name="rating" content="general">
 <meta name="title" content="{{$title ?? 'Official Website - LeazyCMS'}}" >
-<meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta property="og:type" content="website">
 <meta property="og:url"  content="{{$url ?? url('/')}}">
 <meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}">
@@ -28,28 +25,23 @@
 <meta property="twitter:site" content="@parsintalabs">
 <meta name="author" content="Abu Umar">
 <meta property="og:locale" content="id" />
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ??  get_option('site_title') }}">
+<meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
+<meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
+<meta name="msapplication-TileColor" content="#0068df">
+<meta name="msapplication-TileImage" content="{{ get_option('favicon') ?? nomimage() }}">
+<link rel="canonical" href="{{$url ?? url('/')}}" >
 <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ?? noimage()}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ get_option('pwa_icon_32')  ?? noimage()}}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ get_option('pwa_icon_16') ?? noimage()}}">
 <link rel="manifest" href="/manifest.json">
-<met name="theme-color" content="#ffffff">
-
-<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ??  get_option('site_title') }}">
-<meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
-<meta name="application-name"content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
-
-<meta name="msapplication-TileColor" content="#0068df">
-<meta name="msapplication-TileImage" content="{{ get_option('favicon') ?? nomimage() }}">
-<meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
-<link rel="icon" href="{{get_option('favicon') ?? noimage() }}" type="image/x-icon" />
 <script type="text/javascript">
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js', {
             scope: '.'
         }).then(function (registration) {
-            console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
         }, function (err) {
-            console.log('Laravel PWA: ServiceWorker registration failed: ', err);
         });
     }
 </script>
@@ -103,7 +95,7 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   </script>
   @endif
   @if(file_exists(public_path('template/'.template().'/styles.css')))
-  <link rel="stylesheet" type='text/css' property='stylesheet' href="{{url('template/'.template().'/styles.css')}}">
+  <link rel="stylesheet" type='text/css'  href="{{url('template/'.template().'/styles.css')}}">
   @endif
 
 
