@@ -30,7 +30,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
 <meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
 <meta name="msapplication-TileColor" content="#0068df">
-<meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ?? nomimage() }}">
+<meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ?? noimage() }}">
 <link rel="canonical" href="{{$url ?? url('/')}}" >
 <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ?? noimage()}}">
 @php $ic32 = get_option('pwa_icon_32'); $ic16=get_option('pwa_icon_32'); @endphp
