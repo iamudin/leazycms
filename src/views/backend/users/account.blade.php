@@ -31,6 +31,7 @@
       <input required type="text" class="form-control form-control-sm username" name="username" placeholder="Masukkan Username" value="{{$user->username}}">
       <small for="">Password</small>
       <input type="password" class="form-control form-control-sm password" name="password" placeholder="Masukkan Password" value="">
+      <small class="text-danger">Minimal 8 karakter dan di butuhkan Min 1 Kapital, 1 huruf kecil, 1 angka dan symbol khusus</small>
         <small for="">Konfimasi Password</small>
         <input type="password" class="form-control form-control-sm password" name="password_confirmation" placeholder="Masukkan Password" value="">
         <small class="text-danger">*) Kosongkan jika tidak mengubah password</small>

@@ -4,7 +4,6 @@ namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Leazycms\Web\Models\Tag;
 use Leazycms\Web\Models\Post;
-use Leazycms\Web\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
@@ -36,23 +35,6 @@ class PostController extends Controller implements HasMiddleware
             'mime_type'=>['image/jpeg','image/png']]);
         return response()->json(['status'=>'success','url'=>$result]);
     }
-    public function comments(Request $req)
-    {
-        if ($req->status) {
-            $cek = Comment::where('id', $req->status)->first();
-            if ($cek->status == 1) {
-                Comment::where('id', $req->status)->update(['status' => 0]);
-            } else {
-                Comment::where('id', $req->status)->update(['status' => 1]);
-            }
-            return back()->with('success', 'Success');
-
-        }
-        $data['comments'] = Comment::withwherehas('post')->orderBy('created_at', 'desc')->get();
-
-        return view('views::backend.comments', $data);
-    }
-
 public function create(Request $request){
 $request->user()->hasRole(get_post_type(),__FUNCTION__);
     $newpost = $request->user()->posts()->create([
@@ -85,9 +67,9 @@ return view('cms::backend.posts.form',[
 }
 public function destroy(Request $request,Post $post){
     $request->user()->hasRole(get_post_type(),'delete');
-    // if($post->medias->count()){
-    //     Post::whereParentId($post->id)->whereParentType('post')->whereType('media')->delete();
-    //     recache_media();
+    // if($post->files->count()){
+    //     File::whereFileableId($post->id)->delete();
+    //     // recache_media();
     // }
     $post->delete();
     switch(get_post_type()){
@@ -128,8 +110,9 @@ public function update(Request $request, Post $post){
         }
     }
 }
+$uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$post->type)->whereNull('deleted_at')->ignore($post->id) : '';
     $post_field =  [
-        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5|'. Rule::unique('posts')->where('type',$post->type)->whereNull('deleted_at')->ignore($post->id),
+        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5'.$uniq,
         'media'=> 'nullable|file|mimetypes:image/jpeg,image/png',
         'content'=> ['nullable',function ($attribute, $value, $fail) {
             if (strpos($value, '<?php') !== false) {

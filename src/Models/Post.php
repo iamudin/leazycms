@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
+use Leazycms\FLC\Traits\Commentable;
 
 class Post extends Model
 {
-    use SoftDeletes,Fileable;
+    use SoftDeletes,Fileable,Commentable;
     public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','mime'];
 
     protected $userselectcolumn = ['id','name','url'];
@@ -32,10 +33,6 @@ class Post extends Model
     public function tags()
     {
         return $this->belongsToMany(Tag::class);
-    }
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
     }
     public function visitors()
     {
@@ -122,7 +119,7 @@ class Post extends Model
     }
     function scopePinned($query)
     {
-        return $query->wherePinned(1);
+        return $query->wherePinned('Y');
     }
     function scopeWithCountVisitors($query)
     {
@@ -146,18 +143,7 @@ class Post extends Model
         return collect(Cache::get('category_' . $type))->sortBy('sort');
     }
 
-    function comment_by_post($type, $slug, $limit = false)
-    {
-        if ($limit) {
-            Comment::withWhereHas('post', function ($q) use ($slug, $type) {
-                $q->whereType($type)->whereStatus('publish')->whereSlug($slug);
-            })->whereStatus('publish')->limit($limit)->get();
-        } else {
-            return Comment::withWhereHas('post', function ($q) use ($slug, $type) {
-                $q->whereType($type)->whereStatus('publish')->whereSlug($slug);
-            })->whereStatus('publish')->get();
-        }
-    }
+
 
     function index_limit($type, $limit)
     {
@@ -200,6 +186,10 @@ class Post extends Model
             ->take($limit)
             ->get();
         }
+    }
+    function index_tags()
+    {
+        return Tag::whereStatus('publish')->whereHas('posts')->get();
     }
     function index_sort($type,$order='asc')
     {
@@ -244,12 +234,22 @@ class Post extends Model
 
     function index_pinned($limit, $type = false)
     {
+       if($type){
         return $this->selectedColumn()
-        ->pinnded()
+        ->pinned()
+        ->published()
+        ->onType($type)
+        ->take($limit)
+        ->latest()
+        ->get();
+    }else{
+        return $this->selectedColumn()
+        ->pinned()
         ->published()
         ->take($limit)
         ->latest()
         ->get();
+       }
     }
     function index_by_category($type, $slug, $limit = false)
     {

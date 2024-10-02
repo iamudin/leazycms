@@ -99,6 +99,7 @@ return [
                     ['Pemberi Sambutan','break'],
                     ['Nama','text'],
                     ['Jabatan','text'],
+                    ['Visi Misi','textarea'],
 
                 ],
             ],

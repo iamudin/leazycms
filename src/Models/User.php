@@ -61,10 +61,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Log::class);
     }
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
+
     public function isActive(){
         return $this->status == '1';
     }

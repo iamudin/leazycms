@@ -30,9 +30,14 @@
         <li><a class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
                 href="{{ admin_url('tags') }}"><i class="app-menu__icon fa fa-hashtag"></i> <span
                     class="app-menu__label">Tags</span></a></li>
+                    <li title="Komentar Pengunjung"><a
+                        class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
+                        href="{{ admin_url('comments') }}"><i class="app-menu__icon fa fa-comments"></i> <span
+                            class="app-menu__label">Tanggapan</span></a></li>
         <li><a class="app-menu__item {{ Request::is(admin_path() . '/files') ? 'active' : '' }}"
                 href="{{ admin_url('files') }}"><i class="app-menu__icon fa fa-folder"></i> <span
                     class="app-menu__label">File Manager</span></a></li>
+
         @if ($option = config('modules.config.option'))
         <li><a class="app-menu__item {{ Request::is(admin_path() . '/option') ? 'active' : '' }}"
             href="{{ admin_url('option') }}"><i class="app-menu__icon fa fa-table"></i> <span
@@ -57,10 +62,7 @@
                 </li>
             @endforeach
         @endif
-        {{-- <li title="Komentar Pengunjung"><a
-                class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
-                href="{{ admin_url('comments') }}"><i class="app-menu__icon fa fa-comments"></i> <span
-                    class="app-menu__label">Tanggapan</span></a></li> --}}
+
         @if ($userprofile->level == 'admin')
             <li class="text-muted" style="padding:12px 10px;font-size:small;background:#000"><i class="fa fa-lock"
                     aria-hidden="true"></i> &nbsp; ADMINISTRATOR</li>

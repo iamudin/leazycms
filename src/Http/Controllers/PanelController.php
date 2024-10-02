@@ -134,6 +134,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Logo', 'logo', 'file'],
             ['Favicon (Gambar PNG/JPG rasio 1:1 maks 2mb)', 'favicon', 'file'],
             ['Preview', 'preview', 'file'],
+            ['Background Header Video (.mp4)', 'bg_header_video', 'file'],
         );
         $data['pwa'] = array(
             ['Nama Aplikasi', 'pwa_name', 'text'],
@@ -208,7 +209,7 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
-                    $request->validate([$key => 'nullable|file|mimetypes:image/png,image/jpeg|max:2048']);
+                    $request->validate([$key => 'nullable|file']);
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
 
@@ -224,7 +225,16 @@ class PanelController extends Controller implements HasMiddleware
                             rename($outputPath, public_path('favicon.ico'));
                         }
 
-                    }else{
+                    }elseif($key=='bg_header_video'){
+                        $fid->update([
+                            'value' =>$fid->addFile([
+                                'file'=> $request->file($key),
+                                'purpose'=>$key,
+                                'mime_type'=>['video/mp4'],
+                                ])
+                             ]);
+                    }
+                    else{
 
                         $fid->update([
                             'value' =>$fid->addFile([

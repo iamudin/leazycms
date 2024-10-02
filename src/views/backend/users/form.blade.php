@@ -28,7 +28,7 @@
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Foto</label>
                 @if($user && $user->photo && media_exists($user,$user->photo))
-                <br><img src="{{ url($user->photo) }}" style="height: 70px" class="img-thumbnail"> <a href="javascript:void(0)" onclick="media_destroy('{{ $user->photo }}')" class="btn-danger btn-sm"> <i class="fa fa-trash text-white"></i> </a>
+                <br><img src="{{ $user->photo_user}}" style="height: 70px" class="img-thumbnail"> <a href="javascript:void(0)" onclick="media_destroy('{{ $user->photo }}')" class="btn-danger btn-sm"> <i class="fa fa-trash text-white"></i> </a>
                 @else
                   <input accept="image/png,image/jpeg"  class=" form-control-sm form-control-file " name="photo"  type="file">
                 @endif

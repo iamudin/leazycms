@@ -104,10 +104,10 @@ class CmsServiceProvider extends ServiceProvider
                 config(['modules.option' => $options]);
             }
 
-
             if (empty(Cache::has('menu'))) {
                 recache_menu();
             }
+
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && env('APP_DEBUG') == true)) {
                 Config::set(['app.debug' => true]);
             } else {

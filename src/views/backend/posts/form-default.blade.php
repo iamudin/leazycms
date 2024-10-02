@@ -161,7 +161,7 @@
                                     class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
                 @else
                 @endif
-                @if ($module->web->sortable && $module->web->index)
+                @if ($module->web->sortable)
                 <small for="">Urutan {!! help('Urutan konten yang akan ditampilkan') !!}</small>
                 <select class="form-control form-control-sm" name="sort">
                     @php $count = query()->whereType(get_post_type())->count();@endphp
@@ -187,7 +187,6 @@
                         </label>
                     </div>
                 @endif
-                @if ($module->form->thumbnail)
                     <div class="animated-checkbox">
                         <label>
                             <input {{ $post && $post->pinned == 'Y' ? 'checked=checked' : '' }} type="checkbox"
@@ -195,7 +194,6 @@
                                     {!! help('Jika dicentang, maka postingan ini akan menjadi prioritas dihalaman jika dikondisikan pada template ') !!}</small></span>
                         </label>
                     </div>
-                @endif
                 <div class="form-group form-inline">
                     <div class="animated-radio-button">
                         <label>

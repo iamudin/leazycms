@@ -37,7 +37,7 @@ class UserController extends Controller implements HasMiddleware
             $data= $request->validate([
                 'photo'=> 'nullable|file|mimetypes:image/jpeg,image/png',
                 'name'=> 'required|string',
-                'username'=>'required|string|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
+                'username'=>'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
                 'email'=> 'required|string|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
                 'password'=>'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
             ]);
@@ -102,7 +102,7 @@ public function store(Request $request){
         'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
         'foto'=> 'nullable|mimetypes:image/jpeg,image/png',
         'email'=>'required|email|'.Rule::unique('users'),
-        'username'=>'required|string|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users'),
+        'username'=>'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users'),
         'status'=>'required|string|in:active,blocked',
         'level'=>'required|string|in:'.get_option('roles'),
         'password'=>'required|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
@@ -126,7 +126,7 @@ public function update(Request $request, User $user){
         'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
         'foto'=> 'nullable|mimetypes:image/jpeg,image/png',
         'email'=>'required|email|'.Rule::unique('users')->ignore($user->id),
-        'username'=>'required|string|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
+        'username'=>'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
         'status'=>'required|string|in:active,blocked',
         'level'=>'required|string|in:'.get_option('roles'),
         'password'=>'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',

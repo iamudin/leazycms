@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('url')->nullable();
+            $table->string('status',50)->default('draft')->index();
             $table->string('slug')->unique();
             $table->integer('visited')->default(0);
             $table->text('description')->nullable();

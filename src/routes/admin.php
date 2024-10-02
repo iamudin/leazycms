@@ -13,6 +13,9 @@ Route::post('files/upload_image_summernote', [PostController::class, 'uploadImag
 Route::get('files', function(){
     return view('cms::backend.files.index');
 });
+Route::get('comments', function(){
+    return view('cms::backend.comments.index');
+});
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {
@@ -82,14 +85,6 @@ Route::controller(TagController::class)->group(function () {
     Route::get('tags/{tag}/edit', 'edit')->name('tag.edit');
     Route::put('tags/{tag}/update', 'update')->name('tag.update');
     Route::delete('tags/{tag}/edit', 'destroy')->name('tag.destroy');
-});
-Route::controller(CommentController::class)->group(function () {
-    Route::get('comments', 'index')->name('comment');
-    Route::post('comments', 'datatable')->name('comment.datatable');
-    Route::get('comments/{comment}/reply', 'reply')->name('comment.reply');
-    Route::post('comments/{comment}/reply', 'sendreply')->name('comment.sendreply');
-    Route::put('comments/{comment}/update', 'update')->name('comment.update');
-    Route::delete('comments/{comment}/delete', 'destroy')->name('comment.destroy');
 });
 Route::get('/', function () {
     return to_route('login');

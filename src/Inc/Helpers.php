@@ -921,7 +921,6 @@ if (!function_exists('init_meta_header')) {
                 'thumbnail' => url(get_option('preview') ?? noimage()),
                 'url' => request()->fullUrl(),
             ];
-
             return \Illuminate\Support\Facades\View::make('cms::layouts.seo', $data ?? [null])->render();
         }
     }
