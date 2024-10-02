@@ -38,11 +38,11 @@ $modules = collect(get_module())->where('name','!=','halaman')->where('active', 
     Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->middleware(['public']);
     Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->middleware(['public']);
     Route::match(['get', 'post'],'sitemap.xml', [ExtController::class, 'sitemap_xml'])->name('sitemap');
-    Route::match(['get', 'post'],'site.manifest', [ExtController::class, 'manifest'])->name('manifest');
-    Route::match(['get', 'post'],'swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
+    Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
+    Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
 
     Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
-->where('slug', '(?!' . implode('|', array_merge([admin_path(),'search','tags','install','author','sitemap.xml','manifest.json','service-worker.js','favicon.ico'],$modules->pluck('name')
+->where('slug', '(?!' . implode('|', array_merge([admin_path(),'search','tags','install','author','sitemap.xml','favicon.ico'],$modules->pluck('name')
 ->toArray())) . ')[a-zA-Z0-9-_]+')->middleware(['public']);
 
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public']);

@@ -38,16 +38,18 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ $ic32}}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ $ic16}}">
 @endif
-<link rel="manifest" href="/site.manifest">
+@if(get_option('pwa_name') && get_option('pwa_short_name'))
+<link rel="manifest" href="/favicon/site.manifest">
 <script type="text/javascript">
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/swk.js', {
+        navigator.serviceWorker.register('/favicon/swk.js', {
             scope: '.'
         }).then(function (registration) {
         }, function (err) {
         });
     }
 </script>
+@endif
 @if($gvc = get_option('google_verification_code'))
 <meta name="google-site-verification" content="{{ $gvc}}">
 @endif
