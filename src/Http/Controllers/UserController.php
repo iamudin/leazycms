@@ -89,7 +89,7 @@ class UserController extends Controller implements HasMiddleware
                 return $row->status=='active' ? $active : $nonactive;
             })
             ->addColumn('photo', function ($row) {
-                return '<img src="'.$row->userphoto.'" height="50" class="rounded">';
+                return '<img src="'.$row->photo_user.'" height="50" class="rounded">';
             })
             ->rawColumns(['action','name','status','photo','role','username'])
             ->toJson();

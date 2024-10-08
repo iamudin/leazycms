@@ -1335,8 +1335,8 @@ if (!function_exists('isHomePage')) {
       return request()->is('/') ? true : false;
     }
 }
-if (!function_exists('getTgl')) {
-    function getTgl($tanggal, $type)
+if (!function_exists('get_tgl')) {
+    function get_tgl($tanggal, $type)
     {
         $hari_array = array(
             'Minggu',

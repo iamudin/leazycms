@@ -191,13 +191,13 @@ class Post extends Model
     {
         return Tag::whereStatus('publish')->whereHas('posts')->get();
     }
-    function index_sort($type,$order='asc')
+    function index_sort($type,$order='asc',$limit=false)
     {
         if (get_module($type)?->cache) {
             return $order=='asc'? collect($this->cachedpost($type)->values())->sortBy($order) : collect($this->cachedpost($type)->values())->sortByDesc($order);
         } else {
             $order = $order!='asc' ? 'desc':'asc';
-            return $this->selectedColumn()->onType($type)->published()->orderBy('sort',$order)->get();
+            return $limit ? $this->selectedColumn()->onType($type)->published()->orderBy('sort',$order)->take($limit)->get() :  $this->selectedColumn()->onType($type)->published()->orderBy('sort',$order)->get();
         }
     }
     function index_sort_by_parent($type,$order='asc')
