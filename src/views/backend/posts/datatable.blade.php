@@ -2,6 +2,7 @@
     window.addEventListener('DOMContentLoaded', function() {
      var sort_col = $('.datatable').find("th:contains('Dibuat')")[0].cellIndex;
         var table = $('.datatable').DataTable({
+
             responsive: true,
 
             processing: true,
@@ -10,13 +11,13 @@
 
             ajax: {
                 method: "POST",
-                url: "{{ route(get_post_type() . '.datatable') }}",
+                url: "{{ route(get_post_type() . '.datatable').(request('trash') ? '?trash=true':'') }}",
                 data: {_token:"{{csrf_token()}}"}
             },
             lengthMenu: [10, 20, 50, 100, 200, 500],
             deferRender: true,
             columns: [
- 
+
                 {
                     className: 'text-center',
                     data: 'DT_RowIndex',
@@ -31,7 +32,7 @@
                         name: 'post_thumbnail',
                         orderable: false
                     },
-                @endif 
+                @endif
                 {
                     data: 'title',
                     searchable: true,
@@ -75,7 +76,7 @@
                         orderable: true,
                         searchable: false
                     },
-                @endif 
+                @endif
                 {
                     data: 'action',
                     name: 'action',

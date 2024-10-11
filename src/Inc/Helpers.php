@@ -233,20 +233,7 @@ function getWebDisk($host = false)
 
     return new \Leazycms\Web\Inc\Disk($host ? $host : false);
 }
-if (!function_exists('size_as_kb')) {
-    function size_as_kb($bytes, $precision = 2)
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
-
-        $bytes /= pow(1024, $pow);
-
-        return round($bytes, $precision) . ' ' . $units[$pow];
-    }
-}
 
 
 if (!function_exists('domain')) {
@@ -1056,13 +1043,6 @@ if (!function_exists('mime_thumbnail')) {
     }
 }
 
-if (!function_exists('media_exists')) {
-    function media_exists($media)
-    {
-        $media_exists =  \Illuminate\Support\Facades\Cache::get("media_".basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) &&\Illuminate\Support\Facades\Storage::exists($media_exists->file_path) ? true : false;
-    }
-}
 if (!function_exists('upload_media')) {
     function upload_media($post, $media, $description, $parent_type)
     {

@@ -51,7 +51,7 @@ class WebController extends Controller
         $modul = current_module();;
         config(['modules.page_name' => 'Daftar ' . $modul->title]);
         $data = array(
-            'index' => $index= $modul->web->auto_query ? $post->index($modul->name, get_option('post_perpage')) : [],
+            'index' => $modul->web->auto_query ? $post->index($modul->name, get_option('post_perpage')) : [],
             'module' => $modul,
         );
      return view('cms::layouts.master', $data);

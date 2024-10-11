@@ -36,6 +36,7 @@ foreach (get_module() as $value) {
         }
         if (in_array('delete', $value->route)) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
+            Route::match(['get','post'],$value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');
         }
         if ($value->form->editor) {
             Route::post($value->name . '/{post}/upload_image', 'editor_image_upload')->name($value->name . '.editor-image-upload');

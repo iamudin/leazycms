@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id()->index();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('parent_id')->index()->nullable();
-            $table->string('parent_type')->index()->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
             $table->string('status',50)->default('draft')->index();
             $table->string('type')->index();

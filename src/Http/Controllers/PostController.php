@@ -1,17 +1,18 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Leazycms\Web\Models\Tag;
-use Leazycms\Web\Models\Post;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Http\Request;
+use Leazycms\Web\Models\Tag;
+use Leazycms\FLC\Models\File;
+use Leazycms\Web\Models\Post;
 use Illuminate\Validation\Rule;
+use Leazycms\Web\Models\Category;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Route;
+use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Leazycms\Web\Models\Category;
-use Illuminate\Support\Facades\Route;
 
 class PostController extends Controller implements HasMiddleware
 {
@@ -35,6 +36,18 @@ class PostController extends Controller implements HasMiddleware
             'mime_type'=>['image/jpeg','image/png']]);
         return response()->json(['status'=>'success','url'=>$result]);
     }
+    public function restore(Request $request){
+        if($request->user()->isAdmin()){
+            $post = Post::withTrashed()->findOrFail($request->post);
+            $post->update(['status'=>'draft']);
+            $post->restore();
+            return back()->with('success','Data Berhasil dipulihkan');
+
+        }else{
+            return redirect(admin_path());
+        }
+
+        }
 public function create(Request $request){
 $request->user()->hasRole(get_post_type(),__FUNCTION__);
     $newpost = $request->user()->posts()->create([
@@ -65,23 +78,18 @@ return view('cms::backend.posts.form',[
         'category'=> $module->form->category ? Category::query()->whereType(get_post_type())->select('id','name')->orderBy('sort')->get() : null
 ]);
 }
-public function destroy(Request $request,Post $post){
+public function destroy(Request $request){
     $request->user()->hasRole(get_post_type(),'delete');
-    // if($post->files->count()){
-    //     File::whereFileableId($post->id)->delete();
-    //     // recache_media();
-    // }
-    $post->delete();
-    switch(get_post_type()){
-        case 'banner':
-        recache_banner();
-        break;
-        case 'menu':
-        recache_menu();
-        break;
-        default:
-        regenerate_cache();
-        break;
+    $post = Post::withTrashed()->find($request->post);
+    if($post->trashed() && $request->user()->isAdmin()){
+        $post->forceDelete();
+    }
+    if($request->user()->isAdmin() ||  ($request->user()->isOperator() && $post->user_id != $request->user()->id)){
+        if(empty($post->title) && $post->status=='draft'){
+            $post->forceDelete();
+        }else {
+        $post->delete();
+        }
     }
 }
 public function show(Post $post,$id){
@@ -237,6 +245,9 @@ public function recache($type){
     public function datatable(Request $req)
     {
         $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
+        if($req->trash){
+            $data = $data->onlyTrashed();
+        }
         return DataTables::of($data)
             ->addIndexColumn()
             ->order(function ($query) use ($req) {
@@ -292,19 +303,19 @@ public function recache($type){
             ->addColumn('category', function ($row) {
                return $row->category->name ?? '__';
             })
-            // || $row->type!='media' && empty($row->child_count)) || ($row->type == 'menu' && empty($row->data_loop)
+
             ->addColumn('action', function ($row) {
 
                 $btn = '<div style="text-align:right"><div class="btn-group ">';
 
-                $btn .= current_module()->web->detail && $row->status=='publish' ? '<a target="_blank" href="' .url($row->url.'/').'"  class="btn btn-info btn-sm fa fa-globe"></a>':'';
-
+                $btn .= !$row->trashed() && current_module()->web->detail && $row->status=='publish' ? '<a target="_blank" href="' .url($row->url.'/').'"  class="btn btn-info btn-sm fa fa-globe"></a>':'';
+                if(empty($row->deleted_at)){
                 $btn .= Route::has($row->type.'.edit') ?'<a href="' . route(get_post_type().'.edit', $row->id).'"  class="btn btn-warning btn-sm fa '.($row->type=='media' ? 'fa-eye' : 'fa-edit').'"></a>':'';
-                $btn .= $row->type=='media' ? '<button title="Copy URL media" class="btn btn-sm btn-info fa fa-copy" onclick="copy(\''.route('stream',basename($row->media)).'\')"></button>' : '';
-                $btn .= $row->type=='media' && $row->id == $row->parent_id ? '<button title="Hapus Media" class="btn btn-sm btn-danger fa fa-trash" onclick="deleteAlert(\''.basename($row->media).'\')"></button>' : '';
-
-
-                $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '<button onclick="deleteAlert(\''.route($row->type.'.destroyer',$row->id).'\')" class="btn btn-danger btn-sm fa fa-trash-o"></button>' ) :'';
+                }else{
+                    $btn .= '<a href="' . route(get_post_type().'.restore', $row->id).'"  class="btn btn-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
+                }
+                $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
+                $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '<button title="'.$titledelete.'" onclick="deleteAlert(\''.route($row->type.'.destroyer',$row->id).'\')" class="btn btn-danger btn-sm fa fa-trash-o"></button>' ) :'';
                 $btn .= '</div></div>';
                 return $btn;
             })

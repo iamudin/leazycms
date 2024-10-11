@@ -302,7 +302,7 @@ return [
                 'index' => true,
                 'detail' => true,
                 'history' => true,
-                'auto_query' => true,
+                'auto_query' => false,
                 'sortable'=>false,
             ],
             'public' => true,

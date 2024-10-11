@@ -10,6 +10,9 @@
     <a href="{{route(get_post_type().'.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
     @endif
     @if(Route::has(get_post_type().'.category')) <a href="{{route(get_post_type().'.category')}}" class="btn btn-dark btn-sm"> <i class="fa fa-tags" aria-hidden></i> Kategori</a> @endif
+    @if(request()->user()->isAdmin())
+<a title="Sampah" href="{{ route(get_post_type()).'?trash=show' }}" class="btn btn-sm btn-warning">&nbsp; <i class="fa fa-trash-restore"></i> </a>
+@endif
 </div>
 </div>
 
@@ -62,6 +65,9 @@
 </table>
 
 </div>
+<br>
+<br>
+
 </div>
 @include('cms::backend.posts.datatable')
 @push('styles')
