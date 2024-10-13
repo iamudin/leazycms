@@ -96,7 +96,7 @@
                         @if ($module->web->index && $module->web->detail)
                             <span style="padding:10px">
                                 <textarea placeholder="Keterangan Gambar" type="text" class="form-control form-control-sm"
-                                    name="media_description">{{ $post->media_description ?? '' }}</textarea>
+                                    name="media_description">{{ !empty(old('media_description')) ? old('media_description'): ($post->media_description ?? '') }}</textarea>
                             </span>
                         @endif
 
@@ -107,13 +107,13 @@
                 @if ($module->web->detail || $modname = $module->name=='banner')
                     <small>Pengalihan URL {!! help('Opsi Jika Ingin Mengalihkan Konten Ini ke suatu halaman web atau url') !!} </small>
                     <input type="text" class="form-control form-control-sm" name="redirect_to"
-                        placeholder="URL dimulai https:// atau http://" value="{{ $post->redirect_to ?? '' }}">
+                        placeholder="URL dimulai https:// atau http://" value="{{ !empty(old('redirect_to')) ? old('redirect_to') :($post->redirect_to ?? '') }}">
                     @if(!isset($modname))
                     <small for="">Deskripsi {!! help('Opsi deskripsi singkat tentang konten yang dapat ditelusuri oleh mesin pencarian') !!} </small>
-                    <textarea placeholder="Tulis Deskripsi" type="text" class="form-control form-control-sm" name="description">{{ $post->description ?? '' }}</textarea>
+                    <textarea placeholder="Tulis Deskripsi" type="text" class="form-control form-control-sm" name="description">{{ !empty(old('description')) ? old('description') : ($post->description ?? '') }}</textarea>
                     <small for="">Kata Kunci {!! help('Kata kunci tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}</small>
                     <input placeholder="Keyword1,Keyword2,Keyword3" type="text" class="form-control form-control-sm"
-                        name="keyword" value="{{ $post->keyword ?? '' }}">
+                        name="keyword" value="{{ !empty(old('keyword')) ? old('keyword') :($post->keyword ?? '') }}">
                         @endif
                 @if ($module->form->tag)
 

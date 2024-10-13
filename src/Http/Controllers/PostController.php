@@ -121,9 +121,12 @@ public function update(Request $request, Post $post){
     foreach(collect($module->form->custom_field)->whereIn([1],['file']) as $row){
         $k = _us($row[0]);
         if($request->hasFile($k)){
+            $required = isset($row[1]) ? 'required':'nullable';
+            $mime = isset($row[3]) ? $row[3] : allow_mime();
+
         $request->validate([
-           $k =>'nullable|file|mimetypes:'.allow_mime(),
-        ],[$k.'.mimetypes'=>'Format File Tidak Di izinkan']);
+           $k =>$required.'|file|mimetypes:'.$mime,
+        ],[$k.'.mimetypes'=>'Format file '.str($k)->headline().' tidak didukung']);
         }
     }
 }
@@ -139,10 +142,10 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         'sort'=> 'nullable|numeric',
         'parent_id'=> 'nullable|exists:posts,id',
         'keyword'=> 'nullable|string|regex:/^[a-zA-Z,]+$/u',
-        'description'=> 'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
+        'description'=> 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u',
         'redirect_to'=> 'nullable|url',
         'category_id'=> 'nullable|string',
-        'media_description'=> 'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
+        'media_description'=> 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u',
         'pinned'=> 'nullable|in:N,Y',
         'allow_comment'=> 'nullable|in:N,Y',
         'status'=> 'required|string|in:draft,publish'
