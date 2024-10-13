@@ -13,7 +13,7 @@ var chartData = {
             strokeColor: "#79D1CF",
             data: [
               @foreach($weekago as $r)
-            {{$visitor->whereDate('created_at',$r)->count()}},
+            {{collect($visitor)->where('created_at',$r)->count()}},
             @endforeach
           ]
         }

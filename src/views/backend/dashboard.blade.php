@@ -16,7 +16,7 @@
     <div class="col-lg-12">
   <div class="row">
     @foreach($type as $row)
-          <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{route($row->name)}}'">
+          <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{Route::has($row->name) ? route($row->name) : ''}}'">
             <div class="widget-small danger coloured-icon"><i class="icon fa {{$row->icon}} fa-3x"></i>
               <div class="info pl-3">
                 <p class="mt-2 text-muted">{{$row->title}}</p>

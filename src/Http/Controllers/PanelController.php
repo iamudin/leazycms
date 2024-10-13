@@ -1,10 +1,12 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
 use ZipArchive;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Visitor;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
@@ -39,7 +41,14 @@ class PanelController extends Controller implements HasMiddleware
         for ($i = 0; $i <= 6; $i++) {
             array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
         }
+
         $weekago = json_decode(json_encode(collect($da)->sort()), true);
+        $visitor = Visitor::whereIn(DB::raw('DATE(created_at)'), $da)
+            ->get()
+            ->map(function($record) {
+                $record->created_at = \Carbon\Carbon::parse($record->created_at)->format('Y-m-d');
+                return $record;
+            });
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
         return view('cms::backend.dashboard', [
@@ -47,7 +56,7 @@ class PanelController extends Controller implements HasMiddleware
             'weekago' => $weekago,
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $user->posts,
-            'visitor' => new Visitor,
+            'visitor' => $visitor
         ]);
     }
     public function visitor(Request $request)
@@ -64,7 +73,7 @@ class PanelController extends Controller implements HasMiddleware
                 }
             )
             ->addColumn('created_at', function ($row) {
-                return '<code>' . $row->created_at->diffForHumans() . '</code>';
+                return '<code>' . Carbon::parse($row->created_at)->diffForHumans() . '</code>';
             })
             ->addColumn('ip_location', function ($row) {
                 $city = json_decode($row->ip_location)->city ?? null;
@@ -320,9 +329,8 @@ class PanelController extends Controller implements HasMiddleware
 
         admin_only();
         if($request->optimize){
-            Artisan::call('optimize:clear');
             Artisan::call('optimize');
-             return to_route('appearance');
+             return to_route('appearance')->with('success','Berhasil di optimalkan');
 
 
          }
@@ -498,7 +506,6 @@ class PanelController extends Controller implements HasMiddleware
                             } else {
                                 return back()->with('danger', 'Failed write modules script!');
                             }
-                            Artisan::call('optimize');
                         }else{
                             try {
                                 File::put($file, $content);

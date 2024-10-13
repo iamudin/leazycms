@@ -39,6 +39,7 @@ class Post extends Model
                 }
             }
         });
+
     }
     public function user()
     {
@@ -127,6 +128,14 @@ class Post extends Model
     {
         return $query->whereType($type);
     }
+    function scopeFieldFilter($query,$arr)
+    {
+
+        foreach($arr as $key=>$value){
+            $query = $query->where('data_field->'.$key, $value);
+        }
+        return $query;
+    }
     function scopePublished($query)
     {
         return $query->whereStatus('publish');
@@ -135,6 +144,7 @@ class Post extends Model
     {
         return $query->wherePinned('Y');
     }
+
     function scopeWithCountVisitors($query)
     {
         return $query->withCount('visitors');

@@ -21,7 +21,7 @@
         </li>
         @foreach ($userprofile->isAdmin() ? collect(get_module())->sortBy('position') : collect(get_module())->sortBy('position')->whereIn('name', $userprofile->get_modules->pluck('module')->toArray()) as $row)
             <li title="">
-                <a class="app-menu__item {{ active_item($row->name) }}" href="{{ route($row->name) }}">
+                <a class="app-menu__item {{ active_item($row->name) }}" href="{{ Route::has($row->name) ? route($row->name) : '' }}">
                     <i class="app-menu__icon fa {{ $row->icon }}"></i>
                     <span class="app-menu__label">{{ $row->title }}</span>
                 </a>

@@ -6,6 +6,7 @@
 
         <div class="btn-group">
       <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan</button>
+      <a href="javascript:void(0)" onclick="location.href='{{ route('appearance').'?optimize=true' }}'" class="btn btn-warning btn-sm"> <i class="fa fa-rocket"></i> Optimalkan</a>
         <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
     </div></div>
 
@@ -38,7 +39,7 @@
     <form action="{{ url()->full() }}" class="editorForm" method="post">
         @csrf
         @if($e = request()->edit )
-    <h6> <i class="fa fa-edit"></i> {{  'Edit : '.$e  }} @if(!str($e)->contains(['modules','home.','header','footer','styles','scripts']))<i onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer" title="Delete this file "></i>@endif</h6>
+    <h6> <i class="fa fa-edit"></i> {{  'Edit : '.$e  }} @if(!str($e)->contains(['modules.blade.php','home.','header','footer','styles','scripts']))<i onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer" title="Delete this file "></i>@endif</h6>
     @else
     <h6> <i class="fa fa-edit"></i> {{  'Edit : /home.blade.php'  }}</h6>
 
