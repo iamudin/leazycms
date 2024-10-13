@@ -11,7 +11,7 @@ use Leazycms\FLC\Traits\Commentable;
 class Post extends Model
 {
     use SoftDeletes,Fileable,Commentable;
-    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','mime'];
+    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status'];
 
     protected $userselectcolumn = ['id','name','url'];
     protected $categoryselectcolumn = ['id','name','url','slug'];

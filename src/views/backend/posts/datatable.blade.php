@@ -29,7 +29,7 @@
                     {
                         data: 'thumbnail',
                         searchable: false,
-                        name: 'post_thumbnail',
+                        name: 'thumbnail',
                         orderable: false
                     },
                 @endif
@@ -61,14 +61,12 @@
                     searchable: false
                 },
 
-                @if (get_post_type() != 'media')
                     {
                         data: 'updated_at',
                         name: 'updated_at',
                         orderable: true,
                         searchable: false
                     },
-                @endif
                 @if (current_module()->web->detail)
                     {
                         data: 'visitors_count',

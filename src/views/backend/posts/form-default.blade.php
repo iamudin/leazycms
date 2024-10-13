@@ -26,8 +26,8 @@
             <div class="col-lg-9">
                 <div class="form-group">
                     <input data-toggle="tooltip" title="Masukkan {{ $module->datatable->data_title }}" required
-                        name="title" type="text" value="{{ $post->title ?? '' }}"
-                        placeholder="Masukkan {{ $module->datatable->data_title }}" class="form-control form-control-lg">
+                        name="title" type="text" value="{{ !empty(old('title')) ? old('title') : ($post->title??null) }}"
+                        placeholder="Masukkan {{ $module->datatable->data_title }}" class="form-control form-control-lg" >
 
                 </div>
 
@@ -39,7 +39,7 @@
                           <textarea name="content" placeholder="Dokumentasi" id="editor" class="custom_html">{{ $post->content ?? '' }}</textarea>
                           @include('cms::backend.layout.codemirrorjs')
                           @else
-                            <textarea name="content" placeholder="Keterangan..." id="editor">{{ $post->content ?? '' }}</textarea>
+                            <textarea name="content" placeholder="Keterangan..." id="editor">{{ !empty(old('content')) ? old('content') : ($post->content ?? '') }}</textarea>
                           @endif
                     </div>
                 @endif
@@ -48,8 +48,7 @@
                     <?php
                     if (isset($pp[1])) {
                         if (isset($pp[2]) && $pp[2] != 'all') {
-                            // echo "<script>alert('oi');</script>";
-                            $par = Leazycms\Web\Models\Post::withwherehas('category', function ($q) {
+                            $par = query()->withwherehas('category', function ($q) {
                                 $q->where('slug', $pp[2]);
                             })
                                 ->whereType($pp[1])
@@ -57,7 +56,7 @@
                                 ->select('id', 'title')
                                 ->get();
                         } else {
-                            $par = Leazycms\Web\Models\Post::whereType($pp[1])
+                            $par = query()->whereType($pp[1])
                                 ->whereStatus('publish')
                                 ->select('id', 'title')
                                 ->get();
@@ -84,24 +83,6 @@
                 @endif
                 @if ($module->form->looping_data)
                 @include('cms::backend.posts.looping_data.form')
-                @endif
-
-
-                @if (get_module_info('looping'))
-                    <br>
-                    <h6 style="border-bottom:1px dashed #000;font-weight:normal"><b>{{ get_module_info('looping') }}</b>
-                        <span class="text-muted pull-right">{{ get_module_info('looping_for') }}</span> </h6>
-
-                    @if (get_module_info('post_type') != 'menu')
-                        @if (get_module_info('post_type') == 'lasyanan')
-                            @include('admin.hasil-skm')
-                        @else
-                            @include('cms::backend.looping-data')
-                        @endif
-                    @else
-                        @include('cms::backend.list-menu')
-                    @endif
-
                 @endif
             </div>
             <div class="col-lg-3">

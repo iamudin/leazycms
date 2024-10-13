@@ -129,7 +129,7 @@ return [
                 'data_title' => 'Nama Pegawai',
             ],
             'form'=>[
-                'unique_title' => false,
+                'unique_title' => true,
                 'post_parent' => ['Unit Kerja','unit-kerja'],
                 'thumbnail' => true,
                 'editor' => false,

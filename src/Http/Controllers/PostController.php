@@ -50,11 +50,16 @@ class PostController extends Controller implements HasMiddleware
         }
 public function create(Request $request){
 $request->user()->hasRole(get_post_type(),__FUNCTION__);
+    if($blankexists = query()->onType(get_post_type())->whereStatus('draft')->whereUserId($request->user()->id)->first()){
+        $newpost = $blankexists;
+    }else{
     $newpost = $request->user()->posts()->create([
         'type' => get_post_type(),
         'url' => get_post_type() . '/' . rand(),
         'status' => 'draft',
     ]);
+}
+
     return to_route(get_post_type() . '.edit', $newpost->id);
 }
 
@@ -107,14 +112,18 @@ public function update(Request $request, Post $post){
     if($module->form->custom_field){
 
     foreach(collect($module->form->custom_field)->whereNotIn([1],['break']) as $row){
-        $custom_field[_us($row[0])] = (isset($row[2]) ? 'required' : 'nullable');
+        $custom_f[_us($row[0])] = (isset($row[2]) ? 'required' : 'nullable');
     }
+
+  foreach(array_keys($custom_f) as $row){
+    $msg[$row.'.required'] = str($row)->headline().' tidak boleh kosong';
+  }
     foreach(collect($module->form->custom_field)->whereIn([1],['file']) as $row){
         $k = _us($row[0]);
         if($request->hasFile($k)){
         $request->validate([
            $k =>'nullable|file|mimetypes:'.allow_mime(),
-        ]);
+        ],[$k.'.mimetypes'=>'Format File Tidak Di izinkan']);
         }
     }
 }
@@ -136,13 +145,16 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         'media_description'=> 'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
         'pinned'=> 'nullable|in:N,Y',
         'allow_comment'=> 'nullable|in:N,Y',
-        'status'=> 'required|string',
-        'mime'=> 'nullable|in:embed,api'
+        'status'=> 'required|string|in:draft,publish'
+    ];
+    $custommsg = [
+        'title.unique' => $module->datatable->data_title .' Sudah digunakan',
+        'title.min' => $module->datatable->data_title .' minimal 5 karakter',
     ];
 
+    $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
 
     $data = $request->validate($post_field);
-
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
@@ -264,8 +276,7 @@ public function recache($type){
 
                 $category = current_module()->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "<i class='fa fa-tag'></i> <i class='text-warning'>Uncategorized</i>") : '';
                 $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> "  : '';
-                $custom = ($row->mime == 'html') ? '<i class="text-muted">_HTML</i>' : '';
-                $tit = (current_module()->web->detail || current_module()->name == 'media') ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ' . $custom : $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tanpa Judul__</i>');
+                $tit = (current_module()->web->detail || current_module()->name == 'media') ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ': $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
                 $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
 

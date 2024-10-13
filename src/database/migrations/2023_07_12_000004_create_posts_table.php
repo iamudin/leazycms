@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
             $table->string('status',50)->default('draft')->index();
             $table->string('type')->index();
-            $table->string('mime')->nullable();
             $table->text('title')->nullable();
             $table->char('pinned',1)->default('0');
             $table->longText('content')->nullable();

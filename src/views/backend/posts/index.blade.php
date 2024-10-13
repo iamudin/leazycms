@@ -2,7 +2,7 @@
 @section('content')
 <div class="row">
 <div class="col-lg-12 mb-3">
-  <h3 style="font-weight:normal;float:left;" ><i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i> {{get_post_type('title_crud')}}
+  <h3 style="font-weight:normal;float:left;" ><i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i> {{get_post_type('title_crud')}} @if(request('trash')) <sup class="badge badge-warning" style="font-size:7px"> <i class="fa fa-trash-restore"></i> </sup> @endif
 </h3>
 <div class="pull-right">
     <div class="btn-group">
@@ -11,7 +11,11 @@
     @endif
     @if(Route::has(get_post_type().'.category')) <a href="{{route(get_post_type().'.category')}}" class="btn btn-dark btn-sm"> <i class="fa fa-tags" aria-hidden></i> Kategori</a> @endif
     @if(request()->user()->isAdmin())
-<a title="Sampah" href="{{ route(get_post_type()).'?trash=show' }}" class="btn btn-sm btn-warning">&nbsp; <i class="fa fa-trash-restore"></i> </a>
+    @if(request('trash'))
+<a title="Kembali" href="{{ route(get_post_type()) }}" class="btn btn-sm btn-danger">&nbsp; <i class="fa fa-undo"></i> Kembali</a>
+@else
+<a title="Sampah" href="{{ route(get_post_type()).'?trash=show' }}" class="btn btn-sm btn-warning">&nbsp; <i class="fa fa-trash-restore"></i> Sampah</a>
+@endif
 @endif
 </div>
 </div>
@@ -23,18 +27,6 @@
 <table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%">
 <thead style="text-transform:uppercase;color:#444">
   <tr>
-    {{-- <th style="width:40px;vertical-align: middle">
-
-
-            <span   data-toggle="dropdown" style="padding-left:4px;cursor: pointer;">
-             <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
-            </span>
-            <div class="dropdown-menu" style="font-size:10px;text-transform: none" >
-              <a class="dropdown-item" href="#"><input id="chk" onclick="toggle(this);" type="checkbox"> Centang Semua</a>
-              <a class="dropdown-item" href="#">Pindahkan Ke Sampah</a>
-              <a class="dropdown-item" href="#">Pendahkan Ke Draft</a>
-            </div>
-</th> --}}
     <th style="width:10px;vertical-align: middle">NO</th>
     @if(current_module()->form->thumbnail)
     <th style="width:55px;vertical-align: middle" >Gambar</th>
@@ -49,7 +41,7 @@
     @endif
     <th style="width:60px;vertical-align: middle">Dibuat</th>
 
-    @if(get_post_type()!='media')<th style="width:60px;vertical-align: middle">Diubah</th>@endif
+    <th style="width:60px;vertical-align: middle">Diubah</th>
     @if(current_module()->web->detail)
     <th  style="width:30px;vertical-align: middle">Hits</th>
     @endif
