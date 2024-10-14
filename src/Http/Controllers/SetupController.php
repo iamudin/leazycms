@@ -55,7 +55,6 @@ class SetupController extends Controller
                 Cache::put('option',$option);
                 $db['APP_URL'] = 'http://' . $request->getHttpHost();
                 $db['DB_CONNECTION'] = 'mysql';
-                $db['APP_ENV'] = 'production';
                 $db['APP_TIMEZONE'] = '"Asia/Jakarta"';
                 foreach (cache('dbcredential') as $k => $row) {
                     $key = Str::upper($k);
@@ -86,6 +85,7 @@ class SetupController extends Controller
             }
             clear_route();
             if ($this->createEnvConfig(['APP_INSTALLED' => true])) {
+                $this->createEnvConfig(['APP_ENV'=>'production']);
                 Artisan::call('vendor:publish --tag=cms');
                 Artisan::call('route:cache');
                 Artisan::call('config:cache');
