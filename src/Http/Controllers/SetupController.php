@@ -84,8 +84,7 @@ class SetupController extends Controller
                 ], ['value' => $row, 'autoload' => 1]);
             }
             clear_route();
-            if ($this->createEnvConfig(['APP_INSTALLED' => true])) {
-                $this->createEnvConfig(['APP_ENV'=>'production']);
+            if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
                 Artisan::call('vendor:publish --tag=cms');
                 Artisan::call('route:cache');
                 Artisan::call('config:cache');
