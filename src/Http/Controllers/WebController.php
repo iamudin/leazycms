@@ -46,7 +46,7 @@ class WebController extends Controller
     }
     public function index(Post $post)
     {
-        $modul = current_module();;
+        $modul = current_module();
         config(['modules.page_name' => 'Daftar ' . $modul->title]);
         $data = array(
             'index' => $modul->web->auto_query ? $post->index($modul->name, get_option('post_perpage')) : [],

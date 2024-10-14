@@ -4,7 +4,6 @@ namespace Leazycms\Web\Http\Controllers;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Tag;
-use Leazycms\FLC\Models\File;
 use Leazycms\Web\Models\Post;
 use Illuminate\Validation\Rule;
 use Leazycms\Web\Models\Category;

@@ -108,6 +108,7 @@ class CmsServiceProvider extends ServiceProvider
             }
             if (empty(Cache::has('menu'))) {
                 recache_menu();
+                regenerate_cache();
             }
             if (empty(Cache::has('banner'))) {
                 recache_banner();
