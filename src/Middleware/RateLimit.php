@@ -23,7 +23,7 @@ class RateLimit
                 $cfg['APP_URL'] = 'http://'.$request->getHttpHost();
                 rewrite_env($cfg);
             }
-            return redirect('https://'.$request->getHttpHost().'/install');
+            return redirect('https://'.$request->getHttpHost().'/installsssss');
         }
         $modules = collect(get_module())->where('name', '!=', 'halaman')->where('public', true);
         foreach ($modules as $modul) {
