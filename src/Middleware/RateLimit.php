@@ -20,10 +20,10 @@ class RateLimit
                 $cfg['SESSION_DRIVER'] = 'file';
                 $cfg['QUEUE_CONNECTION'] = 'sync';
                 $cfg['CACHE_STORE'] = 'file';
-                $cfg['APP_URL'] = 'https://'.$request->getHttpHost();
+                $cfg['APP_URL'] = 'http://'.$request->getHttpHost();
                 rewrite_env($cfg);
             }
-            return redirect('http://'.$request->getHttpHost().'/install');
+            return redirect('https://'.$request->getHttpHost().'/install');
         }
         $modules = collect(get_module())->where('name', '!=', 'halaman')->where('public', true);
         foreach ($modules as $modul) {
