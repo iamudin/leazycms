@@ -65,7 +65,6 @@ class SetupController extends Controller
                     $db['DB_PASSWORD'] = '';
                 }
                 $this->createEnvConfig($db);
-                Artisan::call('vendor:publish --tag=laravel-pagination');
                 return to_route('initializing');
             }
         }
@@ -87,6 +86,7 @@ class SetupController extends Controller
             clear_route();
             if ($this->createEnvConfig(['APP_INSTALLED' => true])) {
                 Artisan::call('vendor:publish --tag=cms');
+                Artisan::call('vendor:publish --tag=laravel-pagination');
                 Artisan::call('optimize');
                 Cache::forget('dbcredential');
                 Cache::forget('option');
