@@ -55,6 +55,7 @@ class SetupController extends Controller
                 Cache::put('option',$option);
                 $db['APP_URL'] = 'http://' . $request->getHttpHost();
                 $db['DB_CONNECTION'] = 'mysql';
+                $db['APP_ENV'] = 'production';
                 $db['APP_TIMEZONE'] = '"Asia/Jakarta"';
                 foreach (cache('dbcredential') as $k => $row) {
                     $key = Str::upper($k);
@@ -163,6 +164,7 @@ class SetupController extends Controller
 
         $option = array(
             ['name' => 'site_maintenance', 'value' => 'Y', 'autoload' => 1],
+            ['name' => 'app_env', 'value' => 'production', 'autoload' => 1],
             ['name' => 'post_perpage', 'value' => 10, 'autoload' => 1],
             ['name' => 'site_title', 'value' => 'Your Website Official', 'autoload' => 1],
             ['name' => 'template', 'value' => 'default', 'autoload' => 1],
