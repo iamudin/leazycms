@@ -15,17 +15,15 @@ class RateLimit
      */
     public function handle(Request $request, Closure $next)
     {
-
-
         if(!config('modules.installed') && strpos($request->fullUrl(), 'install') === false ){
             if(env('SESSION_DRIVER')!='file' || env('QUEUE_CONNECTION')!= 'sync' || env('CACHE_STORE')!='file'){
                 $cfg['SESSION_DRIVER'] = 'file';
                 $cfg['QUEUE_CONNECTION'] = 'sync';
                 $cfg['CACHE_STORE'] = 'file';
-                $cfg['APP_URL'] = 'http://'.$request->getHttpHost();
+                $cfg['APP_URL'] = 'https://'.$request->getHttpHost();
                 rewrite_env($cfg);
             }
-            return redirect()->route('install');
+            return redirect('http://'.$request->getHttpHost().'/install');
         }
         $modules = collect(get_module())->where('name', '!=', 'halaman')->where('public', true);
         foreach ($modules as $modul) {
