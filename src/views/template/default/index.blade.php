@@ -30,7 +30,7 @@
 				@endforeach
 
                   <div class="col-12">
-                    {{$index->links('vendor.pagination.bootstrap-5')}}
+                    {{$index->links('pagination::bootstrap-5')}}
                   </div>
                     </div>
 		   </div>
