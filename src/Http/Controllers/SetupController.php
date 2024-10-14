@@ -87,7 +87,8 @@ class SetupController extends Controller
             clear_route();
             if ($this->createEnvConfig(['APP_INSTALLED' => true])) {
                 Artisan::call('vendor:publish --tag=cms');
-                Artisan::call('optimize');
+                Artisan::call('route:cache');
+                Artisan::call('config:cache');
                 Cache::forget('dbcredential');
                 Cache::forget('option');
                 Cache::forget('usercredential');
