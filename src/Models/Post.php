@@ -205,7 +205,7 @@ class Post extends Model
             ->withCountVisitors()
             ->onType($type)
             ->published()
-            ->latest()
+            ->latest('created_at')
             ->skip($skip)
             ->take($limit)
             ->get();
