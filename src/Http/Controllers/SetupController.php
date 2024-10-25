@@ -172,7 +172,7 @@ class SetupController extends Controller
             ['name' => 'logo', 'value' => 'noimage.webp', 'autoload' => 1],
             ['name' => 'favicon', 'value' => 'noimage.webp', 'autoload' => 1],
             ['name' => 'site_url', 'value' => request()->getHttpHost(), 'autoload' => 1],
-            ['name' => 'site_keyword', 'value' => 'Web, Official, New', 'autoload' => 1],
+            ['name' => 'site_meta_keyword', 'value' => 'Web, Official, New', 'autoload' => 1],
             ['name' => 'site_description', 'value' => 'My Offical Web', 'autoload' => 1],
             ['name' => 'address', 'value' => 'Anggrek Streen, 2', 'autoload' => 1],
             ['name' => 'phone', 'value' => '123456789', 'autoload' => 1],

@@ -873,8 +873,8 @@ if (!function_exists('init_meta_header')) {
         $data = config('modules.data') ?? false;
         $site_title = get_option('site_title');
         $site_desc = get_option('site_description');
-        $site_meta_keyword = get_option('site_keyword');
-        $site_meta_description = get_option('site_description');
+        $site_meta_keyword = get_option('site_meta_keyword');
+        $site_meta_description = get_option('site_meta_description');
         if ($data) {
             $data['site_keyword'] = $site_meta_keyword;
             return \Illuminate\Support\Facades\View::make('cms::layouts.seo', set_header_seo($data));
