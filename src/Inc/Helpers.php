@@ -902,7 +902,7 @@ if (!function_exists('init_meta_header')) {
                 $pn = null;
             }
             $data = [
-                'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : $site_meta_description,
+                'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : ($site_meta_description ?? $site_desc),
                 'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') ?? noimage()),
