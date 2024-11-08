@@ -329,8 +329,10 @@ class PanelController extends Controller implements HasMiddleware
 
         admin_only();
         if($request->optimize){
-            Artisan::call('route:cache');
-             return to_route('appearance')->with('success','Berhasil di optimalkan');
+            if(Artisan::call('route:cache')){
+                return to_route('appearance')->with('success','Berhasil di optimalkan');
+            }
+
          }
         if($request->isMethod('post')){
         if($file = $request->file('template')){

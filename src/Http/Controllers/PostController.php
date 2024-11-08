@@ -130,8 +130,9 @@ public function update(Request $request, Post $post){
     }
 }
 $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$post->type)->whereNull('deleted_at')->ignore($post->id) : '';
+
     $post_field =  [
-        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5'.$uniq,
+        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:4'.$uniq,
         'media'=> 'nullable|file|mimetypes:image/jpeg,image/png',
         'content'=> ['nullable',function ($attribute, $value, $fail) {
             if (strpos($value, '<?php') !== false) {
@@ -151,12 +152,18 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     ];
     $custommsg = [
         'title.unique' => $module->datatable->data_title .' Sudah digunakan',
-        'title.min' => $module->datatable->data_title .' minimal 5 karakter',
+        'title.min' => $module->datatable->data_title .' minimal 4 karakter',
     ];
 
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
 
     $data = $request->validate($post_field);
+    if(!$module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug(str($request->title)->slug())->count()){
+        $data['slug'] = str($request->title)->slug().'-'.$post->id;
+    }else{
+        $data['slug'] = str($request->title)->slug();
+
+    }
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
@@ -168,7 +175,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 
         }
     }
-    if($module->form->custom_field){
+    if($module->form->custom_field ){
     foreach (collect($module->form->custom_field)->where([1], '!=', 'break') as $key => $value) {
         $fieldname = _us($value[0]);
         switch ($value[1]) {
@@ -183,7 +190,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     }
 }
     if($module->form->custom_field || $module->form->post_parent){
-        $data['data_field'] = $custom_field;
+        $data['data_field'] = $custom_field ?? null;
     }
 
     if($request->hasFile('media')){
@@ -197,8 +204,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         $timedate = $request->tanggal_entry ?? date('Y-m-d H:i:s');
         $data['created_at'] = $timedate;
     }
-    $data['url'] = $post->type!='halaman' ? $post->type.'/'.str($request->title)->slug() : str($request->title)->slug();
-    $data['slug'] = str($request->title)->slug();
+    $data['url'] = $post->type!='halaman' ? $post->type.'/'.$data['slug'] : $data['slug'];
 
     // dd($request->all());
     if($looping_data = $module->form->looping_data){
