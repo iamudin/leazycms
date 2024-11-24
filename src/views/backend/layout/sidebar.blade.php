@@ -20,12 +20,21 @@
                     class="app-menu__label">Dahsboard</span></a>
         </li>
         @foreach ($userprofile->isAdmin() ? collect(get_module())->sortBy('position') : collect(get_module())->sortBy('position')->whereIn('name', $userprofile->get_modules->pluck('module')->toArray()) as $row)
-            <li title="">
-                <a class="app-menu__item {{ active_item($row->name) }}" href="{{ Route::has($row->name) ? route($row->name) : '' }}">
-                    <i class="app-menu__icon fa {{ $row->icon }}"></i>
-                    <span class="app-menu__label">{{ $row->title }}</span>
-                </a>
+
+            <li class="treeview {{ active_item($row->name) ? 'is-expanded' :'' }}" ><a title="{{ $row->description }}" class="app-menu__item" href="#"
+                data-toggle="treeview"><i class="app-menu__icon fa {{ $row->icon }}"></i><span
+                    class="app-menu__label">{{ $row->title }}</span><i
+                    class="treeview-indicator fa fa-chevron-right"></i></a>
+            <ul class="treeview-menu">
+            <li><a class="treeview-item @if(request()->segment(4)=='edit') active @endif " href="{{ Route::has($row->name.'.create') ? route($row->name.'.create') : '' }}"><i class="icon fa fa-plus"></i> Tambah {{ $row->title }}</a>
             </li>
+            <li><a class="treeview-item @if(active_item($row->name) && !request()->segment(3)) active @endif "   href="{{ Route::has($row->name) ? route($row->name) : '' }}"><i class="icon fa fa-table"></i> Daftar {{ $row->title }}</a>
+            @if($row->form->category)
+            <li><a class="treeview-item @if(request()->segment(3)=='category') active @endif " href="{{ Route::has($row->name.'.category') ? route($row->name.'.category') : '' }}"><i class="icon fa fa-tags"></i> Category</a>
+                @endif
+            </li>
+            </ul>
+        </li>
         @endforeach
         <li><a class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
                 href="{{ admin_url('tags') }}"><i class="app-menu__icon fa fa-hashtag"></i> <span

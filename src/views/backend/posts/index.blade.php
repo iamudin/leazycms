@@ -10,8 +10,8 @@
     @if(Route::has(get_post_type().'.create'))
     <a href="{{route(get_post_type().'.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
     @endif
-    @if(Route::has(get_post_type().'.category')) <a href="{{route(get_post_type().'.category')}}" class="btn btn-dark btn-sm"> <i class="fa fa-tags" aria-hidden></i> Kategori</a> @endif
-    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i class="fa fa-filter"></i></button>
+
+    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i class="fas fa-filter"></i></button>
 </div>
 </div>
 

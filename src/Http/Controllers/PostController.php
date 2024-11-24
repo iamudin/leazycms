@@ -159,7 +159,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 
     $data = $request->validate($post_field);
     if(!$module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug(str($request->title)->slug())->count()){
-        $data['slug'] = str($request->title)->slug().'-'.$post->id;
+        $data['slug'] = $post->id.'-'.str($request->title)->slug();
     }else{
         $data['slug'] = str($request->title)->slug();
 
@@ -274,6 +274,17 @@ public function recache($type){
                 }
                 if ($category_id = $req->category_id) {
                     $instance->where('category_id', $category_id);
+                }
+                if ($search = $req->search) {
+                    $instance->where('type', get_post_type()) // Batasi hanya pada type 'berita'
+                    ->where(function($query) use ($search) {
+                        $query->orWhere('title', 'like', '%' . $search . '%')
+                              ->orWhere('data_field', 'like', '%' . $search . '%')
+                              ->orWhere('content', 'like', '%' . $search . '%')
+                              ->orWhere('description', 'like', '%' . $search . '%')
+                              ->orWhere('keyword', 'like', '%' . $search . '%')
+                              ->orWhere('media_description', 'like', '%' . $search . '%');
+                    });
                 }
                 if ($status = $req->status) {
                     $conditions = [
