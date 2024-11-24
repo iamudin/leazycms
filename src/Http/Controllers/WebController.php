@@ -47,7 +47,7 @@ class WebController extends Controller
     public function index(Post $post)
     {
         $modul = current_module();
-        config(['modules.page_name' => 'Daftar ' . $modul->title]);
+        config(['modules.page_name' =>  $modul->title]);
         $data = array(
             'index' => $modul->web->auto_query ? $post->index($modul->name, get_option('post_perpage')) : [],
             'module' => $modul,
@@ -86,7 +86,7 @@ class WebController extends Controller
             return view('cms::layouts.master', $data);
         }else{
             $author = User::whereHas('posts')->where('status','active')->whereNotIn('level',['admin'])->get();
-            config(['modules.page_name' => 'Daftar Author']);
+            config(['modules.page_name' => 'Author']);
             $data = [
                 'author' => $author
             ];
@@ -175,7 +175,7 @@ class WebController extends Controller
         if ($category->slug != $slug)
             return redirect($category->url);
 
-        config(['modules.page_name' => 'Daftar ' . $modul->title . ' di kategori ' . $category->name]);
+        config(['modules.page_name' => $modul->title . ' di kategori ' . $category->name]);
         $data = array(
             'index' => (new Post)->index_by_category($modul->name, $slug),
             'category' => $category,
@@ -218,7 +218,7 @@ class WebController extends Controller
             return redirect(get_post_type() . '/' . $request->segment(2) . '/' . $post_parent->slug);
         $title = $post_parent->title;
         $post_name = $modul->title;
-        config(['modules.page_name' => 'Daftar ' . $post_name . ' ' . $title]);
+        config(['modules.page_name' => $post_name . ' ' . $title]);
         $index = $post->index_child($post_parent->id, get_post_type());
         $data = array('index' => $index, 'title' => $post_name . ' ' . $title, 'icon' => $modul->icon, 'post_type' => get_post_type());
         return view('views::layouts.master', $data);

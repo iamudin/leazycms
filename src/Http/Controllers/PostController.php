@@ -265,11 +265,61 @@ public function recache($type){
     public function datatable(Request $req)
     {
         $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
-        if($req->trash){
-            $data = $data->onlyTrashed();
-        }
+
         return DataTables::of($data)
             ->addIndexColumn()
+            ->filter(function ($instance) use ($req) {
+                if ($parent_id = $req->parent_id) {
+                    $instance->where('parent_id', $parent_id);
+                }
+                if ($category_id = $req->category_id) {
+                    $instance->where('category_id', $category_id);
+                }
+                if ($status = $req->status) {
+                    $conditions = [
+                        'publish' => function($query) {
+                            $query->where('status', 'publish');
+                        },
+                        'draft' => function($query) {
+                            $query->where('status', 'draft');
+                        },
+                        'sampah' => function($query) {
+                            $query->onlyTrashed();
+                        },
+                        'disematkan' => function($query) {
+                            $query->wherePinned('Y');
+                        },
+                    ];
+                    if (array_key_exists($status, $conditions)) {
+                        $conditions[$status]($instance);
+                    }
+                }
+                if ($user_id = $req->user_id) {
+                    $instance->whereUserId($user_id);
+                }
+                if ($req->from_date || $req->to_date) {
+                    if ($req->from_date) {
+                        // Jika hanya from_date yang ada
+                        if (!$req->to_date) {
+                            $instance->whereDate('created_at','>=',$req->from_date);
+                        } else {
+                            // Jika ada from_date dan to_date
+                            $from_timestamp = strtotime($req->from_date);
+                            $to_timestamp = strtotime($req->to_date);
+
+                            if ($from_timestamp < $to_timestamp) {
+                                $instance->whereBetween('created_at', [$req->from_date, $req->to_date]);
+                            } else {
+                                // Jika from_date sama dengan to_date
+                                $instance->whereDate('created_at', $req->from_date);
+                            }
+                        }
+                    } elseif ($req->to_date) {
+                        // Jika hanya to_date yang ada
+                        $instance->whereDate('created_at', '<=', $req->to_date);
+                    }
+                }
+            })
             ->order(function ($query) use ($req) {
                 if ($req->has('order')) {
                     $columns = $req->columns;
@@ -319,9 +369,7 @@ public function recache($type){
                     return '-';
                 endif;
             })
-            ->addColumn('category', function ($row) {
-               return $row->category->name ?? '__';
-            })
+
 
             ->addColumn('action', function ($row) {
 
@@ -343,15 +391,6 @@ public function recache($type){
             ->orderColumn('updated_at', '-updated_at $1')
             ->orderColumn('created_at', '-created_at $1')
             ->only(['visitors_count', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
-            ->filterColumn('title', function ($query, $keyword) {
-                $query->whereRaw("CONCAT(posts.title,'-',posts.title) like ?", ["%{$keyword}%"]);
-            })
-            ->filterColumn('data_field', function ($query, $keyword) {
-                $query->whereRaw("CONCAT(posts.data_field,'-',posts.data_field) like ?", ["%{$keyword}%"]);
-            })
-            ->filterColumn('parents', function ($query, $keyword) {
-                $query->whereRaw("CONCAT(posts.data_field,'-',posts.data_field) like ?", ["%{$keyword}%"]);
-            })
             ->toJson();
     }
 

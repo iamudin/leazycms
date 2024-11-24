@@ -11,8 +11,21 @@
 
             ajax: {
                 method: "POST",
-                url: "{{ route(get_post_type() . '.datatable').(request('trash') ? '?trash=true':'') }}",
-                data: {_token:"{{csrf_token()}}"}
+                url: "{{ route(get_post_type() . '.datatable')}}",
+                data: function (d){
+                 d._token = "{{csrf_token()}}";
+                 @if($parent = current_module()->form->post_parent)
+                 d.parent_id = $("#parent_id").val();
+                 @endif
+                 @if($parent = current_module()->form->category)
+                 d.category_id = $("#category_id").val();
+                 @endif
+                 d.status = $("#status").val();
+                 d.user_id = $("#user_id").val();
+                 d.from_date = $("#from_date").val();
+                 d.to_date = $("#to_date").val();
+                 d.search = $("input[type=search]").val();
+            }
             },
             lengthMenu: [10, 20, 50, 100, 200, 500],
             deferRender: true,

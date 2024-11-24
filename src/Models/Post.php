@@ -183,13 +183,25 @@ class Post extends Model
             ->get();
         }
     }
+    function index_author($type=false)
+    {
+           if($type){
+            return User::whereHas('posts')->withCount(['posts' => function($q) use($type){
+                $q->onType($type);
+            }])->get();
+           } else{
+            return User::whereHas('posts')
+            ->withCountPosts()
+            ->get();
+           }
 
+    }
     function index_category($type)
     {
         if (get_module($type)?->cache) {
             return collect($this->categories($type)->values());
         } else {
-            return Category::withCountPosts()
+            return Category::whereHas('posts')->withCountPosts()
             ->onType($type)
             ->published()
             ->orderBy('sort','ASC')

@@ -4,19 +4,14 @@
 <div class="col-lg-12 mb-3">
   <h3 style="font-weight:normal;float:left;" ><i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i> {{get_post_type('title_crud')}} @if(request('trash')) <sup class="badge badge-warning" style="font-size:7px"> <i class="fa fa-trash-restore"></i> </sup> @endif
 </h3>
+
 <div class="pull-right">
     <div class="btn-group">
     @if(Route::has(get_post_type().'.create'))
     <a href="{{route(get_post_type().'.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
     @endif
     @if(Route::has(get_post_type().'.category')) <a href="{{route(get_post_type().'.category')}}" class="btn btn-dark btn-sm"> <i class="fa fa-tags" aria-hidden></i> Kategori</a> @endif
-    @if(request()->user()->isAdmin())
-    @if(request('trash'))
-<a title="Kembali" href="{{ route(get_post_type()) }}" class="btn btn-sm btn-danger">&nbsp; <i class="fa fa-undo"></i> Kembali</a>
-@else
-<a title="Sampah" href="{{ route(get_post_type()).'?trash=show' }}" class="btn btn-sm btn-warning">&nbsp; <i class="fa fa-trash-restore"></i> Sampah</a>
-@endif
-@endif
+    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i class="fa fa-filter"></i></button>
 </div>
 </div>
 
@@ -61,6 +56,7 @@
 <br>
 
 </div>
+@include('cms::backend.posts.filter')
 @include('cms::backend.posts.datatable')
 @push('styles')
 

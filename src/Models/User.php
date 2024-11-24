@@ -61,7 +61,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Log::class);
     }
-
+    function scopeWithCountPosts($query)
+    {
+        return $query->withCount('posts');
+    }
     public function isActive(){
         return $this->status == '1';
     }
