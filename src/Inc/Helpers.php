@@ -857,8 +857,9 @@ if (!function_exists('isPre')) {
 if (!function_exists('set_header_seo')) {
     function set_header_seo($data)
     {
+        $desctitle = \Illuminate\Support\Str::of($data->title)->explode(' ')[0] != get_module($data->type)->title ? get_module($data->type)->title . ' ' . $data->title : $data->title;
         return array(
-            'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . get_module($data->type)->title . ' ' . $data->title : $data->short_content),
+            'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
             'thumbnail' => $data->media ? url($data->thumbnail) : url(get_option('preview') ?? noimage()),
