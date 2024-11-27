@@ -858,7 +858,7 @@ if (!function_exists('set_header_seo')) {
     function set_header_seo($data)
     {
         return array(
-            'description' => !empty($data->description) ? $data->description : (strlen(strip_tags($data->content)) == 0 ? 'Lihat ' . get_module($data->type)->title . ' ' . $data->title : preg_replace('/\s+/', ' ',str(strip_tags($data->content))->limit(250))),
+            'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . get_module($data->type)->title . ' ' . $data->title : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
             'thumbnail' => $data->media ? url($data->thumbnail) : url(get_option('preview') ?? noimage()),
@@ -903,7 +903,7 @@ if (!function_exists('init_meta_header')) {
             }
             $data = [
                 'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : ($site_meta_description ?? $site_desc),
-                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title),
+                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title.($site_desc?' - '.$site_desc :'')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') ?? noimage()),
                 'url' => request()->fullUrl(),
