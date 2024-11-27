@@ -251,6 +251,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         $time['created_at'] =  $beforestatus!='publish' &&  empty($beforetitle) ? now() : $post->created_at;
         $time['updated_at'] =  strlen($timequery) != $beforelength ? now() : $post->updated_at;
         query()->whereId($post->id)->update($time);
+        Cache::forget($post->type);
         Cache::forget($post->id);
         $this->recache(get_post_type());
         return back()->with('success',$module->title.' Berhasil diperbarui');
