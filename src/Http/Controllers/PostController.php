@@ -8,6 +8,7 @@ use Leazycms\Web\Models\Post;
 use Illuminate\Validation\Rule;
 use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
@@ -250,6 +251,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         $time['created_at'] =  $beforestatus!='publish' &&  empty($beforetitle) ? now() : $post->created_at;
         $time['updated_at'] =  strlen($timequery) != $beforelength ? now() : $post->updated_at;
         query()->whereId($post->id)->update($time);
+        Cache::forget($post->id);
         $this->recache(get_post_type());
         return back()->with('success',$module->title.' Berhasil diperbarui');
 }
