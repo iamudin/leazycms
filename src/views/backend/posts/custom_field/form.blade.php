@@ -20,8 +20,7 @@
 @elseif (is_array($r[1]))
 @include('cms::backend.posts.custom_field.option')
 @elseif($r[1]=='break')
-<br>
-<h6 for="" style="border-bottom:1px dashed #000">{{$r[0]}}</h6>
+<h6 for="" style="border-bottom:1px dashed #000;">{{$r[0]}}</h6>
 @else
 @endif
 @endforeach

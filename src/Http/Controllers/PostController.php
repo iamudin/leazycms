@@ -278,12 +278,23 @@ public function recache($type){
                 if ($search = $req->search) {
                     $instance->where('type', get_post_type()) // Batasi hanya pada type 'berita'
                     ->where(function($query) use ($search) {
-                        $query->orWhere('title', 'like', '%' . $search . '%')
+                        $q = $query->orWhere('title', 'like', '%' . $search . '%')
                               ->orWhere('data_field', 'like', '%' . $search . '%')
                               ->orWhere('content', 'like', '%' . $search . '%')
                               ->orWhere('description', 'like', '%' . $search . '%')
                               ->orWhere('keyword', 'like', '%' . $search . '%')
                               ->orWhere('media_description', 'like', '%' . $search . '%');
+                            if(current_module()->form->post_parent){
+                               $q->orWhereHas('parent',function($q)use($search){
+                                    $q->select('id')->where('title','like','%'.$search.'%')->orWhereHas('parent',function($q)use($search){
+                                        $q->select('id')->where('title','like','%'.$search.'%');
+                                      })->orWhereHas('parent',function($q)use($search){
+                                        $q->select('id')->where('title','like','%'.$search.'%')->orWhereHas('parent',function($q)use($search){
+                                            $q->select('id')->where('title','like','%'.$search.'%');
+                                          });;
+                                      });
+                                  });
+                            }
                     });
                 }
                 if ($status = $req->status) {

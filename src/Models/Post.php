@@ -259,13 +259,14 @@ class Post extends Model
         return $q->paginate($paginate);
 
     }
-    public function index_popular($type)
+    public function index_popular($type,$limit)
     {
+        $type= is_array($type) ? $type : [$type];
         return $this->selectedColumn()
         ->withCountVisitors()
-        ->onType($type)
+        ->whereIn('type',$type)
         ->published()
-        ->orderBy('visitors_count', 'desc')->take('5')->get();
+        ->orderBy('visitors_count', 'desc')->take($limit)->get();
     }
 
     function index_pinned($limit, $type = false)
@@ -340,12 +341,11 @@ class Post extends Model
         if ($name) {
             if (get_module($type)->form->category) {
                 $with[] = 'category';
-                $with[] = 'user';
             }
             return $this->where('type', $type)
             ->likeSlug($name)
             ->published()
-            ->with($with ?? ['user'])
+            ->with(array_merge($with??[],['user']))
             ->withCountVisitors()
             ->first();
 

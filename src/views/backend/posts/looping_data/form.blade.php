@@ -39,6 +39,8 @@ if(!empty($l->$k) && media_exists($post,$l->$k)){
              @include('cms::backend.posts.looping_data.email')
              @elseif('number' == $r[1])
              @include('cms::backend.posts.looping_data.number')
+             @elseif('textarea' == $r[1])
+             @include('cms::backend.posts.looping_data.textarea')
              @else
              @endif
 
@@ -54,7 +56,7 @@ if(!empty($l->$k) && media_exists($post,$l->$k)){
        <tfoot style="background:#f7f7f7">
           <tr>
              <td colspan="{{count($module->form->looping_data)+1}}" align="right">
-            <button style="display:none" type="button" class="btn btn-sm btn-outline-danger delbut" onclick="$('.coldata tr.nw:last').remove();$('.btnadd').show();$('.delbut').hide();">&nbsp;&nbsp;<i class="fa fa-times" aria-hidden></i></button> <button onclick="$('.coldata').append('<tr class=\'nw\'>'+ $('.addcol').html()+'</tr>');$('.coldata tr.nw select').removeAttr('disabled');$('.coldata tr.nw input').removeAttr('disabled');$('.delbut').show();$('.btnadd').hide()" type="button" class="btn btn-sm btn-outline-info btnadd" name="button"> &nbsp; <i class="fa fa-plus"></i></button></td>
+            <button style="display:none" type="button" class="btn btn-sm btn-outline-danger delbut" onclick="$('.coldata tr.nw:last').remove();$('.btnadd').show();$('.delbut').hide();">&nbsp;&nbsp;<i class="fa fa-times" aria-hidden></i></button> <button onclick="$('.coldata').append('<tr class=\'nw\'>'+ $('.addcol').html()+'</tr>');$('.coldata tr.nw select').removeAttr('disabled');$('.coldata tr.nw textarea').removeAttr('disabled');$('.coldata tr.nw input').removeAttr('disabled');$('.delbut').show();$('.btnadd').hide()" type="button" class="btn btn-sm btn-outline-info btnadd" name="button"> &nbsp; <i class="fa fa-plus"></i></button></td>
           </tr>
           <tr style="display:none" class="addcol">
              @foreach($module->form->looping_data as $r)
@@ -68,6 +70,8 @@ if(!empty($l->$k) && media_exists($post,$l->$k)){
                 <option value="{{$r}}">{{$r}}</option>
                 @endforeach
              </select>
+             @elseif($r[1]=='textarea')
+             <textarea disabled placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}"  class="form-control" name="{{_us($r[0])}}[]"></textarea>
              @else
 
                 <input style="min-width:80px" disabled placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}" type="{{$r[1]}}"  class="form-control form-control-sm"  name="{{_us($r[0])}}[]" >
