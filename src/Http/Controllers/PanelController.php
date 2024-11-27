@@ -37,6 +37,7 @@ class PanelController extends Controller implements HasMiddleware
     {
         // $this->toDashboard($request);
         $user = $request->user();
+        $posts = Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type');
         $da = array();
         for ($i = 0; $i <= 6; $i++) {
             array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
@@ -55,7 +56,7 @@ class PanelController extends Controller implements HasMiddleware
             'latest' => $lastpublish,
             'weekago' => $weekago,
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
-            'posts' => $user->posts,
+            'posts' => $posts,
             'visitor' => $visitor
         ]);
     }

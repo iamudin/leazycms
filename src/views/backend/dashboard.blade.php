@@ -20,7 +20,7 @@
             <div class="widget-small danger coloured-icon"><i class="icon fa {{$row->icon}} fa-3x"></i>
               <div class="info pl-3">
                 <p class="mt-2 text-muted">{{$row->title}}</p>
-                <h2><b>{{$posts->where('type',$row->name)->count()}}</b></h2>
+                <h2><b>{{$posts[$row->name]??''}}</b></h2>
               </div>
             </div>
           </div>
