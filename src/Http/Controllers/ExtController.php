@@ -1,8 +1,10 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
-use Illuminate\Support\Facades\Response;
 use Leazycms\Web\Models\Post;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Response;
 
 class ExtController extends Controller
 {
@@ -33,39 +35,62 @@ class ExtController extends Controller
     ->header('Content-Type', 'application/json')
     ->header('Content-Disposition', 'attachment; filename="site.manifest"');
     }
-    public function sitemap_xml(){
+    public function sitemap_xml()
+    {
+        // Cek apakah sitemap sudah ada di cache
+        $sitemap = Cache::remember('sitemap', 60, function () {
+            $type = collect(get_module())
+                ->where('active', true)
+                ->where('public', true)
+                ->where('web.detail', true);
 
-            $type = collect(get_module())->where('active',true)->where('public',true)->where('web.detail',true);
-            $post = Post::whereIn('type',$type->pluck('name')->toArray())->published()->select('updated_at','url','type')->get();
+            $post = Post::whereIn('type', $type->pluck('name')->toArray())
+                ->published()
+                ->select('updated_at', 'url', 'type')
+                ->get();
+
             $lastmod = Post::select('updated_at')->latest('updated_at')->first()?->updated_at;
 
             $type_index = [
                 [
-                    'loc'=>url('/'),
-                    'priority'=>'1.0',
-                    'lastmod' => $lastmod->toIso8601String()
+                    'loc' => url('/'),
+                    'priority' => '1.0',
+                    'lastmod' => $lastmod ? $lastmod->toIso8601String() : now()->toIso8601String(),
                 ]
             ];
-            foreach($type as $row){
-            if($row->web->index){
-                $lst = $post->where('type',$row->name)->sortByDesc('updated_at')->first();
-                $a['loc'] = url($row->name);
-                $a['priority'] = '0.80';
-                $a['lastmod'] = $lst ? $lst->updated_at->toIso8601String() : $lastmod->toIso8601String();
-                $type_index[] = $a;
+
+            foreach ($type as $row) {
+                if ($row->web->index) {
+                    $lst = $post->where('type', $row->name)->sortByDesc('updated_at')->first();
+                    $a['loc'] = url($row->name);
+                    $a['priority'] = '0.80';
+                    $a['lastmod'] = $lst ? $lst->updated_at->toIso8601String() : $lastmod->toIso8601String();
+                    $type_index[] = $a;
+                }
             }
-            }
+
             $post_index = [];
-            foreach($post as $row){
-                    $a['loc'] = url($row->url);
-                    $a['priority'] = $row->type=='halaman' ? '0.64' : '0.80';
-                    $a['lastmod'] = $row->updated_at->toIso8601String();
+            foreach ($post as $row) {
+                $a['loc'] = url($row->url);
+                $a['priority'] = $row->type == 'halaman' ? '0.64' : '0.80';
+                $a['lastmod'] = $row->updated_at->toIso8601String();
                 $post_index[] = $a;
             }
-            $urls = array_merge($type_index,$post_index);
-            $sitemap = view('cms::layouts.sitemap-xml', compact('urls'))->render();
 
-            return response($sitemap, 200)->header('Content-Type', 'application/xml');
+            $urls = array_merge($type_index, $post_index);
+            $sitemapContent = view('cms::layouts.sitemap-xml', compact('urls'))->render();
+
+            // Simpan ke file sitemap.xml
+            File::put(public_path('sitemap.xml'), $sitemapContent);
+
+            return $sitemapContent;
+        });
+
+        // Kembalikan file sitemap.xml sebagai respons
+        return Response::file(public_path('sitemap.xml'), [
+            'Content-Type' => 'application/xml',
+            'Content-Disposition' => 'inline; filename="sitemap.xml"',
+        ]);
     }
 
 }
