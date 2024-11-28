@@ -12,6 +12,38 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+
+
+if (!function_exists('getThumbUrl')) {
+function getThumbUrl($url)
+{
+    $response = \Illuminate\Support\Facades\Http::withOptions([
+        'verify' => false,  // Menonaktifkan verifikasi SSL
+    ])->get($url);
+
+    if ($response->successful()) {
+        // Ambil body HTML dari respons
+        $html = $response->body();
+        // Membuat objek DOMDocument dan memuat HTML
+        $dom = new \DOMDocument();
+        @$dom->loadHTML($html);
+
+        // Membuat objek XPath untuk query di dokumen
+        $xpath = new \DOMXPath($dom);
+
+        // Menjalankan query XPath untuk mencari gambar dengan class 'lz-thumbnail'
+        $images = $xpath->query('//img[contains(@class, "lz-thumbnail")]');
+
+        if ($images->length > 0) {
+            // Ambil URL dari atribut 'src'
+            $src = $images->item(0)->getAttribute('data-src');
+            return $src;
+        }
+    }
+
+    return null; // Jika gambar dengan class 'lz-thumbnail' tidak ditemukan
+}
+}
 if (!function_exists('getLatestVersion')) {
     function getLatestVersion($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
     {
@@ -854,6 +886,13 @@ if (!function_exists('isPre')) {
         return implode('</pre>', $parts);
 }
 }
+if (!function_exists('get_thumbnail')) {
+    function get_thumbnail()
+    {
+        return Cache::has('lz_thumbnail') ? url(Cache::get('lz_thumbnail')) : url(noimage());
+    }
+}
+
 if (!function_exists('set_header_seo')) {
     function set_header_seo($data)
     {
@@ -862,7 +901,7 @@ if (!function_exists('set_header_seo')) {
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
-            'thumbnail' => $data->media ? url($data->thumbnail) : url(get_option('preview') ?? noimage()),
+            'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? $data->thumbnail : url(get_option('preview') ?? noimage())) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') ?? noimage())) ,
             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
         );
     }

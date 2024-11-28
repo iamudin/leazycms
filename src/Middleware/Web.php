@@ -3,6 +3,9 @@ namespace Leazycms\Web\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Cache;
+
 class Web
 {
     /**
@@ -30,6 +33,13 @@ class Web
                     $attributes = preg_replace('/class=["\']([^"\']*?)["\']/', 'class="$1 lazyload"', $attributes);
                 } else {
                     $attributes .= ' class="lazyload"';
+                }
+                if (strpos($attributes, 'class="') !== false && strpos($attributes, 'lz-thumbnail') !== false) {
+                    if(strpos($matches[2],'noimage.webp') === false && !empty($matches[2])){
+                        if(!Cache::has('lz_thumbnail')){
+                            Cache::put('lz_thumbnail', $matches[2], now()->addSeconds(1800));
+                        }
+                    }
                 }
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);

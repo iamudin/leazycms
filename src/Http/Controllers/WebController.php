@@ -21,6 +21,7 @@ class WebController extends Controller
 
     public function home()
     {
+
         $hp = get_option('home_page');
         if($hp!='default' && View::exists('template.'.template().'.'.str_replace('.blade.php','',$hp))){
             return view('template.'.template().'.'.str_replace('.blade.php','',$hp));
@@ -96,7 +97,6 @@ class WebController extends Controller
     }
     public function detail(Request $request, Post $post, $slug = false)
     {
-
         $modul = get_module(get_post_type() ?? 'halaman');
         $detail = $post->detail(get_post_type() ?? 'halaman', $slug);
         abort_if(empty($detail), '404');
