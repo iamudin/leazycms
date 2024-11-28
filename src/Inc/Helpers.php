@@ -889,7 +889,7 @@ if (!function_exists('isPre')) {
 if (!function_exists('get_thumbnail')) {
     function get_thumbnail()
     {
-        return Cache::has('lz_thumbnail') ? url(Cache::get('lz_thumbnail')) : url(noimage());
+        return Cache::has(md5(request()->fullUrl())) ? url(Cache::get(md5(request()->fullUrl()))) : url(noimage());
     }
 }
 

@@ -27,7 +27,7 @@ class Web
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
-            $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) {
+            $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use($request) {
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
                 if (strpos($attributes, 'class="') !== false) {
                     $attributes = preg_replace('/class=["\']([^"\']*?)["\']/', 'class="$1 lazyload"', $attributes);
@@ -36,8 +36,9 @@ class Web
                 }
                 if (strpos($attributes, 'class="') !== false && strpos($attributes, 'lz-thumbnail') !== false) {
                     if(strpos($matches[2],'noimage.webp') === false && !empty($matches[2])){
-                        if(!Cache::has('lz_thumbnail')){
-                            Cache::put('lz_thumbnail', $matches[2], now()->addSeconds(1800));
+                        $keycache = md5($request->fullUrl());
+                        if(!Cache::has($keycache)){
+                            Cache::put($keycache, $matches[2], now()->addSeconds(1800));
                         }
                     }
                 }
