@@ -7,6 +7,7 @@ use Leazycms\Web\Models\User;
 use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Cache;
 use Leazycms\Web\Http\Controllers\VisitorController;
 
 class WebController extends Controller
@@ -21,7 +22,6 @@ class WebController extends Controller
 
     public function home()
     {
-
         $hp = get_option('home_page');
         if($hp!='default' && View::exists('template.'.template().'.'.str_replace('.blade.php','',$hp))){
             return view('template.'.template().'.'.str_replace('.blade.php','',$hp));

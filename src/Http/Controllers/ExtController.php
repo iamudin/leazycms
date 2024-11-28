@@ -78,12 +78,26 @@ class ExtController extends Controller
             }
 
             $urls = array_merge($type_index, $post_index);
-            $sitemapContent = view('cms::layouts.sitemap-xml', compact('urls'))->render();
 
-            // Simpan ke file sitemap.xml
-            File::put(public_path('sitemap.xml'), $sitemapContent);
+            // Pisahkan URL ke dalam beberapa file dengan maksimal 50.000 URL per file
+            $chunkedUrls = array_chunk($urls, 50000);
+            $sitemaps = [];
 
-            return $sitemapContent;
+            foreach ($chunkedUrls as $index => $chunk) {
+                $filename = "sitemap_" . ($index + 1) . ".xml";
+                $sitemapContent = view('cms::layouts.sitemap-xml', ['urls' => $chunk])->render();
+                File::put(public_path($filename), $sitemapContent);
+                $sitemaps[] = [
+                    'loc' => url($filename),
+                    'lastmod' => now()->toIso8601String(),
+                ];
+            }
+
+            // Generate indeks sitemap utama
+            $sitemapIndexContent = view('cms::layouts.sitemap-index', ['sitemaps' => $sitemaps])->render();
+            File::put(public_path('sitemap.xml'), $sitemapIndexContent);
+
+            return $sitemapIndexContent;
         });
 
         // Kembalikan file sitemap.xml sebagai respons
