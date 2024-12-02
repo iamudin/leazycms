@@ -387,12 +387,10 @@ public function recache($type){
             })
 
             ->addColumn('parents', function ($row) {
-                if (current_module()->form->post_parent):
-                    $custom = _us(current_module()->form->post_parent[0]);
-                    return (!empty($row->data_field) && !empty($row->data_field[$custom])) ? '<span class="text-muted">' . $row->data_field[$custom] . '</span>' : '<span class="text-muted">__</span>';
-                else:
-                    return '-';
-                endif;
+                if (current_module()->form->post_parent){
+                    return $row->parent?->title ?? '<span class="text-muted">__</span>';
+                }
+
             })
 
 
