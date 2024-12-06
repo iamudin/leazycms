@@ -27,7 +27,7 @@
             <br>
             <br>
             <h4 class="text-warning">{{get_option('site_title') ?? 'Web Title'}}</h4>
-           @if(get_option('site_description')) <h6 class="text-muted"><i>{{ get_option('site_description') }}</i></h6>@endif
+           @if(get_option('site_description')) <h6 class="text-white"><i>{{ get_option('site_description') }}</i></h6>@endif
             <br>
 
             @if(get_option('site_maintenance')=='Y')
