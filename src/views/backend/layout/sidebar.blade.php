@@ -16,7 +16,7 @@
                 aria-hidden="true"></i> MENU UTAMA</li>
         <li>
             <a class="app-menu__item {{ Request::is(admin_path() . '/dashboard') ? 'active' : '' }}"
-                href="{{ route('panel.dashboard') }}"><i class="app-menu__icon fa fa-tachometer"></i> <span
+                href="{{ route('panel.dashboard') }}"><i class="app-menu__icon fa fa-dashboard"></i> <span
                     class="app-menu__label">Dahsboard</span></a>
         </li>
         @foreach ($userprofile->isAdmin() ? collect(get_module())->sortBy('position') : collect(get_module())->sortBy('position')->whereIn('name', $userprofile->get_modules->pluck('module')->toArray()) as $row)

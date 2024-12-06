@@ -1,19 +1,19 @@
 @extends('cms::backend.layout.app',['title'=>'Dashboard'])
 @section('content')
-<!-- <link href="https://coderthemes.com/adminox/layouts/vertical/assets/css/icons.min.css" rel="stylesheet" type="text/css" /> -->
 <div class="row">
-<div class="col-lg-12 mb-3">
-    @if($latestv = getLatestVersion() )
-    @if(get_leazycms_version() != $latestv)
-    <div class="alert alert-info">
-        <strong> <i class="fa fa-sync"></i> New Version {{ $latestv }} Update Available!</strong> You are currently running version {{ get_leazycms_version()}}
-    </div>
-    @endif
-    @endif
-    <h3 style="font-weight:normal;"> <i class="fa fa-tachometer"></i> Dashboard </h3>
+<div class="col-lg-12 mb-1">
+
+    <h3 style="font-weight:normal;"> <i class="fa fa-dashboard"></i> Dashboard </h3>
 
 </div>
     <div class="col-lg-12">
+        @if($latestv = getLatestVersion() )
+        @if(get_leazycms_version() != $latestv)
+        <div class="alert alert-info">
+            <strong> <i class="fa fa-sync"></i> New Version {{ $latestv }} Update Available!</strong> You are currently running version {{ get_leazycms_version()}}
+        </div>
+        @endif
+        @endif
   <div class="row">
     @foreach($type as $row)
           <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{Route::has($row->name) ? route($row->name) : ''}}'">
