@@ -4,10 +4,7 @@ use Leazycms\Web\Http\Controllers\PostController;
 use Leazycms\Web\Http\Controllers\TagController;
 use Leazycms\Web\Http\Controllers\UserController;
 use Leazycms\Web\Http\Controllers\PanelController;
-use Leazycms\Web\Http\Controllers\CommentController;
 use Leazycms\Web\Http\Controllers\CategoryController;
-use Leazycms\Web\Http\Controllers\FileController;
-
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
 Route::get('files', function(){
@@ -38,10 +35,7 @@ foreach (get_module() as $value) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
             Route::match(['get','post'],$value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');
         }
-        if ($value->form->editor) {
-            Route::post($value->name . '/{post}/upload_image', 'editor_image_upload')->name($value->name . '.editor-image-upload');
-            Route::post($value->name . '/{post}/upload_file', 'editor_file_upload')->name($value->name . '.editor-file-upload');;
-        }
+
     });
     if ($value->form->category) {
 
