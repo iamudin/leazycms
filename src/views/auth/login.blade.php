@@ -27,7 +27,7 @@
             <br>
             <br>
             <h4 class="text-warning">{{get_option('site_title') ?? 'Web Title'}}</h4>
-           @if(get_option('site_description')) <h6 class="text-white"><i>{{ get_option('site_description') }}</i></h6>@endif
+           @if(get_option('site_description')) <h6 class="text-muted"><i>{{ get_option('site_description') }}</i></h6>@endif
             <br>
 
             @if(get_option('site_maintenance')=='Y')
@@ -42,7 +42,7 @@
                 @endif
 
           <div class="form-group  pb-0 mb-2">
-            <label class="control-label" style="color:#f5f5f5">Username</label>
+            <label class="control-label " style="color:#f5f5f5">Username</label>
                 <input id="username" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Username" type="text" class="form-control form-control-lg " name="username" required autocomplete="username" autofocus>
           </div>
           <div class="form-group">
