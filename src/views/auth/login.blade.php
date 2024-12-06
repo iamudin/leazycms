@@ -10,7 +10,7 @@
     <!-- Font-icon css-->
     <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Masuk - {{get_option('site_title')}}</title>
-    <link rel="shortcut icon" href="{{ url('favicon') }}" />
+    <link rel="shortcut icon" href="{{ url('favicon.ico') }}" />
     <meta property="og:title" content="Masuk - {{get_option('site_title')?? 'Web Title'}}" />
 <meta property="og:image" content="{{url(get_option('logo')??noimage())}}" />
 <meta property="og:site_name" content="{{get_option('site_title') ?? 'Web Title'}}" />
@@ -19,7 +19,7 @@
   <body>
 
     <section class="login-content" style="background:#000">
-      <div class="login-box" style=background:transparent;box-shadow:none;width:100%">
+      <div class="login-box" style="background:transparent;box-shadow:none;width:100%">
 
         <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{route('login.submit') }}">
           @csrf

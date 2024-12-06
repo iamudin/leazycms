@@ -43,8 +43,16 @@ class LoginController extends Controller
         if(Auth::check())
         return redirect(admin_path().'/dashboard');
         $this->codeCaptcha();
-        return view('cms::auth.login',['captcha'=>route('captcha')]);
 
+    // Mulai output buffering
+    ob_start();
+    echo view('cms::auth.login', ['captcha' => route('captcha')])->render();
+    $output = ob_get_clean();
+
+    // Hilangkan newline
+    $output = preg_replace('/\s+/', ' ', $output);
+
+    return response($output);
     }
     public function loginSubmit(Request $request,RateLimiter $limiter,User $user)
     {
