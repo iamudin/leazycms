@@ -901,7 +901,7 @@ if (!function_exists('set_header_seo')) {
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
-            'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? $data->thumbnail : url(get_option('preview') ?? noimage())) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') ?? noimage())) ,
+            'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? url($data->thumbnail) : url(get_option('preview') ?? url(noimage()))) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') ?? url(noimage()))) ,
             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
         );
     }

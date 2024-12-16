@@ -165,6 +165,9 @@ class WebController extends Controller
             'detail' => $detail,
             'history' => isset($history) ? $history : null
         );
+        if(View::exists('template.'.template().'.'.$detail->type.'.'.$detail->id)){
+        return view('template.'.template().'.'.$detail->type.'.'.$detail->id, $data);
+        }
         return view('cms::layouts.master', $data);
     }
     public function category($slug = null)
