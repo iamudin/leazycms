@@ -231,7 +231,6 @@ return [
             'cache' => false,
             'active' => true,
         ],
-
         'berita' => [
             'position' => 1,
             'name' => 'berita',
@@ -380,6 +379,45 @@ return [
                 'index' => true,
                 'detail' => true,
                 'history' => true,
+                'auto_query' => true,
+                'sortable'=>false,
+            ],
+            'public' => true,
+            'cache' => false,
+            'active' => true,
+        ],
+        'statistik' => [
+            'position' => 2,
+            'name' => 'statistik',
+            'title' => 'Data Statistik',
+            'description' => 'Menu Untuk Mengelola Statistik',
+            'parent' => false,
+            'icon' => 'fa-bar-chart',
+            'route' => ['index','create','show','update','delete'],
+            'datatable'=>[
+                'custom_column' => false,
+                'data_title' => 'Nama Statistik',
+            ],
+            'form'=>[
+                'unique_title' => false,
+                'post_parent' => false,
+                'thumbnail' => false,
+                'editor' => false,
+                'category' => false,
+                'tag' => true,
+                'looping_name'=>'Periode',
+                'looping_data' => array(
+                    ['Tahun', range(2000, 2025)],
+                    ['Data Excel', 'file']
+                ),
+                'custom_field' => false
+            ],
+            'web'=>[
+                'api' => false,
+                'archive' => false,
+                'index' => true,
+                'detail' => true,
+                'history' => false,
                 'auto_query' => true,
                 'sortable'=>false,
             ],

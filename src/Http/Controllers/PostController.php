@@ -207,8 +207,8 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     }
     $data['url'] = $post->type!='halaman' ? $post->type.'/'.$data['slug'] : $data['slug'];
 
-    // dd($request->all());
     if($looping_data = $module->form->looping_data){
+
         $datanya = [];
         $jmlh = 0;
     foreach ($looping_data as $y) {

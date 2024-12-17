@@ -980,33 +980,29 @@ if (!function_exists('get_menu')) {
         return collect(json_decode(json_encode($menuTree)));
     }
 }
-
-
 if (!function_exists('load_default_module')) {
     function load_default_module()
     {
         use_module([
-            'berita' => ['position' => 1],
-            'halaman' => ['custom_field' => false],
-            'pengumuman' => ['custom_field' => false],
+            'berita' => ['position' => 1,'active'=>true],
+            'halaman' => ['custom_field' => false,'active'=>true],
+            'pengumuman' => ['custom_field' => false,'active'=>false],
             'agenda' => ['position' => 2],
             'sambutan' => ['position' => 6],
             'document' => ['position' => 3],
             'menu' => true,
             'banner' => ['auto_load' => true],
-            'unit-kerja' => ['position' => 4],
+            'unit-kerja' => ['position' => 4,'active'=>true],
+            'statistik' => ['position' => 6],
             'pegawai' => ['position' => 4],
             'dokumentasi' => ['position' => 4],
             'media' => ['position' => 7, 'icon' => 'fa-link']
         ]);
     }
 }
-
-
 if (!function_exists('paginate')) {
     function paginate($items)
     {
-
         $perPage = get_option('post_perpage');
         $page = request()->page ?: (\Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof \Illuminate\Support\Collection ? $items : \Illuminate\Support\Collection::make($items);
@@ -1016,12 +1012,9 @@ if (!function_exists('paginate')) {
 if (!function_exists('get_post')) {
     function get_post()
     {
-
         return new \Leazycms\Web\Models\Post;
     }
 }
-
-
 if (!function_exists('_loop')) {
     function _loop($r)
     {
@@ -1049,6 +1042,13 @@ if (!function_exists('isImage')) {
         return str_contains($src, 'image') ? true : false;
     }
 }
+if (!function_exists('web_layout')) {
+    function web_layout()
+    {
+        return "cms::layouts.layout";
+    }
+}
+
 if (!function_exists('allow_mime')) {
 
     function allow_mime()

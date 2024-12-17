@@ -22,7 +22,7 @@
           <td align="center" @if('file'==$r[1])  onmouseover="$('.edit-{{_us($r[0])}}-{{$y}}').show()" onmouseout="$('.edit-{{_us($r[0])}}-{{$y}}').hide()" @endif>
              @if('file'==$r[1])
              <?php
-if(!empty($l->$k) && media_exists($post,$l->$k)){
+if(!empty($l->$k) && media_exists($l->$k)){
   $f[$y] = true;
 }
 ?>
