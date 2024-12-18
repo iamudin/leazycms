@@ -30,6 +30,7 @@
         "intervention/image": "~2.0",
         "stevebauman/location":"*",
         "nesbot/carbon": "*",
+        "maatwebsite/excel":"^3.1",
         "spatie/laravel-backup":"*"
     }
 

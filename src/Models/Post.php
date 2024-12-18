@@ -111,9 +111,9 @@ class Post extends Model
     {
         return json_decode(json_encode($this->data_field));
     }
-    public function getDatadAttribute()
+    public function getDataAttribute()
     {
-        return json_decode(json_encode($this->data_loop));
+        return collect(json_decode(json_encode($this->data_loop)));
     }
     public function getThumbnailDescriptionAttribute()
     {
