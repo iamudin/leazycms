@@ -986,14 +986,15 @@ if (!function_exists('load_default_module')) {
         use_module([
             'berita' => ['position' => 1,'active'=>true],
             'halaman' => ['custom_field' => false,'active'=>true],
-            'pengumuman' => ['custom_field' => false,'active'=>false],
+            'pengumuman' => ['active'=>true],
             'agenda' => ['position' => 2],
             'sambutan' => ['position' => 6],
             'document' => ['position' => 3],
-            'menu' => true,
-            'banner' => ['auto_load' => true],
+            'menu' =>  ['active'=>true],
+            'banner' =>   ['active'=>true],
             'unit-kerja' => ['position' => 4,'active'=>true],
             'statistik' => ['position' => 6],
+            'countdown' => ['position' => 10],
             'pegawai' => ['position' => 4],
             'dokumentasi' => ['position' => 4],
             'media' => ['position' => 7, 'icon' => 'fa-link']

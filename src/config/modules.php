@@ -1,6 +1,44 @@
 <?php
 return [
     'menu' => [
+        'countdown' => [
+            'position' => 5,
+            'name' => 'countdown',
+            'title' => 'Hitung Mundur',
+            'description' => 'Menu Untuk Mengelola Pengumuman',
+            'parent' => false,
+            'icon' => 'fa-hourglass',
+            'route' => ['index','create','show','update','delete'],
+            'datatable'=>[
+                'custom_column' => false,
+                'data_title' => 'Nama Hitung Mundur',
+            ],
+            'form'=>[
+                'unique_title' => false,
+                'post_parent' => false,
+                'thumbnail' => true,
+                'editor' => false,
+                'category' => false,
+                'tag' => false,
+                'looping_name'=>'Arsip',
+                'looping_data' => false,
+                'custom_field' => array(
+                    ['Tanggal', 'date','required'],
+                    )
+            ],
+            'web'=>[
+                'api' => false,
+                'archive' => false,
+                'index' => false,
+                'detail' => false,
+                'history' => false,
+                'auto_query' => false,
+                'sortable'=>false,
+            ],
+            'public' => true,
+            'cache' => true,
+            'active' => true,
+        ],
         'pengumuman' => [
             'position' => 3,
             'name' => 'pengumuman',
