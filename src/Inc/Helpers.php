@@ -992,8 +992,6 @@ if (!function_exists('load_default_module')) {
             'document' => ['position' => 3],
             'menu' =>  ['active'=>true],
             'banner' =>   ['active'=>true],
-            'unit-kerja' => ['position' => 4,'active'=>true],
-            'statistik' => ['position' => 6],
             'countdown' => ['position' => 10],
             'pegawai' => ['position' => 4],
             'dokumentasi' => ['position' => 4],
