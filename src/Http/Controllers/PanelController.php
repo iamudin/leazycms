@@ -61,7 +61,13 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function visitor(Request $request)
     {
-        $data = Visitor::query()->latest('created_at');
+        $da = array();
+        for ($i = 0; $i <= 6; $i++) {
+            array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
+        }
+
+        $weekago = json_decode(json_encode(collect($da)->sort()), true);
+        $data = Visitor::whereIn(DB::raw('DATE(created_at)'), $da);
         return Datatables::of($data)
             ->addIndexColumn()
             ->filter(

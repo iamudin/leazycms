@@ -46,6 +46,7 @@ $modules = collect(get_module())->where('name','!=','halaman')->where('active', 
 ->toArray())) . ')[a-zA-Z0-9-_]+')->middleware(['public']);
 
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public']);
+Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
 
 
 Route::match(['get', 'post'],'install', [SetupController::class, 'index'])->name('install');

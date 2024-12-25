@@ -47,6 +47,3 @@
             </div>
 </form>
 </div>
-@push('scripts')
-@include('cms::backend.layout.js')
-@endpush

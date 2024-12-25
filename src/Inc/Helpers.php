@@ -13,6 +13,14 @@ if (!function_exists('query')) {
     }
 }
 
+if (!function_exists('polling_form')) {
+    function polling_form($keyword){
+        if(empty(request()->cookie('polling_'.$keyword))){
+        $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->first();
+        return View::make('cms::backend.polling.web.form',compact('data'));
+    }
+}
+}
 
 if (!function_exists('getThumbUrl')) {
 function getThumbUrl($url)
@@ -1082,61 +1090,7 @@ if (!function_exists('mime_thumbnail')) {
     }
 }
 
-if (!function_exists('upload_media')) {
-    function upload_media($post, $media, $description, $parent_type)
-    {
 
-        if (in_array($media->getClientMimeType(), explode(',', allow_mime()))) {
-            $result = $post->medias()->updateOrCreate(
-                ['media_description' => $description],
-                [
-                    'type' => 'media',
-                    'parent_type' => $parent_type,
-                    'status' => 'publish',
-                    'user_id' => request()->user()->id,
-                ]
-            );
-            if ($result->media) {
-                \Illuminate\Support\Facades\Storage::delete($result->media);
-            }
-            $dir = !empty(get_post_type()) ? get_post_type() : 'media';
-            $path = 'uploads/' . $dir . '/' . time_to_path();
-            if (!is_dir($path)) {
-                \Illuminate\Support\Facades\Storage::makeDirectory($path);
-            }
-            $result->update([
-                'media' => $file = isImage($media) ? put_image($media, $path) : \Illuminate\Support\Facades\Storage::putFileAs($path, $media, str(pathinfo($media->getClientOriginalName(), PATHINFO_FILENAME) . ' ' . str()->random(4))->slug() . '.' . $media->getClientOriginalExtension()),
-                'title' => $media->getClientOriginalName(),
-                'slug' => basename($file),
-                'created_at' => now(),
-                'data_field' => ['ukuran' => size_as_kb(\Illuminate\Support\Facades\Storage::size($file))],
-                'mime' => \Illuminate\Support\Facades\Storage::mimeType($file)
-            ]);
-
-            recache_media();
-            return str_replace(url('/') . '/', '', route('stream', basename($result->media)));
-        }
-    }
-}
-
-if (!function_exists('recache_media')) {
-    function recache_media()
-    {
-            $mediaItems =  \Leazycms\Web\Models\Post::where('status', 'publish')
-                ->where('type', 'media')
-                ->select('slug', 'mime', 'media')
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    return [$item['slug'] => ['mime' => $item['mime'], 'media' => $item['media']]];
-                })
-                ->toArray();
-                foreach ($mediaItems as $slug => $data) {
-                    \Illuminate\Support\Facades\Cache::rememberForever("media_{$slug}", function () use ($data) {
-                        return $data;
-                    });
-                }
-    }
-}
 if (!function_exists('recache_banner')) {
     function recache_banner()
     {

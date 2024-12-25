@@ -1,9 +1,10 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use Leazycms\Web\Http\Controllers\PostController;
 use Leazycms\Web\Http\Controllers\TagController;
+use Leazycms\Web\Http\Controllers\PostController;
 use Leazycms\Web\Http\Controllers\UserController;
 use Leazycms\Web\Http\Controllers\PanelController;
+use Leazycms\Web\Http\Controllers\PollingController;
 use Leazycms\Web\Http\Controllers\CategoryController;
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
@@ -80,6 +81,20 @@ Route::controller(TagController::class)->group(function () {
     Route::get('tags/{tag}/edit', 'edit')->name('tag.edit');
     Route::put('tags/{tag}/update', 'update')->name('tag.update');
     Route::delete('tags/{tag}/edit', 'destroy')->name('tag.destroy');
+});
+Route::controller(PollingController::class)->group(function () {
+    Route::get('polling', 'index')->name('polling');
+    Route::get('polling/create', 'create')->name('polling.create');
+    Route::post('polling/create', 'store')->name('polling.store');
+    Route::post('polling', 'datatable')->name('polling.datatable');
+    Route::get('polling/{polling}/edit', 'edit')->name('polling.edit');
+    Route::get('polling/{polling}/option', 'indexOption')->name('polling.option.index');
+    Route::post('polling/{polling}/option', 'storeOption')->name('polling.option.store');
+    Route::get('polling/{polling}/option/{option:id}/edit', 'editOption')->name('polling.option.edit');
+    Route::put('polling/{polling}/option/{option}/edit', 'updateOption')->name('polling.option.update');
+    Route::delete('polling/option/{option}/delete', 'destroyOption')->name('polling.option.destroy');
+    Route::put('polling/{polling}/update', 'update')->name('polling.update');
+    Route::delete('polling/{polling}/edit', 'destroy')->name('polling.destroy');
 });
 Route::get('/', function () {
     return to_route('login');

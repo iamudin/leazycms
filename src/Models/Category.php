@@ -1,15 +1,26 @@
 <?php
 namespace Leazycms\Web\Models;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Leazycms\FLC\Traits\Fileable;
+
 class Category extends Model
 {
-    use SoftDeletes;
+    use Fileable;
 
     protected $fillable=[
         'type','url','status','name','description','slug','icon','sort'
       ];
+      public static function boot()
+      {
+          parent::boot();
 
+          static::deleting(function ($post) {
+                  foreach($post->files as $row){
+                      $row->deleteFile();
+                  }
+          });
+
+      }
     public function posts()
     {
     return $this->hasMany(Post::class);

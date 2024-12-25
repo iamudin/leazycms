@@ -58,7 +58,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || request()->is(admin_path().'/tags') || request()->is(admin_path().'/user') || request()->is(admin_path().'/files'))
+@if(get_post_type() || request()->segment(2)=='polling'  ||  request()->is(admin_path().'/tags') || request()->is(admin_path().'/user') || request()->is(admin_path().'/files'))
 <script>
 function deleteAlert(url) {
     swal(
@@ -89,6 +89,10 @@ function deleteAlert(url) {
                     setTimeout(() => {
                     $(".datatable").show();
                         $(".datatable").DataTable().ajax.reload();
+                    }, 500);
+                }else{
+                    setTimeout(() => {
+                   location.reload();
                     }, 500);
                 }
                 swal.close();

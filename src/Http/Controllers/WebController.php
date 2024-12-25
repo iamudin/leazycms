@@ -7,8 +7,9 @@ use Leazycms\Web\Models\User;
 use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Cache;
 use Leazycms\Web\Http\Controllers\VisitorController;
+use Leazycms\Web\Models\PollingResponse;
+use Leazycms\Web\Models\PollingTopic;
 
 class WebController extends Controller
 {
@@ -17,6 +18,21 @@ class WebController extends Controller
     {
         if (!config('modules.current.detail_visited') ) {
             $this->visited = (new VisitorController)->visitor_counter();
+        }
+    }
+    public function pollingsubmit(Request $request){
+        $polling = PollingTopic::find($request->topic);
+        if(empty($request->cookie('polling_'.$request->keyword))){
+        PollingResponse::create([
+            'polling_option_id' => $request->answer,
+            'ip'=>$request->ip(),
+            'reference' => $request->headers->get('referer') ?? '',
+        ]);
+            $cookieName = 'polling_'.$polling->keyword;
+            $cookieValue = 'voted';
+            $duration = 1440;
+            return response('')
+            ->cookie($cookieName, $cookieValue, $duration);
         }
     }
 

@@ -27,7 +27,7 @@
             @endif
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Foto</label>
-                @if($user && $user->photo && media_exists($user,$user->photo))
+                @if($user && $user->photo && media_exists($user->photo))
                 <br><img src="{{ $user->photo_user}}" style="height: 70px" class="img-thumbnail"> <a href="javascript:void(0)" onclick="media_destroy('{{ $user->photo }}')" class="btn-danger btn-sm"> <i class="fa fa-trash text-white"></i> </a>
                 @else
                   <input accept="image/png,image/jpeg"  class=" form-control-sm form-control-file " name="photo"  type="file">
@@ -62,7 +62,7 @@
             </div>
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Username [ <i class="text-danger">Tanpa spasi</i> ]</label>
-                  <input class="form-control form-control-sm " name="username" type="text" placeholder="Masukkan username" value="{{$user ? $user->username : old('username')}}">
+                  <input onkeyup="this.value = this.value.replace(/\s+/g, '').toLowerCase();" class="form-control form-control-sm " name="username" type="text" placeholder="Masukkan username" value="{{$user ? $user->username : old('username')}}">
             </div>
             @if($user)<br>
             <div class="alert alert-warning" style="font-size:small;border-left:4px solid brown;min-width:100%"><b class="fa fa-warning"></b> Kosongkan kolom password jika tidak mengganti</div>
