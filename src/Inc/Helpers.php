@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Redirect;
 
 if (!function_exists('query')) {
@@ -16,8 +17,10 @@ if (!function_exists('query')) {
 if (!function_exists('polling_form')) {
     function polling_form($keyword){
         if(empty(request()->cookie('polling_'.$keyword))){
-        $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->first();
-        return View::make('cms::backend.polling.web.form',compact('data'));
+        $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
+        if($data){
+            return View::make('cms::backend.polling.web.form',compact('data'));
+        }
     }
 }
 }

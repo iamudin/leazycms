@@ -138,6 +138,7 @@ class PollingController extends Controller implements HasMiddleware
             'title' => 'required|string|' . Rule::unique('polling_topics'),
             'description' => 'nullable|string',
             'keyword' => 'nullable|string|' . Rule::unique('polling_topics'),
+            'duration' => 'required|numeric',
             'status' => 'required|in:draft,publish',
         ]);
         PollingTopic::create($data);
@@ -149,6 +150,7 @@ class PollingController extends Controller implements HasMiddleware
             'title' => 'required|string|' . Rule::unique('polling_topics')->ignore($polling->id),
             'keyword' => 'nullable|string|' . Rule::unique('polling_topics')->ignore($polling->id),
             'description' => 'nullable|string',
+            'duration' => 'required|numeric',
             'status' => 'required|in:draft,publish',
         ]);
         $polling->update($data);

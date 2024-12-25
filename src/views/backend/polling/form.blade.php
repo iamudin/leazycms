@@ -33,6 +33,10 @@
                 <label class="mb-0">Keterangan </label>
                 <textarea class="form-control form-control-sm " name="description" placeholder="Masukkan Keterangan">{{ $polling ? $polling->description : old('description') }}</textarea>
             </div>
+            <div class="form-group mt-2 mb-2">
+                <label class="mb-0">Durasi (Dalam menit)</label>
+                  <input onkeyup="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length === 1 && this.value === '0') this.value = '';" class="form-control form-control-sm " name="duration" type="number" placeholder="Masukkan durasi menit" value="{{$polling ? $polling->duration : old('duration')}}">
+            </div>
             @if($polling)
             <div class="form-group mt-2  mb-2">
             <label class="mb-0">Opsi Polling <a href="{{ route('polling.option.index',$polling->id) }}" class=""> <i class="fa fa-edit"></i> </a></label>

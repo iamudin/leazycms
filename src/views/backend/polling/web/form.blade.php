@@ -74,35 +74,35 @@
 
     <div class="polling-body">
         @foreach ($data->options as $item)
-            <input type="radio"  onchange="$('.btn-submit-polling-{{$data->id}}').show()" name="answer_{{ $data->id }}" value="{{ $item->id }}"> {{ $item->name }}<br>
+            <input type="radio"  onchange="$('.btn-submit-polling-{{$data->id}}').show()" name="answer_{{$data->id}}" value="{{ $item->id }}"> {{ $item->name }}<br>
         @endforeach
     </div>
     <div class="polling-footer">
         <button class="btn-submit-polling btn-submit-polling-{{$data->id}}" style="display:none">Kirim</button>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          $('.btn-submit-polling-{{$data->id}}').click(function () {
+              const answer = $('input[name="answer_{{$data->id}}"]:checked').val();
+              let formData = new FormData();
+              formData.append('answer', answer);
+              formData.append('topic','{{$data->id}}');
+              formData.append('_token','{{csrf_token()}}');
+              $.ajax({
+                  url: '/pollingentry/submit',
+                  type: 'POST',
+                  data: formData,
+                  processData: false,
+                  contentType: false,
+                  success: function (response) {
+                  $('.polling-form-{{$data->id}}').html('<center>Terima Kasih Atas Voting Anda</center>');
+                  },
+                  error: function (xhr, status, error) {
+                  }
+              });
+          });
+
+  });
+  </script>
 
 </div>
-<script>
-      document.addEventListener('DOMContentLoaded', function () {
-        $('.btn-submit-polling-{{$data->id}}').click(function () {
-            const answer = $('input[name="answer_{{$data->id}}"]:checked').val();
-            let formData = new FormData();
-            formData.append('answer', answer);
-            formData.append('topic','{{$data->id}}');
-            formData.append('_token','{{csrf_token()}}');
-            $.ajax({
-                url: '/pollingentry/submit',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (response) {
-                $('.polling-form-{{$data->id}}').html('<center>Terima Kasih Atas Voting Anda</center>');
-                },
-                error: function (xhr, status, error) {
-                }
-            });
-        });
-
-});
-</script>

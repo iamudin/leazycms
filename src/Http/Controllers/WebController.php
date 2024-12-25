@@ -23,9 +23,8 @@ class WebController extends Controller
     public function pollingsubmit(Request $request){
         $polling = PollingTopic::find($request->topic);
         if(empty($request->cookie('polling_'.$request->keyword))){
-            $answer = "answer_".$polling->id;
         PollingResponse::create([
-            'polling_option_id' => $request->$answer,
+            'polling_option_id' => $request->answer,
             'ip'=>$request->ip(),
             'reference' => $request->headers->get('referer') ?? '',
         ]);

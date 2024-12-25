@@ -18,6 +18,7 @@
 
                         <th style="width:5px;vertical-align: middle">No</th>
                         <th style="vertical-align: middle;width:40%">Judul</th>
+                        <th style="vertical-align: middle;width:5%">Status</th>
                         <th style="vertical-align: middle">Response</th>
                         <th style="vertical-align: middle" width="10px">Aksi</th>
                     </tr>
@@ -53,6 +54,12 @@
                     {
                         data: 'title',
                         name: 'title',
+                        orderable: false,
+                        searchable: true
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
                         orderable: false,
                         searchable: true
                     },
