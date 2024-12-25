@@ -67,25 +67,25 @@
 }
 
 </style>
-<div class="polling-form">
+<div class="polling-form-{{$data->id}}">
     <div class="polling-header">
-        <h6 class="polling-title">{{ $data->title }} ? </h6>
+        <h6 class="polling-title">{{ $data->title }}</h6>
     </div>
 
     <div class="polling-body">
         @foreach ($data->options as $item)
-            <input type="radio" class="answer" onchange="$('.btn-submit-polling').show()" name="answer" value="{{ $item->id }}"> {{ $item->name }}<br>
+            <input type="radio"  onchange="$('.btn-submit-polling-{{$data->id}}').show()" name="answer_{{ $data->id }}" value="{{ $item->id }}"> {{ $item->name }}<br>
         @endforeach
     </div>
     <div class="polling-footer">
-        <button class="btn-submit-polling" style="display:none">Kirim</button>
+        <button class="btn-submit-polling-{{$data->id}}" style="display:none">Kirim</button>
     </div>
 
 </div>
 <script>
       document.addEventListener('DOMContentLoaded', function () {
-        $('.btn-submit-polling').click(function () {
-            const answer = $('input[name="answer"]:checked').val();
+        $('.btn-submit-polling-{{$data->id}}').click(function () {
+            const answer = $('input[name="answer_{{$data->id}}"]:checked').val();
             let formData = new FormData();
             formData.append('answer', answer);
             formData.append('topic','{{$data->id}}');
@@ -97,7 +97,7 @@
                 processData: false,
                 contentType: false,
                 success: function (response) {
-                $('.polling-form').html('<center>Terima Kasih Atas Voting Anda</center>');
+                $('.polling-form-{{$data->id}}').html('<center>Terima Kasih Atas Voting Anda</center>');
                 },
                 error: function (xhr, status, error) {
                 }
