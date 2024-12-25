@@ -67,7 +67,7 @@
 }
 
 </style>
-<div class="polling-form-{{$data->id}}">
+<div class="polling-form polling-form-{{$data->id}}">
     <div class="polling-header">
         <h6 class="polling-title">{{ $data->title }}</h6>
     </div>
@@ -78,7 +78,7 @@
         @endforeach
     </div>
     <div class="polling-footer">
-        <button class="btn-submit-polling-{{$data->id}}" style="display:none">Kirim</button>
+        <button class="btn-submit-polling btn-submit-polling-{{$data->id}}" style="display:none">Kirim</button>
     </div>
 
 </div>
