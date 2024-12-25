@@ -3,7 +3,7 @@
 .polling-form {
     width: 100%;
     max-width: 400px; /* Lebar maksimal form */
-    margin: 20px auto; /* Menjaga agar form tetap di tengah */
+    margin: 0 auto; /* Menjaga agar form tetap di tengah */
     padding: 20px;
     background-color: #f9f9f9; /* Warna latar belakang form */
     border: 2px solid #3498db; /* Border berwarna biru */
