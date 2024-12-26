@@ -120,6 +120,8 @@ class WebController extends Controller
             $request->validate([
                 'name'=>'required'
             ]);
+           if(session()->get('captcha')==$request->captcha){
+
             $detail->addComment([
                 'name' => strip_tags($request->name),
                 'email' => strip_tags($request->email ?? null),
@@ -127,8 +129,11 @@ class WebController extends Controller
                 'link' => strip_tags($request->link ?? null),
                 'comment_meta' => $request->comment_meta ? cleanArrayValues($request->comment_meta) :[],
             ]);
+
+           }else{
+            return response()->json(['error' => 'Invalid Captcha'], 200);
+           }
             $request->session()->regenerateToken();
-            return back()->with('success', 'Tanggapan Berhasil Dikirim');
         }
         if ($detail->slug != $slug) {
             return redirect($detail->url);
