@@ -116,12 +116,16 @@ class WebController extends Controller
         $modul = get_module(get_post_type() ?? 'halaman');
         $detail = $post->detail(get_post_type() ?? 'halaman', $slug);
         abort_if(empty($detail), '404');
-        if ($request->comment_sender) {
-            $detail->comments()->create([
+        if ($request->ajax() && $request->isMethod('post')) {
+            $request->validate([
+                'name'=>'required'
+            ]);
+            $detail->addComment([
                 'name' => strip_tags($request->name),
-                'email' => strip_tags($request->email),
-                'content' => nl2br(strip_tags($request->content)),
-                'link' => strip_tags($request->link),
+                'email' => strip_tags($request->email ?? null),
+                'content' => nl2br(strip_tags($request->content ?? null)),
+                'link' => strip_tags($request->link ?? null),
+                'comment_meta' => $request->comment_meta ? cleanArrayValues($request->comment_meta) :[],
             ]);
             $request->session()->regenerateToken();
             return back()->with('success', 'Tanggapan Berhasil Dikirim');

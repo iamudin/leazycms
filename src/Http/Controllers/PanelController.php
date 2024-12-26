@@ -27,6 +27,13 @@ class PanelController extends Controller implements HasMiddleware
         ];
     }
 
+    function files(){
+        return view('cms::backend.files.index');
+    }
+    function comments(){
+        return view('cms::backend.comments.index');
+
+    }
     protected function toDashboard($request)
     {
         if (!$request->segment(2))

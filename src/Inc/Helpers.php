@@ -917,6 +917,13 @@ if (!function_exists('set_header_seo')) {
         );
     }
 }
+if (!function_exists('cleanArrayValues')) {
+function cleanArrayValues($array) {
+    return array_map(function ($value) {
+        return is_string($value) ? strip_tags($value) : $value;
+    }, $array);
+}
+}
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
     {
@@ -1011,9 +1018,9 @@ if (!function_exists('load_default_module')) {
     }
 }
 if (!function_exists('paginate')) {
-    function paginate($items)
+    function paginate($items,$perpage=false)
     {
-        $perPage = get_option('post_perpage');
+        $perPage = get_option('post_perpage') ? ($perpage ? $perpage : 10) : 10;
         $page = request()->page ?: (\Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof \Illuminate\Support\Collection ? $items : \Illuminate\Support\Collection::make($items);
         return new \Illuminate\Pagination\LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, ['path' => URL::current()]);

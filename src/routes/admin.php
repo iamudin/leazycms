@@ -8,12 +8,10 @@ use Leazycms\Web\Http\Controllers\PollingController;
 use Leazycms\Web\Http\Controllers\CategoryController;
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
-Route::get('files', function(){
-    return view('cms::backend.files.index');
-});
-Route::get('comments', function(){
-    return view('cms::backend.comments.index');
-});
+
+
+Route::get('comments', [PanelController::class, 'comments'])->name('comments');
+Route::get('files', [PanelController::class, 'files'])->name('files');
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {
