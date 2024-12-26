@@ -129,9 +129,10 @@ class WebController extends Controller
                 'link' => strip_tags($request->link ?? null),
                 'comment_meta' => $request->comment_meta ? cleanArrayValues($request->comment_meta) :[],
             ]);
+            return response()->json(['error' => 'None'], 200);
 
            }else{
-            return response()->json(['error' => 'Invalid Captcha'], 200);
+            return response()->json(['error' => 'Captcha'], 200);
            }
             $request->session()->regenerateToken();
         }
