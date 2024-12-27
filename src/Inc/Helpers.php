@@ -917,6 +917,11 @@ if (!function_exists('set_header_seo')) {
         );
     }
 }
+if (!function_exists('preload')) {
+    function preload(){
+    return view()->make('cms::layouts.preload')->render();
+}
+}
 if (!function_exists('cleanArrayValues')) {
 function cleanArrayValues($array) {
     return array_map(function ($value) {

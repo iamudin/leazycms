@@ -101,5 +101,15 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   @if(file_exists(public_path('template/'.template().'/styles.css')))
   <link rel="stylesheet" type='text/css'  href="{{url('template/'.template().'/styles.css')}}">
   @endif
+<style>
+        .fade-in {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .fade-in.show {
+            opacity: 1;
+        }
+</style>
+<script>document.addEventListener("DOMContentLoaded", function() {const fadeElements = document.querySelectorAll('.fade-in');fadeElements.forEach(element => {element.classList.add('show');});});</script>
 @stack('styles')
 

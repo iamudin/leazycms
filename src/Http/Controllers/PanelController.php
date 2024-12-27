@@ -176,6 +176,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Control + S', 'ctrl_s'],
             ['Right Click', 'right_click'],
             ['Frame Embed', 'frame_embed'],
+            ['Preloader Effect', 'preload'],
         );
         $data['security'] = array(
 
