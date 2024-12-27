@@ -177,6 +177,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Right Click', 'right_click'],
             ['Frame Embed', 'frame_embed'],
             ['Preloader Effect', 'preload'],
+            ['Default JQuery Min', 'default_jquery'],
         );
         $data['security'] = array(
 

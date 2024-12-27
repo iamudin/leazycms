@@ -1112,7 +1112,7 @@ if (!function_exists('recache_banner')) {
         $posts = \Leazycms\Web\Models\Post::with('category')
             ->onType('banner')
             ->published()
-            ->select('media', 'redirect_to', 'title', 'category_id') // Pastikan 'category_id' dipilih untuk relasi
+            ->select('media', 'redirect_to', 'title', 'category_id','data_field') // Pastikan 'category_id' dipilih untuk relasi
             ->get();
 
         // Group by category name and map the results
@@ -1123,6 +1123,7 @@ if (!function_exists('recache_banner')) {
                         return [
                             'image' => $item->media,
                             'name' => $item->title,
+                            'description' => $item->field?->description,
                             'link' => $item->redirect_to,
                         ];
                     })->toArray()
@@ -1186,6 +1187,7 @@ if (!function_exists('get_banner')) {
                     $a['image'] = $r->image ?? noimage();
                     $a['link'] = $r->link;
                     $a['name'] = $r->name;
+                    $a['description'] = $r->description;
                     $banner[] = $a;
                 }
             } else {
@@ -1193,6 +1195,7 @@ if (!function_exists('get_banner')) {
                 $a['image'] = $res->image ?? noimage();
                 $a['link'] = $res->link;
                 $a['name'] = $res->name;
+                $a['description'] = $res->description;
                 $banner = $a;
             }
             return json_decode(json_encode($banner));

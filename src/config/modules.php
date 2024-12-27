@@ -528,7 +528,7 @@ return [
                 'tag' => false,
                 'looping_name'=>'Daftar Menu',
                 'looping_data' => false,
-                'custom_field' => false,
+                'custom_field' => [['Description','textarea']],
             ],
             'web'=>[
                 'api' => false,
