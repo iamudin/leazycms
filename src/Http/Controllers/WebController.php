@@ -184,13 +184,13 @@ class WebController extends Controller
             abort_if(empty($slug), '404');
         }
         $query = str_replace('-', ' ', str($slug)->slug());
-        $type = collect(get_module())->where('public', true)->where('web.detail', true)->where('web.index', true)->pluck('name')->toArray();
+        $type = collect(get_module())->where('public', true)->where('web.detail', true)->pluck('name')->toArray();
         $index = Post::select((new Post)->selected)->wherein('type', $type)
             ->where('title', 'like', '%' . $query . '%')
             ->orwhere('keyword', 'like', '%' . $query . '%')
             ->orwhere('description', 'like', '%' . $query . '%')
-            ->where('status', 'publish')
-            ->whereNotIn('type', ['halaman'])
+            ->orwhere('content', 'like', '%' . $query . '%')
+            ->published()
             ->latest('created_at')
             ->paginate(get_option('post_perpage'));
         $data = array(
