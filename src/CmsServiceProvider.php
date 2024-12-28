@@ -116,7 +116,7 @@ class CmsServiceProvider extends ServiceProvider
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && env('APP_DEBUG') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
-                Config::set(['app.debug' => true]);
+                Config::set(['app.debug' => false]);
             }
             $this->loadTemplateConfig();
         }

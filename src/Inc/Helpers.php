@@ -792,9 +792,14 @@ if (!function_exists('blade_path')) {
         if (\Illuminate\Support\Facades\View::exists($blades)) {
             return $blades;
         } else {
-            $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
-            \Illuminate\Support\Facades\View::share('blade', $path);
-            return 'cms::layouts.warning';
+            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!app()->environment('production'))){
+                $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
+                \Illuminate\Support\Facades\View::share('blade', $path);
+                return 'cms::layouts.warning';
+            }else{
+                exit("<center><h1>Oops! View Not Found!</h1></center>");
+            }
+
         }
     }
 }
