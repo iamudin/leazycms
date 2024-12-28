@@ -248,7 +248,7 @@ return [
             'form'=>[
                 'unique_title' => false,
                 'post_parent' => false,
-                'thumbnail' => false,
+                'thumbnail' => true,
                 'editor' => true,
                 'category' => false,
                 'tag' => true,

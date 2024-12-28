@@ -51,7 +51,7 @@ class Web
                     $content
                 );
             }
-            if (strpos($content, '</head>') !== false) {
+            if (strpos($content, '</head>') !== false  && strpos($content, 'loading-spin') === false) {
                 $content = str_replace(
                     '</head>',
                     '</head>' . preload(),
