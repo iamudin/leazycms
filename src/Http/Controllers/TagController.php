@@ -66,7 +66,6 @@ class TagController extends Controller implements HasMiddleware
         $data['url'] = 'tags/'.$name;
         $data['name'] = $name;
         $data['slug'] = $name;
-        Tag::create($data);
         $tag->update($data);
         return to_route('tag')->with('success','Tag diperbaharui');
     }

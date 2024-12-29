@@ -58,7 +58,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || request()->segment(2)=='polling'  ||  request()->is(admin_path().'/tags') || request()->is(admin_path().'/user') || request()->is(admin_path().'/files'))
+@if(get_post_type() || in_array(request()->segment(2),['polling','tags','user','files']))
 <script>
 function deleteAlert(url) {
     swal(
