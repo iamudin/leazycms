@@ -16,7 +16,7 @@ class Post extends Model
     protected $userselectcolumn = ['id','name','url'];
     protected $categoryselectcolumn = ['id','name','url','slug'];
     protected $fillable = [
-        'short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable'
+        'slug_edited','short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable'
     ];
     protected $casts = [
         'data_field' => 'array',

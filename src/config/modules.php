@@ -233,9 +233,9 @@ return [
             'cache' => false,
             'active' => true,
         ],
-        'halaman' => [
+        'page' => [
             'position' => 5,
-            'name' => 'halaman',
+            'name' => 'page',
             'title' => 'Halaman',
             'description' => 'Menu Untuk Mengelola Halaman',
             'parent' => false,

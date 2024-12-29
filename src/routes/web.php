@@ -6,7 +6,7 @@ use Leazycms\Web\Http\Controllers\SetupController;
 use Leazycms\Web\Http\Controllers\ExtController;
 
 
-$modules = collect(get_module())->where('name','!=','halaman')->where('active', true)->where('public', true);
+$modules = collect(get_module())->where('name','!=','page')->where('active', true)->where('public', true);
     foreach($modules as $modul)
      {
             Route::controller(WebController::class)

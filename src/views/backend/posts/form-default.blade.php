@@ -16,10 +16,87 @@
                 @if (!empty($post && $module->web->detail && $post->title && $post->status=='publish') && $module->public)
                     <div style="border-left:3px solid green" class="alert alert-success"><b>URL : </b><a
                             title="Kunjungi URL" data-toggle="tooltip" href="{{ url($post->url) }}"
-                            target="_blank"><i><u>{{ str(url($post->url))->limit('160','...') }}</u></i></a> <span
+                            target="_blank"><i class="url"><u>{{ url($post->url) }}</u></i>  </a><span class="custom-url"></span> <i class="fa fa-edit ml-2 pointer"  data-post-url="{{ url($post->url) }}"
+                                data-slug="{{ $post->slug }}"></i><span
                             title="Klik Untuk Menyalin alamat URL {{ $module->title }}" data-toggle="tooltip"
                             class="pointer copy pull-right badge badge-primary" data-copy="{{ url($post->url) }}"><i
                                 class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
+                                <script>
+  function enableCustomSlugEdit(postUrl, slug) {
+    const urlElement = document.querySelector('.url');
+    const customUrlElement = document.querySelector('.custom-url');
+    const editButton = document.querySelector('.fa-edit');
+
+    const baseUrl = postUrl.replace(slug, '');
+    urlElement.innerHTML = baseUrl;
+
+    customUrlElement.innerHTML = `
+        <input type='text' name='custom_slug' autofocus
+               style='border:none;border-radius:5px;color:#004A43;width:300px;background:transparent'
+               value='${slug}'
+               maxlength='100'
+               oninput="validateAndUpdateSlug('${baseUrl}', this)">
+        <i class="fa fa-check ml-2 pointer" onclick="finalizeSlugEdit('${baseUrl}', this)"></i>
+    `;
+
+    if (editButton) {
+        editButton.style.display = 'none';
+    }
+}
+
+function validateAndUpdateSlug(baseUrl, inputElement) {
+    let newSlug = inputElement.value.replace(/[^a-z\-\^0-9]/g, '');
+    if (newSlug && !/^[a-z0-9]/.test(newSlug[0])) {
+        newSlug = newSlug.slice(1);
+    }
+    while (/--/.test(newSlug)) {
+        newSlug = newSlug.replace(/--/g, '-');
+    }
+    if (newSlug.length > 100) {
+        newSlug = newSlug.slice(0, 100);
+    }
+    inputElement.value = newSlug;
+
+    const urlElement = document.querySelector('.url');
+    urlElement.innerHTML = `${baseUrl}`;
+}
+
+function finalizeSlugEdit(baseUrl, checkButton) {
+    const inputElement = document.querySelector('.custom-url input');
+    const editButton = document.querySelector('.fa-edit');
+
+    if (inputElement) {
+        let slug = inputElement.value;
+        if (slug.endsWith('-')) {
+            slug = slug.slice(0, -1);
+        }
+
+        inputElement.value = slug;
+        inputElement.setAttribute('type', 'hidden');
+    }
+
+    if (checkButton) {
+        checkButton.style.display = 'none';
+    }
+
+    if (editButton) {
+        editButton.style.display = 'inline';
+    }
+
+    const urlElement = document.querySelector('.url');
+    const slug = inputElement.value;
+    urlElement.innerHTML = `${baseUrl}${slug}`;
+}
+
+document.querySelectorAll('.fa-edit').forEach(icon => {
+    icon.addEventListener('click', function () {
+        const postUrl = this.dataset.postUrl;
+        const slug = this.dataset.slug;
+        enableCustomSlugEdit(postUrl, slug);
+    });
+});
+
+                                </script>
                 @endif
                 @include('cms::backend.layout.error')
             </div>

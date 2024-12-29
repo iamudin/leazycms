@@ -1013,7 +1013,7 @@ if (!function_exists('load_default_module')) {
     {
         use_module([
             'berita' => ['position' => 1,'active'=>true],
-            'halaman' => ['custom_field' => false,'active'=>true],
+            'page' => ['custom_field' => false,'active'=>true],
             'pengumuman' => ['active'=>true],
             'agenda' => ['position' => 2],
             'sambutan' => ['position' => 6],

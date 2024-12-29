@@ -24,7 +24,7 @@ class RateLimit
             }
             return redirect('https://'.$request->getHttpHost().'/install');
         }
-        $modules = collect(get_module())->where('name', '!=', 'halaman')->where('public', true);
+        $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
             $attr['post_type'] = $modul->name;
 
@@ -73,10 +73,10 @@ class RateLimit
 
 
         if ($request->is('*') && !in_array($request->segment(1), array_merge([admin_path()],$modules->pluck('name')->toArray()))) {
-            $attr['post_type'] = 'halaman';
+            $attr['post_type'] = 'page';
             $attr['detail_visited'] = true;
             $attr['view_type'] = 'detail';
-            $attr['view_path'] = 'halaman.detail';
+            $attr['view_path'] = 'page.detail';
             config([
                 'modules.current' => $attr
             ]);

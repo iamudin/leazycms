@@ -113,8 +113,8 @@ class WebController extends Controller
     }
     public function detail(Request $request, Post $post, $slug = false)
     {
-        $modul = get_module(get_post_type() ?? 'halaman');
-        $detail = $post->detail(get_post_type() ?? 'halaman', $slug);
+        $modul = get_module(get_post_type() ?? 'page');
+        $detail = $post->detail(get_post_type() ?? 'page', $slug);
         abort_if(empty($detail), '404');
         if ($request->ajax() && $request->isMethod('post')) {
             $request->validate([

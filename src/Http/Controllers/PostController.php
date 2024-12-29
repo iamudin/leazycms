@@ -158,13 +158,16 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
 
+    $slug = $request->custom_slug && strlen($request->custom_slug) > 0 ? $request->custom_slug : ($post->slug_edited=='1' ? $post->slug : str(trim(str($request->title)->limit(120)))->slug());
+
     $data = $request->validate($post_field);
-    if(!$module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug(str($request->title)->slug())->count()){
-        $data['slug'] = $post->id.'-'.str($request->title)->slug();
+    if(!$module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()){
+        $data['slug'] = $slug.'-'.$post->id;
     }else{
-        $data['slug'] = str($request->title)->slug();
+        $data['slug'] = $slug;
 
     }
+    $data['slug_edited'] = $request->custom_slug && strlen($request->custom_slug) > 0 ? '1':'0';
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
@@ -205,7 +208,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         $timedate = $request->tanggal_entry ?? date('Y-m-d H:i:s');
         $data['created_at'] = $timedate;
     }
-    $data['url'] = $post->type!='halaman' ? $post->type.'/'.$data['slug'] : $data['slug'];
+    $data['url'] = $post->type!='page' ? $post->type.'/'.$data['slug'] : $data['slug'];
 
     if($looping_data = $module->form->looping_data){
 
