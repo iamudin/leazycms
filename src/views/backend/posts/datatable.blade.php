@@ -14,11 +14,14 @@
                 url: "{{ route(get_post_type() . '.datatable')}}",
                 data: function (d){
                  d._token = "{{csrf_token()}}";
-                 @if($parent = current_module()->form->post_parent)
+                 @if(current_module()->form->post_parent)
                  d.parent_id = $("#parent_id").val();
                  @endif
-                 @if($parent = current_module()->form->category)
+                 @if(current_module()->form->category)
                  d.category_id = $("#category_id").val();
+                 @endif
+                 @if(current_module()->form->tag)
+                 d.tag_id = $("#tag_id").val();
                  @endif
                  d.status = $("#status").val();
                  d.user_id = $("#user_id").val();

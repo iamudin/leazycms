@@ -270,8 +270,8 @@ public function recache($type){
 }
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
-
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $current_module = current_module();
         return DataTables::of($data)
             ->addIndexColumn()
             ->filter(function ($instance) use ($req) {
@@ -280,6 +280,11 @@ public function recache($type){
                 }
                 if ($category_id = $req->category_id) {
                     $instance->where('category_id', $category_id);
+                }
+                if ($tag_id = $req->tag_id) { // Menambahkan pencarian berdasarkan tag_id
+                    $instance->whereHas('tags', function ($query) use ($tag_id) {
+                        $query->where('tags.id', $tag_id); // Pastikan untuk menggunakan nama tabel yang benar
+                    });
                 }
                 if ($search = $req->search) {
                     $instance->where('type', get_post_type()) // Batasi hanya pada type 'berita'
@@ -358,18 +363,22 @@ public function recache($type){
                     }
                 }
             })
-            ->addColumn('title', function ($row) {
+            ->addColumn('title', function ($row) use($current_module) {
 
-                $category = current_module()->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "<i class='fa fa-tag'></i> <i class='text-warning'>Uncategorized</i>") : '';
+                $category = $current_module->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "<i class='fa fa-tag'></i> <i class='text-warning'>Uncategorized</i>") : '';
+                $tags = '';
+                foreach($row->tags ? $row->tags->pluck('name') : [] as $item){
+                    $tags .= ' <b>#'.$item.'</b>';
+                }
                 $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> "  : '';
-                $tit = (current_module()->web->detail || current_module()->name == 'media') ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ': $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+                $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ': $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
                 $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
 
                 $pin =  $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;':'';
 
                 $b = '<b class="text-primary">' . $tit . '</b><br>';
-                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' ' . $label . ' ' . $draft . '</small>';
+                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' '.$tags.' ' . $label . ' ' . $draft . '</small>';
                 return $b;
             })
             ->addColumn('created_at', function ($row) {
@@ -384,24 +393,24 @@ public function recache($type){
             ->addColumn('thumbnail', function ($row) {
                 return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '"/>';
             })
-            ->addColumn('data_field', function ($row) {
-                $custom = _us( current_module()->datatable->custom_column);
+            ->addColumn('data_field', function ($row) use($current_module){
+                $custom = _us( $current_module->datatable->custom_column);
                 return ($custom && !empty($row->data_field) && isset($row->data_field[$custom])) ? '<span class="text-muted">' .$row->data_field[$custom] . '</span>' : '<span class="text-muted">__</span>';
             })
 
-            ->addColumn('parents', function ($row) {
-                if (current_module()->form->post_parent){
+            ->addColumn('parents', function ($row) use($current_module){
+                if ($current_module->form->post_parent){
                     return $row->parent?->title ?? '<span class="text-muted">__</span>';
                 }
 
             })
 
 
-            ->addColumn('action', function ($row) {
+            ->addColumn('action', function ($row) use($current_module) {
 
                 $btn = '<div style="text-align:right"><div class="btn-group ">';
 
-                $btn .= !$row->trashed() && current_module()->web->detail && $row->status=='publish' ? '<a target="_blank" href="' .url($row->url.'/').'"  class="btn btn-info btn-sm fa fa-globe"></a>':'';
+                $btn .= !$row->trashed() && $current_module->web->detail && $row->status=='publish' ? '<a target="_blank" href="' .url($row->url.'/').'"  class="btn btn-info btn-sm fa fa-globe"></a>':'';
                 if(empty($row->deleted_at)){
                 $btn .= Route::has($row->type.'.edit') ?'<a href="' . route(get_post_type().'.edit', $row->id).'"  class="btn btn-warning btn-sm fa '.($row->type=='media' ? 'fa-eye' : 'fa-edit').'"></a>':'';
                 }else{

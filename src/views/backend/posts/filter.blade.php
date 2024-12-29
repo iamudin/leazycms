@@ -31,6 +31,17 @@
         </select>
     </div>
     @endif
+    @if(current_module()->form->tag)
+    <div class="col-12">
+        <small>Tags</small>
+        <select id="tag_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
+            <option value="">Pilih</option>
+            @foreach(query()->index_tags(get_post_type()) as $row)
+            <option value="{{ $row->id }}">{{ $row->name }} ({{ $row->posts_count }})</option>
+            @endforeach
+        </select>
+    </div>
+    @endif
     @if($parent = current_module()->form->post_parent)
     <div class="col-12">
         <small>{{ $parent[0] }}</small>

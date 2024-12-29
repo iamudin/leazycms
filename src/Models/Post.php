@@ -223,8 +223,16 @@ class Post extends Model
             ->get();
         }
     }
-    function index_tags()
+    function index_tags($type=false)
     {
+        if($type){
+        return Tag::whereStatus('publish')->whereHas('posts',function($q)use($type){
+            $q->onType($type);
+        })->withCount(['posts as posts_count' => function ($query) use ($type) {
+            $query->onType($type);
+        }])->get();
+
+        }
         return Tag::whereStatus('publish')->whereHas('posts')->get();
     }
     function index_sort($type,$order='asc',$limit=false)
