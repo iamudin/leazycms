@@ -50,8 +50,9 @@ class TagController extends Controller implements HasMiddleware
             'name'=> 'required|string|'.Rule::unique('tags'),
             'description'=> 'required|string'
         ]);
-        $data['url'] = 'tags/'.str($request->name)->slug();
-        $data['slug'] = str($request->name)->slug();
+        $name = preg_replace('/[^a-zA-Z0-9]/', '', $request->name);
+        $data['url'] = 'tags/'.$name;
+        $data['slug'] = $name;
         Tag::create($data);
         return to_route('tag')->with('success','Tag diperbaharui');
     }
@@ -60,8 +61,10 @@ class TagController extends Controller implements HasMiddleware
             'name'=> 'required|string|'.Rule::unique('tags')->ignore($tag->id),
             'description'=> 'required|string'
         ]);
-        $data['url'] = 'tags/'.str($request->name)->slug();
-        $data['slug'] = str($request->name)->slug();
+        $name = preg_replace('/[^a-zA-Z0-9]/', '', $request->name);
+        $data['url'] = 'tags/'.$name;
+        $data['slug'] = $name;
+        Tag::create($data);
         $tag->update($data);
         return to_route('tag')->with('success','Tag diperbaharui');
     }
