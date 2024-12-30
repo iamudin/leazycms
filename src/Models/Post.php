@@ -296,8 +296,8 @@ class Post extends Model
         ->get();
        }
     }
-    function index_by_tag($tag,$limit=false,$paginate=false){
-        $q = $this->selectedColumn()->ontType('page')->published()->whereHas('tags', function ($query)  use($tag){
+    function index_by_tag($type,$tag,$limit=false,$paginate=false){
+        $q = $this->selectedColumn()->onType($type)->published()->whereHas('tags', function ($query)  use($tag){
             $query->where('tags.slug', $tag);
         })->latest();
         if($limit){
