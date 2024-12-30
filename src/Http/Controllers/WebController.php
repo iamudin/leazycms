@@ -75,7 +75,7 @@ class WebController extends Controller
     {
         $tag = Tag::select('name', 'visited', 'id')->whereSlug($slug)->first();
         abort_if(empty($tag), 404);
-        config(['modules.page_name' => '#' . $tag->name]);
+        config(['modules.page_name' =>$tag->name]);
 
         if ($this->visited) {
             $tag->increment('visited');
