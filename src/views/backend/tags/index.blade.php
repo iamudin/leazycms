@@ -42,8 +42,11 @@
                 ajax: {
                     method: "POST",
                     url: "{{ route('tag') }}",
-                    data: {
-                        _token: "{{ csrf_token() }}"
+                    data: function (d){
+                 d._token = "{{csrf_token()}}";
+                 @if(request()->segment(4) && request()->segment(4)=='edit')
+                 d.edit_id = '{{request()->segment(3)}}';
+                 @endif
                     }
                 },
                 lengthMenu: [10, 20],

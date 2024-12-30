@@ -23,6 +23,9 @@ class TagController extends Controller implements HasMiddleware
     public function datatable(Request $request)
     {
         $data = Tag::withCount('posts');
+        if($request->edit_id){
+            $data = $data->whereNotIn('id',[$request->edit_id]);
+        }
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
@@ -34,7 +37,8 @@ class TagController extends Controller implements HasMiddleware
                 return $btn;
             })
             ->addColumn('name', function ($row) {
-                return '<span class="text-primary">'.$row->name.'</span>';
+                $status = $row->status=='draft' ? '<br><span class="badge badge-warning">Draft</span>': '';
+                return '<span class="text-primary">'.$row->name.'</span>'.$status;
             })
             ->rawColumns(['action','name'])
             ->toJson();
@@ -48,6 +52,7 @@ class TagController extends Controller implements HasMiddleware
     public function store(Request $request){
         $data = $request->validate([
             'name'=> 'required|string|'.Rule::unique('tags'),
+            'status'=> 'required|in:draft,publish',
             'description'=> 'required|string'
         ]);
         $name = preg_replace('/[^a-zA-Z0-9]/', '', $request->name);
@@ -60,7 +65,8 @@ class TagController extends Controller implements HasMiddleware
     public function update(Request $request, Tag $tag){
         $data = $request->validate([
             'name'=> 'required|string|'.Rule::unique('tags')->ignore($tag->id),
-            'description'=> 'required|string'
+            'description'=> 'required|string',
+            'status'=> 'required|in:draft,publish'
         ]);
         $name = preg_replace('/[^a-zA-Z0-9]/', '', $request->name);
         $data['url'] = 'tags/'.$name;

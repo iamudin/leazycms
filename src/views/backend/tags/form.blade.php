@@ -29,7 +29,12 @@
                 <label class="mb-0">Deskripsi [ <i class="text-danger">Keterangan Singkat tentang Tag ini</i> ]</label>
                   <textarea class="form-control form-control-sm " name="description"  placeholder="Masukkan Keterangan">{{$tag ? $tag->description : old('description')}}</textarea>
             </div>
-
+            <div class="form-group mt-2  mb-2">
+                <label class="mb-0">Status</label><br>
+                @foreach(['publish','draft'] as $row)
+                  <input name="status"  type="radio" value="{{$row}}" {{ $tag && $tag->status==$row ? 'checked':'' }}> {{ str($row)->headline() }} &nbsp; &nbsp;
+                  @endforeach
+            </div>
             <div class="form-group mt-2  mb-2 text-right">
                 <button type="submit" class="btn btn-primary btn-sm">
                     @if(!$tag)

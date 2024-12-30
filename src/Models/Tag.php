@@ -9,6 +9,7 @@ class Tag extends Model
         'name',
         'url',
         'slug',
+        'status',
         'description',
         'visited'
     ];
