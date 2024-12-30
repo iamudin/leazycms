@@ -29,8 +29,6 @@
     </div>
   </div>
 
-<script src="{{ asset('backend/js/summernote-image-attributes.js') }}"></script>
-<script src="{{ asset('backend/js/en-us.js') }}"></script>
 <script type="text/javascript">
     $(document).ready(function() {
 
@@ -53,13 +51,6 @@
 
             },
 
-            imageAttributes: {
-                icon: '<i class="note-icon-pencil"></i>',
-                figureClass: 'figureClass',
-                figcaptionClass: 'captionClass',
-                captionText: 'Caption Goes Here.',
-                manageAspectRatio: false
-            },
             lang: 'en-EN',
             popover: {
                 image: [
@@ -88,7 +79,6 @@
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help','codeview']],
         ],
-
         buttons: {
             embedUrl: function() {
                 var ui = $.summernote.ui;
@@ -123,8 +113,6 @@
             if (!allowedTypes.includes(file.type)) {
                 alert('Pilih hanya format gambar: jpg atau png.');
             }else{
-                var placeholderImageUrl = '/backend/images/load.gif';
-        $('#editor').summernote('editor.insertImage', placeholderImageUrl);
         var data = new FormData();
         data.append("file", file);
         data.append("post","{{ $post?->id }}");
@@ -137,10 +125,13 @@
             processData: false,
             success: function(response) {
                 var actualImageUrl = response.url;
-                var alls = $('#editor').summernote("code");
-                $('#editor').summernote("code", alls.replace(placeholderImageUrl, actualImageUrl));
-
-
+                var figureHTML = `
+                        <figure style="text-align: center; margin: 10px 0;">
+                            <img src="${actualImageUrl}" alt="Image" style="max-width: 100%; height: auto;">
+                            <figcaption style="font-style: italic; color: #666;">Caption Goes Here</figcaption>
+                        </figure>
+                    `;
+                $('#editor').summernote("pasteHTML", figureHTML);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error('Error uploading image: ', textStatus, errorThrown);
@@ -148,9 +139,6 @@
         });
             }
         }
-
-
-
     }
 
     function deleteImage(src) {

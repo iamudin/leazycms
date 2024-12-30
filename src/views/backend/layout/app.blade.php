@@ -22,6 +22,7 @@
     <meta content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" name="viewport">
     <meta content="yes" name="apple-mobile-web-app-capable">
     <meta content="yes" name="apple-touch-fullscreen">
+    <meta name="mobile-web-app-capable" content="yes"
     <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('icon') ?? noimage() }}">
     <meta name="theme-color" content="#009688" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
