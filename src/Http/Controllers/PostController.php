@@ -161,7 +161,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     $slug = $request->custom_slug && strlen($request->custom_slug) > 0 ? $request->custom_slug : ($post->slug_edited=='1' ? $post->slug : str(trim(str($request->title)->limit(120)))->slug());
 
     $data = $request->validate($post_field);
-    if(!$module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()){
+    if($module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()){
         $data['slug'] = $slug.'-'.str(Str::random(4))->lower();
     }else{
         $data['slug'] = $slug;
