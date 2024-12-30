@@ -157,12 +157,21 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     ];
 
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
-
-    $slug = $request->custom_slug && strlen($request->custom_slug) > 0 ? $request->custom_slug : ($post->slug_edited=='1' ? $post->slug : str(trim(str($request->title)->limit(120)))->slug());
-
+    if(strlen($post->slug) == 0){
+        $slug = str($request->title)->slug();
+    }else{
+    if($post->slug_edited=='1' && !$request->custom_slug){
+        $slug = $post->slug;
+    }elseif(($post->slug_edited=='1' && $request->custom_slug) || ($post->slug_edited=='0' && $request->custom_slug)){
+        $slug = $request->custom_slug;
+    }
+    else{
+        $slug = $post->slug;
+    }
+}
     $data = $request->validate($post_field);
     if($module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()){
-        $data['slug'] = $slug.'-'.str(Str::random(4))->lower();
+        $data['slug'] = $post->slug ??  str($request->title.' '.Str::random(4))->slug();
     }else{
         $data['slug'] = $slug;
 

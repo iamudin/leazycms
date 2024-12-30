@@ -282,7 +282,7 @@ return [
                 'data_title' => 'Judul Berita',
             ],
             'form'=>[
-                'unique_title' => false,
+                'unique_title' => true,
                 'post_parent' => false,
                 'thumbnail' => true,
                 'editor' => true,
