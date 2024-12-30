@@ -162,7 +162,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 
     $data = $request->validate($post_field);
     if(!$module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()){
-        $data['slug'] = $slug.'-'.$post->id;
+        $data['slug'] = $slug.'-'.str(Str::random(4))->lower();
     }else{
         $data['slug'] = $slug;
 
