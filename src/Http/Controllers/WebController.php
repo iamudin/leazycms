@@ -81,7 +81,7 @@ class WebController extends Controller
             $tag->increment('visited');
         }
         $post = Post::select((new Post)->selected)->whereHas('tags', function ($query) use ($slug) {
-            $query->where('slug', $slug);
+            $query->where('slug', $slug)->whereStatus('publish');
         })->whereStatus('publish')->paginate(get_option('post_perpage'));
 
         $data = array(

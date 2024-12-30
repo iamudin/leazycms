@@ -298,7 +298,7 @@ class Post extends Model
     }
     function index_by_tag($type,$tag,$limit=false,$paginate=false){
         $q = $this->selectedColumn()->onType($type)->published()->whereHas('tags', function ($query)  use($tag){
-            $query->where('tags.slug', $tag);
+            $query->where('tags.slug', $tag)->where('tags.status','publish');
         })->latest();
         if($limit){
             return $q->take($limit)->get();
