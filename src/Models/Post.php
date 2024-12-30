@@ -296,6 +296,17 @@ class Post extends Model
         ->get();
        }
     }
+    function index_by_tag($tag,$limit=false,$paginate=false){
+        $q = $this->selectedColumn()->ontType('page')->published()->whereHas('tags', function ($query)  use($tag){
+            $query->where('tags.slug', $tag);
+        })->latest();
+        if($limit){
+            return $q->take($limit)->get();
+        }
+        if($paginate){
+            return $q->paginate(get_option('post_perpage'));
+        }
+    }
     function index_by_category($type, $slug, $limit = false)
     {
         $modul = get_module($type);
