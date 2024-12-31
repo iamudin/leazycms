@@ -1,24 +1,19 @@
 <?php
 
 namespace Leazycms\Web;
-
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
 use Leazycms\Web\Middleware\Panel;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 use Leazycms\Web\Middleware\RateLimit;
 use Illuminate\Support\ServiceProvider;
 use Leazycms\Web\Exceptions\NotFoundHandler;
-use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-use Illuminate\Support\Facades\Artisan;
 
 class CmsServiceProvider extends ServiceProvider
 {
@@ -71,6 +66,7 @@ class CmsServiceProvider extends ServiceProvider
     }
     public function boot()
     {
+        Schema::defaultStringLength(191);
         load_default_module();
         $this->registerMiddleware();
         $this->registerResources();
@@ -78,6 +74,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->defineAssetPublishing();
         $this->cmsHandler();
         $this->registerRoutes();
+
     }
     public function register()
     {
