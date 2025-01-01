@@ -76,17 +76,17 @@ return [
             'cache' => true,
             'active' => true,
         ],
-        'dokumentasi' => [
+        'gallery' => [
             'position' => 5,
-            'name' => 'dokumentasi',
-            'title' => 'Dokumentasi',
-            'description' => 'Menu Untuk Mengelola Dokumentasi',
+            'name' => 'gallery',
+            'title' => 'Gallery',
+            'description' => 'Menu Untuk Mengelola Gallery',
             'parent' => false,
             'icon' => 'fa-camera',
             'route' => ['index','create','show','update','delete'],
             'datatable'=>[
                 'custom_column' => false,
-                'data_title' => 'Nama Kegiatan',
+                'data_title' => 'Nama Gallery',
             ],
             'form'=>[
                 'unique_title' => false,
@@ -113,7 +113,7 @@ return [
             'active' => true,
         ],
         'sambutan' => [
-            'position' => 0,
+            'position' => 6,
             'name' => 'sambutan',
             'title' => 'Sambutan',
             'description' => 'Menu Untuk Mengelola Sambutan',
@@ -135,8 +135,8 @@ return [
                 'looping_data' => false,
                 'custom_field' => [
                     ['Pemberi Sambutan','break'],
-                    ['Nama','text'],
-                    ['Jabatan','text'],
+                    ['Nama','text','required'],
+                    ['Jabatan','text','required'],
                     ['Visi Misi','textarea'],
 
                 ],
@@ -154,11 +154,11 @@ return [
             'cache' => true,
             'active' => true,
         ],
-        'pegawai' => [
-            'position' => 8,
-            'name' => 'pegawai',
-            'title' => 'Pegawai',
-            'description' => 'Menu Untuk Mengelola Pegawai',
+        'kepegawaian' => [
+            'position' => 4,
+            'name' => 'kepegawaian',
+            'title' => 'Kepegawaian',
+            'description' => 'Menu Untuk Mengelola Kepegawaian',
             'parent' => false,
             'icon' => 'fa-id-card',
             'route' => ['index','create','show','update','delete'],
@@ -182,6 +182,7 @@ return [
                     ['Pangkat/Golongan','text','required'],
                     ['Pendidikan','text','required'],
                     ['Tahun Mulai','text','required'],
+                    ['Motivasi','textarea'],
                 ],
             ],
             'web'=>[
@@ -234,7 +235,7 @@ return [
             'active' => true,
         ],
         'page' => [
-            'position' => 5,
+            'position' => 1,
             'name' => 'page',
             'title' => 'Halaman',
             'description' => 'Menu Untuk Mengelola Halaman',
@@ -254,7 +255,9 @@ return [
                 'tag' => true,
                 'looping_name'=>'Arsip',
                 'looping_data' => false,
-                'custom_field' => false,
+                'custom_field' => array(
+                    ['Tanggal Entry', 'datetime']
+                ),
             ],
             'web'=>[
                 'api' => false,
@@ -263,7 +266,7 @@ return [
                 'detail' => true,
                 'history' => false,
                 'auto_query' => true,
-                'sortable'=>true,
+                'sortable'=>false,
             ],
             'public' => true,
             'cache' => false,
@@ -308,7 +311,7 @@ return [
             'active' => true,
         ],
         'document' => [
-            'position' => 4,
+            'position' => 3,
             'name' => 'document',
             'title' => 'Doukumen',
             'description' => 'Menu Untuk Mengelola Dokumen',
@@ -556,6 +559,7 @@ return [
         'detail_visited'=> false,
         'data'=> null,
         'domain'=>null,
+        'default_module'=>env('USE_MODULE',null),
         'installed'=>env('APP_INSTALLED',false),
         'public_path'=>env('PUBLIC_PATH',null),
         'version'=>null,

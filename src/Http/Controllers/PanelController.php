@@ -154,7 +154,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Postingan Perhalaman', 'post_perpage', 'number'],
             ['Logo', 'logo', 'file'],
             ['Favicon (Gambar PNG/JPG rasio 1:1 maks 2mb)', 'favicon', 'file'],
-            ['Preview', 'preview', 'file'],
+            ['Preview', 'poreview', 'file'],
             ['Background Header Video (.mp4)', 'bg_header_video', 'file'],
         );
         $data['pwa'] = array(
@@ -343,10 +343,11 @@ class PanelController extends Controller implements HasMiddleware
 
         admin_only();
         if($request->optimize){
-            if(Artisan::call('route:clear')){
+            if(Artisan::call('config:clear') && Artisan::call('route:clear')){
+                Artisan::call('config:cache');
                 Artisan::call('route:cache');
-                return to_route('appearance')->with('success','Berhasil di optimalkan');
             }
+            return to_route('appearance')->send()->with('success','Berhasil di optimalkan');
 
          }
         if($request->isMethod('post')){

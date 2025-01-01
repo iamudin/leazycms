@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
@@ -14,45 +13,46 @@ if (!function_exists('query')) {
 }
 
 if (!function_exists('polling_form')) {
-    function polling_form($keyword){
-        if(empty(request()->cookie('polling_'.$keyword))){
-        $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
-        if($data){
-            return View::make('cms::backend.polling.web.form',compact('data'));
+    function polling_form($keyword)
+    {
+        if (empty(request()->cookie('polling_' . $keyword))) {
+            $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
+            if ($data) {
+                return View::make('cms::backend.polling.web.form', compact('data'));
+            }
         }
     }
-}
 }
 
 if (!function_exists('getThumbUrl')) {
-function getThumbUrl($url)
-{
-    $response = \Illuminate\Support\Facades\Http::withOptions([
-        'verify' => false,  // Menonaktifkan verifikasi SSL
-    ])->get($url);
+    function getThumbUrl($url)
+    {
+        $response = \Illuminate\Support\Facades\Http::withOptions([
+            'verify' => false,  // Menonaktifkan verifikasi SSL
+        ])->get($url);
 
-    if ($response->successful()) {
-        // Ambil body HTML dari respons
-        $html = $response->body();
-        // Membuat objek DOMDocument dan memuat HTML
-        $dom = new \DOMDocument();
-        @$dom->loadHTML($html);
+        if ($response->successful()) {
+            // Ambil body HTML dari respons
+            $html = $response->body();
+            // Membuat objek DOMDocument dan memuat HTML
+            $dom = new \DOMDocument();
+            @$dom->loadHTML($html);
 
-        // Membuat objek XPath untuk query di dokumen
-        $xpath = new \DOMXPath($dom);
+            // Membuat objek XPath untuk query di dokumen
+            $xpath = new \DOMXPath($dom);
 
-        // Menjalankan query XPath untuk mencari gambar dengan class 'lz-thumbnail'
-        $images = $xpath->query('//img[contains(@class, "lz-thumbnail")]');
+            // Menjalankan query XPath untuk mencari gambar dengan class 'lz-thumbnail'
+            $images = $xpath->query('//img[contains(@class, "lz-thumbnail")]');
 
-        if ($images->length > 0) {
-            // Ambil URL dari atribut 'src'
-            $src = $images->item(0)->getAttribute('data-src');
-            return $src;
+            if ($images->length > 0) {
+                // Ambil URL dari atribut 'src'
+                $src = $images->item(0)->getAttribute('data-src');
+                return $src;
+            }
         }
-    }
 
-    return null; // Jika gambar dengan class 'lz-thumbnail' tidak ditemukan
-}
+        return null; // Jika gambar dengan class 'lz-thumbnail' tidak ditemukan
+    }
 }
 if (!function_exists('getLatestVersion')) {
     function getLatestVersion($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
@@ -92,28 +92,30 @@ if (!function_exists('getLatestVersion')) {
 }
 if (!function_exists('get_leazycms_version')) {
 
-    function get_leazycms_version(){
+    function get_leazycms_version()
+    {
         return config('modules.version');
     }
-    }
+}
 if (!function_exists('leazycms_version')) {
 
-function leazycms_version(){
-    $composerLockPath = base_path('composer.lock');
+    function leazycms_version()
+    {
+        $composerLockPath = base_path('composer.lock');
 
-    $composerLockContents = file_get_contents($composerLockPath);
+        $composerLockContents = file_get_contents($composerLockPath);
 
-    $composerData = json_decode($composerLockContents, true);
+        $composerData = json_decode($composerLockContents, true);
 
-    $packageVersion = null;
-    foreach ($composerData['packages'] as $package) {
-        if ($package['name'] === 'leazycms/web') {
-            $packageVersion = $package['version'];
-            break;
+        $packageVersion = null;
+        foreach ($composerData['packages'] as $package) {
+            if ($package['name'] === 'leazycms/web') {
+                $packageVersion = $package['version'];
+                break;
+            }
         }
+        return $packageVersion;
     }
-    return $packageVersion;
-}
 }
 
 if (!function_exists('isNotInSession')) {
@@ -130,18 +132,17 @@ if (!function_exists('isNotInSession')) {
 
 
 if (!function_exists('forbidden')) {
-    function forbidden($request,$k=false)
+    function forbidden($request, $k = false)
     {
         if (get_option('forbidden_keyword') && str()->contains(str($request->fullUrl())->lower(), explode(",", str_replace(" ", "", get_option('forbidden_keyword') ?? '')))) {
             $redirect = get_option('forbidden_redirect');
-            if(!$k){
-            if (!empty($redirect) && str($redirect)->isUrl()) {
-                return Redirect::to($redirect)->send();
-            } else {
-                abort(403);
+            if (!$k) {
+                if (!empty($redirect) && str($redirect)->isUrl()) {
+                    return Redirect::to($redirect)->send();
+                } else {
+                    abort(403);
+                }
             }
-        }
-
         }
         if (get_option('block_ip') && in_array($request->ip(), explode(",", get_option('block_ip')))) {
             abort(403);
@@ -169,26 +170,26 @@ if (!function_exists('processVisitorData')) {
 if (!function_exists('ratelimiter')) {
     function ratelimiter($request, $limittime)
     {
-        if(config('modules.installed')){
-        $ip = $request->ip();
-        $sessionId = $request->session()->getId();
-        $userAgent = $request->header('User-Agent');
-        $url = $request->fullUrl();
-        $referer = $request->header('referer');
-        $limittime = (int)$limittime;
-        $limitduration = (int)get_option('limit_duration');
-        $key = generateRateLimitKey($ip, $sessionId, $userAgent, $url, $referer);
-        $maxAttempts = $limittime > 0 ? $limittime : 10;
-        $decayMinutes = $limitduration > 0 ? $limitduration : 1;
-        if (Cache::has($key)) {
-            $attempts = cache::get($key);
-            if ($attempts >= $maxAttempts) {
-                return abort(429);
+        if (config('modules.installed')) {
+            $ip = $request->ip();
+            $sessionId = $request->session()->getId();
+            $userAgent = $request->header('User-Agent');
+            $url = $request->fullUrl();
+            $referer = $request->header('referer');
+            $limittime = (int)$limittime;
+            $limitduration = (int)get_option('limit_duration');
+            $key = generateRateLimitKey($ip, $sessionId, $userAgent, $url, $referer);
+            $maxAttempts = $limittime > 0 ? $limittime : 10;
+            $decayMinutes = $limitduration > 0 ? $limitduration : 1;
+            if (Cache::has($key)) {
+                $attempts = cache::get($key);
+                if ($attempts >= $maxAttempts) {
+                    return abort(429);
+                }
             }
+            Cache::increment($key);
+            Cache::put($key, Cache::get($key), now()->addMinutes($decayMinutes));
         }
-        Cache::increment($key);
-        Cache::put($key, Cache::get($key), now()->addMinutes($decayMinutes));
-    }
     }
 }
 if (!function_exists('generateRateLimitKey')) {
@@ -504,7 +505,7 @@ if (!function_exists('get_option')) {
 
                 return Leazycms\Web\Models\Option::whereName($val)->first();
             }
-            return config('modules.option.'.$val) ?? null;
+            return config('modules.option.' . $val) ?? null;
         }
         return '';
     }
@@ -531,21 +532,7 @@ if (!function_exists('add_module')) {
         config(['modules.used' => $data]);
     }
 }
-// if (!function_exists('add_modules')) {
-//     function add_module($array)
-//     {
-//         $data = config('modules.used');
-//         if (!empty(collect($data)->where('name', $array['name'])->first())) {
-//             foreach (collect($data)->where('name', $array['name']) as $key => $row):
-//                 $data[$key] = $array;
-//             endforeach;
-//         } else {
-//             array_push($data, $array);
 
-//         }
-//         config(['modules.used' => $data]);
-//     }
-// }
 
 if (!function_exists('_field')) {
     function _field($r, $k, $link = false)
@@ -616,31 +603,11 @@ if (!function_exists('is_admin')) {
         return auth()->user()->level == 'admin' ? true : false;
     }
 }
-if (!function_exists('uses_module')) {
-    function uses_module($module_selected)
-    {
-        foreach ($module_selected as $module => $attr) {
-            if (config('modules.menu.' . $module)) {
-                if ($attr) {
-                    if (is_array($attr)) {
-                        foreach ($attr as $attr_key => $attr_value) {
-                            if (in_array($attr_key, array_keys(config('modules.menu.' . $module)))) {
-                                $config['modules.menu.' . $module . '.' . $attr_key] = $attr_value;
-                            }
-                        }
-                    }
-                    add_module(config('modules.menu.' . $module));
-                }
-            }
-        }
-    }
-}
-
 if (!function_exists('use_module')) {
     function use_module($module_selected)
     {
         foreach ($module_selected as $module => $attr) {
-            if (config('modules.menu.' . $module)) {
+            if (config('modules.menu.' . $module) !== null) {
                 $module_config = config('modules.menu.' . $module);
                 if (is_array($attr)) { // Add this check
                     foreach ($attr as $attr_key => $attr_value) {
@@ -791,14 +758,13 @@ if (!function_exists('blade_path')) {
         if (\Illuminate\Support\Facades\View::exists($blades)) {
             return $blades;
         } else {
-            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || !app()->environment('production')){
+            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || !app()->environment('production')) {
                 $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
                 \Illuminate\Support\Facades\View::share('blade', $path);
                 return 'cms::layouts.warning';
-            }else{
+            } else {
                 exit("<center><h1>Oops! View Not Found!</h1></center>");
             }
-
         }
     }
 }
@@ -824,7 +790,7 @@ if (!function_exists('get_element')) {
 if (!function_exists('template_asset')) {
     function template_asset($path = false)
     {
-        return $path ? secure_asset('template/' . template() . '/' . $path) : secure_asset('template/'.template().'/');
+        return $path ? secure_asset('template/' . template() . '/' . $path) : secure_asset('template/' . template() . '/');
     }
 }
 if (!function_exists('strip_to_underscore')) {
@@ -868,30 +834,32 @@ if (!function_exists('is_day')) {
 }
 if (!function_exists('isPrePanel')) {
 
-function isPrePanel($content){
-$parts = preg_split('/(<textarea\b[^>]*class="custom_html"[^>]*>.*?<\/textarea>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
-$beforeEditor = '';
-$insideEditor = '';
-$afterEditor = '';
-$insideEditorFound = false;
-foreach ($parts as $part) {
-    if ($insideEditorFound) {
-        $afterEditor .= $part;
-    } elseif (strpos($part, 'class="custom_html"') !== false) {
-        $insideEditor .= $part;
-        $insideEditorFound = true;
-    } else {
-        $beforeEditor .= $part;
+    function isPrePanel($content)
+    {
+        $parts = preg_split('/(<textarea\b[^>]*class="custom_html"[^>]*>.*?<\/textarea>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $beforeEditor = '';
+        $insideEditor = '';
+        $afterEditor = '';
+        $insideEditorFound = false;
+        foreach ($parts as $part) {
+            if ($insideEditorFound) {
+                $afterEditor .= $part;
+            } elseif (strpos($part, 'class="custom_html"') !== false) {
+                $insideEditor .= $part;
+                $insideEditorFound = true;
+            } else {
+                $beforeEditor .= $part;
+            }
+        }
+        $beforeEditor = preg_replace('/\s+/', ' ', $beforeEditor);
+        $afterEditor = preg_replace('/\s+/', ' ', $afterEditor);
+        $content = $beforeEditor . $insideEditor . $afterEditor;
+        return $content;
     }
 }
-$beforeEditor = preg_replace('/\s+/', ' ', $beforeEditor);
-$afterEditor = preg_replace('/\s+/', ' ', $afterEditor);
-$content = $beforeEditor . $insideEditor . $afterEditor;
-return $content;
-}
-}
 if (!function_exists('isPre')) {
-    function isPre($string){
+    function isPre($string)
+    {
         $parts = explode('</pre>', $string);
         foreach ($parts as &$part) {
             $subparts = explode('<pre', $part);
@@ -899,7 +867,7 @@ if (!function_exists('isPre')) {
             $part = implode('<pre', $subparts);
         }
         return implode('</pre>', $parts);
-}
+    }
 }
 if (!function_exists('get_thumbnail')) {
     function get_thumbnail()
@@ -911,27 +879,29 @@ if (!function_exists('get_thumbnail')) {
 if (!function_exists('set_header_seo')) {
     function set_header_seo($data)
     {
-        $desctitle = !\Illuminate\Support\Str::contains(get_module($data->type)->title,\Illuminate\Support\Str::of($data->title)->explode(' ')[0]) ? get_module($data->type)->title . ' ' . $data->title : $data->title;
+        $desctitle = !\Illuminate\Support\Str::contains(get_module($data->type)->title, \Illuminate\Support\Str::of($data->title)->explode(' ')[0]) ? get_module($data->type)->title . ' ' . $data->title : $data->title;
         return array(
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
-            'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? url($data->thumbnail) : url(get_option('preview') ?? url(noimage()))) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') ?? url(noimage()))) ,
+            'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? url($data->thumbnail) : url(get_option('preview') ?? url(noimage()))) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') ?? url(noimage()))),
             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
         );
     }
 }
 if (!function_exists('preload')) {
-    function preload(){
-    return view()->make('cms::layouts.preload')->render();
-}
+    function preload()
+    {
+        return view()->make('cms::layouts.preload')->render();
+    }
 }
 if (!function_exists('cleanArrayValues')) {
-function cleanArrayValues($array) {
-    return array_map(function ($value) {
-        return is_string($value) ? strip_tags($value) : $value;
-    }, $array);
-}
+    function cleanArrayValues($array)
+    {
+        return array_map(function ($value) {
+            return is_string($value) ? strip_tags($value) : $value;
+        }, $array);
+    }
 }
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
@@ -970,7 +940,7 @@ if (!function_exists('init_meta_header')) {
             }
             $data = [
                 'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : ($site_meta_description ?? $site_desc),
-                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title.($site_desc?' - '.$site_desc :'')),
+                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title . ($site_desc ? ' - ' . $site_desc : '')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') ?? noimage()),
                 'url' => request()->fullUrl(),
@@ -1008,26 +978,42 @@ if (!function_exists('get_menu')) {
     }
 }
 if (!function_exists('load_default_module')) {
+
     function load_default_module()
     {
-        use_module([
-            'berita' => ['position' => 1,'active'=>true],
-            'page' => ['custom_field' => false,'active'=>true],
-            'pengumuman' => ['active'=>true],
-            'agenda' => ['position' => 2],
-            'sambutan' => ['position' => 6],
-            'document' => ['position' => 3],
-            'menu' =>  ['active'=>true],
-            'banner' =>   ['active'=>true],
-            'countdown' => ['position' => 10],
-            'pegawai' => ['position' => 4],
-            'dokumentasi' => ['position' => 4],
-            'media' => ['position' => 7, 'icon' => 'fa-link']
-        ]);
+        $module = config('modules.default_module', ''); // Gunakan default string kosong jika null
+        $defaultFromConfig = array_filter(explode(',', $module)); // Filter nilai kosong
+
+        $default = [
+            'menu' => ['active' => true],
+            'banner' => ['active' => true],
+            'gallery' => ['active' => true],
+            'page' => ['active' => true],
+            'countdown' => ['active' => true],
+        ];
+
+        // Ambil kunci valid dari config('modules.menu') dan filter hanya string atau integer
+        $validKeys = array_filter(array_keys(config('modules.menu', [])), function ($key) {
+            return is_string($key) || is_int($key);
+        });
+
+        // Ubah menjadi flip untuk optimasi lookup
+        $validKeysFlipped = array_flip($validKeys);
+
+        // Gabungkan array dengan validasi kunci
+        foreach ($defaultFromConfig as $key) {
+            if (isset($validKeysFlipped[$key]) && !isset($default[$key])) {
+                $default[$key] = ['active' => true];
+            }
+        }
+
+        use_module($default);
     }
+
+
 }
 if (!function_exists('paginate')) {
-    function paginate($items,$perpage=false)
+    function paginate($items, $perpage = false)
     {
         $perPage = get_option('post_perpage') ? ($perpage ? $perpage : 10) : 10;
         $page = request()->page ?: (\Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1);
@@ -1088,12 +1074,12 @@ if (!function_exists('mime_thumbnail')) {
         $mimeArray = Symfony\Component\Mime\MimeTypes::getDefault()->getMimeTypes(pathinfo($file, PATHINFO_EXTENSION));
         $mime = $mimeArray[0] ?? 'default'; // Ambil MIME type pertama atau 'default' jika array kosong
 
-        return match($mime) {
+        return match ($mime) {
             'application/x-zip-compressed',
             'application/zip' => '/backend/images/archive.png',
 
             'image/jpeg',
-            'image/png' => '/media/'.$file,
+            'image/png' => '/media/' . $file,
 
             'application/pdf' => '/backend/images/pdf.png',
             'application/msword',
@@ -1116,7 +1102,7 @@ if (!function_exists('recache_banner')) {
         $posts = \Leazycms\Web\Models\Post::with('category')
             ->onType('banner')
             ->published()
-            ->select('media', 'redirect_to', 'title', 'category_id','data_field') // Pastikan 'category_id' dipilih untuk relasi
+            ->select('media', 'redirect_to', 'title', 'category_id', 'data_field') // Pastikan 'category_id' dipilih untuk relasi
             ->get();
 
         // Group by category name and map the results
@@ -1173,9 +1159,9 @@ if (!function_exists('_tohref')) {
     }
 }
 if (!function_exists('banner_here')) {
-    function banner_here($name,$data)
+    function banner_here($name, $data)
     {
-        return \Illuminate\Support\Facades\Auth::user()?->isAdmin() ? View::make('cms::layouts.banner',['banner'=>$name,'data'=>$data]) : null;
+        return \Illuminate\Support\Facades\Auth::user()?->isAdmin() ? View::make('cms::layouts.banner', ['banner' => $name, 'data' => $data]) : null;
     }
 }
 
@@ -1209,9 +1195,7 @@ if (!function_exists('get_banner')) {
     }
 }
 if (!function_exists('banner_here')) {
-    function banner_here($name)
-    {
-    }
+    function banner_here($name) {}
 }
 
 
@@ -1227,28 +1211,28 @@ if (!function_exists('get_ip_info')) {
         }
     }
 }
-function renderTemplateFile($items, $parentPath = '') {
+function renderTemplateFile($items, $parentPath = '')
+{
     echo '<ul style="list-style:none;padding:0 0 0 14px">';
     foreach ($items as $item) {
         $currentPath = $parentPath . '/' . $item['name'];
         if (isset($item['children']) && !empty($item['children'])) {
-            echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\''. $currentPath .'\')"></i> </span>' . htmlspecialchars($item['name']);
+            echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
             renderTemplateFile($item['children'], $currentPath);
             echo '</li>';
-        } elseif(strtolower(substr(strrchr($item['name'], '.'), 1))) {
-            echo '<li><a href="'.route('appearance.editor').'?edit='.htmlspecialchars($currentPath).'"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
-        }
-        else
-        {
-            echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\''. $currentPath .'\')" title="Create File"></i> </span></li>';
+        } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
+            echo '<li><a href="' . route('appearance.editor') . '?edit=' . htmlspecialchars($currentPath) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
+        } else {
+            echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
         }
     }
     echo '</ul>';
 }
 
-function getDirectoryContents($path = null, &$results = [], $parentPath = '') {
+function getDirectoryContents($path = null, &$results = [], $parentPath = '')
+{
     if (is_null($path)) {
-        $path = base_path('resources/views/template/'.template());
+        $path = base_path('resources/views/template/' . template());
     }
 
     $files = scandir($path);
@@ -1327,7 +1311,7 @@ if (!function_exists('db_connected')) {
 if (!function_exists('isHomePage')) {
     function isHomePage()
     {
-      return request()->is('/') ? true : false;
+        return request()->is('/') ? true : false;
     }
 }
 if (!function_exists('get_tgl')) {
@@ -1511,16 +1495,17 @@ if (!function_exists('getRateLimiterKey')) {
     }
 }
 if (!function_exists('add_extension')) {
-function add_extension($arr) {
-    // Mengambil array yang sudah ada di konfigurasi
-    $exist_extension = config('modules.extension_module', []);
+    function add_extension($arr)
+    {
+        // Mengambil array yang sudah ada di konfigurasi
+        $exist_extension = config('modules.extension_module', []);
 
-    // Menambahkan elemen baru ke array yang sudah ada
-    $exist_extension[] = $arr; // Bisa juga menggunakan array_push
+        // Menambahkan elemen baru ke array yang sudah ada
+        $exist_extension[] = $arr; // Bisa juga menggunakan array_push
 
-    // Mengupdate konfigurasi secara runtime
-    config(['modules.extension_module' => $exist_extension]);
+        // Mengupdate konfigurasi secara runtime
+        config(['modules.extension_module' => $exist_extension]);
 
-    // Mengembalikan array yang sudah diperbarui jika diperlukan
-}
+        // Mengembalikan array yang sudah diperbarui jika diperlukan
+    }
 }

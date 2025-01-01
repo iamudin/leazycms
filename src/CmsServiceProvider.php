@@ -129,7 +129,7 @@ class CmsServiceProvider extends ServiceProvider
 
         if (file_exists($configFile)) {
             ob_start();
-            include $configFile;
+            require_once($configFile);
             ob_end_clean();
             if (isset($config)) {
                 config(['modules.config' => $config]);
