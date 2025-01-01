@@ -22,7 +22,10 @@ class RateLimit
                 $cfg['APP_URL'] = 'http://'.$request->getHttpHost();
                 rewrite_env($cfg);
             }
-            return redirect('https://'.$request->getHttpHost().'/install');
+            return redirect()->away($request->getHttpHost().'/install', 301);
+        }
+        if (str_starts_with($request->getHost(), 'www.') || strpos($request->getRequestUri(), 'index.php') !== false || $request->getHost()!=str_replace('http://','',config('app.url'))) {
+            return redirect()->away( config('app.url') . str_replace('/index.php', '', $request->getRequestUri()), 301);
         }
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
