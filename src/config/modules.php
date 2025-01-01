@@ -550,6 +550,8 @@ return [
         'config'=> [
             'web_type'=> null,
             'option'=> array(),
+            'template_asset'=>array(),
+            'templaet_info'=>array(),
         ],
         'option'=> array(),
         'option_cached'=> null,

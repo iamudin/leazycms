@@ -155,7 +155,6 @@ class PanelController extends Controller implements HasMiddleware
             ['Logo', 'logo', 'file'],
             ['Favicon (Gambar PNG/JPG rasio 1:1 maks 2mb)', 'favicon', 'file'],
             ['Preview', 'poreview', 'file'],
-            ['Background Header Video (.mp4)', 'bg_header_video', 'file'],
         );
         $data['pwa'] = array(
             ['Nama Aplikasi', 'pwa_name', 'text'],
@@ -248,14 +247,6 @@ class PanelController extends Controller implements HasMiddleware
                             rename($outputPath, public_path('favicon.ico'));
                         }
 
-                    }elseif($key=='bg_header_video'){
-                        $fid->update([
-                            'value' =>$fid->addFile([
-                                'file'=> $request->file($key),
-                                'purpose'=>$key,
-                                'mime_type'=>['video/mp4'],
-                                ])
-                             ]);
                     }
                     else{
 
@@ -338,7 +329,7 @@ class PanelController extends Controller implements HasMiddleware
         }
         return view('cms::backend.setting', $data);
     }
-    public function appearance(Request $request)
+    public function appearance(Request $request,Option $option)
     {
 
         admin_only();
@@ -356,6 +347,26 @@ class PanelController extends Controller implements HasMiddleware
             'template' => 'required|file|mimes:zip',
         ]);
         return $this->template_uploader($file);
+        }
+        if($ta = $request->template_asset){
+            $ar_ta = config('modules.config.template_asset') ?? null;
+            if($ar_ta){
+                foreach($ar_ta as $row){
+                    $key = _us($row[0]);
+                    if(isset($ta[$key]) && is_file($ta[$key])){
+                        $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                        $filename = $fid->addFile([
+                            'file'=> $ta[$key],
+                            'purpose'=>$key,
+                            'mime_type'=>explode(",",$row[2]),
+                        ]);
+                        $fid->update([
+                            'value' => $filename
+                             ]);
+                    }
+                }
+            }
+            return back()->send();
         }
         }
         return view('cms::backend.appearance');

@@ -82,11 +82,45 @@
   </ul>
 
 </div>
-<div class="col-lg-10">
 
+<div class="col-lg-10">
+    @php
+    $template_asset = config('modules.config.template_asset') ?? null;
+    @endphp
+    @if($template_asset && is_array($template_asset))
+        <h6> <i class="fa fa-image"></i> Template Assets <small class="text-muted">(optional)</small> </h6>
+        <form action="{{ URL::current() }}" method="post" enctype="multipart/form-data">
+            @csrf
+        <div class="row">
+
+        @foreach($template_asset as $row)
+        @php
+        $keyasset = _us($row[0]);
+        @endphp
+        <div class="col-lg-6">
+        <div class="form-group">
+            <small for="">{{ $row[0] }}</small><br>
+            @if($row[1]=='file')
+            @if($asset = get_option($keyasset) && media_exists(get_option($keyasset)))
+            <a href="{{ get_option($keyasset)}}" target="_blank" class="btn btn-outline-primary">{{ basename(get_option($keyasset)) }}</a>
+            <i class="fa fa-trash text-danger pointer" onclick="media_destroy('{{ get_option($keyasset)}}')"></i>
+            @else
+            <input accept="{{ $row[2] }}" type="file" name="template_asset[{{$keyasset}}]" onchange="this.form.submit()">
+            @endif
+            @else
+
+            @endif
+        </div>
+        </div>
+        @endforeach
+
+    </div>
+</form>
+    @endif
 <iframe  src="{{ url('/') }}" frameborder="0" class="w-100 preview" style="height: 80vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
 
 </div>
+
 </div>
 
 </div>
