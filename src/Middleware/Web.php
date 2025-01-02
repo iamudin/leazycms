@@ -48,13 +48,7 @@ class Web
                     $content
                 );
             }
-            if (strpos($content, '</head>') !== false  && strpos($content, 'loading-spin') === false) {
-                $content = str_replace(
-                    '</head>',
-                    '</head>' . preload(),
-                    $content
-                );
-            }
+
                 if ($request->segment(1) == 'docs') {
                     $content = isPre($content);
                 } else {

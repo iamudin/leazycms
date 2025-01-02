@@ -141,8 +141,19 @@ class RateLimit
             ratelimiter($request,get_option('time_limit_reload'));
     }
     forbidden($request,config('modules.current.detail_visited'));
-    return $next($request);
-
+   $response =  $next($request);
+   if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
+    $content = $response->getContent();
+    if ($request->segment(1) != admin_path() && strpos($content, '</head>') !== false  && strpos($content, 'spinner-spin') === false) {
+        $content = str_replace(
+            '</head>',
+            '</head>' . preload(),
+            $content
+        );
     }
+    $response->setContent($content);
+    }
+return $response;
+}
 
 }
