@@ -88,7 +88,9 @@ class WebController extends Controller
             'index' => $post,
             'tag' => $tag
         );
-
+        if(View::exists('template.'.template().'.tags.'.$tag->id)){
+            return view('template.'.template().'.tags.'.$tag->id, $data);
+        }
         return view('cms::layouts.master', $data);
     }
     public function author(Request $request, $u = null)

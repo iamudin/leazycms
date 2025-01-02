@@ -117,7 +117,7 @@ class RateLimit
             $attr['post_type'] = null;
             $attr['detail_visited'] = false;
             $attr['view_type'] = 'tags';
-            $attr['view_path'] = 'tags';
+            $attr['view_path'] = 'tags.index';
             config([
                 'modules.current' => $attr
             ]);

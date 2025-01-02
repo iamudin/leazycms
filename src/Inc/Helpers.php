@@ -23,7 +23,16 @@ if (!function_exists('polling_form')) {
         }
     }
 }
-
+if (!function_exists('web_header')) {
+function web_header(){
+    return View::make(blade_path('header'));
+}
+}
+if (!function_exists('web_footer')) {
+function web_footer(){
+    return View::make(blade_path('footer'));
+}
+}
 if (!function_exists('getThumbUrl')) {
     function getThumbUrl($url)
     {
