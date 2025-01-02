@@ -43,7 +43,7 @@ class NotFoundHandler extends ExceptionHandler
                     $content
                 );
             }
-            if (strpos($content, '</head>') !== false && strpos($content, 'loading-spin') === false) {
+            if (strpos($content, '</head>') !== false && strpos($content, 'spinner-spin') === false) {
                 $content = str_replace(
                     '</head>',
                     '</head>' . preload(),
