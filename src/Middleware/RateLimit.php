@@ -1,5 +1,7 @@
 <?php
+
 namespace Leazycms\Web\Middleware;
+
 use Closure;
 use Illuminate\Http\Request;
 
@@ -14,19 +16,48 @@ class RateLimit
      */
     public function handle(Request $request, Closure $next)
     {
-        if(!config('modules.installed') && strpos($request->fullUrl(), 'install') === false ){
-            if(env('SESSION_DRIVER')!='file' || env('QUEUE_CONNECTION')!= 'sync' || env('CACHE_STORE')!='file'){
+        if (!config('modules.installed') && strpos($request->fullUrl(), 'install') === false) {
+            if (config('session.driver')!= 'file' || config('queue.default') != 'sync' || config('cache.default') != 'file') {
                 $cfg['SESSION_DRIVER'] = 'file';
                 $cfg['QUEUE_CONNECTION'] = 'sync';
                 $cfg['CACHE_STORE'] = 'file';
-                $cfg['APP_URL'] = 'http://'.$request->getHttpHost();
+                $cfg['APP_URL'] = 'http://' . $request->getHttpHost();
                 rewrite_env($cfg);
             }
-            return redirect()->away($request->getHttpHost().'/install', 301);
+            return redirect()->away($request->getHttpHost() . '/install', 301);
         }
-        if (str_starts_with($request->getHost(), 'www.') || strpos($request->getRequestUri(), 'index.php') !== false || $request->getHost()!=str_replace('http://','',config('app.url'))) {
-            return redirect()->away( config('app.url') . str_replace('/index.php', '', $request->getRequestUri()), 301);
+        $host = $request->getHost();
+        $scheme = $request->getScheme();
+        $uri = $request->getRequestUri();
+
+        // Initialize variables
+        $redirectUrl = null;
+
+        // Remove "www." from domain
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
         }
+
+        // Remove "index.php" from URI
+        if (strpos($uri, 'index.php') !== false) {
+            $uri = str_replace('index.php', '', $uri);
+        }
+
+        // Force HTTPS if not secure
+        if ($scheme !== 'https' && app()->environment('production')) {
+            $scheme = 'https';
+        }
+
+        // Build the redirect URL if needed
+        if ($host !== $request->getHost() || $scheme !== $request->getScheme() || $uri !== $request->getRequestUri()) {
+            $redirectUrl = $scheme . '://' . $host . '/' . ltrim($uri, '/');
+        }
+
+        // Redirect if necessary
+        if ($redirectUrl) {
+            return redirect($redirectUrl);
+        }
+
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
             $attr['post_type'] = $modul->name;
@@ -75,7 +106,7 @@ class RateLimit
         }
 
 
-        if ($request->is('*') && !in_array($request->segment(1), array_merge([admin_path()],$modules->pluck('name')->toArray()))) {
+        if ($request->is('*') && !in_array($request->segment(1), array_merge([admin_path()], $modules->pluck('name')->toArray()))) {
             $attr['post_type'] = 'page';
             $attr['detail_visited'] = true;
             $attr['view_type'] = 'detail';
@@ -94,7 +125,7 @@ class RateLimit
             ]);
         }
         if ($request->is('author') || $request->is('author/*')) {
-            if($request->is('author')){
+            if ($request->is('author')) {
                 $attr['post_type'] = null;
                 $attr['detail_visited'] = false;
                 $attr['view_type'] = 'author.index';
@@ -102,7 +133,7 @@ class RateLimit
                 config([
                     'modules.current' => $attr
                 ]);
-            }else{
+            } else {
                 $attr['post_type'] = null;
                 $attr['detail_visited'] = false;
                 $attr['view_type'] = 'author.detail';
@@ -111,7 +142,6 @@ class RateLimit
                     'modules.current' => $attr
                 ]);
             }
-
         }
         if ($request->is('tags/*')) {
             $attr['post_type'] = null;
@@ -122,7 +152,7 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
-        if ($request->is(['sitemap.xml','swk.js','site.manifest'])) {
+        if ($request->is(['sitemap.xml', 'swk.js', 'site.manifest'])) {
             $attr['detail_visited'] = false;
             config([
                 'modules.current' => $attr
@@ -137,23 +167,23 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
-        if($o = config('modules.current.detail_visited')){
-            ratelimiter($request,get_option('time_limit_reload'));
+        if ($o = config('modules.current.detail_visited')) {
+            ratelimiter($request, get_option('time_limit_reload'));
+        }
+        forbidden($request, config('modules.current.detail_visited'));
+        $response =  $next($request);
+        if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
+            $content = $response->getContent();
+            if ($request->segment(1) != admin_path() && strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
+                $content = str_replace(
+                    '</body>',
+                    preload() . '</body>',
+                    $content
+                );
+                $content = preg_replace('/\s+/', ' ', $content);
+            }
+            $response->setContent($content);
+        }
+        return $response;
     }
-    forbidden($request,config('modules.current.detail_visited'));
-   $response =  $next($request);
-   if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
-    $content = $response->getContent();
-    if ($request->segment(1) != admin_path() && strpos($content, '</head>') !== false  && strpos($content, 'spinner-spin') === false) {
-        $content = str_replace(
-            '</head>',
-            '</head>' . preload(),
-            $content
-        );
-    }
-    $response->setContent($content);
-    }
-return $response;
-}
-
 }

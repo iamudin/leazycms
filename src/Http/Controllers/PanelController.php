@@ -351,6 +351,7 @@ class PanelController extends Controller implements HasMiddleware
         if($ta = $request->template_asset){
             $ar_ta = config('modules.config.template_asset') ?? null;
             if($ar_ta){
+                $success = array();
                 foreach($ar_ta as $row){
                     $key = _us($row[0]);
                     if(isset($ta[$key]) && is_file($ta[$key])){
@@ -363,7 +364,13 @@ class PanelController extends Controller implements HasMiddleware
                         $fid->update([
                             'value' => $filename
                              ]);
+                    if(basename($filename)){
+                        array_push($success,basename($filename));
                     }
+                    }
+                }
+                if(count($success)>0){
+                    Artisan::call('config:cache');
                 }
             }
             return back()->send();
