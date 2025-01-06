@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
-<title>{{request()->is('/') ? $title : $title.' | '.get_option('site_title')}}</title>
+<title>{{request()->is('/') ? $title : $title.' - '.get_option('site_title')}}</title>
 <meta http-equiv="content-language" content="en">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="mobile-web-app-capable" content="yes" />
