@@ -298,7 +298,8 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
 
-            if ($app_env = $request->app_env && in_array($request->app_env, ['production', 'local'])) {
+            if ($request->app_env && in_array($request->app_env, ['production', 'local'])) {
+                $app_env = $request->app_env;
                 if ($existsenv = get_option('app_env')) {
                     if ($existsenv != $app_env) {
                         $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
@@ -316,7 +317,7 @@ class PanelController extends Controller implements HasMiddleware
                 }
                 $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
             }
-           Artisan::call('config:cache');
+                Artisan::call('config:cache');
 
                 if ($request->admin_path != $request->segment(1)) {
                     Artisan::call('route:cache');
