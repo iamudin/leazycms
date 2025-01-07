@@ -1,5 +1,7 @@
 <?php
+
 namespace Leazycms\Web\Http\Controllers;
+
 use ZipArchive;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,12 +29,13 @@ class PanelController extends Controller implements HasMiddleware
         ];
     }
 
-    function files(){
+    function files()
+    {
         return view('cms::backend.files.index');
     }
-    function comments(){
+    function comments()
+    {
         return view('cms::backend.comments.index');
-
     }
     protected function toDashboard($request)
     {
@@ -52,7 +55,7 @@ class PanelController extends Controller implements HasMiddleware
         $weekago = json_decode(json_encode(collect($da)->sort()), true);
         $visitor = Visitor::whereIn(DB::raw('DATE(created_at)'), $da)
             ->get()
-            ->map(function($record) {
+            ->map(function ($record) {
                 $record->created_at = \Carbon\Carbon::parse($record->created_at)->format('Y-m-d');
                 return $record;
             });
@@ -106,20 +109,20 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function option(Request $request, Option $option)
     {
-        if(empty(config('modules.config.option'))){
+        if (empty(config('modules.config.option'))) {
             return to_route('panel.dashboard');
         }
-        if($request->isMethod('post')){
-            foreach(config('modules.config.option') as $row){
-                foreach($row as $field){
+        if ($request->isMethod('post')) {
+            foreach (config('modules.config.option') as $row) {
+                foreach ($row as $field) {
                     $key = _us($field[0]);
-                    if($value = $request->$key){
+                    if ($value = $request->$key) {
                         $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                     }
                 }
             }
             Artisan::call('config:cache');
-            return back()->with('success','Berhasil Diupdate');
+            return back()->with('success', 'Berhasil Diupdate');
         }
         return view('cms::backend.option');
     }
@@ -189,11 +192,11 @@ class PanelController extends Controller implements HasMiddleware
             ['Roles', 'operator,editor,publisher']
         );
 
-       $data['home'] = array_map([File::class, 'basename'], File::glob(resource_path('views/template/'.template().'/home-*.blade.php')));
+        $data['home'] = array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php')));
         if ($request->isMethod('POST')) {
 
-            if($hp = $request->home_page){
-                if(in_array($hp,array_merge(['default'],$data['home']))){
+            if ($hp = $request->home_page) {
+                if (in_array($hp, array_merge(['default'], $data['home']))) {
                     $fid = $option->updateOrCreate(['name' => 'home_page'], ['value' => $hp, 'autoload' => 1]);
                 }
             }
@@ -206,10 +209,10 @@ class PanelController extends Controller implements HasMiddleware
                     if ($request->hasFile($key)) {
                         $fid->update([
                             'value' => $fid->addFile([
-                                'file'=> $request->file($key),
-                                'purpose'=>$key,
-                                'mime_type'=>['image/png','image/jpeg'],
-                                ])
+                                'file' => $request->file($key),
+                                'purpose' => $key,
+                                'mime_type' => ['image/png', 'image/jpeg'],
+                            ])
                         ]);
                     }
                 } else {
@@ -235,31 +238,28 @@ class PanelController extends Controller implements HasMiddleware
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
 
-                    if($key=='favicon'){
-                        $outputPath = public_path('favicon.png');
-                        if(file_exists($outputPath)){
-                            unlink($outputPath);
-                        }
-                        $image = Image::make($request->file('favicon')->getRealPath())
-                                      ->resize(16, 16);
-                        $image->save($outputPath);
-                        if (file_exists($outputPath)) {
-                            rename($outputPath, public_path('favicon.ico'));
-                        }
+                        if ($key == 'favicon') {
+                            $outputPath = public_path('favicon.png');
+                            if (file_exists($outputPath)) {
+                                unlink($outputPath);
+                            }
+                            $image = Image::make($request->file('favicon')->getRealPath())
+                                ->resize(16, 16);
+                            $image->save($outputPath);
+                            if (file_exists($outputPath)) {
+                                rename($outputPath, public_path('favicon.ico'));
+                            }
+                        } else {
 
-                    }
-                    else{
-
-                        $fid->update([
-                            'value' =>$fid->addFile([
-                                'file'=> $request->file($key),
-                                'purpose'=>$key,
-                                'mime_type'=>['image/png','image/jpeg'],
+                            $fid->update([
+                                'value' => $fid->addFile([
+                                    'file' => $request->file($key),
+                                    'purpose' => $key,
+                                    'mime_type' => ['image/png', 'image/jpeg'],
                                 ])
-                             ]);
+                            ]);
+                        }
                     }
-                }
-
                 } else {
                     $value = $request->$key;
                     $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
@@ -273,17 +273,17 @@ class PanelController extends Controller implements HasMiddleware
 
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
-                        $res = explode('_',$key)[count(explode('_',$key))-1];
+                        $res = explode('_', $key)[count(explode('_', $key)) - 1];
                         $filename = $fid->addFile([
-                            'file'=> $request->file($key),
-                            'purpose'=>$key,
-                            'mime_type'=>['image/png'],
-                            'width'=> $res,
-                            'height'=> $res
+                            'file' => $request->file($key),
+                            'purpose' => $key,
+                            'mime_type' => ['image/png'],
+                            'width' => $res,
+                            'height' => $res
                         ]);
                         $fid->update([
                             'value' => $filename
-                             ]);
+                        ]);
                     }
                 } else {
                     $value = $request->$key;
@@ -293,93 +293,93 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['shortcut'] as $row) {
                 $key = $row[1];
                 $value = $request->$key;
-                $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
-            }
-            if ($val = $request->admin_path) {
-                if (in_array($val, ['admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel'])) {
-                    return back()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
-                }
-                $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
-                if ($val != get_option('admin_path')) {
-                  $isconfg=  Artisan::call('config:cache');
-                    Artisan::call('route:cache');
-                    return to_route('setting')->with('success', 'Berhasil disimpan');
+                if ($value && in_array($value, ['Y', 'N'])) {
+                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
-            if ($app_env = $request->app_env) {
+
+            if ($app_env = $request->app_env && in_array($request->app_env, ['production', 'local'])) {
                 if ($existsenv = get_option('app_env')) {
                     if ($existsenv != $app_env) {
                         $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
                         rewrite_env(['APP_ENV' => $app_env]);
-                        $isconfg =     Artisan::call('config:cache');
                     }
                 } else {
                     $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
                     rewrite_env(['APP_ENV' => $app_env]);
-                    $isconfg=   Artisan::call('config:cache');
                 }
             }
-            if(!isset($isconfg)){
-                $isconfg = Artisan::call('config:cache');
+            if ($request->admin_path&& get_option('admin_path') != $request->admin_path) {
+                $val = $request->admin_path;
+                if (strlen($val) <= 5 || in_array($val, array_merge(['slot', 'admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel'], collect(get_module())->pluck('name')->toArray())) || is_numeric($val)) {
+                    return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
+                }
+                $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
             }
-            if($isconfg === 0 && config('modules.option')== \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray()){
+           Artisan::call('config:cache');
 
-                return back()->send()->with('success','dff');
+                if ($request->admin_path != $request->segment(1)) {
+                    Artisan::call('route:cache');
+                    $changeadmin = 1;
+                }
+            if(isset($changeadmin)){
+                return to_route('setting')->send()->with('success', 'Berhasil');
             }
+            return back()->send()->with('success', 'Berhasil');
         }
         return view('cms::backend.setting', $data);
     }
-    public function appearance(Request $request,Option $option)
+    public function appearance(Request $request, Option $option)
     {
 
         admin_only();
-        if($request->optimize){
-            if(Artisan::call('config:clear') && Artisan::call('route:clear')){
+        if ($request->optimize) {
+            if (Artisan::call('config:clear') && Artisan::call('route:clear')) {
                 Artisan::call('config:cache');
                 Artisan::call('route:cache');
             }
-            return to_route('appearance')->send()->with('success','Berhasil di optimalkan');
-
-         }
-        if($request->isMethod('post')){
-        if($file = $request->file('template')){
-           $request->validate([
-            'template' => 'required|file|mimes:zip',
-        ]);
-        return $this->template_uploader($file);
+            return to_route('appearance')->send()->with('success', 'Berhasil di optimalkan');
         }
-        if($ta = $request->template_asset){
-            $ar_ta = config('modules.config.template_asset') ?? null;
-            if($ar_ta){
-                $success = array();
-                foreach($ar_ta as $row){
-                    $key = _us($row[0]);
-                    if(isset($ta[$key]) && is_file($ta[$key])){
-                        $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
-                        $filename = $fid->addFile([
-                            'file'=> $ta[$key],
-                            'purpose'=>$key,
-                            'mime_type'=>explode(",",$row[2]),
-                        ]);
-                        $fid->update([
-                            'value' => $filename
-                             ]);
-                    if(basename($filename)){
-                        array_push($success,basename($filename));
-                    }
-                    }
-                }
-                if(count($success)>0){
-                    Artisan::call('config:cache');
-                }
+        if ($request->isMethod('post')) {
+            if ($file = $request->file('template')) {
+                $request->validate([
+                    'template' => 'required|file|mimes:zip',
+                ]);
+                return $this->template_uploader($file);
             }
-            return back()->send();
-        }
+            if ($ta = $request->template_asset) {
+                $ar_ta = config('modules.config.template_asset') ?? null;
+                if ($ar_ta) {
+                    $success = array();
+                    foreach ($ar_ta as $row) {
+                        $key = _us($row[0]);
+                        if (isset($ta[$key]) && is_file($ta[$key])) {
+                            $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                            $filename = $fid->addFile([
+                                'file' => $ta[$key],
+                                'purpose' => $key,
+                                'mime_type' => explode(",", $row[2]),
+                            ]);
+                            $fid->update([
+                                'value' => $filename
+                            ]);
+                            if (basename($filename)) {
+                                array_push($success, basename($filename));
+                            }
+                        }
+                    }
+                    if (count($success) > 0) {
+                        Artisan::call('config:cache');
+                    }
+                }
+                return back()->send();
+            }
         }
         return view('cms::backend.appearance');
     }
-    public function template_uploader($file){
-              // Simpan file zip secara sementara
+    public function template_uploader($file)
+    {
+        // Simpan file zip secara sementara
         $zipFilePath = $file->getRealPath();
 
         $zip = new ZipArchive;
@@ -405,14 +405,14 @@ class PanelController extends Controller implements HasMiddleware
                 File::deleteDirectory($extractPath);
 
                 // Batalkan upload dan kembalikan respon error
-                return back()->with('danger','File Template Tidak Valid');
+                return back()->with('danger', 'File Template Tidak Valid');
             }
 
             // Path sumber dari folder temaku
             $sourcePath = $extractPath . '/' . $mainFolderName;
 
             // Path tujuan untuk resource_path
-            $templatePath = resource_path('views/template/'.$mainFolderName.'/');
+            $templatePath = resource_path('views/template/' . $mainFolderName . '/');
 
             // Pastikan direktori target ada
             File::ensureDirectoryExists($templatePath);
@@ -446,16 +446,15 @@ class PanelController extends Controller implements HasMiddleware
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
 
-            $current_template_name = get_option('template',true);
-            if($current_template_name->value != $mainFolderName){
+            $current_template_name = get_option('template', true);
+            if ($current_template_name->value != $mainFolderName) {
                 $current_template_name->update([
-                    'value'=>$mainFolderName
+                    'value' => $mainFolderName
                 ]);
             }
-            return redirect(route('appearance').'?optimize=true');
+            return redirect(route('appearance') . '?optimize=true');
         } else {
-            return back()->with('danger','Template Gagal Diupload');
-
+            return back()->with('danger', 'Template Gagal Diupload');
         }
     }
     public function editorTemplate(Request $request)
@@ -463,7 +462,7 @@ class PanelController extends Controller implements HasMiddleware
         admin_only();
         $path = resource_path('views/template/' . template());
         if (!file_exists($path . '/home.blade.php')) {
-            File::put($path . '/home.blade.php','<h1>Your Script Here</h1>');
+            File::put($path . '/home.blade.php', '<h1>Your Script Here</h1>');
         }
         $file = $request->edit ?? '/home.blade.php';
 
@@ -474,8 +473,7 @@ class PanelController extends Controller implements HasMiddleware
                 mkdir($path);
             }
             if (!file_exists($path . $file)) {
-                File::put($path .$file,'html,body{}');
-
+                File::put($path . $file, 'html,body{}');
             }
         } elseif ($file == '/scripts.js') {
             $file = '/scripts.js';
@@ -484,7 +482,7 @@ class PanelController extends Controller implements HasMiddleware
                 mkdir($path);
             }
             if (!file_exists($path . $file)) {
-                File::put($path .$file,'/*You JS Here*/');
+                File::put($path . $file, '/*You JS Here*/');
             }
         } else {
         }
@@ -504,7 +502,7 @@ class PanelController extends Controller implements HasMiddleware
                         $myfile = fopen($path . $filepath . '/' . $filename, "w") or die("Unable to open file!");
                         fwrite($myfile, '<h1>You Script Here</h1>');
                         fclose($myfile);
-                        File::put($path . $filepath . '/' . $filename,'You Script Here');
+                        File::put($path . $filepath . '/' . $filename, 'You Script Here');
 
                         return response()->json(['msg' => 'success']);
                     }
@@ -524,31 +522,30 @@ class PanelController extends Controller implements HasMiddleware
                         $data = $content;
                         $file = $path  . $file;
                         $ext = pathinfo($file, PATHINFO_EXTENSION);
-                        if($ext=='php'){
-                        if (basename($file) == 'modules.blade.php') {
-                            Cache::put('tempmodules',file_get_contents($file));
-                            if ( File::put($file,  $content)) {
-                                $phpCode = File::get($file);
-                                try {
-                                    ob_start();
-                                    eval('?>' . $phpCode);
-                                    ob_end_clean();
-                                } catch (\ParseError $e) {
-                                    File::put($file, Cache::get('tempmodules'));
-                                    return back()->with('danger', 'PHP script modules is wrong!');
+                        if ($ext == 'php') {
+                            if (basename($file) == 'modules.blade.php') {
+                                Cache::put('tempmodules', file_get_contents($file));
+                                if (File::put($file,  $content)) {
+                                    $phpCode = File::get($file);
+                                    try {
+                                        ob_start();
+                                        eval('?>' . $phpCode);
+                                        ob_end_clean();
+                                    } catch (\ParseError $e) {
+                                        File::put($file, Cache::get('tempmodules'));
+                                        return back()->with('danger', 'PHP script modules is wrong!');
+                                    }
+                                } else {
+                                    return back()->with('danger', 'Failed write modules script!');
                                 }
                             } else {
-                                return back()->with('danger', 'Failed write modules script!');
-                            }
-                        }else{
-                            try {
-                                File::put($file, $content);
+                                try {
+                                    File::put($file, $content);
                                 } catch (\Exception $e) {
-                                    return back()->with('danger','Failed write file : '.$e->getMessage());
+                                    return back()->with('danger', 'Failed write file : ' . $e->getMessage());
                                 }
-                        }
-                    }
-                        else {
+                            }
+                        } else {
                             $myfile = fopen($file, "w") or die("Unable to open file!");
                             fwrite($myfile, $data);
                             fclose($myfile);
@@ -567,13 +564,14 @@ class PanelController extends Controller implements HasMiddleware
             'php' => 'application/x-httpd-php',
             'css' => 'text/css',
             'js' => 'text/javascript',
-            default=>'application/x-httpd-php'
+            default => 'application/x-httpd-php'
         };
 
         return view('cms::backend.editortemplate', ['view' => $src, 'type' => $type]);
     }
 
-    function backup_restore(Request $request){
+    function backup_restore(Request $request)
+    {
         return to_route('panel.dashboard');
         try {
             Artisan::call('backup:list');
