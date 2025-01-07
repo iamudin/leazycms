@@ -3,7 +3,6 @@ namespace Leazycms\Web\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 
 class Web
