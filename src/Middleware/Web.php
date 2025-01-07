@@ -18,9 +18,9 @@ class Web
     {
 
         $response = $next($request);
-        if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
-            return undermaintenance();
-        }
+        // if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
+        //     return undermaintenance();
+        // }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use($request) {
