@@ -317,11 +317,13 @@ class PanelController extends Controller implements HasMiddleware
                 }
                 $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
             }
-                Artisan::call('config:cache');
 
                 if ($request->admin_path != $request->segment(1)) {
+                    Artisan::call('config:cache');
                     Artisan::call('route:cache');
                     $changeadmin = 1;
+                }else{
+                    Artisan::call('config:cache');
                 }
             if(isset($changeadmin)){
                 return to_route('setting')->send()->with('success', 'Berhasil');
