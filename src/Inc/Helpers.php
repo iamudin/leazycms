@@ -868,7 +868,7 @@ if (!function_exists('isPrePanel')) {
 }
 if (!function_exists('not_allow_adminpath')) {
     function not_allow_adminpath(){
-   return  array_merge(['slot','gacor','maxwin','bokep','xxx','panel','judi','admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel'], collect(get_module())->pluck('name')->toArray());
+   return  array_merge(['slot','gacor','maxwin','bokep','xxx','panel','judi','admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel',admin_path()], collect(get_module())->pluck('name')->toArray());
 }
 }
 if (!function_exists('isPre')) {
