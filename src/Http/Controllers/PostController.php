@@ -184,7 +184,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 
     if($pp = $module->form->post_parent){
         if($pid=$request->parent_id){
-            $custom_field[_us($pp[0])] = Post::find($pid)?->title;
+            $custom_field[_us($pp[0])] = $post->parent?->title;
 
         }
     }

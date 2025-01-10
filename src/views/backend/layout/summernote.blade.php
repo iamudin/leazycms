@@ -38,15 +38,20 @@
             codeviewFilter: false,
             codeviewIframeFilter: true,
             callbacks: {
-                onFileUpload: function(file) {
-                    fileupload(files[0]);
-                },
+
                 onImageUpload: function(files) {
                     uploadImage(files[0]);
                 },
                 onMediaDelete: function(target) {
-                    deleteImage(target[0].src);
-                },
+                var img = $(target).is('img') ? $(target) : $(target).find('img');
+
+                if (img.length > 0) {
+                    var src = img.attr('src');
+                    deleteImage(src);
+                    removeFigure(target);
+                } else {
+                }
+            }
 
 
             },
@@ -140,20 +145,23 @@
             }
         }
     }
-
+    function removeFigure(target) {
+    var figure = $(target).closest('figure');
+    if (figure.length > 0) {
+        figure.remove();
+    } else {
+    }
+}
     function deleteImage(src) {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        });
+        var data = new FormData();
+        data.append("media", src);
+        data.append("_token", "{{ csrf_token() }}");
         $.ajax({
-            data: {
-                media: src
-            },
+            data: data,
             type: "POST",
             url: "{{ route('media.destroy') }}",
-            cache: false,
+            contentType: false,
+            processData: false,
             success: function(response) {
                 console.log(response);
             }
