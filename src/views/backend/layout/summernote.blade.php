@@ -47,7 +47,12 @@
 
                 if (img.length > 0) {
                     var src = img.attr('src');
+                    if (src.startsWith('https')) {
+                        return;
+                    }else{
                     deleteImage(src);
+
+                    }
                     removeFigure(target);
                 } else {
                 }
@@ -132,8 +137,8 @@
                 var actualImageUrl = response.url;
                 var figureHTML = `
                         <figure style="text-align: center; margin: 10px 0;">
-                            <img src="${actualImageUrl}" alt="Image" style="max-width: 100%; height: auto;">
-                            <figcaption style="font-style: italic; color: #666;">Caption Goes Here</figcaption>
+                            <img src="${actualImageUrl}" alt="${actualImageUrl.split('/').pop()}" style="max-width: 100%; height: auto;">
+                            <figcaption style="font-style: italic; color: #666;"><small>Ilustrasi Gambar Disini</small></figcaption>
                         </figure>
                     `;
                 $('#editor').summernote("pasteHTML", figureHTML);
