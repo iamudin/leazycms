@@ -50,7 +50,7 @@ class PostController extends Controller implements HasMiddleware
         }
 public function create(Request $request){
 $request->user()->hasRole(get_post_type(),__FUNCTION__);
-    if($blankexists = query()->onType(get_post_type())->whereStatus('draft')->whereUserId($request->user()->id)->first()){
+    if($blankexists = query()->onType(get_post_type())->whereStatus('draft')->whereUserId($request->user()->id)->where('title',null)->first()){
         $newpost = $blankexists;
     }else{
     $newpost = $request->user()->posts()->create([
@@ -133,7 +133,7 @@ public function update(Request $request, Post $post){
 $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$post->type)->whereNull('deleted_at')->ignore($post->id) : '';
 
     $post_field =  [
-        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:4'.$uniq,
+        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5'.$uniq,
         'media'=> 'nullable|file|mimetypes:image/jpeg,image/png',
         'content'=> ['nullable',function ($attribute, $value, $fail) {
             if (strpos($value, '<?php') !== false) {
@@ -153,7 +153,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     ];
     $custommsg = [
         'title.unique' => $module->datatable->data_title .' Sudah digunakan',
-        'title.min' => $module->datatable->data_title .' minimal 4 karakter',
+        'title.min' => $module->datatable->data_title .' minimal 5 karakter',
     ];
 
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
@@ -170,7 +170,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     }
 }
     $data = $request->validate($post_field);
-    if($module->form->unique_title && Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()>0){
+    if(Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()>0){
         $data['slug'] = str($request->title.' '.Str::random(4))->slug();
     }else{
         $data['slug'] = $slug;
