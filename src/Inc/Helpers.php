@@ -866,6 +866,11 @@ if (!function_exists('isPrePanel')) {
         return $content;
     }
 }
+if (!function_exists('not_allow_adminpath')) {
+    function not_allow_adminpath(){
+   return  array_merge(['slot','gacor','maxwin','bokep','xxx','panel','judi','admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel'], collect(get_module())->pluck('name')->toArray());
+}
+}
 if (!function_exists('isPre')) {
     function isPre($string)
     {

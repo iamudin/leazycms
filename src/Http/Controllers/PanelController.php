@@ -312,7 +312,7 @@ class PanelController extends Controller implements HasMiddleware
             }
             if ($request->admin_path&& get_option('admin_path') != $request->admin_path) {
                 $val = $request->admin_path;
-                if (strlen($val) <= 5 || in_array($val, array_merge(['slot', 'admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel'], collect(get_module())->pluck('name')->toArray())) || is_numeric($val)) {
+                if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
                     return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
                 }
                 $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);

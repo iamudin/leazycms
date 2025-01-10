@@ -109,6 +109,10 @@ abort_if(!is_numeric($id),'403');
 public function update(Request $request, Post $post){
     $request->user()->hasRole(get_post_type(),'update');
     $module = current_module();
+    if($post->type=='page' && in_array(str($request->title)->lower(),not_allow_adminpath())){
+        return back()->with('danger','Nama Halaman tidak di izinkan');
+
+    }
     if($module->form->custom_field){
 
     foreach(collect($module->form->custom_field)->whereNotIn([1],['break']) as $row){
