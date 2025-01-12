@@ -328,7 +328,7 @@ class PanelController extends Controller implements HasMiddleware
 
                 }
             if(isset($changeadmin)){
-                return to_route('setting')->send()->with('success', 'Berhasil');
+                return redirect($request->admin_path.'/setting')->send()->with('success', 'Berhasil');
             }
             return back()->send()->with('success', 'Berhasil');
         }
