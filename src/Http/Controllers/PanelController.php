@@ -320,7 +320,7 @@ class PanelController extends Controller implements HasMiddleware
 
                 if ($request->admin_path != $request->segment(1)) {
                     Artisan::call('optimize');
-                    sleep(3);
+                    sleep(10);
                     $changeadmin = 1;
                 }else{
                     Artisan::call('config:cache');
