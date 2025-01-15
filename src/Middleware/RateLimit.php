@@ -33,24 +33,13 @@ class RateLimit
 
         // Initialize variables
         $redirectUrl = null;
-
-        // Remove "www." from domain
-        if (str_starts_with($current_host, 'www.')) {
-            $host = substr($current_host, 4);
-        }
-
         // Remove "index.php" from URI
         if (strpos($uri, 'index.php') !== false) {
             $uri = str_replace('index.php', '', $uri);
         }
 
-        // Force HTTPS if not secure
-        if ($scheme != 'https' && app()->environment('production')) {
-            $scheme = 'https';
-        }
-
         // Build the redirect URL if needed
-        if ($current_host != $origin_host || $scheme != $request->getScheme() || $uri != $request->getRequestUri()) {
+        if ($current_host != $origin_host || $uri != $request->getRequestUri()) {
             $redirectUrl = $scheme . '://' . $origin_host . '/' . ltrim($uri, '/');
         }
 
