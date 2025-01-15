@@ -28,7 +28,6 @@ class RateLimit
         }
         $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
-        $scheme = $request->getScheme();
         $uri = $request->getRequestUri();
 
         // Initialize variables
@@ -37,10 +36,15 @@ class RateLimit
         if (strpos($uri, 'index.php') !== false) {
             $uri = str_replace('index.php', '', $uri);
         }
+        if(app()->environment('production')){
+            $scheme = 'https://';
+        }else{
+            $scheme = 'http://';
 
+        }
         // Build the redirect URL if needed
         if ($current_host != $origin_host || $uri != $request->getRequestUri()) {
-            $redirectUrl = 'http://'.$origin_host . '/' . ltrim($uri, '/');
+            $redirectUrl = $scheme.$origin_host . '/' . ltrim($uri, '/');
         }
 
         // Redirect if necessary
