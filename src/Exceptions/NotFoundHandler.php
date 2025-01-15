@@ -23,6 +23,31 @@ class NotFoundHandler extends ExceptionHandler
             if(!config('modules.installed')){
             return redirect()->route('install');
             }
+            $current_host = $request->getHost();
+            $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
+            $uri = $request->getRequestUri();
+            $current_scheme = strpos($request,'https') !==false ? 'https' : 'http';
+            // Initialize variables
+            $redirectUrl = null;
+            // Remove "index.php" from URI
+            if (strpos($uri, 'index.php') !== false) {
+                $uri = str_replace('index.php', '', $uri);
+            }
+            if(app()->environment('production')){
+                $scheme = 'https';
+            }else{
+                $scheme = 'http';
+            }
+            // Build the redirect URL if needed
+            if ($current_scheme!=$scheme || $current_host != $origin_host || $uri != $request->getRequestUri()) {
+                $redirectUrl = $scheme.'://'.$origin_host . '/' . ltrim($uri, '/');
+            }
+
+            // Redirect if necessary
+            if ($redirectUrl) {
+                return redirect($redirectUrl);
+            }
+
             forbidden($request);
 
             if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
