@@ -157,7 +157,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Postingan Perhalaman', 'post_perpage', 'number'],
             ['Logo', 'logo', 'file'],
             ['Favicon (Gambar PNG/JPG rasio 1:1 maks 2mb)', 'favicon', 'file'],
-            ['Preview', 'poreview', 'file'],
+            ['Preview', 'preview', 'file'],
         );
         $data['pwa'] = array(
             ['Nama Aplikasi', 'pwa_name', 'text'],
