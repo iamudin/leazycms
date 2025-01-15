@@ -51,7 +51,7 @@ class RateLimit
 
         // Build the redirect URL if needed
         if ($current_host != $origin_host || $scheme != $request->getScheme() || $uri != $request->getRequestUri()) {
-            $redirectUrl = $scheme . '://' . $host . '/' . ltrim($uri, '/');
+            $redirectUrl = $scheme . '://' . $origin_host . '/' . ltrim($uri, '/');
         }
 
         // Redirect if necessary
