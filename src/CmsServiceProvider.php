@@ -75,9 +75,6 @@ class CmsServiceProvider extends ServiceProvider
     }
     public function register()
     {
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-        }
         $this->configure();
         $this->registerServices();
         $this->registerFunctions();
@@ -117,7 +114,9 @@ class CmsServiceProvider extends ServiceProvider
             }
             $this->loadTemplateConfig();
         }
-
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 
     protected function loadTemplateConfig()
