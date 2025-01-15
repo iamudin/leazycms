@@ -26,7 +26,8 @@ class RateLimit
             }
             return redirect()->away($request->getHttpHost() . '/install', 301);
         }
-        $host = $request->getHost();
+        $current_host = $request->getHost();
+        $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
         $scheme = $request->getScheme();
         $uri = $request->getRequestUri();
 
@@ -34,8 +35,8 @@ class RateLimit
         $redirectUrl = null;
 
         // Remove "www." from domain
-        if (str_starts_with($host, 'www.')) {
-            $host = substr($host, 4);
+        if (str_starts_with($current_host, 'www.')) {
+            $host = substr($current_host, 4);
         }
 
         // Remove "index.php" from URI
@@ -44,12 +45,12 @@ class RateLimit
         }
 
         // Force HTTPS if not secure
-        if ($scheme !== 'https' && app()->environment('production')) {
+        if ($scheme != 'https' && app()->environment('production')) {
             $scheme = 'https';
         }
 
         // Build the redirect URL if needed
-        if ($host !== $request->getHost() || $scheme !== $request->getScheme() || $uri !== $request->getRequestUri()) {
+        if ($current_host != $origin_host || $scheme != $request->getScheme() || $uri != $request->getRequestUri()) {
             $redirectUrl = $scheme . '://' . $host . '/' . ltrim($uri, '/');
         }
 

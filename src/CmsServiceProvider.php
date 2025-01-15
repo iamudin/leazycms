@@ -21,19 +21,16 @@ class CmsServiceProvider extends ServiceProvider
     {
         Route::prefix(admin_path())
         ->middleware(['web', 'admin'])
-        ->domain(parse_url(config('app.url'), PHP_URL_HOST)) // Mengambil domain dari APP_URL
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/admin.php');
         });
 
         Route::middleware(['web'])
-        ->domain(parse_url(config('app.url'), PHP_URL_HOST))
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/auth.php');
         });
 
         Route::middleware(['web'])
-        ->domain(parse_url(config('app.url'), PHP_URL_HOST))
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/web.php');
         });
