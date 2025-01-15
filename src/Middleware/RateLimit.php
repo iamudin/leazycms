@@ -40,7 +40,7 @@ class RateLimit
 
         // Build the redirect URL if needed
         if ($current_host != $origin_host || $uri != $request->getRequestUri()) {
-            $redirectUrl = $origin_host . '/' . ltrim($uri, '/');
+            $redirectUrl = 'http://'.$origin_host . '/' . ltrim($uri, '/');
         }
 
         // Redirect if necessary
