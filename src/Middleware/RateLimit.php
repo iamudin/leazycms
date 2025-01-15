@@ -36,7 +36,7 @@ class RateLimit
         if (strpos($uri, 'index.php') !== false) {
             $uri = str_replace('index.php', '', $uri);
         }
-        if(app()->environment('production') && $current_scheme !='https'){
+        if(app()->environment('production')){
             $scheme = 'https';
         }else{
             $scheme = 'http';
