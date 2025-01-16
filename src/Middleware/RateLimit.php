@@ -36,7 +36,7 @@ class RateLimit
         if (strpos($uri, 'index.php') !== false) {
             $uri = str_replace('index.php', '', $uri);
         }
-        if(app()->environment('production')){
+        if(app()->environment('production')) {
             $scheme = 'https';
         }else{
             $scheme = 'http';
@@ -45,9 +45,8 @@ class RateLimit
         if ($current_scheme!=$scheme || $current_host != $origin_host || $uri != $request->getRequestUri()) {
             $redirectUrl = $scheme.'://'.$origin_host . '/' . ltrim($uri, '/');
         }
-
         // Redirect if necessary
-        if ($redirectUrl) {
+        if ($redirectUrl && !(request()->ip() == '127.0.0.1' || request()->ip() == '::1')) {
             return redirect($redirectUrl);
         }
 
