@@ -69,7 +69,7 @@ abort_if(!is_numeric($id),'403');
 $request->user()->hasRole(get_post_type(),'update');
 $module = current_module();
 
-$data = $request->user()->isAdmin() ? $post->with('category','user')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category','user')->whereType(get_post_type())->find($id);
+$data = $request->user()->isAdmin() ? $post->with('category','user','tags')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category','user','tags')->whereType(get_post_type())->find($id);
 if (!$data) {
     return redirect(admin_url(get_post_type()))->with('danger', get_module_info('title') . ' Tidak Ditemukan');
 }

@@ -209,7 +209,7 @@ document.querySelectorAll('.fa-edit').forEach(icon => {
                         <small for="">Tags {!! help('Penanda untuk memudahkan pencarian topik') !!}</small>
                         <select name="tags[]" id="select2" class="form-control form-control-sm form-control-select" multiple id="">
                             @foreach($tags as $row)
-                            <option  {{ $post?->tags()->find($row->id) ? 'selected' : '' }} value="{{  $row->id}}">{{ $row->name }}</option>
+                            <option  {{ in_array($row->id, $post->tags->pluck('id')->toArray()) ? 'selected' : '' }} value="{{  $row->id}}">{{ $row->name }}</option>
                             @endforeach
                         </select>
 

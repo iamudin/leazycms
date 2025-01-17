@@ -57,12 +57,13 @@ public function store(Request $request){
     $data['url'] = get_post_type().'/category/'.$slug;
     $data = Category::create($data);
         if($request->hasFile('icon')){
+            $fname = $data->addFile([
+                'file'=>$request->file('icon'),
+                'puprose'=>'categoryicon_'.$data->id,
+                'mime_type'=>['image/jpeg','image/png']
+            ]);
             $data->update([
-                'icon'=> $data->addFile([
-                    'file'=>$request->file('icon'),
-                    'puprose'=>'categoryicon_'.$data->id,
-                    'mime_type'=>['image/jpeg','image/png']
-                ])
+                'icon'=> $fname
 
             ]);
         }
@@ -85,17 +86,17 @@ public function update(Request $request, Category $category){
     $data['slug'] = $slug = str($request->name)->slug();
     $data['type'] = get_post_type();
     $data['url'] = get_post_type().'/category/'.$slug;
-    $category->update($data);
     if($request->hasFile('icon')){
-        $category->update([
-            'icon'=> $category->addFile([
-                'file'=>$request->file('icon'),
-                'puprose'=>'categoryicon_'.$category->id,
-                'mime_type'=>['image/jpeg','image/png']
-            ])
-
+        $fname = $category->addFile([
+            'file'=>$request->file('icon'),
+            'puprose'=>'categoryicon_'.$category->id,
+            'mime_type'=>['image/jpeg','image/png']
         ]);
+        $data['icon'] = $fname;
+
     }
+    $category->update($data);
+
     return to_route(get_post_type().'.category')->with('success','Kategori '.current_module()->title.' berhasil ditambah');
 }
 public function destroy(Request $request,Category $category){

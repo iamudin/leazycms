@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('posts', function (Blueprint $table) {
             $table->char('shortcut',6)->nullable()->unique();
+            $table->tinyInteger('shortcut_counter')->default(0);
         });
 
     }

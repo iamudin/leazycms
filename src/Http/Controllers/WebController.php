@@ -139,6 +139,9 @@ class WebController extends Controller
             $request->session()->regenerateToken();
         }
         if ($detail->slug != $slug) {
+            if($detail->shortcut == $slug){
+                $detail->increment('shortcut_counter');
+            }
             return redirect($detail->url);
         }
 
