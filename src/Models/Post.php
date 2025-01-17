@@ -11,12 +11,12 @@ use Leazycms\FLC\Traits\Commentable;
 class Post extends Model
 {
     use SoftDeletes,Fileable,Commentable;
-    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status'];
+    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','shortcut'];
 
     protected $userselectcolumn = ['id','name','url'];
     protected $categoryselectcolumn = ['id','name','url','slug'];
     protected $fillable = [
-        'slug_edited','short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable'
+        'slug_edited','short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable','shortcut'
     ];
     protected $casts = [
         'data_field' => 'array',
@@ -361,13 +361,20 @@ class Post extends Model
             if (get_module($type)->form->category) {
                 $with[] = 'category';
             }
-            return $this->where('type', $type)
-            ->likeSlug($name)
-            ->published()
-            ->with(array_merge($with??[],['user']))
-            ->withCountVisitors()
-            ->first();
-
+            if(strlen($name)==6){
+                return $this->whereShortcut($name)
+                ->published()
+                ->with(array_merge($with??[],['user']))
+                ->withCountVisitors()
+                ->first();
+            }else{
+                return $this->where('type', $type)
+                ->likeSlug($name)
+                ->published()
+                ->with(array_merge($with??[],['user']))
+                ->withCountVisitors()
+                ->first();
+            }
         } else {
             if (get_module($type)->cache) {
                 return collect($this->cachedpost($type))->first();
