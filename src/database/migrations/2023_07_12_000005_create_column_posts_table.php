@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('posts', function (Blueprint $table) {
-            $table->char('shortcut',6)->unique()->default(null);
+            $table->char('shortcut',6)->nullable()->unique();
         });
 
     }
