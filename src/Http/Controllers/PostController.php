@@ -57,6 +57,7 @@ $request->user()->hasRole(get_post_type(),__FUNCTION__);
         'type' => get_post_type(),
         'url' => get_post_type() . '/' . rand(),
         'status' => 'draft',
+        'shortcut'=>Str::random(6)
     ]);
 }
 
