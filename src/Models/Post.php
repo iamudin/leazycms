@@ -363,6 +363,10 @@ class Post extends Model
             }
             if(strlen($name)==6){
                 return $this->whereShortcut($name)
+                ->orWhere(function ($query) use ($name, $type) {
+                    $query->where('slug', $name)
+                          ->where('type', $type);
+                })
                 ->published()
                 ->with(array_merge($with??[],['user']))
                 ->withCountVisitors()
