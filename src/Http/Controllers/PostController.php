@@ -183,6 +183,9 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     }
     $data['slug_edited'] = $request->custom_slug && strlen($request->custom_slug) > 0 ? '1':'0';
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
+    if(strlen($post->shortcut) < 6){
+    $data['shortcut'] =  Str::random(6);
+    }
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
     $data['allow_comment'] =   isset($request->allow_comment) ? 'Y': 'N';
@@ -218,7 +221,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
             'mime_type'=> ['image/png','image/jpeg']
         ]);
     }
-    if($request->has('tanggal_entry')){
+    if($request->tanggal_entry){
         $timedate = $request->tanggal_entry ?? date('Y-m-d H:i:s');
         $data['created_at'] = $timedate;
     }
@@ -260,14 +263,8 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
             $data['data_loop'] = $mnews;
         }
     }
-        $beforelength = strlen($post);
-        $beforestatus = $post->status;
-        $beforetitle= $post->title;
+
         $post->update($data);
-        $timequery = query()->whereId($post->id)->first();
-        $time['created_at'] =  $beforestatus!='publish' &&  empty($beforetitle) ? now() : $post->created_at;
-        $time['updated_at'] =  strlen($timequery) != $beforelength ? now() : $post->updated_at;
-        query()->whereId($post->id)->update($time);
         Cache::forget($post->type);
         Cache::forget($post->id);
         $this->recache(get_post_type());
@@ -379,7 +376,7 @@ public function recache($type){
             })
             ->addColumn('title', function ($row) use($current_module) {
 
-                $category = $current_module->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "<i class='fa fa-tag'></i> <i class='text-warning'>Uncategorized</i>") : '';
+                $category = $current_module->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
                 $tags = '';
                 foreach($row->tags ? $row->tags->pluck('name') : [] as $item){
                     $tags .= ' <b>#'.$item.'</b>';
@@ -390,9 +387,10 @@ public function recache($type){
                 $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
 
                 $pin =  $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;':'';
+                $shortcut =  $current_module->web->detail && $row->shortcut && $row->status=='publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\''.url($row->shortcut).'\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> '.$row->shortcut_counter.'</a>':'';
 
                 $b = '<b class="text-primary">' . $tit . '</b><br>';
-                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' '.$tags.' ' . $label . ' ' . $draft . '</small>';
+                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' '.$tags.' ' . $label . ' '. $shortcut.' ' . $draft . '</small>';
                 return $b;
             })
             ->addColumn('created_at', function ($row) {
