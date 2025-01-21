@@ -8,6 +8,7 @@ use Leazycms\Web\Models\Post;
 use Illuminate\Validation\Rule;
 use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Yajra\DataTables\Facades\DataTables;
@@ -183,9 +184,12 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     }
     $data['slug_edited'] = $request->custom_slug && strlen($request->custom_slug) > 0 ? '1':'0';
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
-    if(strlen($post->shortcut) < 6){
+    if($module->web->detail && strlen($post->shortcut) < 6){
     $data['shortcut'] =  Str::random(6);
     }
+    if($module->web->detail){
+        $data['custom_page'] =  View::exists('template.'.template().'.'.$post->type.'.'.$post->id) ? '1' : '0';
+  }
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
     $data['allow_comment'] =   isset($request->allow_comment) ? 'Y': 'N';
@@ -382,7 +386,7 @@ public function recache($type){
                     $tags .= ' <b>#'.$item.'</b>';
                 }
                 $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> "  : '';
-                $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> ': $row->title ) : '<i class="text-muted">__Tanpa Judul__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+                $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> '.($row->custom_page==1? '<sup class="badge badge-dark"><small>Custom Page</small></sup>':''): $row->title ) : '<i class="text-muted">__Tanpa '.$current_module->datatable->data_title.'__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
                 $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
 

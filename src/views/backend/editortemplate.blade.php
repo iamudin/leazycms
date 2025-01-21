@@ -6,7 +6,9 @@
 
         <div class="btn-group">
       <button type="button" onclick="if(confirm('Anda Yakin ?')) $('.editorForm').submit()" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan</button>
-      <a href="javascript:void(0)" onclick="location.href='{{ route('appearance').'?optimize=true' }}'" class="btn btn-warning btn-sm"> <i class="fa fa-rocket"></i> Optimalkan</a>
+      @if(str(URL::full())->contains(['modules.blade.php']))
+      <a href="javascript:void(0)" onclick="location.href='{{ route('appearance').'?optimize=true' }}'" class="btn btn-warning btn-sm"> <i class="fa fa-rocket"></i> Atur Ulang Konfigurasi</a>
+      @endif
         <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
     </div></div>
 
