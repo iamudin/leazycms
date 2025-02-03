@@ -306,6 +306,7 @@ class Post extends Model
         if($paginate){
             return $q->paginate(get_option('post_perpage'));
         }
+        return $q->get();
     }
     function index_by_category($type, $slug, $limit = false)
     {
