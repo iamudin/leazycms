@@ -39,10 +39,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="{{ url($ic16)}}">
 @endif
 @if(get_option('pwa_name') && get_option('pwa_short_name'))
-<link rel="manifest" href="/favicon/site.manifest">
+<link rel="manifest" href="{{ urL('favicon/site.manifest') }}">
 <script type="text/javascript">
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/favicon/swk.js', {
+        navigator.serviceWorker.register("{{ urL('favicon/swk.js')}}", {
             scope: '.'
         }).then(function (registration) {
         }, function (err) {
