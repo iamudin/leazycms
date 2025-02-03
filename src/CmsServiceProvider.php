@@ -93,6 +93,8 @@ class CmsServiceProvider extends ServiceProvider
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
         if (DB::connection()->getPDO() && $this->checkAllTables()) {
+            try{
+
             if(!config('modules.option')){
                 $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                 config(['modules.option' => $options]);
@@ -112,6 +114,10 @@ class CmsServiceProvider extends ServiceProvider
             } else {
                 Config::set(['app.debug' => false]);
             }
+        }
+        catch (\Exception $e) {
+        return abort('500',$e->getMessage());
+    }
             $this->loadTemplateConfig();
         }
         if ($this->app->environment('production')) {
@@ -146,6 +152,6 @@ class CmsServiceProvider extends ServiceProvider
 
     protected function checkAllTables()
     {
-        return (Schema::hasTable('users') && Schema::hasTable('posts') && Schema::hasTable('categories') && Schema::hasTable('visitors') && Schema::hasTable('comments') && Schema::hasTable('tags') && Schema::hasTable('roles') && Schema::hasTable('logs') && Schema::hasTable('options')) ? true : false;
+        return (Schema::hasTable('users') && Schema::hasTable('files') && Schema::hasTable('posts') && Schema::hasTable('categories') && Schema::hasTable('visitors') && Schema::hasTable('comments') && Schema::hasTable('tags') && Schema::hasTable('roles') && Schema::hasTable('logs') && Schema::hasTable('options')) ? true : false;
     }
 }

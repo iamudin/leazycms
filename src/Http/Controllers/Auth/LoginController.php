@@ -1,26 +1,23 @@
 <?php
 namespace Leazycms\Web\Http\Controllers\Auth;
+
 use Leazycms\Web\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+
 class LoginController extends Controller
 {
-
-
-    public function codeCaptcha()
+    public function codeCaptcha(): void
     {
-        Session::put('captcha',Str::random(6));
+        Session::put('captcha', Str::random(6));
     }
+
     public function generateCaptcha(Request $request)
     {
-
-
         $image = imagecreatetruecolor(120, 40);
         $bgColor = imagecolorallocate($image, 255, 255, 255);
         $textColor = imagecolorallocate($image, 0, 0, 0);
@@ -32,68 +29,83 @@ class LoginController extends Controller
         imagepng($image);
         $captchaImage = ob_get_clean();
         imagedestroy($image);
-        if(!$request->headers->get('referer') ){
-        $request->session()->regenerateToken();
-        return redirect('/');
+
+        // Redirect if request lacks referer
+        if (!$request->headers->get('referer')) {
+            $request->session()->regenerateToken();
+            return redirect('/');
         }
-        return response($captchaImage)->header('Content-type', 'image/png');
+
+        return response($captchaImage)->header('Content-Type', 'image/png');
     }
+
     public function loginForm(Request $request)
     {
-        if(Auth::check())
-        return redirect(admin_path().'/dashboard');
+        if (Auth::check()) {
+            return redirect(admin_path() . '/dashboard');
+        }
+
         $this->codeCaptcha();
 
-    // Mulai output buffering
-    ob_start();
-    echo view('cms::auth.login', ['captcha' => route('captcha')])->render();
-    $output = ob_get_clean();
+        $captchaUrl = route('captcha');
+        $viewContent = view('cms::auth.login', ['captcha' => $captchaUrl])->render();
 
-    // Hilangkan newline
-    $output = preg_replace('/\s+/', ' ', $output);
+        // Minimize output for performance
+        $compressedOutput = preg_replace('/\s+/', ' ', $viewContent);
 
-    return response($output);
+        return response($compressedOutput);
     }
-    public function loginSubmit(Request $request,RateLimiter $limiter,User $user)
+
+    public function loginSubmit(Request $request, RateLimiter $limiter)
     {
-      ratelimiter($request,get_option('time_limit_login'));
-        if($request->username && $request->password)
-        {
-            $request->validate([
-                'username' => 'required',
-                'password' => 'required'
-            ]);
-
-          if($request->captcha != Session::get('captcha')){
-            $request->session()->regenerateToken();
-            return back()->with('error','Captcha Tidak Valid! ');
-
-          }
-        if(Auth::attempt(array('username'=>$request->username,'password'=>$request->password,'host'=>$request->getHttpHost())))
-        {
-            $request->session()->regenerate();
-            if(Auth::user()->status == 'active'){
-             Auth::user()->update(['last_login_at'=>now(),'last_login_ip'=>$request->ip(),'active_session'=>md5(md5($request->session()->id()))]);
-            return  redirect()->intended(url(admin_path().'/dashboard'));
-            }
-            else{
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return back()->with('error','Akun telah diblokir!');
-            }
+        // Throttle login attempts
+        $limiterKey = $request->ip() . '|' . $request->username;
+        if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login'))) {
+            return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
         }
-        $request->session()->regenerateToken();
-        return back()->with('error','Akun tidak ditemukan!');
-    }
-    }
 
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required',
+            'captcha' => 'required',
+        ]);
+
+        if ($request->captcha !== Session::get('captcha')) {
+            $request->session()->regenerateToken();
+            return back()->with('error', 'Captcha tidak valid!');
+        }
+
+        if (Auth::attempt(['username' => $request->username, 'password' => $request->password])) {
+            $request->session()->regenerate();
+            $user = Auth::user();
+
+            if ($user->status === 'active') {
+                $user->update([
+                    'last_login_at' => now(),
+                    'last_login_ip' => $request->ip(),
+                    'active_session' => md5(md5($request->session()->id())),
+                ]);
+
+                return redirect()->intended(admin_path() . '/dashboard');
+            }
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return back()->with('error', 'Akun telah diblokir!');
+        }
+
+        $limiter->hit($limiterKey);
+        $request->session()->regenerateToken();
+        return back()->with('error', 'Akun tidak ditemukan!');
+    }
 
     public function logout(Request $request)
     {
         Auth::logout();
+        $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
-
 }

@@ -244,7 +244,7 @@ class PanelController extends Controller implements HasMiddleware
                                 unlink($outputPath);
                             }
                             $image = Image::make($request->file('favicon')->getRealPath())
-                                ->resize(16, 16);
+                                ->resize(64, 64);
                             $image->save($outputPath);
                             if (file_exists($outputPath)) {
                                 rename($outputPath, public_path('favicon.ico'));
