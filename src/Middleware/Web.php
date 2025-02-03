@@ -25,21 +25,33 @@ class Web
             $content = $response->getContent();
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use($request) {
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
+
+                // Tambahkan class lazyload
                 if (strpos($attributes, 'class="') !== false) {
                     $attributes = preg_replace('/class=["\']([^"\']*?)["\']/', 'class="$1 lazyload"', $attributes);
                 } else {
                     $attributes .= ' class="lazyload"';
                 }
+
+                // Tambahkan atribut alt jika tidak ada
+                if (!preg_match('/\balt=["\']([^"\']*?)["\']/', $attributes)) {
+                    $altValue = pathinfo($matches[2], PATHINFO_FILENAME); // Ambil nama file dari src
+                    $attributes .= ' alt="' . formatFilename(htmlspecialchars($altValue, ENT_QUOTES)) . '"';
+                }
+
+                // Cache jika class mengandung lz-thumbnail
                 if (strpos($attributes, 'class="') !== false && strpos($attributes, 'lz-thumbnail') !== false) {
-                    if(strpos($matches[2],'noimage.webp') === false && !empty($matches[2])){
+                    if (strpos($matches[2], 'noimage.webp') === false && !empty($matches[2])) {
                         $keycache = md5($request->fullUrl());
-                        if(!Cache::has($keycache)){
+                        if (!Cache::has($keycache)) {
                             Cache::put($keycache, $matches[2], now()->addSeconds(1800));
                         }
                     }
                 }
+
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
+
             if (strpos($content, '<head>') !== false) {
                 $content = str_replace(
                     '<head>',
