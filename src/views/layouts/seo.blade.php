@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width,initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
 <title>{{request()->is('/') ? $title : $title.' - '.get_option('site_title')}}</title>
