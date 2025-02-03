@@ -46,19 +46,24 @@ class PanelController extends Controller implements HasMiddleware
     {
         // $this->toDashboard($request);
         $user = $request->user();
-        $posts = Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type');
+        $posts = Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
         $da = array();
         for ($i = 0; $i <= 6; $i++) {
             array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
         }
 
         $weekago = json_decode(json_encode(collect($da)->sort()), true);
-        $visitor = Visitor::whereIn(DB::raw('DATE(created_at)'), $da)
-            ->get()
-            ->map(function ($record) {
-                $record->created_at = \Carbon\Carbon::parse($record->created_at)->format('Y-m-d');
-                return $record;
-            });
+
+        // Melakukan query untuk menghitung pengunjung berdasarkan tanggal
+        $visitorCounts = Visitor::whereIn(DB::raw('DATE(created_at)'), $da)
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy(DB::raw('DATE(created_at)'))
+            ->pluck('total', 'date')
+            ->toArray();
+
+        // Pastikan bahwa array $visitorCounts berisi semua tanggal yang diinginkan
+        $visitorCounts = array_replace(array_fill_keys($da, 0), $visitorCounts);
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
         return view('cms::backend.dashboard', [
@@ -66,7 +71,7 @@ class PanelController extends Controller implements HasMiddleware
             'weekago' => $weekago,
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
-            'visitor' => $visitor
+            'visitor' => $visitorCounts
         ]);
     }
     public function visitor(Request $request)
