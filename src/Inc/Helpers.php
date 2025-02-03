@@ -405,19 +405,19 @@ if (!function_exists('admin_url')) {
     }
 }
 if (!function_exists('formatFilename')) {
-function formatFilename($filename)
-{
-    // Mengambil nama file tanpa ekstensi
-    $filenameWithoutExtension = pathinfo($filename, PATHINFO_FILENAME);
+    function formatFilename($filename)
+    {
+        // Mengambil nama file tanpa ekstensi
+        $filenameWithoutExtension = pathinfo($filename, PATHINFO_FILENAME);
 
-    // Mengganti tanda strip (-) dengan spasi
-    $formattedName = str_replace('-', ' ', $filenameWithoutExtension);
+        // Mengganti tanda strip (-) dengan spasi
+        $formattedName = str_replace('-', ' ', $filenameWithoutExtension);
 
-    // Menghilangkan kata setelah strip terakhir (misalnya, setelah sumutprov)
-    $formattedName = preg_replace('/\s+\S+$/', '', $formattedName);
+        // Mengambil kalimat sebelum strip terakhir
+        $formattedName = preg_replace('/\s+[^ ]*$/', '', $formattedName);
 
-    return ucfirst($formattedName);
-}
+        return ucfirst($formattedName);
+    }
 }
 if (!function_exists('regenerate_cache')) {
     function regenerate_cache()
