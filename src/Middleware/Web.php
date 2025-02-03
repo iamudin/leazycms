@@ -78,20 +78,7 @@ class Web
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
 
-                $content = preg_replace_callback(
-                    '/<body([^>]*)>/',
-                    function ($matches) {
-                        $existingClasses = '';
-                        if (preg_match('/class="([^"]*)"/', $matches[1], $classMatches)) {
-                            $existingClasses = trim($classMatches[1]);
-                            $existingClasses .= ' fade-in';
-                        } else {
-                            $existingClasses = 'fade-in';
-                        }
-                        return '<body' . ($existingClasses ? ' class="' . $existingClasses . '"' : '') . '>';
-                    },
-                    $content
-                );
+
             $response->setContent($content);
         }
         $this->securityHeaders($response,$request);

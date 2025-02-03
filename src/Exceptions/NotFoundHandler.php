@@ -75,20 +75,7 @@ class NotFoundHandler extends ExceptionHandler
                     $content
                 );
             }
-            $content = preg_replace_callback(
-                '/<body([^>]*)>/',
-                function ($matches) {
-                    $existingClasses = '';
-                    if (preg_match('/class="([^"]*)"/', $matches[1], $classMatches)) {
-                        $existingClasses = trim($classMatches[1]);
-                        $existingClasses .= ' fade-in';
-                    } else {
-                        $existingClasses = 'fade-in';
-                    }
-                    return '<body' . ($existingClasses ? ' class="' . $existingClasses . '"' : '') . '>';
-                },
-                $content
-            );
+
                 $minifiedContent = preg_replace('/\s+/', ' ', $content);
                 return response($minifiedContent, 404)->header('Content-Type', 'text/html; charset=UTF-8');
             }
