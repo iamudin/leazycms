@@ -2,11 +2,12 @@
 
 namespace Leazycms\Web\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
 use Leazycms\FLC\Traits\Commentable;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
@@ -378,20 +379,31 @@ class Post extends Model
             }
         }
     }
-    function history($post_id, $currenttime)
+    function getHistoryAttribute()
     {
-        $type = get_post_type();
-        if (get_module($type)->web->history) {
-            $cekpre = collect($this->cachedpost($type))->where('id', '!=', $post_id)->where('type', get_post_type())->where('created_at', '<', $currenttime)->first();
-            $ceknex = collect($this->cachedpost($type))->where('id', '!=', $post_id)->where('type', get_post_type())->where('created_at', '>', $currenttime)->sortBy('created_at')->first();
-            //add new change post_thumbnail to thumbnail
-            return json_decode(json_encode([
-                'next' => $ceknex ? ['url' => url($ceknex->url), 'title' => $ceknex->title, 'thumbnail' => $ceknex->media] : array(),
-                'previous' => $cekpre ? ['url' => url($cekpre->url), 'title' => $cekpre->title, 'thumbnail' => $cekpre->media] : array(),
-
-            ]));
-        } else {
-            return false;
+        if (!get_module($this->type)->web->history) {
+            return null;
         }
+
+        $previous = $this->select('url','media','title')
+            ->published()
+            ->where('id', '!=', $this->id)
+            ->onType($this->type)
+            ->where('created_at', '<', $this->created_at)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $next = $this->select('url','media','title')
+            ->published()
+            ->where('id', '!=', $this->id)
+            ->onType($this->type)
+            ->where('created_at', '>', $this->created_at)
+            ->orderBy('created_at', 'asc')
+            ->first();
+
+        return json_decode(json_encode([
+            'previous' => $previous ? ['url' => url($previous->url), 'title' => $previous->title, 'thumbnail' => $previous->thumbnail] : [],
+            'next' => $next ? ['url' => url($next->url), 'title' => $next->title, 'thumbnail' => $next->thumbnail] : [],
+        ]));
     }
 }
