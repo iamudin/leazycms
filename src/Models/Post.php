@@ -362,24 +362,14 @@ class Post extends Model
             if (get_module($type)->form->category) {
                 $with[] = 'category';
             }
-            if(strlen($name)==6){
-                return $this->whereShortcut($name)
-                ->orWhere(function ($query) use ($name, $type) {
-                    $query->where('slug', $name)
-                          ->where('type', $type);
-                })
-                ->published()
-                ->with(array_merge($with??[],['user']))
-                ->withCountVisitors()
-                ->first();
-            }else{
+
                 return $this->where('type', $type)
-                ->likeSlug($name)
                 ->published()
+                ->likeSlug($name)
+                ->orWhere('shortcut',$name)
                 ->with(array_merge($with??[],['user']))
                 ->withCountVisitors()
                 ->first();
-            }
         } else {
             if (get_module($type)->cache) {
                 return collect($this->cachedpost($type))->first();
