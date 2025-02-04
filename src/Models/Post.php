@@ -340,17 +340,21 @@ class Post extends Model
         }
     }
 
-    function index_child($type, $id)
+    function index_child($type, $id,$perpage=false)
     {
         if (get_module($type)->cache) {
             return $this->cachedpost($type)->where('parent_id', $id);
         } else {
-            return $this->selectedColumn()
+            $q = $this->selected()
             ->onType($type)
             ->published()
             ->where('parent_id', $id)
-            ->latest('created_at')
-            ->get();
+            ->latest('created_at');
+            if($perpage){
+                $q->paginate(get_option('post_perpage'));
+            }else{
+                $q->get();
+            }
         }
     }
     function detail_by_title($type, $title)

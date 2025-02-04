@@ -207,16 +207,20 @@ class WebController extends Controller
     {
         $modul = get_module(get_post_type());
         abort_if(empty($slug), '404');
-        $post_parent = $post->where('type', $modul->post_parent[1])
-            ->where('slug', 'like', $slug . '%')->select('id', 'title', 'slug')->first();
+        $post_parent = $post->where('type', $modul->post_parent[1])->where('slug', 'like', $slug . '%')->select('id', 'title', 'slug')->first();
         abort_if(empty($post_parent), '404');
-        if ($post_parent->slug != $slug)
-            return redirect(get_post_type() . '/' . $request->segment(2) . '/' . $post_parent->slug);
+        if ($post_parent->slug != $slug){
+            return redirect($modul->name . '/' . $request->segment(2) . '/' . $post_parent->slug);
+        }
         $title = $post_parent->title;
         $post_name = $modul->title;
         config(['modules.page_name' => $post_name . ' ' . $title]);
-        $index = $post->index_child($post_parent->id, get_post_type());
-        $data = array('index' => $index, 'title' => $post_name . ' ' . $title, 'icon' => $modul->icon, 'post_type' => get_post_type());
+        $index = $post->index_child($modul->name,$post_parent->id,true);
+        $data = array(
+        'index' => $index,
+        'title' => $post_name . ' ' . $title, 'icon' => $modul->icon,
+        'post_type' => $modul->name
+        );
         return view('views::layouts.master', $data);
     }
     public function archive(Request $request, Post $post, $year = null, $month = null, $date = null)
