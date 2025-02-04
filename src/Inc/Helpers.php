@@ -1433,7 +1433,7 @@ if (!function_exists('keyword_search')) {
 if (!function_exists('share_button')) {
     function share_button()
     {
-        return view()->make('cms::share.button');
+        return view()->make('cms::share.button',['url'=>url()->fullUrl()]);
     }
 }
 if (!function_exists('get_ext')) {

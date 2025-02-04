@@ -383,6 +383,10 @@ class Post extends Model
             }
         }
     }
+    function getShareToAttribute()
+    {
+        return view()->make('cms::share.button',['url'=>url($this->shortcut??'/')]);
+    }
     function getHistoryAttribute()
     {
         if (!get_module($this->type)->web->history) {
