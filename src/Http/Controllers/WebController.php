@@ -151,14 +151,12 @@ class WebController extends Controller
         if ($detail->redirect_to) {
             return redirect($detail->redirect_to);
         }
-        if ($modul->web->history) {
-            $history = $post->history($detail->id, $detail->created_at);
-        }
+
         $data = array(
             'module' => $modul,
             'category' => $detail->category ?? null,
             'detail' => $detail,
-            'history' => isset($history) ? $history : null
+            'history' => $detail->history
         );
         if(View::exists('template.'.template().'.'.$detail->type.'.'.$detail->id)){
         return view('template.'.template().'.'.$detail->type.'.'.$detail->id, $data);
