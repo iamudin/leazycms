@@ -968,7 +968,7 @@ if (!function_exists('init_meta_header')) {
                 $pn = null;
             }
             $data = [
-                'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : ($site_meta_description ?? $site_desc),
+                'description' => $pn ?  'Lihat ' . $pn.' di '.$site_title : (!request()->is('/') ? 'Halaman Tidak Ditemukan' :  ($site_meta_description ?? $site_desc)),
                 'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title . ($site_desc ? ' - ' . $site_desc : '')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
