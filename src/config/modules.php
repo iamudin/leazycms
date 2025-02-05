@@ -562,7 +562,7 @@ return [
         'data'=> null,
         'domain'=>null,
         'default_module'=>env('USE_MODULE',null),
-        'installed'=>env('APP_INSTALLED',false),
+        'installed'=>env('APP_INSTALLED',0),
         'public_path'=>env('PUBLIC_PATH',null),
         'version'=>null,
 ];

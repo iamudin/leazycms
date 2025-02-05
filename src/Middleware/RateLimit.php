@@ -16,15 +16,8 @@ class RateLimit
      */
     public function handle(Request $request, Closure $next)
     {
-        if (config('modules.installed')=="0" && strpos($request->fullUrl(), 'install') === false) {
-            if (config('session.driver')!= 'file' || config('queue.default') != 'sync' || config('cache.default') != 'file') {
-                $cfg['SESSION_DRIVER'] = 'file';
-                $cfg['QUEUE_CONNECTION'] = 'sync';
-                $cfg['CACHE_STORE'] = 'file';
-                $cfg['APP_URL'] = 'http://' . $request->getHttpHost();
-                rewrite_env($cfg);
-            }
-            return redirect()->away('https://'.$request->getHttpHost() . '/install', 301);
+        if (config('modules.installed')=="1") {
+            exit('Please running leazycms:install');
         }
         $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);

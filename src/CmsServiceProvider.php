@@ -1,6 +1,7 @@
 <?php
 
 namespace Leazycms\Web;
+use Leazycms\Web\Commands\InstallCommand;
 use Carbon\Carbon;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,9 @@ class CmsServiceProvider extends ServiceProvider
     {
         $this->configure();
         $this->registerServices();
+        $this->commands([
+            InstallCommand::class,
+        ]);
         $this->registerFunctions();
         if (config('modules.public_path')) {
             $this->app->usePublicPath(base_path() . '/' . config('modules.public_path'));
