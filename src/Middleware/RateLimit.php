@@ -24,19 +24,20 @@ class RateLimit
                 $cfg['APP_URL'] = 'http://' . $request->getHttpHost();
                 rewrite_env($cfg);
             }
-            return redirect()->away($request->getHttpHost() . '/install', 301);
+            return redirect()->away('https://'.$request->getHttpHost() . '/install', 301);
         }
         $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
         $uri = $request->getRequestUri();
         $current_scheme = strpos($request,'https') !==false ? 'https' : 'http';
+
         // Initialize variables
         $redirectUrl = null;
         // Remove "index.php" from URI
         if (strpos($uri, 'index.php') !== false) {
             $uri = str_replace('index.php', '', $uri);
         }
-        if(app()->environment('production')) {
+        if(!(request()->ip() == '127.0.0.1' || request()->ip() == '::1')) {
             $scheme = 'https';
         }else{
             $scheme = 'http';
