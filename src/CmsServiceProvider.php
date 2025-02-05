@@ -69,19 +69,19 @@ class CmsServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerResources();
         $this->registerMigrations();
+        $this->defineAssetPublishing();
         $this->cmsHandler();
         $this->registerRoutes();
-
+        $this->commands([
+            InstallCommand::class,
+        ]);
     }
     public function register()
     {
         $this->configure();
         $this->registerServices();
         $this->registerFunctions();
-        $this->defineAssetPublishing();
-        $this->commands([
-            InstallCommand::class,
-        ]);
+
         if (config('modules.public_path')) {
             $this->app->usePublicPath(base_path() . '/' . config('modules.public_path'));
         }
