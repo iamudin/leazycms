@@ -16,7 +16,7 @@ class RateLimit
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!config('modules.installed') && strpos($request->fullUrl(), 'install') === false) {
+        if (config('modules.installed')=="0" && strpos($request->fullUrl(), 'install') === false) {
             if (config('session.driver')!= 'file' || config('queue.default') != 'sync' || config('cache.default') != 'file') {
                 $cfg['SESSION_DRIVER'] = 'file';
                 $cfg['QUEUE_CONNECTION'] = 'sync';
