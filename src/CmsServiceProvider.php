@@ -69,7 +69,6 @@ class CmsServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerResources();
         $this->registerMigrations();
-        $this->defineAssetPublishing();
         $this->cmsHandler();
         $this->registerRoutes();
 
@@ -79,6 +78,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->configure();
         $this->registerServices();
         $this->registerFunctions();
+        $this->defineAssetPublishing();
         $this->commands([
             InstallCommand::class,
         ]);
