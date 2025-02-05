@@ -78,10 +78,10 @@ class CmsServiceProvider extends ServiceProvider
     {
         $this->configure();
         $this->registerServices();
+        $this->registerFunctions();
         $this->commands([
             InstallCommand::class,
         ]);
-        $this->registerFunctions();
         if (config('modules.public_path')) {
             $this->app->usePublicPath(base_path() . '/' . config('modules.public_path'));
         }

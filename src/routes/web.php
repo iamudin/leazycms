@@ -49,8 +49,5 @@ Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')-
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
 
 
-Route::match(['get', 'post'],'install', [SetupController::class, 'index'])->name('install');
-Route::match(['get', 'post'],'install/initializing', [SetupController::class, 'initializing'])->name('initializing');
-
 
 

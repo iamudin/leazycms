@@ -20,7 +20,7 @@ class NotFoundHandler extends ExceptionHandler
     {
 
         if ($exception instanceof NotFoundHttpException) {
-            if (config('modules.installed')=="1") {
+            if (config('modules.installed')=="0") {
                 exit('Please running leazycms:install');
             }
             $current_host = $request->getHost();

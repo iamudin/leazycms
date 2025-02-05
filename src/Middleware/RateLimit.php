@@ -16,7 +16,7 @@ class RateLimit
      */
     public function handle(Request $request, Closure $next)
     {
-        if (config('modules.installed')=="1") {
+        if (config('modules.installed')=="0") {
             exit('Please running leazycms:install');
         }
         $current_host = $request->getHost();
