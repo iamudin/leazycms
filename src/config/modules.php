@@ -150,7 +150,7 @@ return [
                 'auto_query' => true,
                 'sortable'=>false,
             ],
-            'public' => false,
+            'public' => true,
             'cache' => true,
             'active' => true,
         ],
