@@ -1142,7 +1142,7 @@ if (!function_exists('recache_banner')) {
                         return [
                             'image' => $item->media,
                             'name' => $item->title,
-                            'description' => $item->field?->description,
+                            'description' => $item->field?->description ?? null,
                             'link' => $item->redirect_to,
                         ];
                     })->toArray()
