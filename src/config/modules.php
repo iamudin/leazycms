@@ -2,7 +2,7 @@
 return [
     'menu' => [
         'countdown' => [
-            'position' => 5,
+            'position' => 7,
             'name' => 'countdown',
             'title' => 'Hitung Mundur',
             'description' => 'Menu Untuk Mengelola Pengumuman',
@@ -561,7 +561,6 @@ return [
         'detail_visited'=> false,
         'data'=> null,
         'domain'=>null,
-        'default_module'=>env('USE_MODULE',null),
         'installed'=>env('APP_INSTALLED',0),
         'public_path'=>env('PUBLIC_PATH',null),
         'version'=>null,

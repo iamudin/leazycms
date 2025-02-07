@@ -522,16 +522,9 @@ if (!function_exists('rewrite_env')) {
 }
 
 if (!function_exists('get_option')) {
-    function get_option($val = false, $fromdb = false)
+    function get_option($val = false)
     {
-        if ($val) {
-            if ($fromdb) {
-
-                return Leazycms\Web\Models\Option::whereName($val)->first();
-            }
             return config('modules.option.' . $val) ?? null;
-        }
-        return '';
     }
 }
 
@@ -1010,32 +1003,17 @@ if (!function_exists('load_default_module')) {
 
     function load_default_module()
     {
-        $module = config('modules.default_module', ''); // Gunakan default string kosong jika null
-        $defaultFromConfig = array_filter(explode(',', $module)); // Filter nilai kosong
-
         $default = [
+            'berita' => ['active' => true],
+            'agenda' => ['active' => true],
+            'pengumuman' => ['active' => true],
+            'document' => ['active' => true],
             'menu' => ['active' => true],
             'banner' => ['active' => true],
             'gallery' => ['active' => true],
             'page' => ['active' => true],
             'countdown' => ['active' => true],
         ];
-
-        // Ambil kunci valid dari config('modules.menu') dan filter hanya string atau integer
-        $validKeys = array_filter(array_keys(config('modules.menu', [])), function ($key) {
-            return is_string($key) || is_int($key);
-        });
-
-        // Ubah menjadi flip untuk optimasi lookup
-        $validKeysFlipped = array_flip($validKeys);
-
-        // Gabungkan array dengan validasi kunci
-        foreach ($defaultFromConfig as $key) {
-            if (isset($validKeysFlipped[$key]) && !isset($default[$key])) {
-                $default[$key] = ['active' => true];
-            }
-        }
-
         use_module($default);
     }
 

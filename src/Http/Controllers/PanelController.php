@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
+use Leazycms\FLC\Models\File as Flc;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -121,12 +122,25 @@ class PanelController extends Controller implements HasMiddleware
             foreach (config('modules.config.option') as $row) {
                 foreach ($row as $field) {
                     $key = _us($field[0]);
-                    if ($value = $request->$key) {
-                        $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                    if ($request->$key) {
+                        if($field[1]!='text' && is_array($field[1])){
+                            if($request->hasFile(_us($field[0]))){
+                            $value = (new Flc)->addFile([
+                                    'file'=>$request->file(_us($field[0])),
+                                    'purpose'=> _us($field[0]),
+                                    'mime_type'=> $field[1],
+                                    'self_upload'=> true,
+                                    ]);
+                           $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                            }
+                        }else{
+                            $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
+                        }
+
                     }
                 }
             }
-            Artisan::call('config:cache');
+            // Artisan::call('config:cache');
             return back()->with('success', 'Berhasil Diupdate');
         }
         return view('cms::backend.option');

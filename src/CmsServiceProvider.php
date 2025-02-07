@@ -98,7 +98,9 @@ class CmsServiceProvider extends ServiceProvider
 
         if (DB::connection()->getPDO() && $this->checkAllTables()) {
             try{
-
+                if(!config('modules.version')){
+                    config(['modules.version' => leazycms_version()]);
+                }
             if(!config('modules.option')){
                 $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                 config(['modules.option' => $options]);
@@ -122,7 +124,7 @@ class CmsServiceProvider extends ServiceProvider
         catch (\Exception $e) {
         return abort('500',$e->getMessage());
     }
-            $this->loadTemplateConfig();
+        $this->loadTemplateConfig();
         }
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
@@ -139,10 +141,14 @@ class CmsServiceProvider extends ServiceProvider
             include $configFile;
             ob_end_clean();
             if (isset($config)) {
-                config(['modules.config' => $config]);
+                foreach($config ?? [] as $key=>$row){
+                    if(!config('modules.config.'.$key)){
+                        config(['modules.config.'.$key => $row]);
+                    }
+                }
             }
         }
-        config(['modules.version' => leazycms_version()]);
+
     }
     /**
      * Summary of register
