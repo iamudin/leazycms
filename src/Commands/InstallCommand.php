@@ -21,79 +21,85 @@ class InstallCommand extends Command
         $this->line('       🌟 Bangun CMS Laravel bisa dengan Lazy dan Easy 🌟');
         $this->line('=================================================================');
         $this->line('');
-        if(config('modules.installed')==0){
-        $this->info("Aplikasi ini hampir siap digunakan. Untuk pertama kali silahkan ikuti dan Selesaikan setup dibawah ini :");
-        $this->line('');
-        $domain = $this->ask('Masukkan url nama domain web tanpa http://', 'localhost');
-        $dbHost = $this->ask('Masukkan host database MySQL (default: 127.0.0.1)', '127.0.0.1');
-        $dbPort = $this->ask('Masukkan port database  MySQL (default: 3306)', '3306');
-        $dbName = $this->ask('Masukkan nama database MySQL');
-        $dbUser = $this->ask('Masukkan username database  MySQL');
-        $dbPass = $this->secret('Masukkan password database  MySQL');
 
-        // Pastikan semua data diisi
-        if (!$dbName || !$dbUser) {
-            $this->error('Nama database dan username tidak boleh kosong!');
-            return;
-        }
-        $result = $this->checkConnection($dbHost, $dbUser, $dbPass, $dbName);
-        if ($result == 'no_table_exists') {
-        } elseif (is_array($result)) {
-            $this->error('Database sudah memiliki table dan data!');
-            return;
+        if (config('modules.installed') == 0) {
+            $this->info("Aplikasi ini hampir siap digunakan. Ikuti langkah berikut:");
 
+            $domain = $this->ask('Masukkan URL domain web tanpa http://', 'localhost');
+            $dbHost = $this->ask('Masukkan host database MySQL (default: 127.0.0.1)', '127.0.0.1');
+            $dbPort = $this->ask('Masukkan port database MySQL (default: 3306)', '3306');
+            $dbName = $this->ask('Masukkan nama database MySQL');
+            $dbUser = $this->ask('Masukkan username database MySQL');
+            $dbPass = $this->secret('Masukkan password database MySQL');
+
+            if (!$dbName || !$dbUser) {
+                $this->error('Nama database dan username tidak boleh kosong!');
+                return;
+            }
+
+            // Periksa koneksi database
+            $result = $this->checkConnection($dbHost, $dbUser, $dbPass, $dbName);
+            if ($result == 'no_table_exists') {
+                $this->info("Database kosong, siap digunakan.");
+            } elseif (is_array($result)) {
+                $this->error('Database sudah memiliki tabel dan data!');
+                return;
+            } else {
+                $this->error('Koneksi database tidak ditemukan!');
+                return;
+            }
+
+            // Update file .env
+            $this->createEnvConfig([
+                "DB_CONNECTION" => "mysql",
+                "DB_HOST" => $dbHost,
+                "DB_PORT" => $dbPort,
+                "DB_DATABASE" => $dbName,
+                "DB_USERNAME" => $dbUser,
+                "DB_PASSWORD" => $dbPass,
+            ]);
+
+            // Bersihkan cache
+            Artisan::call('config:clear');
+            Artisan::call('cache:clear');
+
+            // Paksa Laravel membaca ulang konfigurasi database
+            config(['database.default' => 'mysql']);
+            config(['database.connections.mysql.host' => $dbHost]);
+            config(['database.connections.mysql.port' => $dbPort]);
+            config(['database.connections.mysql.database' => $dbName]);
+            config(['database.connections.mysql.username' => $dbUser]);
+            config(['database.connections.mysql.password' => $dbPass]);
+
+            // Debugging
+            $this->info('Database connection: ' . config('database.default'));
+            $this->info('Database name: ' . config('database.connections.mysql.database'));
+
+            // Jalankan migrasi
+            $this->call('migrate:fresh', ['--force' => true]);
+
+            // Tambahkan APP_INSTALLED
+            $this->createEnvConfig([
+                'APP_INSTALLED' => true,
+                'APP_ENV' => 'production'
+            ]);
+
+            // Generate data dummy
+            $this->generate_dummy_content($domain);
+
+            // Cache konfigurasi baru
+            Artisan::call('config:cache');
+            Artisan::call('route:cache');
+
+            Artisan::call('vendor:publish', ['--tag' => 'cms']);
+
+            $this->info('Instalasi Berhasil! Silahkan akses: ');
+            $this->line('Url login : ' . route('login'));
+            $this->line('Username  : adminsuper');
+            $this->line('Password  : password');
         } else {
-            $this->error('Koneksi database tidak ditemukan!');
-            return;
+            $this->info('Laravel sudah terpasang module LEAZYCMS!');
         }
-        // Ubah file .env
-        $envPath = base_path('.env');
-        if (!File::exists($envPath)) {
-            $this->error('File .env tidak ditemukan!');
-            return;
-        }
-        $this->call('config:clear');
-        $this->call('cache:clear');
-
-        // Update nilai .env
-        $this->createEnvConfig(
-      [
-            "DB_CONNECTION"=>"mysql",
-            "DB_HOST"=>$dbHost,
-            "DB_PORT"=>$dbPort,
-            "DB_DATABASE"=>$dbName,
-            "DB_USERNAME"=>$dbUser,
-            "DB_PASSWORD"=>$dbPass,
-            "APP_URL"=>"http://".$domain,
-            "APP_TIMEZONE"=>"Asia/Jakarta",
-            "CACHE_STORE"=>"file",
-            "SESSION_DRIVER"=>"file",
-      ]);
-        $this->info('Sedang proses mohon tunggu...');
-        $this->info('Reloading environment configuration...');
-        if(Dotenv::createImmutable(base_path())->load()){
-            $this->call('migrate:fresh --force');
-        }
-        if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
-        if(Dotenv::createImmutable(base_path())->load()){
-        $this->generate_dummy_content($domain);
-        $this->call('config:cache');
-        $this->call('route:cache');
-        }
-        }
-        clear_route();
-        Artisan::call('vendor:publish --tag=cms');
-
-        $this->info('Instalasi Berhasil dilakukan. silahkan akses : ');
-        $this->line('');
-        $this->line('Url login : '.route('login'));
-        $this->line('Username  : adminsuper');
-        $this->line('Password  : password');
-
-}
-else{
-    $this->info('Laravel anda sudah terpasang module LEAZYCMS!');
-}
     }
     public function createEnvConfig(array $keyPairs)
     {
