@@ -67,18 +67,17 @@ class InstallCommand extends Command
             "CACHE_STORE"=>"file",
             "SESSION_DRIVER"=>"file",
       ]);
-
-
-        $this->info('Sedang proses mohon tunggu...');
         $this->info('Sedang proses mohon tunggu...');
         $this->info('Reloading environment configuration...');
-        Dotenv::createImmutable(base_path())->load();
-        Artisan::call('migrate');
-        $this->generate_dummy_content($domain);
+        if(Dotenv::createImmutable(base_path())->load()){
+            $this->call('migrate');
+        }
         if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
-        Dotenv::createImmutable(base_path())->load();
-            $this->call('config:cache');
-            $this->call('route:cache');
+        if(Dotenv::createImmutable(base_path())->load()){
+        $this->generate_dummy_content($domain);
+        $this->call('config:cache');
+        $this->call('route:cache');
+        }
         }
         clear_route();
         Artisan::call('vendor:publish --tag=cms');
