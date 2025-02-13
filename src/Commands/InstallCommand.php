@@ -3,6 +3,7 @@
 namespace Leazycms\Web\Commands;
 use Leazycms\Web\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -52,33 +53,25 @@ class InstallCommand extends Command
         }
 
         // Update nilai .env
-        $envContent = file_get_contents($envPath);
-        $newEnvContent = preg_replace([
-            "/^DB_CONNECTION=.*/m",
-            "/^DB_HOST=.*/m",
-            "/^DB_PORT=.*/m",
-            "/^DB_DATABASE=.*/m",
-            "/^DB_USERNAME=.*/m",
-            "/^DB_PASSWORD=.*/m",
-            "/^APP_URL=.*/m",
-            "/^APP_TIMEZONE=.*/m",
-        ], [
-            "DB_CONNECTION=mysql",
-            "DB_HOST={$dbHost}",
-            "DB_PORT={$dbPort}",
-            "DB_DATABASE={$dbName}",
-            "DB_USERNAME={$dbUser}",
-            "DB_PASSWORD={$dbPass}",
-            "APP_URL={$domain}",
-            "APP_TIMEZONE=Asia/Jakarta"
-        ], $envContent);
-       file_put_contents($envPath, $newEnvContent);
+        $this->createEnvConfig(
+      [
+            "DB_CONNECTION"=>"mysql",
+            "DB_HOST"=>$dbHost,
+            "DB_PORT"=>$dbPort,
+            "DB_DATABASE"=>$dbName,
+            "DB_USERNAME"=>$dbUser,
+            "DB_PASSWORD"=>$dbPass,
+            "APP_URL"=>"http://".$domain,
+            "APP_TIMEZONE"=>"Asia/Jakarta",
+            "CACHE_STORE"=>"file",
+            "SESSION_DRIVER"=>"file",
+      ]);
 
         $this->info('Sedang proses mohon tunggu...');
         $this->call('migrate');
         $this->generate_dummy_content($domain);
         if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
-            $this->call('vendor:publish --tag=cms');
+            Artisan::call('vendor:publish --tag=cms');
             $this->call('config:cache');
             $this->call('route:cache');
         }
