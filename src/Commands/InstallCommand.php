@@ -69,6 +69,11 @@ class InstallCommand extends Command
 
 
         $this->info('Sedang proses mohon tunggu...');
+        $this->info('Sedang proses mohon tunggu...');
+        $this->info('Reloading environment configuration...');
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+        Artisan::call('config:cache');
         $this->call('migrate');
         $this->generate_dummy_content($domain);
         if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
