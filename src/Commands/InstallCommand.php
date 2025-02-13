@@ -53,7 +53,7 @@ class InstallCommand extends Command
         }
 
         // Update nilai .env
-        $this->createEnvConfig(
+        if($this->createEnvConfig(
       [
             "DB_CONNECTION"=>"mysql",
             "DB_HOST"=>$dbHost,
@@ -65,24 +65,26 @@ class InstallCommand extends Command
             "APP_TIMEZONE"=>"Asia/Jakarta",
             "CACHE_STORE"=>"file",
             "SESSION_DRIVER"=>"file",
-      ]);
+      ])){
+
 
         $this->info('Sedang proses mohon tunggu...');
         $this->call('migrate');
         $this->generate_dummy_content($domain);
         if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
-            Artisan::call('vendor:publish --tag=cms');
             $this->call('config:cache');
             $this->call('route:cache');
         }
         clear_route();
+        Artisan::call('vendor:publish --tag=cms');
 
         $this->info('Instalasi Berhasil dilakukan. silahkan akses : ');
         $this->line('');
-        $this->line('Url login : '.route('login').'/panel ');
+        $this->line('Url login : '.route('login'));
         $this->line('Username  : adminsuper');
         $this->line('Password  : password');
     }
+}
 else{
     $this->info('Laravel anda sudah terpasang module LEAZYCMS!');
 }
