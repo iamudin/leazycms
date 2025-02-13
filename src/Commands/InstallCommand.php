@@ -1,11 +1,12 @@
 <?php
 
 namespace Leazycms\Web\Commands;
+use Dotenv\Dotenv;
 use Leazycms\Web\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Artisan;
 
 class InstallCommand extends Command
 {
@@ -71,12 +72,11 @@ class InstallCommand extends Command
         $this->info('Sedang proses mohon tunggu...');
         $this->info('Sedang proses mohon tunggu...');
         $this->info('Reloading environment configuration...');
-        Artisan::call('config:clear');
-        Artisan::call('cache:clear');
-        Artisan::call('config:cache');
+        Dotenv::createImmutable(base_path())->load();
         $this->call('migrate');
         $this->generate_dummy_content($domain);
         if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
+        Dotenv::createImmutable(base_path())->load();
             $this->call('config:cache');
             $this->call('route:cache');
         }
