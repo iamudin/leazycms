@@ -554,14 +554,13 @@ return [
             'templaet_info'=>array(),
         ],
         'option'=> array(),
-        'option_cached'=> null,
         'used'=> array(),
         'current'=> null,
         'extension_module'=> array(),
         'detail_visited'=> false,
         'data'=> null,
-        'domain'=>null,
         'installed'=>env('APP_INSTALLED',0),
         'public_path'=>env('PUBLIC_PATH',null),
         'version'=>null,
 ];
+
