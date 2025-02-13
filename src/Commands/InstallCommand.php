@@ -52,6 +52,8 @@ class InstallCommand extends Command
             $this->error('File .env tidak ditemukan!');
             return;
         }
+        $this->call('config:clear');
+        $this->call('cache:clear');
 
         // Update nilai .env
         $this->createEnvConfig(
@@ -70,7 +72,7 @@ class InstallCommand extends Command
         $this->info('Sedang proses mohon tunggu...');
         $this->info('Reloading environment configuration...');
         if(Dotenv::createImmutable(base_path())->load()){
-            $this->call('migrate');
+            $this->call('migrate:fresh --force');
         }
         if ($this->createEnvConfig(['APP_INSTALLED' => true]) && $this->createEnvConfig(['APP_ENV'=>'production'])) {
         if(Dotenv::createImmutable(base_path())->load()){
