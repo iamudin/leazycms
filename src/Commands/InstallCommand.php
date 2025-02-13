@@ -57,6 +57,9 @@ class InstallCommand extends Command
                 "DB_DATABASE" => $dbName,
                 "DB_USERNAME" => $dbUser,
                 "DB_PASSWORD" => $dbPass,
+                "APP_URL" => "http://".$domain,
+                "CACHE_STORE" => "file",
+                "SESSION_DRIVER" => "file",
             ]);
 
             // Bersihkan cache
