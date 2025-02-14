@@ -118,7 +118,7 @@
                                 {{ get_option('app_env') == 'local' ? 'checked' : '' }}> <small>Local</small><br>
                     <br>
                     <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i> Login Path</h6>
-                    <input type="text" class="form-control form-control-sm" name="admin_path" value="{{get_option('admin_path',true)?->value}}">
+                    <input type="text" class="form-control form-control-sm" name="admin_path" value="{{admin_path()}}">
                     <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel </b> dan lainnya yang familiar.<br>!!! Mengganti login Path membutuhkan waktu proses +- 10 detik.</small>
                     <br>
 
