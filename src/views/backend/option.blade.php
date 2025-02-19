@@ -20,7 +20,7 @@
                         <small>{{ $field[0] }}</small><br>
                         @if ($field[1] != 'text' && is_array($field[1]))
                             @if (media_exists(get_option(_us($field[0]))))
-                                <a href="{{ get_option(_us($field[0])) }}"
+                                <a href="{{get_option(_us($field[0])) }}"
                                     class="btn btn-sm btn-outline-primary">{{ basename(get_option(_us($field[0]))) }}</a> <i
                                     title="Hapus data" class="fa fa-trash text-danger pointer"
                                     onclick="media_destroy('{{ get_option(_us($field[0])) }}')"></i><br>

@@ -140,7 +140,7 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 }
             }
-            // Artisan::call('config:cache');
+            Artisan::call('config:cache');
             return back()->with('success', 'Berhasil Diupdate');
         }
         return view('cms::backend.option');

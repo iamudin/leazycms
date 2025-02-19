@@ -520,7 +520,12 @@ if (!function_exists('rewrite_env')) {
         return true;
     }
 }
+if (!function_exists('cached')) {
 
+function cached(){
+    return app()->configurationIsCached();
+}
+}
 if (!function_exists('get_option')) {
     function get_option($val = false)
     {
@@ -623,6 +628,7 @@ if (!function_exists('is_admin')) {
 if (!function_exists('use_module')) {
     function use_module($module_selected)
     {
+        if(!cached()){
         foreach ($module_selected as $module => $attr) {
             if (config('modules.menu.' . $module) !== null) {
                 $module_config = config('modules.menu.' . $module);
@@ -642,6 +648,7 @@ if (!function_exists('use_module')) {
             }
         }
     }
+}
 }
 if (!function_exists('processMenu')) {
     function processMenu($menu, $datanya, &$mnews, $parent = 0)
