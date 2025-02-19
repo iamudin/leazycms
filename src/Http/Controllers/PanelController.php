@@ -329,29 +329,22 @@ class PanelController extends Controller implements HasMiddleware
                     rewrite_env(['APP_ENV' => $app_env]);
                 }
             }
-            if ($request->admin_path&& get_option('admin_path') != $request->admin_path) {
-                $val = $request->admin_path;
+            if ($request->admin_path && get_option('admin_path') != $request->admin_path) {
+                $val = trim(str($request->admin_path)->slug());
                 if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
                     return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
                 }
                 $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
             }
+            Artisan::call('config:cache');
 
-                if ($request->admin_path != $request->segment(1)) {
-                    Artisan::call('optimize');
-                    sleep(10);
-                    $changeadmin = 1;
-                }else{
-                    Artisan::call('config:cache');
-                    sleep(4);
-
-                }
-            if(isset($changeadmin)){
-                return redirect($request->admin_path.'/setting')->send()->with('success', 'Berhasil');
-            }
             return back()->send()->with('success', 'Berhasil');
         }
         return view('cms::backend.setting', $data);
+    }
+    function admin_path(){
+            Artisan::call('route:cache');
+            return redirect()->to(secure_url(route('setting', [], false)));
     }
     public function appearance(Request $request, Option $option)
     {

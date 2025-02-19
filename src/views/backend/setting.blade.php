@@ -120,7 +120,11 @@
                     <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i> Login Path</h6>
                     <input type="text" class="form-control form-control-sm" name="admin_path" value="{{admin_path()}}">
                     <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel </b> dan lainnya yang familiar.<br>!!! Mengganti login Path membutuhkan waktu proses +- 10 detik.</small>
+
                     <br>
+                    @if(basename( str_replace('/login','',route('login'))) != admin_path())
+                    <div class="alert alert-warning">Terdeteksi perubahan admin path, diperlukan sinkron konfigurasi. <a href="{{ route('admin_path_changer') }}" class="btn btn-md btn-warning" onclick="return confirm('Anda yakin ?')">Sinkron Sekarang</a> </div>
+                    @endif
 
 
                 </div>
@@ -157,6 +161,24 @@
             </div>
         </div>
     </form>
+
+    <!-- Button trigger modal -->
+
+
+
+    <script>
+        var modalId = document.getElementById('modalId');
+
+        modalId.addEventListener('show.bs.modal', function (event) {
+              // Button that triggered the modal
+              let button = event.relatedTarget;
+              // Extract info from data-bs-* attributes
+              let recipient = button.getAttribute('data-bs-whatever');
+
+            // Use above variables to manipulate the DOM
+        });
+    </script>
+
     @push('scripts')
         @include('cms::backend.layout.js')
     @endpush

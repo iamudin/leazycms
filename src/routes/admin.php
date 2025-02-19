@@ -53,6 +53,7 @@ foreach (get_module() as $value) {
 Route::controller(PanelController::class)->group(function () {
     Route::get('dashboard', 'index')->name('panel.dashboard');
     Route::post('dashboard', 'visitor')->name('visitor.data');
+    Route::get('admin_path', 'admin_path')->name('admin_path_changer');
     Route::match(['get', 'post'], 'appearance', 'appearance')->name('appearance');
     Route::match(['get', 'post'], 'appearance/editor', 'editorTemplate')->name('appearance.editor');
     Route::match(['get', 'post'], 'setting', 'setting')->name('setting');
