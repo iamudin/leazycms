@@ -95,6 +95,4 @@ Route::controller(PollingController::class)->group(function () {
     Route::put('polling/{polling}/update', 'update')->name('polling.update');
     Route::delete('polling/{polling}/edit', 'destroy')->name('polling.destroy');
 });
-Route::get('/', function () {
-    return to_route('login');
-});
+
