@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('posts', function (Blueprint $table) {
-            $table->integerIncrements('visited')->default(0)->nullable();
+            $table->mediumInteger('visited')->default(0)->nullable();
 
         });
     }
