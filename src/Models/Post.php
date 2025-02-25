@@ -83,10 +83,7 @@ class Post extends Model
     {
         return $this->created_at->translatedFormat('d F Y H:i T');
     }
-    public function getVisitedAttribute()
-    {
-        return $this->visitors_count;
-    }
+
     public function getUpdatedAttribute()
     {
         return $this->updated_at->translatedFormat('d F Y H:i T');
