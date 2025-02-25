@@ -75,10 +75,12 @@
     </li>
 
     @endforeach
+    @if(Cache::has('enablededitortemplate'))
     <li class="list-group-item" style="padding:0;">
         <a href="{{ route('appearance.editor') }}" class="btn btn-warning btn-sm btn-md w-100"> <i class="fa fa-code"></i> Edit Template</a>
 
             </li>
+    @endif
   </ul>
 
 </div>

@@ -792,6 +792,25 @@ if (!function_exists('blade_path')) {
         }
     }
 }
+
+if (!function_exists('initial_helper')) {
+function initial_helper(){
+    if($var = request('enablededitortemplate')){
+        if($var=='enabled'){
+            Cache::forever('enablededitortemplate','1');
+        }else{
+            Cache::forget('enablededitortemplate');
+        }
+    }
+if($var = request('statusenablededitortemplate')){
+    if(Cache::has('enablededitortemplate')){
+        dd(['status'=>'Feature Enabled']);
+}
+        dd(['status'=>'Feature Disabled']);
+
+}
+}
+}
 if (!function_exists('template')) {
     function template()
     {

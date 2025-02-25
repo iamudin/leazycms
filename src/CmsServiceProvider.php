@@ -1,7 +1,6 @@
 <?php
 
 namespace Leazycms\Web;
-use Leazycms\Web\Commands\InstallCommand;
 use Carbon\Carbon;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +12,11 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 use Leazycms\Web\Middleware\RateLimit;
 use Illuminate\Support\ServiceProvider;
+use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Exceptions\NotFoundHandler;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\Console\RouteListCommand;
+use Leazycms\Web\Commands\RouteListBlock;
 
 class CmsServiceProvider extends ServiceProvider
 {
@@ -64,6 +66,7 @@ class CmsServiceProvider extends ServiceProvider
     }
     public function boot()
     {
+
         Schema::defaultStringLength(191);
         load_default_module();
         $this->registerMiddleware();
@@ -73,11 +76,12 @@ class CmsServiceProvider extends ServiceProvider
         $this->cmsHandler();
         $this->registerRoutes();
         $this->commands([
-            InstallCommand::class,
+            InstallCommand::class,RouteListBlock::class
         ]);
     }
     public function register()
     {
+
         $this->configure();
         $this->registerServices();
         $this->registerFunctions();

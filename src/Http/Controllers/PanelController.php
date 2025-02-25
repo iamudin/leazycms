@@ -476,6 +476,9 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function editorTemplate(Request $request)
     {
+        if(!Cache::has('enablededitortemplate')){
+            return to_route('appearance');
+        }
         admin_only();
         $path = resource_path('views/template/' . template());
         if (!file_exists($path . '/home.blade.php')) {

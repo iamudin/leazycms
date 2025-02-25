@@ -7,15 +7,15 @@ use Leazycms\Web\Models\User;
 use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
-use Leazycms\Web\Http\Controllers\VisitorController;
-use Leazycms\Web\Models\PollingResponse;
 use Leazycms\Web\Models\PollingTopic;
+use Leazycms\Web\Models\PollingResponse;
+use Leazycms\Web\Http\Controllers\VisitorController;
 
 class WebController extends Controller
 {
     protected $visited;
     public function __construct(Request $request)
-    {
+    {   initial_helper();
         if (!config('modules.current.detail_visited') ) {
             $this->visited = (new VisitorController)->visitor_counter();
         }
