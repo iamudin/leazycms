@@ -26,7 +26,7 @@
     "minimum-stability": "stable",
     "require": {
         "leazycms/flc": "*",
-        "yajra/laravel-datatables-oracle": "^11.0",
+        "yajra/laravel-datatables":"^11.0",
         "intervention/image": "~2.0",
         "stevebauman/location":"*",
         "nesbot/carbon": "*",
