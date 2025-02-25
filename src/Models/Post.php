@@ -5,19 +5,18 @@ namespace Leazycms\Web\Models;
 use Leazycms\FLC\Traits\Fileable;
 use Leazycms\FLC\Traits\Commentable;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
     use SoftDeletes,Fileable,Commentable;
-    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','shortcut','shortcut_counter','custom_page'];
+    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','shortcut','shortcut_counter','custom_page','visited'];
 
     protected $userselectcolumn = ['id','name','url'];
     protected $categoryselectcolumn = ['id','name','url','slug'];
     protected $fillable = [
-        'custom_page','slug_edited','short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable','shortcut'
+        'custom_page','slug_edited','short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable','shortcut','visited'
     ];
     protected $casts = [
         'data_field' => 'array',
@@ -272,10 +271,9 @@ class Post extends Model
     {
         $type= is_array($type) ? $type : [$type];
         return $this->selectedColumn()
-        ->withCountVisitors()
         ->whereIn('type',$type)
         ->published()
-        ->orderBy('visitors_count', 'desc')->take($limit)->get();
+        ->orderBy('visited', 'desc')->take($limit)->get();
     }
 
     function index_pinned($limit, $type = false)

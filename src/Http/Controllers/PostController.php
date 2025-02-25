@@ -288,7 +288,7 @@ public function recache($type){
 }
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs')->withCount('visitors')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs')->withCount('visitors')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
         return DataTables::of($data)
             ->addIndexColumn()
@@ -403,8 +403,8 @@ public function recache($type){
             ->addColumn('created_at', function ($row) {
                 return '<small class="badge text-muted">' . date('d-m-Y H:i:s', strtotime($row->created_at)) . '</small>';
             })
-            ->addColumn('visitors_count', function ($row) {
-                return '<center><small class="badge text-muted"> <i class="fa fa-line-chart"></i> <b>' . $row->visitors_count . '</b></small></center>';
+            ->addColumn('visited', function ($row) {
+                return '<center><small class="badge text-muted"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
             })
             ->addColumn('updated_at', function ($row) {
                 return ($row->updated_at) ? '<small class="badge text-muted">' . date('d-m-Y H:i:s', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
@@ -440,11 +440,11 @@ public function recache($type){
                 $btn .= '</div></div>';
                 return $btn;
             })
-            ->rawColumns(['created_at','category', 'updated_at', 'visitors_count', 'action', 'title', 'data_field', 'parents', 'thumbnail'])
-            ->orderColumn('visitors_count', '-visited $1')
+            ->rawColumns(['created_at','category', 'updated_at', 'visited', 'action', 'title', 'data_field', 'parents', 'thumbnail'])
+            ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')
             ->orderColumn('created_at', '-created_at $1')
-            ->only(['visitors_count', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
+            ->only(['visited', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
             ->toJson();
     }
 

@@ -10,11 +10,15 @@ class VisitorController
     {
 
         if(config('modules.installed')){
+            $data = config('modules.data');
         if (!$this->isDuplicateVisitor(Session::getId(), url()->full()) && strpos(request()->headers->get('referer'),admin_path()) ===false) {
+            if($data){
+                $data->increment('visited');
+            }
             $visitorData = [
                 'ip' => request()->ip(),
                 'user_id' => request()->user()?->id,
-                'post_id' => config('modules.data')?->id,
+                'post_id' => $data?->id,
                 'ip_location' => get_ip_info(),
                 'browser' => self::browser(),
                 'session' => Session::getId(),

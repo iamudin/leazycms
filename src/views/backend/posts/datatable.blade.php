@@ -85,8 +85,8 @@
                     },
                 @if (current_module()->web->detail)
                     {
-                        data: 'visitors_count',
-                        name: 'visitors_count',
+                        data: 'visited',
+                        name: 'visited',
                         orderable: true,
                         searchable: false
                     },
