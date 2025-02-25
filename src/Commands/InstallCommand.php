@@ -60,7 +60,7 @@ class InstallCommand extends Command
                 "APP_URL" => "http://".$domain,
                 "CACHE_STORE" => "file",
                 "SESSION_DRIVER" => "file",
-                "APP_TIMEZONE" => "Asia/Jakrta",
+                "APP_TIMEZONE" => "Asia/Jakarta",
             ]);
 
             // Bersihkan cache
