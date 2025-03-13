@@ -171,8 +171,7 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->cachedpost($type)->values())->take($limit);
         } else {
-            return $this->withCountVisitors()
-            ->selectedColumn()
+            return $this->selectedColumn()
             ->onType($type)
             ->published()
             ->latest('created_at')
@@ -211,7 +210,6 @@ class Post extends Model
             return collect($this->cachedpost($type)->values())->skip($skip)->take($limit);
         } else {
             return $this->selectedColumn()
-            ->withCountVisitors()
             ->onType($type)
             ->published()
             ->latest('created_at')
@@ -254,7 +252,6 @@ class Post extends Model
     public function index($type, $paginate = null)
     {
         $q = $this->selectedColumn()
-        ->withCountVisitors()
         ->with('user', 'category')
         ->onType($type)
         ->published()
@@ -368,7 +365,6 @@ class Post extends Model
                 ->likeSlug($name)
                 ->orWhere('shortcut',$name)
                 ->with(array_merge($with??[],['user']))
-                ->withCountVisitors()
                 ->first();
         } else {
             if (get_module($type)->cache) {
