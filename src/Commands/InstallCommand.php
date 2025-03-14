@@ -61,6 +61,7 @@ class InstallCommand extends Command
                 "CACHE_STORE" => "file",
                 "SESSION_DRIVER" => "file",
                 "APP_TIMEZONE" => "Asia/Jakarta",
+               " DB_COLLATION" => "utf8mb4_unicode_ci"
             ]);
 
             // Bersihkan cache
@@ -69,6 +70,7 @@ class InstallCommand extends Command
 
             // Paksa Laravel membaca ulang konfigurasi database
             config(['database.default' => 'mysql']);
+            config(['database.connections.mysql.collation' => 'utf8mb4_unicode_ci']);
             config(['database.connections.mysql.host' => $dbHost]);
             config(['database.connections.mysql.port' => $dbPort]);
             config(['database.connections.mysql.database' => $dbName]);
