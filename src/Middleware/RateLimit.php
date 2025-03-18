@@ -153,7 +153,7 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
-        if ($o = config('modules.current.detail_visited')) {
+        if ($o = config('modules.current.detail_visited') && !in_array($request->segment(1),['secure','media'])) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request, config('modules.current.detail_visited'));

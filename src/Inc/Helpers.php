@@ -179,7 +179,6 @@ if (!function_exists('processVisitorData')) {
 if (!function_exists('ratelimiter')) {
     function ratelimiter($request, $limittime)
     {
-        if (config('modules.installed') && !in_array($request->segment(1),['secure','media'])) {
             $ip = $request->ip();
             $sessionId = $request->session()->getId();
             $userAgent = $request->header('User-Agent');
@@ -198,7 +197,7 @@ if (!function_exists('ratelimiter')) {
             }
             Cache::increment($key);
             Cache::put($key, Cache::get($key), now()->addMinutes($decayMinutes));
-        }
+
     }
 }
 if (!function_exists('generateRateLimitKey')) {
