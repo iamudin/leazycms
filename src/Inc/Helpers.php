@@ -832,7 +832,7 @@ if (!function_exists('get_element')) {
 if (!function_exists('template_asset')) {
     function template_asset($path = false)
     {
-        return $path ? secure_asset('template/' . template() . '/' . $path) : secure_asset('template/' . template() . '/');
+        return $path ? url('template/' . template() . '/' . $path) : url('template/' . template() . '/');
     }
 }
 if (!function_exists('strip_to_underscore')) {
