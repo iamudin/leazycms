@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class InstallCommand extends Command
 {
-    protected $signature = 'leazycms:install';
+    protected $signature = 'cms:install';
     protected $description = 'Mengatur kredensial database di file .env';
 
     public function handle()
