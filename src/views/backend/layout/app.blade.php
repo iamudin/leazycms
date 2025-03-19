@@ -27,7 +27,7 @@
     <meta name="theme-color" content="#009688" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Main CSS-->
-    <link rel="stylesheet" type="text/css" href="{{ secure_asset('backend/css/main.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url('backend/css/main.css') }}">
     <!-- Font-icon css-->
     <link rel="stylesheet" type="text/css"
         href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -177,17 +177,17 @@
         }
     </script>
     <!-- Essential javascripts for application to work-->
-    <script src="{{ secure_asset('backend/js/popper.min.js') }}"></script>
-    <script src="{{ secure_asset('backend/js/bootstrap.min.js') }}"></script>
-    <script src="{{ secure_asset('backend/js/main.js') }}"></script>
+    <script src="{{ url('backend/js/popper.min.js') }}"></script>
+    <script src="{{ url('backend/js/bootstrap.min.js') }}"></script>
+    <script src="{{ url('backend/js/main.js') }}"></script>
     <!-- The javascript plugin to display page loading on top-->
-    <script src="{{ secure_asset('backend/js/plugins/pace.min.js') }}"></script>
+    <script src="{{ url('backend/js/plugins/pace.min.js') }}"></script>
     <!-- Page specific javascripts-->
-    <script type="text/javascript" src="{{ secure_asset('backend/js/plugins/chart.js') }}"></script>
+    <script type="text/javascript" src="{{ url('backend/js/plugins/chart.js') }}"></script>
 
-    <script type="text/javascript" src="{{ secure_asset('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
 
-    <script type="text/javascript" src="{{ secure_asset('backend/js/plugins/sweetalert.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url('backend/js/plugins/sweetalert.min.js') }}"></script>
     @stack('scripts')
 
 </body>

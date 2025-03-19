@@ -1,4 +1,4 @@
-<script type="text/javascript" src="{{secure_asset('backend/js/plugins/select2.min.js')}}"></script>
+<script type="text/javascript" src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 
 <script>
     $('#select2').select2({
