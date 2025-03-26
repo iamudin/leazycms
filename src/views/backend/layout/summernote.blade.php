@@ -35,7 +35,7 @@
         $("#editor").summernote({
             placeholder: 'Tulis isi..',
             height: 350,
-            codeviewFilter: false,
+            codeviewFilter: true,
             codeviewIframeFilter: true,
             callbacks: {
 
@@ -56,9 +56,20 @@
                     removeFigure(target);
                 } else {
                 }
-            }
+            },
 
+            onChange: function(contents, $editable) {
+      let sanitized = contents
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')  // Hapus tag <script>
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')    // Hapus tag <style>
+        .replace(/javascript:/gi, '')                // Hapus penggunaan `javascript:`
+        .replace(/on\w+="[^"]*"/gi, '')              // Hapus event handler seperti onclick, onerror
+        .replace(/on\w+='[^']*'/gi, '');             // Hapus event handler versi single quote
 
+      if (sanitized !== contents) {
+        $('#editor').summernote('code', sanitized);
+      }
+    }
             },
 
             lang: 'en-EN',

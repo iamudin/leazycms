@@ -176,11 +176,13 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     }
 }
     $data = $request->validate($post_field);
+    $allowed_tags = '<p><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote>';
+    $data['content'] = strip_tags($data['content'], $allowed_tags);
+
     if(Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()>0){
         $data['slug'] = $post->slug ?? str($request->title.' '.Str::random(4))->slug();
     }else{
         $data['slug'] = $slug;
-
     }
     $data['slug_edited'] = $request->custom_slug && strlen($request->custom_slug) > 0 ? '1':'0';
     $data['pinned'] =  isset($request->pinned) ? 'Y': 'N';
