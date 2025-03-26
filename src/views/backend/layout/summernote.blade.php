@@ -38,7 +38,18 @@
             codeviewFilter: true,
             codeviewIframeFilter: true,
             callbacks: {
+      onChange: function(contents, $editable) {
+      let sanitized = contents
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+        .replace(/javascript:/gi, '')
+        .replace(/on\w+="[^"]*"/gi, '')
+        .replace(/on\w+='[^']*'/gi, '');
 
+      if (sanitized !== contents) {
+        $('#editor').summernote('code', sanitized);
+      }
+    },
                 onImageUpload: function(files) {
                     uploadImage(files[0]);
                 },
@@ -58,18 +69,7 @@
                 }
             },
 
-            onChange: function(contents, $editable) {
-      let sanitized = contents
-        .replace(/<script[^>]*>.*?<\/script>/gi, '')  // Hapus tag <script>
-        .replace(/<style[^>]*>.*?<\/style>/gi, '')    // Hapus tag <style>
-        .replace(/javascript:/gi, '')                // Hapus penggunaan `javascript:`
-        .replace(/on\w+="[^"]*"/gi, '')              // Hapus event handler seperti onclick, onerror
-        .replace(/on\w+='[^']*'/gi, '');             // Hapus event handler versi single quote
 
-      if (sanitized !== contents) {
-        $('#editor').summernote('code', sanitized);
-      }
-    }
             },
 
             lang: 'en-EN',
