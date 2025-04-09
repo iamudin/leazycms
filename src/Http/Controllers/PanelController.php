@@ -463,10 +463,10 @@ class PanelController extends Controller implements HasMiddleware
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
 
-            $current_template_name = get_option('template', true);
-            if ($current_template_name->value != $mainFolderName) {
-                $current_template_name->update([
-                    'value' => $mainFolderName
+            $current_template_name = get_option('template');
+            if ($current_template_name != $mainFolderName) {
+                \Leazycms\Web\Models\Option::where('name',$current_template_name)->update([
+                    'value'=>$mainFolderName
                 ]);
             }
             return redirect(route('appearance') . '?optimize=true');
