@@ -153,7 +153,7 @@ if (!function_exists('forbidden')) {
                 }
             }
         }
-        if (get_option('block_ip') && in_array($request->ip(), explode(",", get_option('block_ip')))) {
+        if (get_option('block_ip') && in_array(get_client_ip(), explode(",", get_option('block_ip')))) {
             abort(403);
         }
     }
@@ -179,7 +179,7 @@ if (!function_exists('processVisitorData')) {
 if (!function_exists('ratelimiter')) {
     function ratelimiter($request, $limittime)
     {
-            $ip = $request->ip();
+            $ip =get_client_ip();
             $sessionId = $request->session()->getId();
             $userAgent = $request->header('User-Agent');
             $url = $request->fullUrl();
@@ -1230,13 +1230,30 @@ if (!function_exists('banner_here')) {
     function banner_here($name) {}
 }
 
-
+function get_client_ip() {
+    $ipaddress = '';
+    if (isset($_SERVER['HTTP_CLIENT_IP']))
+        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+    else if(isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+        $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    else if(isset($_SERVER['HTTP_X_FORWARDED']))
+        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+    else if(isset($_SERVER['HTTP_FORWARDED_FOR']))
+        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+    else if(isset($_SERVER['HTTP_FORWARDED']))
+        $ipaddress = $_SERVER['HTTP_FORWARDED'];
+    else if(isset($_SERVER['REMOTE_ADDR']))
+        $ipaddress = $_SERVER['REMOTE_ADDR'];
+    else
+        $ipaddress = 'UNKNOWN';
+    return $ipaddress;
+  }
 
 if (!function_exists('get_ip_info')) {
     function get_ip_info()
     {
         if (config('app.env') == 'production') {
-            $data = \Stevebauman\Location\Facades\Location::get(request()->ip());
+            $data = \Stevebauman\Location\Facades\Location::get(get_client_ip());
             return $data ? json_encode(['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName]) : json_encode(array());
         } else {
             return NULL;
@@ -1523,7 +1540,7 @@ if (!function_exists('getRateLimiterKey')) {
     function getRateLimiterKey($req)
     {
         // Modify this method to create a unique key based on IP and session ID
-        return md5($req->ip() . '|' . $req->userAgent() . '|' . request()->fullUrl() . '|' . $req->header('referer'));
+        return md5(get_client_ip(). '|' . $req->userAgent() . '|' . request()->fullUrl() . '|' . $req->header('referer'));
     }
 }
 if (!function_exists('add_extension')) {

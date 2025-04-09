@@ -16,7 +16,7 @@ class VisitorController
                 $data->increment('visited');
             }
             $visitorData = [
-                'ip' => request()->ip(),
+                'ip' => get_client_ip(),
                 'user_id' => request()->user()?->id,
                 'post_id' => $data?->id,
                 'ip_location' => get_ip_info(),
