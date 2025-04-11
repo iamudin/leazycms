@@ -786,7 +786,7 @@ if (!function_exists('blade_path')) {
                 \Illuminate\Support\Facades\View::share('blade', $path);
                 return 'cms::layouts.warning';
             } else {
-                exit("<center><h1>Oops! View Not Found!</h1></center>");
+                return undermaintenance();
             }
         }
     }
