@@ -91,6 +91,9 @@ class PanelController extends Controller implements HasMiddleware
                     if ($time = $request->timevisit) {
                         $instance->whereDate('created_at', $time);
                     }
+                    if ($search = $request->search) {
+                        $instance->where('page','like', '%'.$search.'%')->orWhere('reference','like', '%'.$search.'%');
+                    }
                 }
             )
             ->addColumn('created_at', function ($row) {

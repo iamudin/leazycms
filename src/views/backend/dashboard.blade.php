@@ -95,6 +95,8 @@
                 data: function (d){
                  d._token = "{{csrf_token()}}";
                  d.timevisit = $("#timevisit").val();
+                 d.timevisit = $("#timevisit").val();
+                 d.search = $("input[type=search]").val();
             }
           },
         columns: [
