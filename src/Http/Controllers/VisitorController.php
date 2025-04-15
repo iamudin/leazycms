@@ -9,7 +9,7 @@ class VisitorController
     public function visitor_counter()
     {
 
-        if(config('modules.installed')){
+        if(config('modules.installed') && strpos(url()->full(),'editortemplate')==false){
             $data = config('modules.data');
         if (!$this->isDuplicateVisitor(Session::getId(), url()->full()) && strpos(request()->headers->get('referer'),admin_path()) ===false) {
             if($data){
