@@ -35,6 +35,11 @@ class Category extends Model
     {
         return $query->whereType($type);
     }
+    function getIconAttribute()
+    {
+        return $this->icon ? $this->icon : noimage();
+    }
+
     function scopePublished($query)
     {
         return $query->whereStatus('publish');
