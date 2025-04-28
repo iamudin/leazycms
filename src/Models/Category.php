@@ -37,7 +37,7 @@ class Category extends Model
     }
     function getThumbnailAttribute()
     {
-        return $this->icon ? $this->icon : noimage();
+        return $this->icon && media_exists($this->icon) ? $this->icon : noimage();
     }
 
     function scopePublished($query)
