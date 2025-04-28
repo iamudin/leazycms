@@ -35,7 +35,7 @@ class Category extends Model
     {
         return $query->whereType($type);
     }
-    function getIconAttribute()
+    function getThumbnailAttribute()
     {
         return $this->icon ? $this->icon : noimage();
     }
