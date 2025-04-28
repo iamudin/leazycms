@@ -1,9 +1,12 @@
+@if(View::exists('template.'.template().'.403'))
+@include('template.'.template().'.403')
+@else
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 Halaman Tidak ditemukan</title>
+    <title>403 Dilarang Mengakses</title>
     <style>
         body {
             background-color: #f8f9fa;
@@ -58,17 +61,21 @@
 </head>
 <body>
 
-    <div class="error-code">404</div>
-    <div class="error-message">Halaman tidak ditemukan</div>
-    <div class="error-subtext"><b>{{ url()->full() }} </b></div>
+    <div class="error-code">403</div>
+    <div class="error-message">Akses Dilarang</div>
+    <div class="error-subtext">Anda tidak memiliki izin untuk mengakses halaman ini.</div>
 
     <ul class="reason-list">
-        <li>Halaman sudah dihapus</li>
-        <li>Halaman sedang di perbaiki</li>
-        <li>Halaman tidak pernah tersedia</li>
+        <li>Akses dengan cara ilegal atau tidak sah</li>
+        <li>Halaman atau file bersifat privasi</li>
+        <li>Hak akses Anda tidak mencukupi</li>
+        <li>Halaman berisi konten terlarang</li>
+        <li>Upaya membuka halaman terproteksi</li>
     </ul>
 
     <a href="/">Kembali ke Beranda</a>
 
 </body>
 </html>
+
+@endif

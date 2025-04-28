@@ -32,6 +32,7 @@ foreach (get_module() as $value) {
         }
         if (in_array('delete', $value->route)) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
+            Route::post($value->name . '/bulkaction', 'bulkaction')->name($value->name . '.bulkaction');
             Route::match(['get','post'],$value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');
         }
 

@@ -161,17 +161,52 @@ if (!function_exists('forbidden')) {
 if (!function_exists('processVisitorData')) {
     function processVisitorData()
     {
-
         if (!Cache::has('visit_to_db')) {
             $cacheKey = 'visitor_sorted';
             $visitorDataList = Cache::pull($cacheKey, []);
-            foreach ($visitorDataList as $data) {
-                $visitorData = $data;
-                if (is_array($data)) {
-                    \Leazycms\Web\Models\Visitor::create($visitorData);
+
+            if (!empty($visitorDataList)) {
+                // Step 1: Group by ip + session + page
+                $groupedVisitors = [];
+
+                foreach ($visitorDataList as $data) {
+                    if (!is_array($data)) continue;
+
+                    $key = $data['ip'] . '|' . $data['session'] . '|' . $data['page'];
+
+                    if (!isset($groupedVisitors[$key])) {
+                        $groupedVisitors[$key] = $data;
+                        $groupedVisitors[$key]['times'] = 1;
+                    } else {
+                        $groupedVisitors[$key]['times'] += 1;
+                    }
+                }
+
+                // Step 2: Update or Insert into database
+                foreach ($groupedVisitors as $visitorData) {
+                    \Leazycms\Web\Models\Visitor::updateOrCreate(
+                        [
+                            'ip' => $visitorData['ip'],
+                            'session' => $visitorData['session'],
+                            'page' => $visitorData['page'],
+                        ],
+                        [
+                            'user_id' => $visitorData['user_id'],
+                            'post_id' => $visitorData['post_id'],
+                            'ip_location' => $visitorData['ip_location'],
+                            'browser' => $visitorData['browser'],
+                            'device' => $visitorData['device'],
+                            'os' => $visitorData['os'],
+                            'reference' => $visitorData['reference'],
+                            'created_at' => $visitorData['created_at'],
+                            'updated_at' => now(),
+                            'times' => \Illuminate\Support\Facades\DB::raw('times + ' . $visitorData['times']), // ⬅️ Increment times
+                        ]
+                    );
                 }
             }
 
+            // Step 3: Set Cache lock supaya nggak double eksekusi
             Cache::put('visit_to_db', true, now()->addMinutes(1));
         }
     }
@@ -1097,7 +1132,7 @@ if (!function_exists('allow_mime')) {
 
     function allow_mime()
     {
-        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream';
+        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4';
     }
 }
 if (!function_exists('mime_thumbnail')) {

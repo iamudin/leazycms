@@ -84,6 +84,7 @@ function deleteAlert(url) {
                         });
                 }
 
+                swal("Berhasil", "Penghapusan berhasil", "success");
 
                 if ($(".datatable").length) {
                     setTimeout(() => {
@@ -95,7 +96,7 @@ function deleteAlert(url) {
                    location.reload();
                     }, 500);
                 }
-                swal.close();
+
             } else {
                 swal("Dibatalkan", "Penghapusan dibatalkan", "error");
             }

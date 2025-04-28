@@ -83,6 +83,16 @@ class Panel
                     ]
                 ]);
             }
+            if ($request->is($admin_path . '/' . $modul->name . '/bulkaction')) {
+
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Tambah ' . $modul->title,
+                    ]
+                ]);
+            }
+
         }
         isNotInSession($request);
         $response = $next($request);

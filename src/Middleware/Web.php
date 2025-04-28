@@ -1,6 +1,7 @@
 <?php
 namespace Leazycms\Web\Middleware;
 use Closure;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -78,10 +79,13 @@ class Web
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
 
-
+             if (get_option('forbidden_keyword') && Str::contains($content,explode(",",str_replace(",'","",get_option("forbidden_keyword"))))) {
+               abort('403');
+            }
             $response->setContent($content);
         }
         $this->securityHeaders($response,$request);
+        (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
         processVisitorData();
         return $response;
     }

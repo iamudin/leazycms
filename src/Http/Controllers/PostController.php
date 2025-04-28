@@ -412,7 +412,7 @@ public function recache($type){
                 return ($row->updated_at) ? '<small class="badge text-muted">' . date('d-m-Y H:i:s', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
             })
             ->addColumn('thumbnail', function ($row) {
-                return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '"/>';
+                return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
             })
             ->addColumn('data_field', function ($row) use($current_module){
                 $custom = _us( $current_module->datatable->custom_column);
@@ -442,12 +442,61 @@ public function recache($type){
                 $btn .= '</div></div>';
                 return $btn;
             })
-            ->rawColumns(['created_at','category', 'updated_at', 'visited', 'action', 'title', 'data_field', 'parents', 'thumbnail'])
+            ->addColumn('checkbox', function($row){
+               return Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '
+                 <div class="animated-checkbox">
+                        <label>
+                            <input type="checkbox" name="id[]" value="'.$row->id.'" class="dt-checkbox">
+                            <span class="label-text"></span>
+                        </label>
+                </div>
+
+               ' ) :'';
+
+            })
+            ->rawColumns(['checkbox','created_at','category', 'updated_at', 'visited', 'action', 'title', 'data_field', 'parents', 'thumbnail'])
             ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')
             ->orderColumn('created_at', '-created_at $1')
-            ->only(['visited', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
+            ->only(['checkbox','visited', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
             ->toJson();
     }
+function bulkaction(Request $request){
+    $ids = $request->id;
 
+    if (!empty($ids)) {
+        if($action = $request->action){
+            switch($action){
+                case 'delete':
+                    $request->user()->hasRole(get_post_type(),'delete');
+                    foreach(query()->whereIn('id',$ids)->withTrashed()->onType(get_post_type())->get() as $post){
+                        if($post->trashed() && $request->user()->isAdmin()){
+                            $post->forceDelete();
+                        }
+                        if($request->user()->isAdmin() ||  ($request->user()->isOperator() && $post->user_id != $request->user()->id)){
+                            if(empty($post->title) && $post->status=='draft'){
+                                $post->forceDelete();
+                            }else {
+                        $post->delete();
+                            }
+                        }
+                    }
+                    break;
+                case 'draft':
+                    query()->withTrashed()->onType(get_post_type())->whereIn('id',$ids)->update(['status'=>'draft','deleted_at'=>null]);
+                    break;
+                case 'publish':
+                    query()->withTrashed()->onType(get_post_type())->whereIn('id',$ids)->update(['status'=>'publish','deleted_at'=>null]);
+                    break;
+                default:
+                break;
+            }
+        return response()->json(['message' => 'Success'], 200);
+
+        }
+
+        return response()->json(['message' => 'No files selected.'], 400);
+    }
+
+}
 }

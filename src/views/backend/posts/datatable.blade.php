@@ -33,7 +33,13 @@
             lengthMenu: [10, 20, 50, 100, 200, 500],
             deferRender: true,
             columns: [
-
+                {
+                    className: 'text-center',
+                    data: 'checkbox',
+                    name: 'checkbox',
+                    orderable: false,
+                    searchable: false
+                },
                 {
                     className: 'text-center',
                     data: 'DT_RowIndex',
@@ -41,6 +47,7 @@
                     orderable: false,
                     searchable: false
                 },
+
                 @if (current_module()->form->thumbnail)
                     {
                         data: 'thumbnail',

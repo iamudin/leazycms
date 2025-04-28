@@ -18,10 +18,26 @@
 </div>
 <div class="col-lg-12">
     @include('cms::backend.layout.error')
-
+    <div class="mb-2 bulkaction" style="display: none">
+        <select id="bulkAction" class="form-control-sm form-control-select" >
+            <option value="">Pilih tindakan</option>
+            <option value="delete">Hapus</option>
+            <option value="draft">Draft</option>
+            <option value="publish">Publikasikan</option>
+        </select>
+        <button type="button" id="applyAction" class="btn btn-primary btn-sm" >Submit</button>
+    </div>
 <table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%">
 <thead style="text-transform:uppercase;color:#444">
   <tr>
+    <th style="width:10px;vertical-align: middle">
+        <div class="animated-checkbox">
+            <label>
+                <input type="checkbox" id="select-all">
+                <span class="label-text"></span>
+            </label>
+    </div>
+    </th>
     <th style="width:10px;vertical-align: middle">NO</th>
     @if(current_module()->form->thumbnail)
     <th style="width:55px;vertical-align: middle" >Gambar</th>
@@ -65,6 +81,87 @@
 
 @endpush
 @push('scripts')
+<script>
+  $(function () {
+    $('#select-all').prop('checked',false);
+    $('#bulkAction').val('');
+    $('#select-all').click(function() {
+        var isChecked = this.checked;
+        $('.dt-checkbox').prop('checked', isChecked);
+        toggleActionButton();
+    });
+
+    $(document).on('change', '.dt-checkbox', function() {
+        toggleActionButton();
+    });
+
+    function toggleActionButton() {
+        var selectedCount = $('.dt-checkbox:checked').length;
+
+        if (selectedCount > 0) {
+            $('.bulkaction').prop('disabled', false).fadeIn();
+        } else {
+            $('.bulkaction').prop('disabled', true).fadeOut();
+        }
+    }
+
+    $('#applyAction').click(function() {
+        var selectedIds = [];
+        $('.dt-checkbox:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        var action = $('#bulkAction').val();
+        if (selectedIds.length > 0 && action) {
+            swal(
+        {
+            title: "Anda yakin dengan tindakan ini ?",
+            text: "Semua data terkait akan berimbas atas tindakan ini",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Iya, Lakukan!",
+            cancelButtonText: "Tidak, Batalkan!",
+            closeOnConfirm: false,
+            closeOnCancel: false,
+        },
+        function (isConfirm) {
+            if (isConfirm) {
+                $.ajax({
+                        url: "{{ route(get_post_type() . '.bulkaction') }}",
+                        type: 'POST',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content'),
+                            id: selectedIds,
+                            action:action,
+                        },
+                        success: function(response) {
+                swal("Berhasil", "Tindakan Berhasil dilakukan", "success");
+
+                         $('#select-all').prop('checked',false);
+                         $('.bulkaction').prop('disabled', true).fadeOut();
+                        $(".datatable").DataTable().ajax.reload();
+                        },
+                        error: function(xhr) {
+                        $('#select-all').prop('checked',false);
+                        swal("Gagal", "Tindakan gagal dilakukan", "error");
+
+                        }
+                    });
+
+                swal.close();
+            } else {
+                swal("Dibatalkan", "Tindakan dibatalkan", "error");
+            }
+        }
+    );
+
+
+        }
+    });
+});
+
+
+</script>
 <script type="text/javascript" src="{{url('backend/js/plugins/jquery.dataTables.min.js')}}"></script>
      <script type="text/javascript" src="{{url('backend/js/plugins/dataTables.bootstrap.min.js')}}"></script>
      <script type="text/javascript" src="https://cdn.datatables.net/rowreorder/1.4.1/js/dataTables.rowReorder.min.js"></script>

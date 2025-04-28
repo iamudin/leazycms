@@ -11,9 +11,11 @@ class VisitorController
 
         if(config('modules.installed') && strpos(request()->headers->get('referer')??'no','editortemplate')==false && strpos(url()->full(),'editortemplate')==false){
             $data = config('modules.data');
-        if (!$this->isDuplicateVisitor(Session::getId(), url()->full()) && strpos(request()->headers->get('referer'),admin_path()) ===false) {
+
             if($data){
+                if (!$this->isDuplicateVisitor(Session::getId(), url()->full()) && strpos(request()->headers->get('referer'),admin_path()) ===false) {
                 $data->increment('visited');
+                }
             }
             $visitorData = [
                 'ip' => get_client_ip(),
@@ -48,7 +50,7 @@ class VisitorController
         }
 
         return false;
-    }
+
     }
 
     public function isDuplicateVisitor($session, $visitedPage, $timestamp = null)

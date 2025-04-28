@@ -13,12 +13,9 @@ use Leazycms\Web\Http\Controllers\VisitorController;
 
 class WebController extends Controller
 {
-    protected $visited;
     public function __construct(Request $request)
     {   initial_helper();
-        if (!config('modules.current.detail_visited') ) {
-            $this->visited = (new VisitorController)->visitor_counter();
-        }
+
     }
     public function pollingsubmit(Request $request){
         $polling = PollingTopic::find($request->topic);
@@ -77,9 +74,9 @@ class WebController extends Controller
         abort_if(empty($tag), 404);
         config(['modules.page_name' =>$tag->name]);
 
-        if ($this->visited) {
-            $tag->increment('visited');
-        }
+
+        $tag->increment('visited');
+
         $post = Post::select((new Post)->selected)->whereHas('tags', function ($query) use ($slug) {
             $query->where('slug', $slug)->whereStatus('publish');
         })->whereStatus('publish')->paginate(get_option('post_perpage'));
@@ -172,6 +169,7 @@ class WebController extends Controller
             return redirect($category->url);
 
         config(['modules.page_name' => $modul->title . ' di kategori ' . $category->name]);
+        $category->increment('visited');
         $data = array(
             'index' => (new Post)->index_by_category($modul->name, $slug),
             'category' => $category,

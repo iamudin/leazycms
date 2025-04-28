@@ -110,6 +110,9 @@ class PanelController extends Controller implements HasMiddleware
             ->addColumn('reference', function ($row) {
                 return str($row->reference)->limit(70);
             })
+            ->addColumn('times', function ($row) {
+                return $row->times;
+            })
             ->addColumn('page', function ($row) {
                 return '<a href="' . $row->page . '">' . str($row->page)->limit(70) . '</a>';
             })

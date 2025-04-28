@@ -3,6 +3,7 @@ namespace Leazycms\Web\Exceptions;
 use Throwable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -22,6 +23,9 @@ class NotFoundHandler extends ExceptionHandler
         if ($exception instanceof NotFoundHttpException) {
             if (config('modules.installed')=="0") {
                 exit('Please running leazycms:install');
+            }
+            if(!Route::is('stream')){
+                (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
             }
             $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);

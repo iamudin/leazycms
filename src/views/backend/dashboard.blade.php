@@ -73,6 +73,7 @@
     <th width="10%">Browser</th>
     <th width="10%">Device</th>
     <th width="10%">OS</th>
+    <th width="10%">Tried</th>
   </tr></thead>
   <tbody>
 
@@ -108,6 +109,7 @@
             {data: 'browser', name: 'browser'},
             {data: 'device', name: 'device'},
             {data: 'os', name: 'os'},
+            {data: 'times', name: 'times'},
         ],
         responsive: true,
         /*    order: [

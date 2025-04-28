@@ -8,7 +8,7 @@ class Category extends Model
     use Fileable;
 
     protected $fillable=[
-        'type','url','status','name','description','slug','icon','sort'
+        'type','url','status','name','description','slug','icon','sort','visited'
       ];
       public static function boot()
       {
