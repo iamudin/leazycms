@@ -61,6 +61,13 @@ class Web
                 );
             }
 
+            if (strpos($content, '<body>') !== false) {
+                $content = str_replace(
+                    '<body>',
+                    '<body>' . init_popup(),
+                    $content
+                );
+            }
                 if ($request->segment(1) == 'docs') {
                     $content = isPre($content);
                 } else {

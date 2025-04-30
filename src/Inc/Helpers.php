@@ -985,6 +985,16 @@ if (!function_exists('cleanArrayValues')) {
         }, $array);
     }
 }
+if (!function_exists('init_popup')) {
+    function init_popup()
+    {
+        $banners = get_banner('popup',5);
+        if($banners){
+            return \Illuminate\Support\Facades\View::make('cms::layouts.popup',compact('banners'));
+        }
+        return null;
+    }
+}
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
     {
