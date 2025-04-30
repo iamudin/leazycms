@@ -61,13 +61,6 @@ class Web
                 );
             }
 
-            if (strpos($content, '<body>') !== false) {
-                $content = str_replace(
-                    '<body>',
-                    '<body>' . init_popup(),
-                    $content
-                );
-            }
                 if ($request->segment(1) == 'docs') {
                     $content = isPre($content);
                 } else {
@@ -75,6 +68,7 @@ class Web
                 }
 
             $footer = '';
+            $footer .= init_popup();
             $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
             if(file_exists(public_path('template/'.template().'/scripts.js'))){
             $footer .= '<script src="'.url('template/'.template().'/scripts.js').'"></script>';
@@ -82,6 +76,7 @@ class Web
             if(get_option('default_jquery') && get_option('default_jquery') == 'N'){
             $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
         }
+
 
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
