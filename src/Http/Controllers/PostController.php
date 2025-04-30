@@ -98,6 +98,7 @@ public function destroy(Request $request){
         $post->delete();
         }
     }
+    $this->recache(get_post_type());
 }
 public function show(Post $post,$id){
 abort_if(!is_numeric($id),'403');
