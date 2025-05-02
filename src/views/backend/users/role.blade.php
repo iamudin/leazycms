@@ -33,7 +33,7 @@
                 </tr>
             </thead>
             <tbody>
-            @foreach(explode(',',get_option('roles')) as $r)
+            @foreach(collect(explode(',',get_option('roles')))->diff(collect(config('modules.extension_module'))->pluck('path'))->values() as $r)
             <tr>
                 <td>{{ str($r)->headline() }}</td>
                 @foreach(['index','create','update','delete'] as $r2)

@@ -102,7 +102,7 @@ class RateLimit
             ]);
         }
         if ($request->is('search') || $request->is('search/*')) {
-            $attr['post_type'] = null;
+            $attr['post_type'] = 'search';
             $attr['detail_visited'] = false;
             $attr['view_type'] = 'search';
             $attr['view_path'] = 'search';
@@ -112,7 +112,7 @@ class RateLimit
         }
         if ($request->is('author') || $request->is('author/*')) {
             if ($request->is('author')) {
-                $attr['post_type'] = null;
+                $attr['post_type'] = 'author';
                 $attr['detail_visited'] = false;
                 $attr['view_type'] = 'author.index';
                 $attr['view_path'] = 'author.index';
@@ -120,7 +120,7 @@ class RateLimit
                     'modules.current' => $attr
                 ]);
             } else {
-                $attr['post_type'] = null;
+                $attr['post_type'] = 'author';
                 $attr['detail_visited'] = false;
                 $attr['view_type'] = 'author.detail';
                 $attr['view_path'] = 'author.detail';
@@ -130,7 +130,7 @@ class RateLimit
             }
         }
         if ($request->is('tags/*')) {
-            $attr['post_type'] = null;
+            $attr['post_type'] = 'tags';
             $attr['detail_visited'] = false;
             $attr['view_type'] = 'tags';
             $attr['view_path'] = 'tags.index';
@@ -145,7 +145,7 @@ class RateLimit
             ]);
         }
         if ($request->is('/')) {
-            $attr['post_type'] = null;
+            $attr['post_type'] = 'home';
             $attr['detail_visited'] = false;
             $attr['view_type'] = 'home';
             $attr['view_path'] = 'home';

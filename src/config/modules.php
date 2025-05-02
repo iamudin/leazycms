@@ -313,7 +313,7 @@ return [
         'document' => [
             'position' => 3,
             'name' => 'document',
-            'title' => 'Doukumen',
+            'title' => 'Dokumen',
             'description' => 'Menu Untuk Mengelola Dokumen',
             'parent' => false,
             'icon' => 'fa-download',

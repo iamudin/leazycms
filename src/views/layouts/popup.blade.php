@@ -1,125 +1,4 @@
-{{--
-  <style>
-    .modals {
-      position: fixed;
-      z-index: 1000;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(231, 231, 231, 0.9);
-      overflow: auto;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-    }
-
-    .modals.show {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .modals-inner {
-      max-width: 800px;
-      margin: 60px auto;
-      background: #111;
-      padding: 0;
-      border-radius: 10px;
-      text-align: center;
-      transform: translateY(-20px);
-      transition: transform 0.4s ease;
-    }
-
-    .modals.show .modals-inner {
-      transform: translateY(0);
-    }
-
-    .modals-content {
-      width: 100%;
-      max-height: 500px;
-      object-fit: cover;
-    }
-
-    .modals-header h3{
-       padding:0;
-       font-size:20px;
-       line-height: 1em;
-       color:white;
-
-    }
-    .modals-footer{
-      padding: 10px;
-      color: white;
-      font-size: 16px;
-      border-bottom-left-radius: 10px;
-      border-bottom-right-radius: 10px;
-      background: #222;
-    }
-    .modals-header {
-        border-top-left-radius: 10px;
-      border-top-right-radius: 10px;
-      padding:18px 0 0 0;
-    }
-    .closes-btn {
-      position: absolute;
-      top: 15px;
-      right: 25px;
-      color: rgb(193, 0, 0);
-      font-size: 35px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .closes-btn:hover {
-      color: #bbb;
-    }
-    label {
-      cursor: pointer;
-    }
-  </style>
-<div id="autoModal" class="modals">
-  <span class="closes-btn" id="closeBtn">&times;</span>
-
-  <div class="modals-inner">
-    <div class="modals-header">
-        <h3>{{ $banner->name }}</h3>
-      </div>
-    <a href="{{ $banner->link ?? 'javascript::void(0)' }}" title="{{ $banner->description }}"><img src="{{$banner->image}}"  class="modals-content"></a>
-    <div class="modals-footer">
-      <label>
-        <input type="checkbox" id="dontShowAgain"/> Jangan tampilkan lagi di sesi ini
-      </label>
-    </div>
-  </div>
-</div>
-
-<script>
-  const modal = document.getElementById('autoModal');
-  const closeBtn = document.getElementById('closeBtn');
-  const dontShowAgain = document.getElementById('dontShowAgain');
-
-  window.addEventListener('load', function () {
-    if (localStorage.getItem('dontShowModal') !== 'true') {
-      setTimeout(() => {
-        modal.classList.add('show');
-      }, 300);
-    }
-  });
-
-  function closeModal() {
-    if (dontShowAgain.checked) {
-      localStorage.setItem('dontShowModal', 'true');
-    }
-    modal.classList.remove('show');
-  }
-
-  closeBtn.onclick = closeModal;
-
-  modal.onclick = function (e) {
-    if (e.target === modal) {
-      closeModal();
-    }
-  };
-</script>
- --}}
-
+@if(get_post_type())
  <style>
     /* Gunakan style yang sama seperti sebelumnya, ditambahkan tombol navigasi */
     .modals {
@@ -162,7 +41,7 @@
     }
 
     .modals-header h3 {
-      padding: 0;
+      padding: 0 0 12px 0;
       font-size: 20px;
       line-height: 1em;
       color: white;
@@ -337,3 +216,4 @@ bannerImage.addEventListener("touchend", function(e) {
       }
     };
   </script>
+@endif

@@ -5,6 +5,7 @@
         aria-label="Hide Sidebar"></a>
     <!-- Navbar Right Menu-->
     <ul class="app-nav">
+        @include('cms::backend.layout.notif')
         <!--Notification Menu-->
         <li class="item" title="Kunjungi Website"><a class="app-nav__item text-info" href="{{ url('/') }}" target="_blank"><i class="fa fa-globe fa-lg"></i></a></li>
 

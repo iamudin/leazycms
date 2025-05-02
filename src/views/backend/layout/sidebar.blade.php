@@ -24,6 +24,7 @@
         >
             <i class="fa fa-list" aria-hidden="true"></i> MENU UTAMA
         </li>
+        @if(!in_array(Auth::user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray()) )
         <li>
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/dashboard') ? 'active' : '' }}"
@@ -32,6 +33,7 @@
                 <span class="app-menu__label">Dahsboard</span></a
             >
         </li>
+        @endif
         @foreach ($userprofile->isAdmin() ?
         collect(get_module())->sortBy('position') :
         collect(get_module())->sortBy('position')->whereIn('name',
@@ -76,6 +78,7 @@
             </ul>
         </li>
         @endforeach
+        @if(Auth::user()->level=='admin')
         <li>
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
@@ -108,6 +111,7 @@
                 <span class="app-menu__label">Polling</span></a
             >
         </li>
+        @endif
         @if ($option = config('modules.config.option'))
         <li>
             <a
@@ -117,7 +121,9 @@
                 <span class="app-menu__label">Data Web</span></a
             >
         </li>
-        @endif @if ($ext = config('modules.extension_module'))
+        @endif
+        @if ($ext = config('modules.extension_module'))
+        @if(Auth::user()->level=='admin')
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -125,9 +131,11 @@
             <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; MENU
             EXTRA
         </li>
-
+        @endif
         @foreach (json_decode(json_encode($ext)) as $row)
-        <li class="treeview">
+        @if(Auth::user()->level!='admin' && Auth::user()->level ==$row->path || Auth::user()->level=='admin')
+        @if(auth()->user()->isAdmin())
+        <li class="treeview {{ Str::contains($row->path.'/'.request()->segment(3), collect($row->module)->pluck('path')->toArray()) ? 'is-expanded':null }}">
             <a
                 title="{{ $row->description }}"
                 class="app-menu__item"
@@ -140,7 +148,7 @@
             <ul class="treeview-menu">
                 @foreach ($row->module as $module)
                 <li>
-                    <a class="treeview-item" href="{{ route($module->route) }}"
+                    <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route($module->route) }}"
                         ><i class="icon fa fa-arrow-right"></i> {{ $module->name
                         }}</a
                     >
@@ -148,7 +156,21 @@
                 @endforeach
             </ul>
         </li>
-        @endforeach @endif @if ($userprofile->level == 'admin')
+        @else
+        @foreach ($row->module as $module)
+        <li title="{{ $module->name }}">
+            <a
+                class="app-menu__item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}"
+                href="{{ route($module->route) }}"
+                ><i class="app-menu__icon fa {{ $module->icon }}"></i>
+                <span class="app-menu__label">{{ $module->name }}</span></a
+            >
+        </li>
+        @endforeach
+        @endif
+        @endif
+        @endforeach
+        @endif @if ($userprofile->level == 'admin')
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -201,7 +223,7 @@
             >
         </li>
         --}} @endif
-
+@if(Auth::user()->isAdmin())
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -216,5 +238,6 @@
                 <i class="fa fa-book"></i> Docs</a
             >
         </li>
+    @endif
     </ul>
 </aside>

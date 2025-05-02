@@ -1137,7 +1137,12 @@ if (!function_exists('web_layout')) {
         return "cms::layouts.layout";
     }
 }
-
+if (!function_exists('notification')) {
+    function notifications()
+    {
+        return new \Leazycms\Web\Models\Notification;
+    }
+}
 if (!function_exists('allow_mime')) {
 
     function allow_mime()

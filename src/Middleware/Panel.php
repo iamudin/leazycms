@@ -16,6 +16,9 @@ class Panel
      */
     public function handle(Request $request, Closure $next)
     {
+        if(strpos(url()->full(),'notifreader') === false && in_array($request->user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray())){
+            return to_route($request->user()->level.'.dashboard');
+        }
         $admin_path = admin_path();
         foreach (get_module() as $modul) {
             if ($request->is($admin_path . '/' . $modul->name)) {

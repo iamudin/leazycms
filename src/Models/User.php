@@ -61,6 +61,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Log::class);
     }
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
     function scopeWithCountPosts($query)
     {
         return $query->withCount('posts');
