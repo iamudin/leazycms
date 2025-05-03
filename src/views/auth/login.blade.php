@@ -42,8 +42,8 @@
                 @endif
 
           <div class="form-group  pb-0 mb-2">
-            <label class="control-label " style="color:#f5f5f5">Username</label>
-                <input id="username" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Username" type="text" class="form-control form-control-lg " name="username" required autocomplete="username" autofocus>
+            <label class="control-label " style="color:#f5f5f5">Username / Email</label>
+                <input id="username" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Username / Email" type="text" class="form-control form-control-lg " name="username" required autocomplete="username" autofocus>
           </div>
           <div class="form-group">
             <label class="control-label" style="color:#f5f5f5">Password</label>

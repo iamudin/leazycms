@@ -14,6 +14,7 @@ class VisitorController
 
             if($data){
                 if (!$this->isDuplicateVisitor(Session::getId(), url()->full()) && strpos(request()->headers->get('referer'),admin_path()) ===false) {
+                $data->timestamps = false;
                 $data->increment('visited');
                 }
             }

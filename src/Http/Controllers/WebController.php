@@ -74,7 +74,7 @@ class WebController extends Controller
         abort_if(empty($tag), 404);
         config(['modules.page_name' =>$tag->name]);
 
-
+        $tag->timestamps = false;
         $tag->increment('visited');
 
         $post = Post::select((new Post)->selected)->whereHas('tags', function ($query) use ($slug) {
@@ -169,6 +169,7 @@ class WebController extends Controller
             return redirect($category->url);
 
         config(['modules.page_name' => $modul->title . ' di kategori ' . $category->name]);
+        $category->timestamps = false;
         $category->increment('visited');
         $data = array(
             'index' => (new Post)->index_by_category($modul->name, $slug),
