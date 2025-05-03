@@ -143,7 +143,7 @@ if (!function_exists('isNotInSession')) {
 if (!function_exists('forbidden')) {
     function forbidden($request, $k = false)
     {
-        if($request->segment(1)!=admin_path()){
+        if($request->segment(2)!='appearance'){
         if (get_option('forbidden_keyword') && str()->contains(str($request->fullUrl())->lower(), explode(",", str_replace(" ", "", get_option('forbidden_keyword') ?? '')))) {
             $redirect = get_option('forbidden_redirect');
             if (!$k) {
