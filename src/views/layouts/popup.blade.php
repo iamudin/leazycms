@@ -36,8 +36,7 @@
 
     .modals-content {
       width: 100%;
-      max-height: 500px;
-      object-fit: cover;
+    min-height: 100%;
     }
 
     .modals-header h3 {
