@@ -180,20 +180,22 @@ bannerImage.addEventListener("touchend", function(e) {
 
 
     window.addEventListener('load', function () {
-      if (localStorage.getItem('dontShowModal') !== 'true') {
-        setTimeout(() => {
-          modal.classList.add('show');
-          showBanner(currentIndex);
-        }, 300);
-      }
-    });
+        const expireTime = localStorage.getItem('dontShowModalUntil');
+  if (!expireTime || Date.now() > parseInt(expireTime)) {
+    setTimeout(() => {
+      modal.classList.add('show');
+      showBanner(currentIndex);
+    }, 300);
+  }
+});
 
     function closeModal() {
-      if (dontShowAgain.checked) {
-        localStorage.setItem('dontShowModal', 'true');
-      }
-      modal.classList.remove('show');
-    }
+  if (dontShowAgain.checked) {
+    const oneHourLater = Date.now() + 10 * 60 * 1000;
+    localStorage.setItem('dontShowModalUntil', oneHourLater);
+  }
+  modal.classList.remove('show');
+}
 
     function nextBanner() {
       currentIndex = (currentIndex + 1) % banners.length;
