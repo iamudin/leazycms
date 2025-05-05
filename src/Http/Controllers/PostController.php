@@ -164,7 +164,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     ];
 
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
-    if(strlen($post->slug) == 0){
+    if(strlen($post->slug) == 0 || $post->type=='docs'){
         $slug = str($request->title)->slug();
     }else{
     if($post->slug_edited=='1' && !$request->custom_slug){
@@ -176,6 +176,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         $slug = $post->slug;
     }
 }
+
     $data = $request->validate($post_field);
     $allowed_tags = '<p><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote>';
     $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content'] ): null;
