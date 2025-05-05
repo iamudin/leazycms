@@ -178,7 +178,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 }
     $data = $request->validate($post_field);
     $allowed_tags = '<p><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote>';
-    $data['content'] = isset($data['content']) ? strip_tags($data['content'], $allowed_tags) : null;
+    $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content'] ): null;
 
     if(Post::onType($post->type)->whereNotIn('id',[$post->id])->whereSlug($slug)->count()>0){
         $data['slug'] = $post->slug ?? str($request->title.' '.Str::random(4))->slug();
