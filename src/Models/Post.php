@@ -192,6 +192,16 @@ class Post extends Model
            }
 
     }
+    function index_sort_by_category($type,$sortby='sort',$sort='ASC')
+    {
+            return Category::withWhereHas('posts',function($q) use($sortby,$sort){
+                $q->orderBy($sortby,$sort);
+            })
+            ->onType($type)
+            ->published()
+            ->orderBy('sort','ASC')
+            ->get();
+    }
     function index_category($type)
     {
         if (get_module($type)?->cache) {
