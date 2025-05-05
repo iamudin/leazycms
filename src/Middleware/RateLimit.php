@@ -166,7 +166,6 @@ class RateLimit
                     preload() . '</body>',
                     $content
                 );
-                $content = preg_replace('/\s+/', ' ', $content);
             }
             $response->setContent($content);
         }
