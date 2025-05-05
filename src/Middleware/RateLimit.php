@@ -17,7 +17,7 @@ class RateLimit
     public function handle(Request $request, Closure $next)
     {
         if (config('modules.installed')=="0") {
-            exit('Please running leazycms:install');
+            exit('Please running cms:install');
         }
         $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);

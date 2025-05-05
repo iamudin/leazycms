@@ -75,7 +75,7 @@
     </li>
 
     @endforeach
-    @if(Cache::has('enablededitortemplate'))
+    @if(Cache::has('enablededitortemplate') || is_local())
     <li class="list-group-item" style="padding:0;">
         <a href="{{ route('appearance.editor') }}" class="btn btn-warning btn-sm btn-md w-100"> <i class="fa fa-code"></i> Edit Template</a>
 

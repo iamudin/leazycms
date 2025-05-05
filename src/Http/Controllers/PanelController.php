@@ -483,7 +483,7 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function editorTemplate(Request $request)
     {
-        if(!Cache::has('enablededitortemplate')){
+        if(!is_local() && !Cache::has('enablededitortemplate')){
             return to_route('appearance');
         }
         admin_only();

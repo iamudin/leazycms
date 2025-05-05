@@ -1281,10 +1281,12 @@ if (!function_exists('get_banner')) {
 if (!function_exists('banner_here')) {
     function banner_here($name) {}
 }
+if (!function_exists('get_client_ip')) {
 
 function get_client_ip() {
     return request()->header('CF-Connecting-IP') ?? request()->getClientIp();
   }
+}
 
 if (!function_exists('get_ip_info')) {
     function get_ip_info()
@@ -1297,7 +1299,8 @@ if (!function_exists('get_ip_info')) {
         }
     }
 }
-function renderTemplateFile($items, $parentPath = '')
+if (!function_exists('renderTemplateFile')) {
+    function renderTemplateFile($items, $parentPath = '')
 {
     echo '<ul style="list-style:none;padding:0 0 0 14px">';
     foreach ($items as $item) {
@@ -1314,8 +1317,14 @@ function renderTemplateFile($items, $parentPath = '')
     }
     echo '</ul>';
 }
-
-function getDirectoryContents($path = null, &$results = [], $parentPath = '')
+}
+if (!function_exists('is_local')) {
+function is_local(){
+    return request()->ip() == '127.0.0.1' || request()->ip() == '::1' ? true : false;
+}
+}
+if (!function_exists('getDirectoryContents')) {
+    function getDirectoryContents($path = null, &$results = [], $parentPath = '')
 {
     if (is_null($path)) {
         $path = base_path('resources/views/template/' . template());
@@ -1339,6 +1348,7 @@ function getDirectoryContents($path = null, &$results = [], $parentPath = '')
     }
 
     return $results;
+}
 }
 
 if (!function_exists('make_custom_view')) {
