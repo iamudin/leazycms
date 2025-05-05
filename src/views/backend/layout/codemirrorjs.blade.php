@@ -13,7 +13,8 @@
             matchBrackets: true,
             indentUnit: 4,
             indentWithTabs: true,
-            theme: "default"
+            theme: "default",
+            lineWrapping: true
         });
         $('.CodeMirror').attr('style','height:74vh');
 </script>
