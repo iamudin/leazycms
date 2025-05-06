@@ -23,8 +23,12 @@
 
 
                 <li>
-                    <a class="dropdown-item" href="{{ route('logout') }}"><i class="fa fa-sign-out fa-lg"></i> Logout</a>
-
+                    <form id="logout-form" action="{{ auth()->user()->isAdmin() ? route('logout') : url('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="dropdown-item">
+                            <i class="fa fa-sign-out fa-lg"></i> Logout
+                        </button>
+                    </form>
                 </li>
             </ul>
         </li>

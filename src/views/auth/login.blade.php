@@ -20,7 +20,7 @@
     <section class="login-content" style="background:#1f1f1f">
       <div class="login-box" style="background:transparent;box-shadow:none;width:100%">
 
-        <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{route('login.submit') }}">
+        <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{$data['loginsubmit'] }}">
           @csrf
           <center>
             <img height="80" src="{{!empty(get_option('icon')) && media_exists(get_option('icon')) ? get_option('icon') : noimage()}}">
