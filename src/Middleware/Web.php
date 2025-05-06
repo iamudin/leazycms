@@ -61,7 +61,11 @@ class Web
                 );
             }
 
-   
+                if ($request->segment(1) == 'docs') {
+                    $content = isPre($content);
+                } else {
+                    $content = preg_replace('/\s+/', ' ', $content);
+                }
 
             $footer = '';
             $footer .= init_popup();
