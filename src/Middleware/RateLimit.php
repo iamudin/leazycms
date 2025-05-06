@@ -190,7 +190,7 @@ class RateLimit
                     background-color: #f1f1f1;
                     font-size: 14px;
                     color: #333;
-                    padding:3px;background:#111;text-align:center;font-size:8px;border-radius:0 5px 0 0;color:#bbb">Build by <a href="https://leazycms.com" style="color:#fff;text-decoration:none">LeazyCMS</a></div>
+                    padding:3px;background:#111;text-align:center;font-size:8px;border-radius:0 5px 0 0;color:#bbb">Build with <a href="https://leazycms.com" style="color:#fff;text-decoration:none">LeazyCMS</a></div>
          
              ';
                 $content = preg_replace('/<\/body>/', $footer. '</body>',$content);
