@@ -182,7 +182,15 @@ class RateLimit
             }
             if ($request->segment(1) != admin_path()){
                 $footer = '
-                <div style="padding:4px;background:#111;color:#f5f5f5;text-align:center;font-size:8px">Dibuat dengan <a href="https://leazycms.com" style="color:#fff;text-decoration:none">LeazyCMS</a></div>
+                <div style="
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    padding: 10px;
+                    background-color: #f1f1f1;
+                    font-size: 14px;
+                    color: #333;
+                    padding:3px;background:#111;text-align:center;font-size:8px;border-radius:0 5px 0 0;color:#bbb">Build by <a href="https://leazycms.com" style="color:#fff;text-decoration:none">LeazyCMS</a></div>
          
              ';
                 $content = preg_replace('/<\/body>/', $footer. '</body>',$content);
