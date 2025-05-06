@@ -122,14 +122,15 @@
             >
         </li>
         @endif
+        @if(config('app.sub_app_enabled'))
         @if ($ext = config('modules.extension_module'))
+
         @if(Auth::user()->level=='admin')
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
         >
-            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; MENU
-            EXTRA
+            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; SUB APP
         </li>
         @endif
         @foreach (json_decode(json_encode($ext)) as $row)
@@ -148,7 +149,7 @@
             <ul class="treeview-menu">
                 @foreach ($row->module as $module)
                 <li>
-                    <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route($module->route) }}"
+                    <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route(config($row->path.'.route').$module->route) }}"
                         ><i class="icon fa fa-arrow-right"></i> {{ $module->name
                         }}</a
                     >
@@ -170,7 +171,10 @@
         @endif
         @endif
         @endforeach
-        @endif @if ($userprofile->level == 'admin')
+        @endif
+        @endif
+
+        @if ($userprofile->level == 'admin')
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"

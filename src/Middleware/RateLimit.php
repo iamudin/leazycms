@@ -19,6 +19,19 @@ class RateLimit
         if (config('modules.installed')=="0") {
             exit('Please running cms:install');
         }
+        if(collect(config('modules.extension_module'))->count()){
+            foreach(collect(config('modules.extension_module'))->pluck('path')->toArray() as $module){
+                if($request->getHost()==parse_url(config('app.url'), PHP_URL_HOST)){
+                    config([$module.'.route'=>'panel.'.$module.'.']);
+                    config([$module.'.path_url'=>$module]);
+                }
+            }
+        }
+        if($request->getHost()==parse_url(config('app.url'), PHP_URL_HOST)){
+            config(['domain.route'=>'panel.domain.']);
+            config(['domain.path_url'=>'domain']);
+            // config('modules.extension_module')
+        }
         $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
         $uri = $request->getRequestUri();

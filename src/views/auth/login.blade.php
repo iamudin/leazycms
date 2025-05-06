@@ -9,11 +9,11 @@
     <link rel="stylesheet" type="text/css" href="{{url('backend/css/main.css')}}">
     <!-- Font-icon css-->
     <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <title>Masuk - {{get_option('site_title')}}</title>
+    <title>Masuk</title>
     <link rel="shortcut icon" href="{{ url('favicon.ico') }}" />
-    <meta property="og:title" content="Masuk - {{get_option('site_title')?? 'Web Title'}}" />
+    <meta property="og:title" content="Masuk - {{$data['title'] ?? 'Web Title'}}" />
 <meta property="og:image" content="{{url(get_option('logo') ?? noimage())}}" />
-<meta property="og:site_name" content="{{get_option('site_title') ?? 'Web Title'}}" />
+<meta property="og:site_name" content="{{$data['title'] ?? 'Web Title'}}" />
 <meta property="og:description" content="Masuk Sebagai Admin / Operator" />
   </head>
   <body>
@@ -26,8 +26,8 @@
             <img height="80" src="{{!empty(get_option('icon')) && media_exists(get_option('icon')) ? get_option('icon') : noimage()}}">
             <br>
             <br>
-            <h4 class="text-warning">{{get_option('site_title') ?? 'Web Title'}}</h4>
-           @if(get_option('site_description')) <h6 class="text-muted"><i>{{ get_option('site_description') }}</i></h6>@endif
+            <h4 class="text-warning">{{$data['title'] ?? 'Web Title'}}</h4>
+           @if(get_option('site_description')) <h6 class="text-muted"><i>{{ $data['description'] ?? 'Web description'  }}</i></h6>@endif
             <br>
 
             @if(get_option('site_maintenance')=='Y')

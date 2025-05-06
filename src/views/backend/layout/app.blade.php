@@ -15,7 +15,7 @@
     <meta property="og:url" content="">
     <meta property="og:image" content="">
     <meta property="og:description" content="">
-    <title>{{ $title ? $title . ' - Admin Panel ' . get_option('site_title') : 'Admin Panel ' . get_option('site_title') }}
+    <title>{{ $title ? $title . ' - Admin Panel ' : 'Admin Panel ' }}
     </title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">

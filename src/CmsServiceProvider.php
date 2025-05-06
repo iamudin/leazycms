@@ -24,6 +24,7 @@ class CmsServiceProvider extends ServiceProvider
     {
         Route::prefix(admin_path())
         ->middleware(['web', 'admin'])
+        ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST):null)
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/admin.php');
         });
@@ -34,6 +35,7 @@ class CmsServiceProvider extends ServiceProvider
         });
 
         Route::middleware(['web'])
+        ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST):null)
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/web.php');
         });
@@ -122,7 +124,7 @@ class CmsServiceProvider extends ServiceProvider
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && config('app.debug') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
-                Config::set(['app.debug' => false]);
+                Config::set(['app.debug' => true]);
             }
         }
         catch (\Exception $e) {

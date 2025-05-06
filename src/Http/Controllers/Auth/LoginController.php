@@ -42,13 +42,32 @@ class LoginController extends Controller
     public function loginForm(Request $request)
     {
         if (Auth::check()) {
-            return redirect(admin_path() . '/dashboard');
+            if(!$request->user()->isAdmin() && config('app.sub_app_enabled') && $request->getHost() != parse_url(config('app.url'), PHP_URL_HOST)){
+            return to_route( $request->user()->level.'.dashboard');
+            }
+            if($request->getHost() != parse_url(config('app.url'), PHP_URL_HOST) && $request->user()->isAdmin()){
+            Auth::logout();
+        }
+        return to_route('panel.dashboard');
+
         }
 
         $this->codeCaptcha();
 
         $captchaUrl = route('captcha');
-        $viewContent = view('cms::auth.login', ['captcha' => $captchaUrl])->render();
+        $data = null;
+
+
+            $data['title'] = get_option('site_title');
+            $data['description'] = get_option('site_description');
+            if(config('sub_app_enabled')){
+                if($request->getHost() != parse_url(config('app.url'), PHP_URL_HOST)){
+                    $getApp = collect(config('modules.extension_module'))->where('url','=','http://'.$request->getHost())->first();
+                    $data['title'] = $getApp['title'];
+                    $data['description'] = $getApp['description'];
+                }
+            }
+        $viewContent = view('cms::auth.login', ['captcha' => $captchaUrl,'data'=>$data])->render();
 
         // Minimize output for performance
         $compressedOutput = preg_replace('/\s+/', ' ', $viewContent);
@@ -86,7 +105,7 @@ class LoginController extends Controller
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
 
-                return redirect()->intended(admin_path() . '/dashboard');
+                return redirect()->intended('/'.admin_path());
             }
 
             Auth::logout();
