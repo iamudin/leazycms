@@ -22,7 +22,6 @@
 <meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
 <meta property="twitter:description" content="{{ $description ?? 'The Website By Laravel'}}">
 <meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
-<meta property="twitter:site" content="@parsintalabs">
 <meta name="author" content="Abu Umar">
 <meta property="og:locale" content="id" />
 <meta name="theme-color" content="#ffffff">

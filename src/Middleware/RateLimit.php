@@ -180,6 +180,19 @@ class RateLimit
                     $content
                 );
             }
+            if ($request->segment(1) != admin_path()){
+                $footer = '
+                <div style="padding:4px;background:#111;color:#f5f5f5;text-align:center;font-size:8px">Dibuat dengan <a href="https://leazycms.com" style="color:#fff;text-decoration:none">LeazyCMS</a></div>
+         
+             ';
+                $content = preg_replace('/<\/body>/', $footer. '</body>',$content);
+
+            }
+            if ($request->segment(1) == 'docs') {
+                $content = isPre($content);
+            } else {
+                $content = preg_replace('/\s+/', ' ', $content);
+            }
             $response->setContent($content);
         }
         return $response;
