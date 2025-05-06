@@ -188,7 +188,11 @@ class RateLimit
                 $content = preg_replace('/<\/body>/', $footer. '</body>',$content);
 
             }
-            
+            if ($request->segment(1) == 'docs') {
+                $content = isPre($content);
+            } elseif($request->segment(1)!= admin_path()) {
+                $content = preg_replace('/\s+/', ' ', $content);
+            }
             $response->setContent($content);
         }
         return $response;

@@ -60,13 +60,6 @@ class Web
                     $content
                 );
             }
-
-                if ($request->segment(1) == 'docs') {
-                    $content = isPre($content);
-                } else {
-                    $content = preg_replace('/\s+/', ' ', $content);
-                }
-
             $footer = '';
             $footer .= init_popup();
             $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
@@ -81,7 +74,7 @@ class Web
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
 
-             if (get_option('forbidden_keyword') && Str::contains($content,explode(",",str_replace(",'","",get_option("forbidden_keyword"))))) {
+             if (get_option('forbidden_keyword') && Str::contains($content,explode(",",str_replace(",'","",str_replace("',","",get_option("forbidden_keyword")))))) {
                abort('403');
             }
             $response->setContent($content);
