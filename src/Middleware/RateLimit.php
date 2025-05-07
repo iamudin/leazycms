@@ -27,11 +27,6 @@ class RateLimit
                 }
             }
         }
-        if($request->getHost()==parse_url(config('app.url'), PHP_URL_HOST)){
-            config(['domain.route'=>'panel.domain.']);
-            config(['domain.path_url'=>'domain']);
-            // config('modules.extension_module')
-        }
         $current_host = $request->getHost();
         $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
         $uri = $request->getRequestUri();
@@ -191,7 +186,7 @@ class RateLimit
                     font-size: 14px;
                     color: #333;
                     padding:3px;background:#111;text-align:center;font-size:8px;border-radius:0 5px 0 0;color:#bbb">Build with <a href="https://leazycms.com" style="color:#fff;text-decoration:none">LeazyCMS</a></div>
-         
+
              ';
                 $content = preg_replace('/<\/body>/', $footer. '</body>',$content);
 
