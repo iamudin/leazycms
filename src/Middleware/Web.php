@@ -74,9 +74,9 @@ class Web
             $content = preg_replace('/<\/body>/', $footer. '</body>',
              $content);
 
-             if (get_option('forbidden_keyword') && Str::contains($content,explode(",",str_replace(",'","",str_replace("',","",get_option("forbidden_keyword")))))) {
-               abort('403');
-            }
+            //  if (get_option('forbidden_keyword') && Str::contains($content,explode(",",str_replace(",'","",str_replace("',","",get_option("forbidden_keyword")))))) {
+            //    abort('403');
+            // }
             $response->setContent($content);
         }
         $this->securityHeaders($response,$request);
