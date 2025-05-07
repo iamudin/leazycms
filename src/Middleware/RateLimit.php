@@ -28,7 +28,7 @@ class RateLimit
             }
         }
         $current_host = $request->getHost();
-        $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
+        $origin_host = !config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST) : $current_host;
         $uri = $request->getRequestUri();
         $current_scheme = strpos($request,'https') !==false ? 'https' : 'http';
 
