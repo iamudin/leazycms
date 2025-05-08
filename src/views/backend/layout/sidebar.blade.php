@@ -92,7 +92,7 @@
                 class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
                 href="{{ admin_url('comments') }}"
                 ><i class="app-menu__icon fa fa-comments"></i>
-                <span class="app-menu__label">Tanggapan</span></a
+                <span class="app-menu__label">Komentar</span></a
             >
         </li>
         <li>

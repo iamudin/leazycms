@@ -1,8 +1,8 @@
-@extends('cms::backend.layout.app', ['title' => 'File Manager'])
+@extends('cms::backend.layout.app', ['title' => 'Komentar'])
 @section('content')
     <div class="row">
         <div class="col-lg-12 mb-3">
-            <h3 style="font-weight:normal;float:left"><i class="fa fa-comments"></i> Tanggapan
+            <h3 style="font-weight:normal;float:left"><i class="fa fa-comments"></i> Komentar
             </h3>
             <div class="pull-right btn-group">
 
