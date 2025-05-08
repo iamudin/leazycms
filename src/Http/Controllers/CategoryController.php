@@ -46,10 +46,10 @@ public function store(Request $request){
     $request->user()->hasRole('category'.get_post_type(),'create');
 
     $data = $request->validate([
-        'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u|'. Rule::unique('categories')->where('type',get_post_type()),
+        'name'=>'required|max:100|min:5|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'. Rule::unique('categories')->where('type',get_post_type()),
         'icon'=> 'nullable|mimetypes:image/jpeg,image/png',
         'sort'=>'nullable|numeric',
-        'description'=>'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
+        'description'=>'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:200|',
         'status'=>'required|string|in:publish,draft',
     ]);
     $data['slug'] = $slug = str($request->name)->slug();
@@ -77,10 +77,10 @@ public function update(Request $request, Category $category){
     $request->user()->hasRole('category'.get_post_type(),'update');
 
     $data = $request->validate([
-        'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u|'.Rule::unique('categories')->where('type',get_post_type())->ignore($category->id),
+        'name'=>'required|max:100|min:5|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'.Rule::unique('categories')->where('type',get_post_type())->ignore($category->id),
         'icon'=> 'nullable|mimetypes:image/jpeg,image/png',
         'sort'=>'nullable|numeric',
-        'description'=>'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
+        'description'=>'max:200|nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
         'status'=>'required|string|in:publish,draft',
     ]);
     $data['slug'] = $slug = str($request->name)->slug();

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Post extends Model
 {
     use SoftDeletes,Fileable,Commentable;
-    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','shortcut','shortcut_counter','custom_page','visited'];
+    public $selected = ['id','description','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','pinned','sort','status','shortcut','shortcut_counter','custom_page','visited','allow_comment'];
 
     protected $userselectcolumn = ['id','name','url','photo'];
     protected $categoryselectcolumn = ['id','name','url','slug'];

@@ -140,7 +140,7 @@ public function update(Request $request, Post $post){
 $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$post->type)->whereNull('deleted_at')->ignore($post->id) : '';
 
     $post_field =  [
-        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5'.$uniq,
+        'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5|max:200'.$uniq,
         'media'=> 'nullable|file|mimetypes:image/jpeg,image/png',
         'content'=> ['nullable',function ($attribute, $value, $fail) {
             if (strpos($value, '<?php') !== false) {
@@ -149,11 +149,11 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         }],
         'sort'=> 'nullable|numeric',
         'parent_id'=> 'nullable|exists:posts,id',
-        'keyword'=> 'nullable|string|regex:/^[a-zA-Z,]+$/u',
-        'description'=> 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u',
-        'redirect_to'=> 'nullable|url',
+        'keyword'=> 'nullable|string|regex:/^[a-zA-Z,]+$/u|max:200',
+        'description'=> 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|max:200',
+        'redirect_to'=> 'nullable|url|max:200',
         'category_id'=> 'nullable|string',
-        'media_description'=> 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u',
+        'media_description'=> 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|max:200',
         'pinned'=> 'nullable|in:N,Y',
         'allow_comment'=> 'nullable|in:N,Y',
         'status'=> 'required|string|in:draft,publish'
@@ -161,6 +161,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     $custommsg = [
         'title.unique' => $module->datatable->data_title .' Sudah digunakan',
         'title.min' => $module->datatable->data_title .' minimal 5 karakter',
+        'title.max' => $module->datatable->data_title .' maksimal 200 karakter',
     ];
 
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
@@ -292,7 +293,7 @@ public function recache($type){
 }
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs','comments')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs','comments')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
         return DataTables::of($data)
             ->addIndexColumn()
@@ -392,7 +393,7 @@ public function recache($type){
                 foreach($row->tags ? $row->tags->pluck('name') : [] as $item){
                     $tags .= ' <b>#'.$item.'</b>';
                 }
-                $label = ($row->allow_comment == 'Y') ? "<i class='fa fa-comments'></i> "  : '';
+                $label = $row->allow_comment == 'Y' ? "<i class='fa fa-comments'></i> ".$row->comments_count  : '';
                 $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> '.($row->custom_page==1? '<sup class="badge badge-dark"><small>Custom Page</small></sup>':''): $row->title ) : '<i class="text-muted">__Tanpa '.$current_module->datatable->data_title.'__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
                 $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
@@ -401,7 +402,7 @@ public function recache($type){
                 $shortcut =  $current_module->web->detail && $row->shortcut && $row->status=='publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\''.url($row->shortcut).'\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> '.$row->shortcut_counter.'</a>':'';
 
                 $b = '<b class="text-primary">' . $tit . '</b><br>';
-                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' '.$tags.' ' . $label . ' '. $shortcut.' ' . $draft . '</small>';
+                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' '.$label.' ' . $tags . ' '. $shortcut.' ' . $draft . '</small>';
                 return $b;
             })
             ->addColumn('created_at', function ($row) {

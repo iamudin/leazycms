@@ -99,10 +99,10 @@ public function create(){
 }
 public function store(Request $request){
     $data = $request->validate([
-        'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
+        'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:100',
         'foto'=> 'nullable|mimetypes:image/jpeg,image/png',
-        'email'=>'required|email|'.Rule::unique('users'),
-        'username'=>'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users'),
+        'email'=>'required|email|max:50|'.Rule::unique('users'),
+        'username'=>'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|max:20|'.Rule::unique('users'),
         'status'=>'required|string|in:active,blocked',
         'level'=>'required|string|in:'.get_option('roles'),
         'password'=>'required|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
@@ -123,10 +123,10 @@ public function edit(User $user){
 }
 public function update(Request $request, User $user){
     $data = $request->validate([
-        'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
+        'name'=>'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:100',
         'foto'=> 'nullable|mimetypes:image/jpeg,image/png',
-        'email'=>'required|email|'.Rule::unique('users')->ignore($user->id),
-        'username'=>'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
+        'email'=>'required|email|max:50|'.Rule::unique('users')->ignore($user->id),
+        'username'=>'required|string|min:5|max:20|regex:/^[a-zA-Z\p{P}]+$/u|'.Rule::unique('users')->ignore($user->id),
         'status'=>'required|string|in:active,blocked',
         'level'=>'required|string|in:'.get_option('roles'),
         'password'=>'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
