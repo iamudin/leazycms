@@ -28,29 +28,28 @@ class RateLimit
             }
         }
         $current_host = $request->getHost();
-        $origin_host = !config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST) : $current_host;
+        $origin_host = config('app.sub_app_enabled') ? $current_host : parse_url(config('app.url'), PHP_URL_HOST);
         $uri = $request->getRequestUri();
-        $current_scheme = strpos($request,'https') !==false ? 'https' : 'http';
+        $current_scheme = $request->getScheme();
 
-        // Initialize variables
-        $redirectUrl = null;
-        // Remove "index.php" from URI
+        $is_local = in_array($request->ip(), ['127.0.0.1', '::1']);
+        $expected_scheme = $is_local ? 'http' : 'https';
+
+        // Remove "index.php" from URI (optional, tapi hati-hati)
         if (strpos($uri, 'index.php') !== false) {
             $uri = str_replace('index.php', '', $uri);
         }
-        if(!(request()->ip() == '127.0.0.1' || request()->ip() == '::1')) {
-            $scheme = 'https';
-        }else{
-            $scheme = 'http';
+
+        // Hanya redirect jika benar-benar berbeda
+        if (!$is_local && ($current_scheme !== $expected_scheme || $current_host !== $origin_host)) {
+            $redirectUrl = $expected_scheme . '://' . $origin_host . '/' . ltrim($uri, '/');
+
+            // Hindari redirect loop
+            if ($redirectUrl !== $request->fullUrl()) {
+                return redirect($redirectUrl);
+            }
         }
-        // Build the redirect URL if needed
-        if ($current_scheme!=$scheme || $current_host != $origin_host || $uri != $request->getRequestUri()) {
-            $redirectUrl = $scheme.'://'.$origin_host . '/' . ltrim($uri, '/');
-        }
-        // Redirect if necessary
-        if ($redirectUrl && !(request()->ip() == '127.0.0.1' || request()->ip() == '::1')) {
-            return redirect($redirectUrl);
-        }
+
 
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
