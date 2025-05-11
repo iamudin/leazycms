@@ -132,8 +132,10 @@ class CmsServiceProvider extends ServiceProvider
     }
         $this->loadTemplateConfig();
         }
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
+        if ($this->app->environment('production') ) {
+                if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+                    URL::forceScheme('https');
+                }
         }
     }
 
