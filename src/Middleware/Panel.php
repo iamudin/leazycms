@@ -101,6 +101,7 @@ class Panel
         $response = $next($request);
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
+            if(strpos($request->fullUrl(),'edit')===false){
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) {
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
                 if (strpos($attributes, 'class="') !== false) {
@@ -110,6 +111,7 @@ class Panel
                 }
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
+        }
                 if (in_array($request->segment(2),['docs','appearance'])) {
                     $content = isPrePanel($content);
                 } else {

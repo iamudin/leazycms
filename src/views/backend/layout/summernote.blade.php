@@ -148,7 +148,7 @@
                 var actualImageUrl = response.url;
                 var figureHTML = `
                         <figure style="text-align: center; margin: 10px 0;">
-                            <img src="${actualImageUrl}" alt="${actualImageUrl.split('/').pop()}" style="max-width: 100%; height: auto;">
+                            <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
                             <figcaption style="font-style: italic; color: #666;"><small>Ilustrasi Gambar Disini</small></figcaption>
                         </figure>
                     `;
