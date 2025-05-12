@@ -22,45 +22,50 @@ class RateLimit
                 }
             }
         }
-
         $uri = $request->getRequestUri();
         $host = $request->getHost();
-        $appUrlHost = parse_url(config('app.url'), PHP_URL_HOST);
+        $appUrl = config('app.url');
+        $appUrlHost = parse_url($appUrl, PHP_URL_HOST);
         $isLocal = in_array($request->ip(), ['127.0.0.1', '::1']);
         $redirectUrl = null;
 
-        // Deteksi HTTPS via Cloudflare
-        $isHttpsViaCloudflare = false;
-        if ($request->server('HTTP_CF_VISITOR')) {
-            $cf = json_decode($request->server('HTTP_CF_VISITOR'), true);
-            $isHttpsViaCloudflare = isset($cf['scheme']) && $cf['scheme'] === 'https';
-        }
+        // Deteksi apakah pakai Cloudflare
+        $cfVisitor = $request->server('HTTP_CF_VISITOR');
+        $isHttpsViaCf = $cfVisitor ? (json_decode($cfVisitor, true)['scheme'] ?? 'http') === 'https' : false;
 
         // Deteksi HTTPS native
         $isHttpsNative = $request->server('HTTPS') === 'on' || $request->server('SERVER_PORT') == 443;
 
-        $isHttps = $isHttpsViaCloudflare || $isHttpsNative;
-
-        // Tentukan skema akhir
+        $isHttps = $isHttpsViaCf || $isHttpsNative;
         $scheme = $isHttps ? 'https' : 'http';
 
-        // 1. Bersihkan index.php dari URI
+        // 1. Redirect jika ada "index.php/" di URI
         if (strpos($uri, 'index.php/') !== false) {
             $cleanUri = str_replace('index.php/', '', $uri);
-            $redirectUrl = $scheme . '://' . $appUrlHost . '/' . ltrim($cleanUri, '/');
+            $redirectUrl = $scheme . '://' . $host . '/' . ltrim($cleanUri, '/');
         }
 
-        // 2. Redirect jika bukan HTTPS dan bukan lokal
+        // 2. Redirect ke HTTPS jika bukan lokal dan belum HTTPS
         elseif (!$isLocal && !$isHttps) {
-            $redirectUrl = 'https://' . $appUrlHost . $uri;
+            $redirectUrl = 'https://' . $host . $uri;
         }
 
-        // 3. Redirect jika host tidak sesuai app.url
+        // 3. Validasi domain jika sub_app_enabled diaktifkan
+        elseif (config('app.sub_app_enabled')) {
+            $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
+                return parse_url($url, PHP_URL_HOST);
+            })->toArray();
+
+            if (!in_array($host, $allowedHosts, true)) {
+                $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
+            }
+        }
+        // 4. Jika sub_app_enabled = false, host tetap harus sama dengan app.url
         elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
 
-        // Eksekusi redirect jika diperlukan dan bukan loop
+        // Lakukan redirect jika perlu dan bukan loop
         if ($redirectUrl && $redirectUrl !== $request->fullUrl()) {
             return redirect($redirectUrl, 301);
         }
