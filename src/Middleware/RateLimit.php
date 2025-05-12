@@ -31,23 +31,25 @@ class RateLimit
         $origin_host = config('app.sub_app_enabled') ? $current_host : parse_url(config('app.url'), PHP_URL_HOST);
         $uri = $request->getRequestUri();
         $current_scheme = $request->getScheme();
-
         $is_local = in_array($request->ip(), ['127.0.0.1', '::1']);
         $expected_scheme = $is_local ? 'http' : 'https';
 
-        // Remove "index.php" from URI (optional, tapi hati-hati)
-        if (strpos($uri, 'index.php') !== false) {
-            $uri = str_replace('index.php', '', $uri);
+        $redirectUrl = null;
+
+        // 1. Redirect jika ada "index.php" di URI
+        if (strpos($uri, 'index.php/') !== false) {
+            $cleanUri = str_replace('index.php/', '', $uri);
+            $redirectUrl = $request->getSchemeAndHttpHost() . '/' . ltrim($cleanUri, '/');
         }
 
-        // Hanya redirect jika benar-benar berbeda
-        if (!$is_local && ($current_scheme !== $expected_scheme || $current_host !== $origin_host)) {
-            $redirectUrl = $expected_scheme . '://' . $origin_host . '/' . ltrim($uri, '/');
+        // 2. Redirect jika scheme atau host tidak sesuai
+        elseif (!$is_local && ($current_scheme !== $expected_scheme || $current_host !== $origin_host)) {
+            $redirectUrl = $expected_scheme . '://' . $origin_host . $uri;
+        }
 
-            // Hindari redirect loop
-            if ($redirectUrl !== $request->fullUrl()) {
-                return redirect($redirectUrl);
-            }
+        // 3. Redirect jika perlu dan tidak menyebabkan loop
+        if ($redirectUrl && $redirectUrl !== $request->fullUrl()) {
+            return redirect($redirectUrl, 301); // gunakan 301 (permanent redirect)
         }
 
 
