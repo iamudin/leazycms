@@ -7,13 +7,8 @@ use Illuminate\Http\Request;
 
 class RateLimit
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return mixed
-     */
+
+
     public function handle(Request $request, Closure $next)
     {
         if (config('modules.installed')=="0") {
@@ -27,31 +22,45 @@ class RateLimit
                 }
             }
         }
-        $current_host = $request->getHost();
-        $origin_host = config('app.sub_app_enabled') ? $current_host : parse_url(config('app.url'), PHP_URL_HOST);
-        $uri = $request->getRequestUri();
-        $current_scheme = $request->getScheme();
-        $is_local = in_array($request->ip(), ['127.0.0.1', '::1']);
-        $expected_scheme = $is_local ? 'http' : 'https';
 
-        $redirectUrl = null;
+     $current_host = $request->getHost();
+    $origin_host = config('app.sub_app_enabled') ? $current_host : parse_url(config('app.url'), PHP_URL_HOST);
+    $uri = $request->getRequestUri();
+    $is_local = in_array($request->ip(), ['127.0.0.1', '::1']);
+    $redirectUrl = null;
 
-        // 1. Redirect jika ada "index.php" di URI
-        if (strpos($uri, 'index.php/') !== false) {
-            $cleanUri = str_replace('index.php/', '', $uri);
-            $redirectUrl = $request->getSchemeAndHttpHost() . '/' . ltrim($cleanUri, '/');
+    // Deteksi HTTPS dari Cloudflare
+    $is_https_via_cf = false;
+    if (isset($_SERVER['HTTP_CF_VISITOR'])) {
+        $cf_visitor = json_decode($_SERVER['HTTP_CF_VISITOR'], true);
+        if (!empty($cf_visitor['scheme']) && $cf_visitor['scheme'] === 'https') {
+            $is_https_via_cf = true;
         }
+    }
 
-        // 2. Redirect jika scheme atau host tidak sesuai
-        elseif (!$is_local && ($current_scheme !== $expected_scheme || $current_host !== $origin_host)) {
-            $redirectUrl = $expected_scheme . '://' . $origin_host . $uri;
-        }
+    // Deteksi HTTPS asli jika tidak pakai Cloudflare
+    $is_native_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                        || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
 
-        // 3. Redirect jika perlu dan tidak menyebabkan loop
-        if ($redirectUrl && $redirectUrl !== $request->fullUrl()) {
-            return redirect($redirectUrl, 301); // gunakan 301 (permanent redirect)
-        }
+    // Final HTTPS detection
+    $is_https = $is_https_via_cf || $is_native_https;
 
+    // 1. Redirect jika ada "index.php" di URI
+    if (strpos($uri, 'index.php/') !== false) {
+        $cleanUri = str_replace('index.php/', '', $uri);
+        $scheme = $is_https ? 'https' : 'http';
+        $redirectUrl = $scheme . '://' . $origin_host . '/' . ltrim($cleanUri, '/');
+    }
+
+    // 2. Redirect ke HTTPS jika belum HTTPS (dan bukan lokal)
+    elseif (!$is_local && !$is_https) {
+        $redirectUrl = 'https://' . $origin_host . $uri;
+    }
+
+    // 3. Redirect jika perlu dan tidak menyebabkan loop
+    if ($redirectUrl && $redirectUrl !== $request->fullUrl()) {
+        return redirect($redirectUrl, 301);
+    }
 
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
