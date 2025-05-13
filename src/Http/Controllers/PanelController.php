@@ -469,11 +469,12 @@ class PanelController extends Controller implements HasMiddleware
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
 
-            $current_template_name = get_option('template');
-              $update =  \Leazycms\Web\Models\Option::where('name',$current_template_name)->update([
+              $update =  \Leazycms\Web\Models\Option::where('name','template')->update([
                     'value'=>$mainFolderName
                 ]);
                 if($update){
+                    Artisan::call('config:cache');
+                    Artisan::call('view:cache');
                     while (get_option('template') !== $mainFolderName) {
                     Artisan::call('config:cache');
                     Artisan::call('view:cache');
