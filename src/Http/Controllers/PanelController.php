@@ -360,6 +360,7 @@ class PanelController extends Controller implements HasMiddleware
         if ($request->optimize) {
                 Artisan::call('config:cache');
                 Artisan::call('route:cache');
+                Artisan::call('view:cache');
             return to_route('appearance')->send()->with('success', 'Berhasil di optimalkan');
         }
         if ($request->isMethod('post')) {
@@ -475,10 +476,11 @@ class PanelController extends Controller implements HasMiddleware
                 if($update){
                     while (get_option('template') !== $mainFolderName) {
                     Artisan::call('config:cache');
+                    Artisan::call('view:cache');
                     sleep(1); // opsional
                     }
                 }
-            return redirect(route('appearance') . '?optimize=true');
+            return to_route('appearance');
         } else {
             return back()->with('danger', 'Template Gagal Diupload');
         }
