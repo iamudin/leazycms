@@ -469,11 +469,15 @@ class PanelController extends Controller implements HasMiddleware
             File::deleteDirectory($extractPath);
 
             $current_template_name = get_option('template');
-            if ($current_template_name != $mainFolderName) {
-                \Leazycms\Web\Models\Option::where('name',$current_template_name)->update([
+              $update =  \Leazycms\Web\Models\Option::where('name',$current_template_name)->update([
                     'value'=>$mainFolderName
                 ]);
-            }
+                if($update){
+                    while (get_option('template') !== $mainFolderName) {
+                    Artisan::call('config:cache');
+                    sleep(1); // opsional
+                    }
+                }
             return redirect(route('appearance') . '?optimize=true');
         } else {
             return back()->with('danger', 'Template Gagal Diupload');
