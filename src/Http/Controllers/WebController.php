@@ -181,10 +181,9 @@ class WebController extends Controller
     }
     public function search(Request $request,  $slug = null)
     {
+         abort_if(empty($slug), '404');
         if ($request->isMethod('post') && $request->keyword){
             return redirect('search/' . str($request->keyword)->slug());
-        }else{
-            abort_if(empty($slug), '404');
         }
         $query = str_replace('-', ' ', str($slug)->slug());
         $type = collect(get_module())->where('public', true)->where('web.detail', true)->pluck('name')->toArray();
