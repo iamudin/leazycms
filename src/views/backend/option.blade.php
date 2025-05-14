@@ -18,7 +18,7 @@
                     <hr style="margin:0;padding:0">
                     @foreach ($row as $field)
                         <small>{{ $field[0] }}</small><br>
-                        @if ($field[1] != 'text' && is_array($field[1]))
+                        @if ($field[1] == 'file')
                             @if (media_exists(get_option(_us($field[0]))))
                                 <a href="{{get_option(_us($field[0])) }}"
                                     class="btn btn-sm btn-outline-primary">{{ basename(get_option(_us($field[0]))) }}</a> <i
@@ -28,8 +28,12 @@
                                 <input @if (isset($field[2])) required @endif type="file"
                                     class="form-control-sm form-control-file" name="{{ _us($field[0]) }}">
                             @endif
+                        @elseif($field[1] == 'textarea')
+                        <textarea @if (isset($field[2])) required @endif cols="20" rows="100" name="{{_us($field[0])}}">
+                            {{ get_option(_us($field[0])) }}
+                        </textarea>
                         @else
-                            <input @if (isset($field[2])) required @endif type="text"
+                            <input @if (isset($field[2])) required @endif type="{{ $field[1]  }}"
                                 class="form-control form-control-sm" name="{{ _us($field[0]) }}"
                                 placeholder="Masukkan {{ $field[0] }}" value="{{ get_option(_us($field[0])) }}">
                         @endif
