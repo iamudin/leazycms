@@ -65,8 +65,7 @@ class RateLimit
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
 
-        // Lakukan redirect jika perlu dan bukan loop
-        if ($redirectUrl && $redirectUrl !== $request->fullUrl()) {
+        if ($redirectUrl && rtrim($redirectUrl,'/') !== $request->fullUrl()) {
             return redirect($redirectUrl, 301);
         }
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);

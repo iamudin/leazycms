@@ -29,7 +29,7 @@
                                     class="form-control-sm form-control-file" name="{{ _us($field[0]) }}">
                             @endif
                         @elseif($field[1] == 'textarea')
-                        <textarea @if (isset($field[2])) required @endif class="form-control" name="{{_us($field[0])}}">
+                        <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">
                             {{ get_option(_us($field[0])) }}
                         </textarea>
                         @else

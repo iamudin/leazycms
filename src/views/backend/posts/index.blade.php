@@ -11,13 +11,60 @@
     <a href="{{route(get_post_type().'.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
     @endif
 
-    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i class="fas fa-filter"></i></button>
+    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i class="fas fa-filter"></i> Filter</button>
+</div>
 </div>
 </div>
 
+<div class="col-lg-12">
+
+    <div class="row">
+        @php
+        $publish = query()->onType(get_post_type())->published()->count();
+        $draft = query()->onType(get_post_type())->whereStatus('draft')->count();
+        $trash = query()->onType(get_post_type())->onlyTrashed()->count();
+
+        @endphp
+              <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">
+                <div class="widget-small primary coloured-icon"><i class="icon fa fa-globe fa-3x"></i>
+                  <div class="info pl-3">
+                    <p class="mt-2 text-muted">Dipublikasi</p>
+                    <h2><b>{{ $publish }}</b></h2>
+                  </div>
+                </div>
+              </div>
+
+              <div onclick="$('#status').val('draft').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">
+                <div class="widget-small warning coloured-icon"><i class="icon fa fa-save fa-3x"></i>
+                  <div class="info pl-3">
+                    <p class="mt-2 text-muted">Draft</p>
+                    <h2><b>{{ $draft }}</b></h2>
+                  </div>
+                </div>
+              </div>
+              @if(current_module()->form->category)
+              <a href="{{ route(get_post_type().'.category') }}" class="col-6 col-md-6 col-lg-3">
+                <div class="widget-small info coloured-icon"><i class="icon fa fa-tags fa-3x"></i>
+                  <div class="info pl-3">
+                    <p class="mt-2 text-muted">Kategori</p>
+                    <h2><b>{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count(); }}</b></h2>
+                  </div>
+                </div>
+            </a>
+              @endif
+              <div onclick="$('#status').val('sampah').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">
+                <div class="widget-small danger coloured-icon"><i class="icon fa fa-trash-alt fa-3x"></i>
+                  <div class="info pl-3">
+                    <p class="mt-2 text-muted">Sampah</p>
+                    <h2><b>{{ $trash }}</b></h2>
+                  </div>
+                </div>
+              </div>
+            </div>
 </div>
 <div class="col-lg-12">
     @include('cms::backend.layout.error')
+
     <div class="mb-2 bulkaction" style="display: none">
         <select id="bulkAction" class="form-control-sm form-control-select" >
             <option value="">Pilih tindakan</option>
