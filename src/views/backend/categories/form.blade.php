@@ -26,14 +26,14 @@
 
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Keterangan</label>
-                  <textarea class="form-control " name="description" placeholder="Masukkan Keterangan">{{$category ? $category->description : old('description')}}</textarea>
+                  <textarea class="form-control form-control-sm" name="description" placeholder="Masukkan Keterangan">{{$category ? $category->description : old('description')}}</textarea>
             </div>
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Urutan</label>
                 @php
                 $count = \Leazycms\Web\Models\Category::whereType(current_module()->name)->whereStatus('publish')->count();
                 @endphp
-                <select name="sort" id="" class="form-control form-control-select">
+                <select name="sort" id="" class="form-control form-control-select form-control-sm">
                     <option value="0" >Pilih</option>
                 @for($i=1; $i <= ( $count > 0 && !$category ? $count+1 : $count); $i++)
                 <option value="{{ $i }}"{{ $category && $category->sort==$i ? 'selected':'' }}>{{$i}}</option>

@@ -25,19 +25,23 @@
 <meta name="author" content="Abu Umar">
 <meta property="og:locale" content="id" />
 <meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="{{$url ?? url('/')}}" >
 <meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ??  get_option('site_title') }}">
 <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
 <meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
 <meta name="msapplication-TileColor" content="#0068df">
+@php $ic180 = get_option('pwa_icon_180'); @endphp
+@if($ic180 && media_exists($ic180))
 <meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')): url(noimage()) }}">
-<link rel="canonical" href="{{$url ?? url('/')}}" >
 <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')) : url(noimage())}}">
-@php $ic32 = get_option('pwa_icon_32'); $ic16=get_option('pwa_icon_32'); @endphp
+@endif
+@php $ic32 = get_option('pwa_icon_32'); $ic16=get_option('pwa_icon_16'); @endphp
 @if($ic32 && $ic16 && media_exists($ic32) && media_exists($ic16)  )
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url($ic32)}}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ url($ic16)}}">
 @endif
 @if(get_option('pwa_name') && get_option('pwa_short_name'))
+
 <link rel="manifest" href="{{ urL('favicon/site.manifest') }}">
 <script type="text/javascript">
     if ('serviceWorker' in navigator) {

@@ -295,6 +295,9 @@ public function recache($type){
     {
         $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs','comments')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs','comments')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
+        if($current_module->web->sortable){
+            $data->orderBy('sort','ASC');
+        }
         return DataTables::of($data)
             ->addIndexColumn()
             ->filter(function ($instance) use ($req) {
