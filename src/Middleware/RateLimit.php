@@ -46,7 +46,7 @@ class RateLimit
         }
 
         // 2. Redirect ke HTTPS jika bukan lokal dan belum HTTPS
-        elseif (!$isLocal && !$isHttps) {
+        elseif (!$isLocal && !$isHttps && app()->environment('production')) {
             $redirectUrl = 'https://' . $host . $uri;
         }
 
