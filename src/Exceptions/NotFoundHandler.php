@@ -27,29 +27,51 @@ class NotFoundHandler extends ExceptionHandler
             if(!Route::is('stream')){
                 (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
             }
-            $current_host = $request->getHost();
-        $origin_host = parse_url(config('app.url'), PHP_URL_HOST);
-        $uri = $request->getRequestUri();
-        $current_scheme = strpos($request,'https') !==false ? 'https' : 'http';
-
-        // Initialize variables
+         $uri = $request->getRequestUri();
+        $host = $request->getHost();
+        $appUrl = config('app.url');
+        $appUrlHost = parse_url($appUrl, PHP_URL_HOST);
+        $isLocal = in_array($request->ip(), ['127.0.0.1', '::1']);
         $redirectUrl = null;
-        // Remove "index.php" from URI
-        if (strpos($uri, 'index.php') !== false) {
-            $uri = str_replace('index.php', '', $uri);
+
+        // Deteksi apakah pakai Cloudflare
+        $cfVisitor = $request->server('HTTP_CF_VISITOR');
+        $isHttpsViaCf = $cfVisitor ? (json_decode($cfVisitor, true)['scheme'] ?? 'http') === 'https' : false;
+
+        // Deteksi HTTPS native
+        $isHttpsNative = $request->server('HTTPS') === 'on' || $request->server('SERVER_PORT') == 443;
+
+        $isHttps = $isHttpsViaCf || $isHttpsNative;
+        $scheme = $isHttps ? 'https' : 'http';
+
+        // 1. Redirect jika ada "index.php/" di URI
+        if (strpos($uri, 'index.php/') !== false) {
+            $cleanUri = str_replace('index.php/', '', $uri);
+            $redirectUrl = $scheme . '://' . $host . '/' . ltrim($cleanUri, '/');
         }
-        if(!(request()->ip() == '127.0.0.1' || request()->ip() == '::1')) {
-            $scheme = 'https';
-        }else{
-            $scheme = 'http';
+
+        // 2. Redirect ke HTTPS jika bukan lokal dan belum HTTPS
+        elseif (!$isLocal && !$isHttps && app()->environment('production')) {
+            $redirectUrl = 'https://' . $host . $uri;
         }
-        // Build the redirect URL if needed
-        if ($current_scheme!=$scheme || $current_host != $origin_host || $uri != $request->getRequestUri()) {
-            $redirectUrl = $scheme.'://'.$origin_host . '/' . ltrim($uri, '/');
+
+        // 3. Validasi domain jika sub_app_enabled diaktifkan
+        elseif (config('app.sub_app_enabled')) {
+            $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
+                return parse_url($url, PHP_URL_HOST);
+            })->toArray();
+
+            if (!in_array($host, $allowedHosts, true)) {
+                $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
+            }
         }
-        // Redirect if necessary
-        if ($redirectUrl && !(request()->ip() == '127.0.0.1' || request()->ip() == '::1')) {
-            return redirect($redirectUrl);
+        // 4. Jika sub_app_enabled = false, host tetap harus sama dengan app.url
+        elseif ($host !== $appUrlHost) {
+            $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
+        }
+        // dd(urldecode($redirectUrl).' '.urldecode($request->fullUrl()));
+        if ($redirectUrl && rtrim(urldecode($redirectUrl),'/') !== urldecode($request->fullUrl())) {
+            return redirect($redirectUrl, 301);
         }
             forbidden($request);
 
