@@ -361,7 +361,7 @@ class PanelController extends Controller implements HasMiddleware
                 Artisan::call('config:cache');
                 Artisan::call('route:cache');
                 Artisan::call('view:cache');
-            return to_route('appearance')->send()->with('success', 'Berhasil di optimalkan');
+            return back()->send()->with('success', 'Berhasil di optimalkan');
         }
         if ($request->isMethod('post')) {
             if ($file = $request->file('template')) {
