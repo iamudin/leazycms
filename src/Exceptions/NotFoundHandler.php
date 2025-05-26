@@ -44,7 +44,6 @@ class NotFoundHandler extends ExceptionHandler
         $isHttps = $isHttpsViaCf || $isHttpsNative;
         $scheme = $isHttps ? 'https' : 'http';
 
-        // 1. Redirect jika ada "index.php/" di URI
         if (strpos($uri, 'index.php/') !== false) {
             $cleanUri = str_replace('index.php/', '', $uri);
             $redirectUrl = $scheme . '://' . $host . '/' . ltrim($cleanUri, '/');
@@ -65,11 +64,9 @@ class NotFoundHandler extends ExceptionHandler
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
         }
-        // 4. Jika sub_app_enabled = false, host tetap harus sama dengan app.url
         elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-        // dd(urldecode($redirectUrl).' '.urldecode($request->fullUrl()));
         if ($redirectUrl && rtrim(urldecode($redirectUrl),'/') !== urldecode($request->fullUrl())) {
             return redirect($redirectUrl, 301);
         }
