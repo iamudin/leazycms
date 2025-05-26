@@ -102,7 +102,7 @@ class CmsServiceProvider extends ServiceProvider
         Carbon::setLocale('ID');
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
-        if (DB::connection()->getPDO() && $this->checkAllTables()) {
+        if (DB::connection()->getDatabaseName() && $this->checkAllTables()) {
             try{
                 if(!config('modules.version')){
                     config(['modules.version' => leazycms_version()]);
