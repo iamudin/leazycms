@@ -45,7 +45,7 @@
             color: #dc3545;
             font-weight: bold;
         }
-        a {
+        .btnback {
             display: inline-block;
             padding: 10px 20px;
             background-color: #dc3545;
@@ -54,7 +54,7 @@
             border-radius: 5px;
             font-size: 16px;
         }
-        a:hover {
+        .btnback:hover {
             background-color: #c82333;
         }
     </style>
