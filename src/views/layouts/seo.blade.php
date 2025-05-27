@@ -107,4 +107,37 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   @endif
 
 @stack('styles')
+@if(get_option('whatsapp'))
+<style>
+    .wa-float {
+  position: fixed;
+  width: 55px;
+  height: 55px;
+  bottom: 20px;
+  right: 20px;
+  background-color: #25d366;
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.wa-float:hover {
+  background-color: #128c7e;
+}
+
+
+
+</style>
+<!-- Floating WA Button -->
+<div class="wa-float" onclick="location.href='https:\/\/wa.me/{{get_option('whatsapp')}}?text=Halo%2C%20saya%20ingin%20bertanya.'">
+  <i class="fab fa-whatsapp fa-2x"></i>
+</div>
+@endif
 
