@@ -191,22 +191,7 @@ class RateLimit
                     $content
                 );
             }
-            if ($request->segment(1) != admin_path()){
-                $footer = '
-                <div style="
-                    position: fixed !important;
-                    bottom: 0  !important;
-                    left: 0  !important;
-                    padding: 10px  !important;
-                    background-color: #f1f1f1  !important;
-                    font-size: 14px  !important;
-                    color: #333  !important;
-                    padding:3px  !important;background:#111  !important;text-align:center  !important;font-size:8px  !important;border-radius:0 5px 0 0  !important;color:#bbb  !important">Build with <a href="https://leazycms.com" style="color:#fff  !important;text-decoration:none  !important">LeazyCMS</a></div>
 
-             ';
-                $content = preg_replace('/<\/body>/', $footer. '</body>',$content);
-
-            }
             if ($request->segment(1) == 'docs') {
                 $content = isPre($content);
             } elseif($request->segment(1)!= admin_path()) {

@@ -1,4 +1,6 @@
 <meta charset="utf-8">
+<meta name="author" content="help@leazycms.com">
+<meta name="copyright" content="© 2025 - Build by LeazyCMS">
 <meta name="viewport" content="width=device-width,initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
@@ -22,7 +24,6 @@
 <meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
 <meta property="twitter:description" content="{{ $description ?? 'The Website By Laravel'}}">
 <meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
-<meta name="author" content="Abu Umar">
 <meta property="og:locale" content="id" />
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="{{$url ?? url('/')}}" >
