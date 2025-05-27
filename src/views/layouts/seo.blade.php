@@ -109,35 +109,53 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
 @stack('styles')
 @if(get_option('whatsapp'))
 <style>
-    .wa-float {
+.wa-float {
   position: fixed;
-  width: 55px;
-  height: 55px;
   bottom: 20px;
   right: 20px;
+  width: 60px;
+  height: 60px;
   background-color: #25d366;
-  color: #fff;
+  color: white;
   border-radius: 50%;
-  text-align: center;
   box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s;
+  z-index: 1000;
+  transition: width 0.3s ease, border-radius 0.3s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-left: 10px;
+}
+
+.wa-float i {
+  flex-shrink: 0;
+  padding:0 10px 0 0;
+}
+
+.wa-label {
+  font-size: 14px;
+  opacity: 0;
+  display: none;
+  transition: opacity 0.3s ease;
 }
 
 .wa-float:hover {
-  background-color: #128c7e;
+  width: 140px;
+  border-radius: 30px;
 }
 
-
+.wa-float:hover .wa-label {
+  opacity: 1;
+}
 
 </style>
 <!-- Floating WA Button -->
-<div class="wa-float" onclick="location.href='https:\/\/wa.me/{{get_option('whatsapp')}}?text=Halo%2C%20saya%20ingin%20bertanya.'">
+<div class="wa-float" onmouseout="$('.wa-label').hide()" onmouseover="$('.wa-label').show()" onclick="location.href='https:\/\/wa.me/{{get_option('whatsapp')}}?text=Halo%2C%20saya%20ingin%20bertanya.'">
   <i class="fab fa-whatsapp fa-2x"></i>
+   <span class="wa-label">Hubungi</span>
 </div>
 @endif
 
