@@ -73,7 +73,7 @@ return [
                 'sortable'=>false,
             ],
             'public' => true,
-            'cache' => true,
+            'cache' => false,
             'active' => true,
         ],
         'gallery' => [
@@ -151,7 +151,7 @@ return [
                 'sortable'=>false,
             ],
             'public' => true,
-            'cache' => true,
+            'cache' => false,
             'active' => true,
         ],
         'kepegawaian' => [
@@ -382,7 +382,7 @@ return [
                 'sortable'=>false,
             ],
             'public' => true,
-            'cache' => true,
+            'cache' => false,
             'active' => true,
         ],
         'agenda' => [
