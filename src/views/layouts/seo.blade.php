@@ -107,7 +107,7 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   @endif
 
 @stack('styles')
-@if(get_option('whatsapp'))
+@if(get_option('whatsapp') && is_main_domain())
 <style>
 .wa-float {
   position: fixed;

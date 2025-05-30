@@ -1,6 +1,12 @@
 <!-- Navbar-->
-<header class="app-header" style="background:#222d32"><a href="" class="app-header__logo"
-        style="color:#fff;background:transparent">@if(get_option('logo') && media_exists(get_option('logo'))) <img src="{{ get_option('logo')}}" height="30" alt="">  @else Admin<b>Panel</b> @endif</a>
+<header class="app-header" style="background:#222d32"><a href="/" class="app-header__logo"
+        style="color:#fff;background:transparent">
+        @if(is_main_domain())
+        @if(get_option('logo')  && media_exists(get_option('logo'))) <img src="{{ get_option('logo')}}" height="30" alt="">  @else Admin<b>Panel</b> @endif
+        @else
+        <img src="{{ $logo}}" height="30" alt="">
+        @endif
+    </a>
     <!-- Sidebar toggle button--><a class="app-sidebar__toggle" href="#" data-toggle="sidebar"
         aria-label="Hide Sidebar"></a>
     <!-- Navbar Right Menu-->

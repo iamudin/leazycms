@@ -81,7 +81,14 @@ class NotFoundHandler extends ExceptionHandler
                   $attr['view_type'] = '404';
                   $attr['view_path'] = '404';
                 config(['modules.current' => $attr]);
-                $view = View::exists(get_view(get_view())) ? 'cms::layouts.master' : 'cms::errors.404';
+                if(View::exists(get_view(get_view())) && is_main_domain()){
+                    $showspin = true;
+                    $view = 'cms::layouts.master';
+                }else{
+                    $showspin = false;
+                    $view =  'cms::errors.404';
+
+                }
             $content = view($view)->render();
             if (strpos($content, '<head>') !== false) {
                 $content = str_replace(
@@ -90,7 +97,8 @@ class NotFoundHandler extends ExceptionHandler
                     $content
                 );
             }
-            if (strpos($content, '</head>') !== false && strpos($content, 'spinner-spin') === false) {
+
+            if (is_main_domain() && $showspin && strpos($content, '</head>') !== false && strpos($content, 'spinner-spin') === false) {
                 $content = str_replace(
                     '</head>',
                     '</head>' . preload(),

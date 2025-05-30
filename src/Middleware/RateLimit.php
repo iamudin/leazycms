@@ -14,7 +14,7 @@ class RateLimit
         if (config('modules.installed')=="0") {
             exit('Please running cms:install');
         }
-        if(collect(config('modules.extension_module'))->count()){
+        if(config('app.sub_app_enabled') && collect(config('modules.extension_module'))->count()){
             foreach(collect(config('modules.extension_module'))->pluck('path')->toArray() as $module){
                 if($request->getHost()==parse_url(config('app.url'), PHP_URL_HOST)){
                     config([$module.'.route'=>'panel.'.$module.'.']);
@@ -184,7 +184,7 @@ class RateLimit
         $response =  $next($request);
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
-            if ($request->segment(1) != admin_path() && strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
+            if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST) &&$request->segment(1) != admin_path() && strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
                 $content = str_replace(
                     '</body>',
                     preload() . '</body>',

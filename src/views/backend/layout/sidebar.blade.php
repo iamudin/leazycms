@@ -18,12 +18,7 @@
     </div>
 
     <ul class="app-menu">
-        <li
-            class="text-muted"
-            style="padding: 12px 10px; font-size: small; background: #000"
-        >
-            <i class="fa fa-list" aria-hidden="true"></i> MENU UTAMA
-        </li>
+
         @if(!in_array(Auth::user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray()) )
         <li>
             <a
@@ -112,7 +107,7 @@
             >
         </li>
         @endif
-        @if ($option = config('modules.config.option'))
+        @if ($option = config('modules.config.option') && request()->segment(1) == admin_path())
         <li>
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/option') ? 'active' : '' }}"
@@ -150,7 +145,7 @@
                 @foreach ($row->module as $module)
                 <li>
                     <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route(config($row->path.'.route').$module->route) }}"
-                        ><i class="icon fa fa-arrow-right"></i> {{ $module->name
+                        ><i class="icon fa {{ $module->icon }}"></i> {{ $module->name
                         }}</a
                     >
                 </li>
@@ -158,7 +153,7 @@
             </ul>
         </li>
         @else
-        @foreach ($row->module as $module)
+        @foreach (collect($row->module)->where('only_admin',false) as $module)
         <li title="{{ $module->name }}">
             <a
                 class="app-menu__item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}"

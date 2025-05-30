@@ -12,7 +12,7 @@
     <title>Masuk</title>
     <link rel="shortcut icon" href="{{ url('favicon.ico') }}" />
     <meta property="og:title" content="Masuk - {{$data['title'] ?? 'Web Title'}}" />
-<meta property="og:image" content="{{url(get_option('logo') ?? noimage())}}" />
+<meta property="og:image" content="{{url($data['logo'] ?? noimage())}}" />
 <meta property="og:site_name" content="{{$data['title'] ?? 'Web Title'}}" />
 <meta property="og:description" content="Masuk Sebagai Admin / Operator" />
   </head>
@@ -23,7 +23,7 @@
         <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{$data['loginsubmit'] }}">
           @csrf
           <center>
-            <img height="80" src="{{!empty(get_option('icon')) && media_exists(get_option('icon')) ? get_option('icon') : noimage()}}">
+            <img height="40" src="{{$data['logo']}}" onerror="{{ noimage() }}">
             <br>
             <br>
             <h4 class="text-warning">{{$data['title'] ?? 'Web Title'}}</h4>

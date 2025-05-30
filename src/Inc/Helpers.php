@@ -11,7 +11,18 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
-
+if (!function_exists('is_main_domain')) {
+    function is_main_domain()
+    {
+        return request()->getHost() == parse_url(config('app.url'), PHP_URL_HOST) ? true : false;
+    }
+}
+if (!function_exists('main_domain')) {
+    function main_domain()
+    {
+        return parse_url(config('app.url'), PHP_URL_HOST);
+    }
+}
 if (!function_exists('polling_form')) {
     function polling_form($keyword)
     {
