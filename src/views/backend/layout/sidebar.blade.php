@@ -142,7 +142,7 @@
                 ><i class="treeview-indicator fa fa-chevron-right"></i
             ></a>
             <ul class="treeview-menu">
-                @foreach ($row->module as $module)
+                @foreach (collect($row->module)->where('only_admin',true) as $module)
                 <li>
                     <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route(config($row->path.'.route').$module->route) }}"
                         ><i class="icon fa {{ $module->icon }}"></i> {{ $module->name

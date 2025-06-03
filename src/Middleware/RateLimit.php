@@ -184,19 +184,6 @@ class RateLimit
         $response =  $next($request);
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
-            if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST) &&$request->segment(1) != admin_path() && strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
-                $content = str_replace(
-                    '</body>',
-                    preload() . '</body>',
-                    $content
-                );
-            }
-
-            if ($request->segment(1) == 'docs') {
-                $content = isPre($content);
-            } elseif($request->segment(1)!= admin_path()) {
-                $content = preg_replace('/\s+/', ' ', $content);
-            }
             $response->setContent($content);
         }
         return $response;

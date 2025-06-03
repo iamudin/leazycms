@@ -1,5 +1,7 @@
 <?php
+
 namespace Leazycms\Web\Middleware;
+
 use Closure;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -24,7 +26,20 @@ class Web
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
-            $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use($request) {
+
+            if (strpos($content, '<head>') !== false) {
+                $content = str_replace(
+                    '<head>',
+                    '<head>' . init_meta_header(),
+                    $content
+                );
+            }
+
+
+            if (get_option('forbidden_keyword') && Str::contains($content, explode(",", str_replace(",'", "", str_replace("',", "", get_option("forbidden_keyword")))))) {
+                abort('403');
+            }
+            $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use ($request) {
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
 
                 // Tambahkan class lazyload
@@ -52,49 +67,52 @@ class Web
 
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
-
-            if (strpos($content, '<head>') !== false) {
-                $content = str_replace(
-                    '<head>',
-                    '<head>' . init_meta_header(),
-                    $content
-                );
-            }
             $footer = '';
             $footer .= init_popup();
             $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
-            if(file_exists(public_path('template/'.template().'/scripts.js'))){
-            $footer .= '<script src="'.url('template/'.template().'/scripts.js').'"></script>';
+            if (file_exists(public_path('template/' . template() . '/scripts.js'))) {
+                $footer .= '<script src="' . url('template/' . template() . '/scripts.js') . '"></script>';
             }
-            if(get_option('default_jquery') && get_option('default_jquery') == 'N'){
-            $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
-        }
-
-
-            $content = preg_replace('/<\/body>/', $footer. '</body>',
-             $content);
-
-             if (get_option('forbidden_keyword') && Str::contains($content,explode(",",str_replace(",'","",str_replace("',","",get_option("forbidden_keyword")))))) {
-               abort('403');
+            if (get_option('default_jquery') && get_option('default_jquery') == 'N') {
+                $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
             }
+
+
+            $content = preg_replace(
+                '/<\/body>/',
+                $footer . '</body>',
+                $content
+            );
+            if (strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
+                $content = str_replace(
+                    '</body>',
+                    preload() . '</body>',
+                    $content
+                );
+            }
+
+            if ($request->segment(1) == 'docs') {
+                $content = isPre($content);
+            } else {
+                $content = preg_replace('/\s+/', ' ', $content);
+            }
+
             $response->setContent($content);
         }
-        $this->securityHeaders($response,$request);
+        $this->securityHeaders($response, $request);
         (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
         processVisitorData();
         return $response;
     }
 
-    function securityHeaders($response,$request){
+    function securityHeaders($response, $request)
+    {
         $response->headers->set('Cache-Control', 'public, max-age=2592000');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-        if(get_option('frame_embed')=='Y' && !Auth::check()){
-        $response->headers->set('X-Frame-Options', 'DENY');
-         }
+        if (get_option('frame_embed') == 'Y' && !Auth::check()) {
+            $response->headers->set('X-Frame-Options', 'DENY');
+        }
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Content-Security-Policy', " base-uri 'self'; form-action 'self';");
-
-
     }
-
 }

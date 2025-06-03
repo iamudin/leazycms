@@ -111,10 +111,10 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
 <style>
 .wa-float {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
+  bottom: 15px;
+  left: 15px;
+  width: 55px;
+  height: 55px;
   background-color: #25d366;
   color: white;
   border-radius: 50%;
@@ -143,7 +143,7 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
 }
 
 .wa-float:hover {
-  width: 140px;
+  width: 130px;
   border-radius: 30px;
 }
 
