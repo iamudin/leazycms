@@ -30,7 +30,7 @@ class LoginController extends Controller
         $captchaImage = ob_get_clean();
         imagedestroy($image);
 
-        $request->session()->regenerateToken();
+        // $request->session()->regenerateToken();
         return response($captchaImage)->header('Content-Type', 'image/png');
     }
 
@@ -61,7 +61,7 @@ class LoginController extends Controller
 
         $this->codeCaptcha();
 
-        $captchaUrl = route('captcha');
+        $captchaUrl = route('captcha').'?time='.time();
         $data = null;
 
 
