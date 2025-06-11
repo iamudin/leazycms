@@ -30,12 +30,7 @@ class LoginController extends Controller
         $captchaImage = ob_get_clean();
         imagedestroy($image);
 
-        // Redirect if request lacks referer
-        if (!$request->headers->get('referer')) {
-            $request->session()->regenerateToken();
-            return redirect('/');
-        }
-
+        $request->session()->regenerateToken();
         return response($captchaImage)->header('Content-Type', 'image/png');
     }
 
