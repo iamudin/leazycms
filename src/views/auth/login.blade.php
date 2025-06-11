@@ -15,6 +15,17 @@
 <meta property="og:image" content="{{url($data['logo'] ?? noimage())}}" />
 <meta property="og:site_name" content="{{$data['title'] ?? 'Web Title'}}" />
 <meta property="og:description" content="Masuk Sebagai Admin / Operator" />
+<style>
+  .no-focus-border {
+border: 1px solid #ccc; 
+outline: none;
+}
+
+.no-focus-border:focus {
+border: none;
+outline: none;
+}
+ </style>
   </head>
   <body style="background:url('https://leazycms.test/media/72566594755-img-20250507-203459-EH8r.jpg') center no-repeat;background-size:cover;">
     <section class="login-content" style=" background-color:rgba(33, 11, 11, 0.4);">
@@ -49,9 +60,9 @@
             <label class="control-label" style="color:#f5f5f5">Password</label>
                 <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Password" type="password" class="form-control form-control-lg " name="password" required autocomplete="current-password" autofocus>
           </div>
-         
+
           <div class="form-group">
-            <img src="{{ $captcha }}" alt="" style="border-radius: 5px 0 0 5px"> <input type="text" name="captcha" placeholder="Enter Code" required  style="border:none;float:right;height: 40px;border-radius:0 5px 5px 0">
+            <img src="{{ $captcha }}" alt="" style="border-radius: 5px 0 0 5px;height: 40px;width:45%;"> <input class="no-focus-border" type="text" name="captcha" placeholder="Enter Code" required  maxlength="6" style="font-weight: bold; border:none;float:right;height: 40px;border-radius:0 5px 5px 0;height: 40px;width:55%;">
           </div>
           <div class="form-group text-white">
             <input  type="checkbox" name="remember">  Ingat Saya <sup class="text-warning"> {!! help('Anda tidak perlu melakukan login ulang di aplikasi saat akan datang') !!}</sup>
