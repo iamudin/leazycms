@@ -1,9 +1,12 @@
 <?php
 namespace Leazycms\Web\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
+    use HasUuids;
     protected $fillable = [
         'user_id',
         'title',
@@ -12,7 +15,10 @@ class Notification extends Model
         'url',
         'is_read'
     ];
-
+    public function notificationable()
+    {
+        return $this->morphTo();
+    }
     function user(){
         return $this->belongsTo(User::class);
     }

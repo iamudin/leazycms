@@ -16,9 +16,9 @@
 <meta property="og:site_name" content="{{$data['title'] ?? 'Web Title'}}" />
 <meta property="og:description" content="Masuk Sebagai Admin / Operator" />
   </head>
-  <body>
-    <section class="login-content" style="background:#1f1f1f">
-      <div class="login-box" style="background:transparent;box-shadow:none;width:100%">
+  <body style="background:url('https://leazycms.test/media/72566594755-img-20250507-203459-EH8r.jpg') center no-repeat;background-size:cover;">
+    <section class="login-content" style=" background-color:rgba(33, 11, 11, 0.4);">
+      <div class="login-box" style=" background-color:transparent;box-shadow:none;width:100%">
 
         <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{$data['loginsubmit'] }}">
           @csrf
@@ -27,7 +27,7 @@
             <br>
             <br>
             <h4 class="text-warning">{{$data['title'] ?? 'Web Title'}}</h4>
-           @if(get_option('site_description')) <h6 class="text-muted"><i>{{ $data['description'] ?? 'Web description'  }}</i></h6>@endif
+           @if(get_option('site_description')) <h6 class="text-white"><i>{{ $data['description'] ?? 'Web description'  }}</i></h6>@endif
             <br>
 
             @if(get_option('site_maintenance')=='Y')
@@ -49,14 +49,18 @@
             <label class="control-label" style="color:#f5f5f5">Password</label>
                 <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Password" type="password" class="form-control form-control-lg " name="password" required autocomplete="current-password" autofocus>
           </div>
+         
           <div class="form-group">
             <img src="{{ $captcha }}" alt="" style="border-radius: 5px 0 0 5px"> <input type="text" name="captcha" placeholder="Enter Code" required  style="border:none;float:right;height: 40px;border-radius:0 5px 5px 0">
           </div>
-
+          <div class="form-group text-white">
+            <input  type="checkbox" name="remember">  Ingat Saya <sup class="text-warning"> {!! help('Anda tidak perlu melakukan login ulang di aplikasi saat akan datang') !!}</sup>
+         </div>
           <div class="form-group btn-container">
             <button class="btn btn-warning btn-block"><i class="fa fa-sign-in fa-lg fa-fw"></i>MASUK</button>
           </div>
-
+          <div class="form-group text-white credit text-center mt-4">
+            <small>Build with &#10084; by LeazyCMS v{{ get_leazycms_version() ?? '0.0' }}</small></div>
         </form>
       </div>
     </section>

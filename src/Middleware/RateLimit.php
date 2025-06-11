@@ -64,10 +64,16 @@ class RateLimit
         elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-        // dd(urldecode($redirectUrl).' '.urldecode($request->fullUrl()));
+
         if ($redirectUrl && rtrim(urldecode($redirectUrl),'/') !== urldecode($request->fullUrl())) {
             return redirect($redirectUrl, 301);
         }
+
+    if(!is_main_domain()){
+             if (!$isLocal && !$isHttps && app()->environment('production')) {
+            return redirect('https://' . $host . $uri);
+        }
+    }
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
             $attr['post_type'] = $modul->name;

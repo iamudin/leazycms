@@ -142,6 +142,7 @@
                 ><i class="treeview-indicator fa fa-chevron-right"></i
             ></a>
             <ul class="treeview-menu">
+
                 @foreach (collect($row->module)->where('only_admin',true) as $module)
                 <li>
                     <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route(config($row->path.'.route').$module->route) }}"
@@ -150,6 +151,11 @@
                     >
                 </li>
                 @endforeach
+                    <li>
+                    <a class="treeview-item " title="{{ $row->url }}" onclick="return confirm('Buka alamat aplikasi {{ $row->url }}')" href="{{ $row->url }}/login" target="_blank"
+                        ><i class="icon fa fa-globe"></i> Buka Aplikasi</a
+                    >
+                </li>
             </ul>
         </li>
         @else

@@ -110,7 +110,7 @@ class LoginController extends Controller
             return back()->with('error', 'Captcha tidak valid!');
         }
 
-        if (Auth::attempt(['username' => $request->username, 'password' => $request->password])) {
+        if (Auth::attempt(['username' => $request->username, 'password' => $request->password],$request->remember ?? false)) {
             $request->session()->regenerate();
             $user = Auth::user();
 

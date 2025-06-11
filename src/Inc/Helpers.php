@@ -110,6 +110,13 @@ if (!function_exists('getLatestVersion')) {
         return null;
     }
 }
+if (!function_exists('no_http_url')) {
+
+    function no_http_url($domain)
+    {
+        return parse_url($domain, PHP_URL_HOST);
+    }
+}
 if (!function_exists('get_leazycms_version')) {
 
     function get_leazycms_version()
@@ -982,6 +989,12 @@ if (!function_exists('set_header_seo')) {
             'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? url($data->thumbnail) : url(get_option('preview') && media_exists(get_option('preview')) ?  get_option('preview') : noimage())) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : url(noimage()))),
             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
         );
+    }
+}
+if (!function_exists('get_domain_extension')) {
+    function get_domain_extension($extension)
+    {
+        return collect(config('modules.extension_module'))->where('path',$extension)->first()['url'] ?? null;
     }
 }
 if (!function_exists('preload')) {

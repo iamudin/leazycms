@@ -7,13 +7,13 @@
 <div class="pull-right">
     @if(Route::has('user.create'))
     <a href="{{route('user.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
-    @if(get_option('roles'))<a href="{{route('role')}}" class="btn btn-dark btn-sm"> <i class="fa fa-key" aria-hidden></i> Hak Akses</a> @endif
+    <a href="{{route('role')}}" class="btn btn-dark btn-sm"> <i class="fa fa-key" aria-hidden></i> Hak Akses</a>
     @endif
 </div>
 </div>
 <div class="col-lg-12">
 
-<table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%">
+<table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%;font-size:small">
 <thead style="text-transform:uppercase;color:#444">
   <tr>
 

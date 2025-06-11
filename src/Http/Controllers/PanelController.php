@@ -660,12 +660,5 @@ class PanelController extends Controller implements HasMiddleware
         return redirect()->back()->with('error', 'File not found.');
     }
 
-    function notifreader(Notification $notification){
-        if(!empty(request()->headers->get('referer')) && (auth()->user()->isAdmin() || $notification->user_id == auth()->user()->id)){
 
-            $notification->mark_as_read();
-            return redirect($notification->url);
-        }
-        return to_route('panel.dashboard');
-    }
 }

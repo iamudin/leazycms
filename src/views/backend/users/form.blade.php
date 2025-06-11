@@ -44,20 +44,16 @@
             </div>
             <div class="form-group mt-2 mb-2">
                 <label class="mb-0">Level</label>
-                @if(get_option('roles'))
+
                 <select name="level"class="form-control-sm form-control" required>
                     <option value="">--pilih--</option>
-                    @foreach(explode(',',get_option('roles')) as $role)
-                    <option {{ (($user && $user->level==$role) || old('level') == $role) ? 'selected':'' }} value="{{ $role }}">{{ str($role)->headline() }}</option>
+                    @foreach($roles as $role)
 
+                       <option {{ (($user && $user->level==$role) || old('level') == $role) ? 'selected':'' }} value="{{ $role }}">{{ str($role)->headline() }}</option>
+                    </optgroup>
                     @endforeach
                 </select>
-                @else
-                <br>
-                <p class="badge badge-danger">
-                    Level User (Roles) Belum tersedia, silahkan tambah di menu <b>Pengaturan</b> -> <b>Keamanan</b> -> <b>Roles</b>
-                </p>
-                @endif
+
 
             </div>
             <div class="form-group mt-2  mb-2">

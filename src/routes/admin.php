@@ -12,7 +12,6 @@ Route::post('files/upload_image_summernote', [PostController::class, 'uploadImag
 
 Route::get('comments', [PanelController::class, 'comments'])->name('comments');
 Route::get('files', [PanelController::class, 'files'])->name('files');
-Route::get('notifreader/{notification}', [PanelController::class, 'notifreader'])->name('notifreader');
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {
