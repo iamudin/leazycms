@@ -1109,6 +1109,10 @@ if (!function_exists('load_default_module')) {
             'gallery' => ['active' => true],
             'page' => ['active' => true],
             'countdown' => ['active' => true],
+            'sambutan' => ['active' => true],
+            'unit-kerja' => ['active' => true],
+            'kepegawaian' => ['active' => true],
+            'link-terkait' => ['active' => true],
         ];
         use_module($default);
     }
