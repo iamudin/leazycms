@@ -81,20 +81,20 @@ class Post extends Model
     }
     public function getCreatedAttribute()
     {
-        return $this->created_at->translatedFormat('d F Y H:i T');
+        return $this->created_at->format('d F Y H:i T');
     }
 
     public function getUpdatedAttribute()
     {
-        return $this->updated_at->translatedFormat('d F Y H:i T');
+        return $this->updated_at->format('d F Y H:i T');
     }
     public function getDateAttribute()
     {
-        return $this->created_at->translatedFormat('d');
+        return $this->created_at->format('d');
     }
     public function getYearAttribute()
     {
-        return $this->updated_at->translatedFormat('Y');
+        return $this->updated_at->format('Y');
     }
     public function getLinkAttribute()
     {
@@ -102,7 +102,7 @@ class Post extends Model
     }
     public function getMonthAttribute()
     {
-        return $this->updated_at->translatedFormat('F');;
+        return $this->updated_at->format('F');;
     }
     public function getFieldAttribute()
     {
