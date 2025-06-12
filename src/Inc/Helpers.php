@@ -208,7 +208,7 @@ if (!function_exists('processVisitorData')) {
                         [
                             'ip' => $visitorData['ip'],
                             'session' => $visitorData['session'],
-                            'page' => $visitorData['page'],
+                            'page' => substr($visitorData['page'],0,191),
                         ],
                         [
                             'user_id' => $visitorData['user_id'],
@@ -217,7 +217,7 @@ if (!function_exists('processVisitorData')) {
                             'browser' => $visitorData['browser'],
                             'device' => $visitorData['device'],
                             'os' => $visitorData['os'],
-                            'reference' => $visitorData['reference'],
+                            'reference' => substr($visitorData['reference'],0,191),
                             'created_at' => $visitorData['created_at'],
                             'updated_at' => now(),
                             'times' => \Illuminate\Support\Facades\DB::raw('times + ' . $visitorData['times']), // ⬅️ Increment times
