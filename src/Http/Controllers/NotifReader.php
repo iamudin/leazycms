@@ -20,7 +20,7 @@ class NotifReader extends Controller  implements HasMiddleware
         return to_route('login');
 
         }
-        if(auth()->user()->isAdmin() || $notification->user_id == auth()->id){
+        if(auth()->user()->isAdmin() || $notification->user_id == auth()->user()->id){
             $notification->mark_as_read();
             return redirect($notification->url);
         }
