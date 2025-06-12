@@ -14,7 +14,7 @@ class NotifReader extends Controller
         return to_route('login');
 
         }
-        if(auth()->user()->isAdmin() || $notification->user_id == auth()->user()->id){
+        if(auth()->check() && auth()->user()->isAdmin() || $notification->user_id == auth()->user()->id){
 
             $notification->mark_as_read();
             return redirect($notification->url);
