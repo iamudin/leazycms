@@ -158,19 +158,19 @@ outline: none;
                 @endif
 
           <div class="form-group  pb-0 mb-2">
-            <label class="control-label " style="color:#f5f5f5">Username / Email</label>
-                <input id="username" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Username / Email" type="text" class="form-control form-control-lg " name="username" required autocomplete="username" autofocus>
+            <label class="control-label " style="color:#f5f5f5"><i class="fa fa-at"></i> Nama Pengguna</label>
+                <input id="username" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Nama Pengguna" type="text" class="form-control form-control-lg " name="username" required autocomplete="username" autofocus>
           </div>
           <div class="form-group">
-            <label class="control-label" style="color:#f5f5f5">Password</label>
-                <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Enter Password" type="password" class="form-control form-control-lg " name="password" required autocomplete="current-password" autofocus>
+            <label class="control-label" style="color:#f5f5f5"> <i class="fa fa-key"></i> Kata Sandi</label>
+                <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Kata Sandi" type="password" class="form-control form-control-lg " name="password" required autocomplete="current-password" autofocus>
           </div>
 
           <div class="form-group">
             <img src="{{ $captcha }}" alt="" style="border-radius: 5px 0 0 5px;height: 40px;width:45%;"> <input class="no-focus-border" type="text" name="captcha" placeholder="Enter Code" required  maxlength="6" style="font-weight: bold; border:none;float:right;height: 40px;border-radius:0 5px 5px 0;height: 40px;width:55%;">
           </div>
           <div class="form-group text-white">
-            <input  type="checkbox" name="remember">  Ingat Saya <sup class="text-warning"> {!! help('Anda tidak perlu melakukan login ulang di aplikasi saat akan datang') !!}</sup>
+            <input  type="checkbox" name="remember"> Tetap ingat akun ini <sup class="text-warning"> {!! help('Akun tetap login dibrowser ini selama tidak melakukan logout') !!}</sup>
          </div>
           <div class="form-group btn-container">
             <button class="btn btn-warning btn-block"><i class="fa fa-sign-in fa-lg fa-fw"></i>MASUK</button>
