@@ -15,7 +15,6 @@ use Illuminate\Support\ServiceProvider;
 use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Exceptions\NotFoundHandler;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-use Illuminate\Foundation\Console\RouteListCommand;
 use Leazycms\Web\Commands\RouteListBlock;
 
 class CmsServiceProvider extends ServiceProvider
@@ -69,6 +68,7 @@ class CmsServiceProvider extends ServiceProvider
     public function boot()
     {
 
+        
         Schema::defaultStringLength(191);
         load_default_module();
         $this->registerMiddleware();
