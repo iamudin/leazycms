@@ -1106,7 +1106,7 @@ if (!function_exists('load_default_module')) {
             'document' => ['active' => true],
             'menu' => ['active' => true],
             'banner' => ['active' => true],
-            'gallery' => ['active' => true],
+            'galeri' => ['active' => true],
             'page' => ['active' => true],
             'countdown' => ['active' => true],
             'sambutan' => ['active' => true],

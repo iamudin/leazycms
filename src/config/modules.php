@@ -76,17 +76,17 @@ return [
             'cache' => false,
             'active' => true,
         ],
-        'gallery' => [
+        'galeri' => [
             'position' => 5,
-            'name' => 'gallery',
-            'title' => 'Gallery',
-            'description' => 'Menu Untuk Mengelola Gallery',
+            'name' => 'galeri',
+            'title' => 'Galeri',
+            'description' => 'Menu untuk mengelola galeri',
             'parent' => false,
             'icon' => 'fa-camera',
             'route' => ['index','create','show','update','delete'],
             'datatable'=>[
                 'custom_column' => false,
-                'data_title' => 'Nama Gallery',
+                'data_title' => 'Nama Galeri',
             ],
             'form'=>[
                 'unique_title' => false,
