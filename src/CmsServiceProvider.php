@@ -27,7 +27,6 @@ class CmsServiceProvider extends ServiceProvider
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/admin.php');
         });
-//oke mac
         Route::middleware(['web'])
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/auth.php');
