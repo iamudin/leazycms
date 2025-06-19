@@ -5,11 +5,8 @@
 <meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
 <title>{{request()->is('/') ? $title : $title}}</title>
-<meta http-equiv="content-language" content="en">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="index,follow">
 <meta name="distribution" content="global" >
 <meta name="rating" content="general">
@@ -24,7 +21,7 @@
 <meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
 <meta property="twitter:description" content="{{ $description ?? 'The Website By Laravel'}}">
 <meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
-<meta property="og:locale" content="id" />
+<meta property="og:locale" content="id">
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="{{$url ?? url('/')}}" >
 <meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ??  get_option('site_title') }}">
