@@ -63,7 +63,7 @@
                                 onerror="{{ noimage() }}">
                             <br>
                                 <input accept="image/png,imgage/jpeg" type="file"
-                                class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                                class="form-control-sm form-control-file compress-image" name="{{ $r[1] }}">
                                 @else
                                 @if (get_option($r[1]) && media_exists(get_option($r[1])))
                                     <br><img height="60" src="{{ url(get_option($r[1])) }}"
