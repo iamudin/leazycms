@@ -57,14 +57,17 @@
                         </select>
                         @foreach ($site_attribute as $r)
                             @if ($r[2] == 'file')
-                                <small for="" class="text-muted">{{ $r[0] }}</small>
                                 @if($r[1]=='favicon')
+                                <small for="" class="text-muted">Favicon (didukung hanya file  gambar format .ico ukuran 64px x 64px)</small>
+
                                 <br><img height="60" src="/favicon.ico"
                                 onerror="{{ noimage() }}">
                             <br>
-                                <input accept="image/png,imgage/jpeg" type="file"
-                                class="form-control-sm form-control-file compress-image" name="{{ $r[1] }}">
+                                <input accept="image/x-icon,image/vnd.microsoft.icon" type="file"
+                                class="form-control-sm form-control-file" name="{{ $r[1] }}">
                                 @else
+                                <small for="" class="text-muted">{{ $r[0] }}</small>
+
                                 @if (get_option($r[1]) && media_exists(get_option($r[1])))
                                     <br><img height="60" src="{{ url(get_option($r[1])) }}"
                                         onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
