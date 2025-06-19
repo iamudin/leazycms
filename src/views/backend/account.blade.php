@@ -8,7 +8,7 @@
   <div class="form-group">
          <center><img class="img-responsive"  onclick="window.open(this.src)" style="border:none;width:100px" id="thumb" src="{{thumb($data->photo)}}" /></center><br>
     <label for="">Foto Pengguna</label>
-    <input onchange="readURL(this);"  type="file" class="form-control photo" name="photo" value="{{$data->photo}}">
+    <input type="file" class="form-control photo compress-image" name="photo" value="{{$data->photo}}">
   </div>
 
     <div class="form-group">
@@ -36,25 +36,7 @@
 </div>
 </div>
 </form>
-<script>
-    function readURL(input) {
-      const allow = ['gif','png','jpeg','jpg'];
-      var ext = input.value.replace(/^.*\./, '');
-      if(!allow.includes(ext)){
-        notif('Pilih hanya gambar','danger');
-        input.value='';
-      }else {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                $('#thumb')
-                    .attr('src', e.target.result)
-                    .width('100px')
-            };
-
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-  }
-  </script>
+@push('scripts')
+@include('views::backend.layout.js')
+@endpush
 @endsection

@@ -127,8 +127,22 @@
             },
         });
     });
+        async function compressToWebP(file, quality = 0.3) {
+            const imageBitmap = await createImageBitmap(file);
+            const canvas = document.createElement('canvas');
+            canvas.width = imageBitmap.width;
+            canvas.height = imageBitmap.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imageBitmap, 0, 0);
 
-    function uploadImage(file) {
+            const blob = await new Promise(resolve =>
+                canvas.toBlob(resolve, 'image/webp', quality)
+            );
+
+            const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+            return new File([blob], newFileName, { type: 'image/webp' });
+        }
+   /* function uploadImage(file) {
         if (file) {
             var allowedTypes = ['image/jpeg', 'image/png'];
             if (!allowedTypes.includes(file.type)) {
@@ -161,6 +175,53 @@
             }
         }
     }
+        */
+    
+
+        async function uploadImage(file) {
+            if (!file) return;
+
+            const allowedTypes = ['image/jpeg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Pilih hanya format gambar: JPG atau PNG.');
+                return;
+            }
+
+            try {
+                const compressedFile = await compressToWebP(file);
+
+                const data = new FormData();
+                data.append("file", compressedFile);
+                data.append("post", "{{ $post?->id }}");
+                data.append("_token", "{{ csrf_token() }}");
+
+                $.ajax({
+                    url: "{{ route('upload_image_summernote') }}",
+                    type: 'POST',
+                    data: data,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        const actualImageUrl = response.url;
+                        const figureHTML = `
+                        <figure style="text-align: center; margin: 10px 0;">
+                            <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
+                            <figcaption style="font-style: italic; color: #666;">
+                                <small>Ilustrasi Gambar Disini</small>
+                            </figcaption>
+                        </figure>`;
+                        $('#editor').summernote("pasteHTML", figureHTML);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error('Error uploading image: ', textStatus, errorThrown);
+                    }
+                });
+            } catch (err) {
+                console.error('Compress error:', err);
+                alert('Gagal mengompres gambar.');
+            }
+        }
+
     function removeFigure(target) {
     var figure = $(target).closest('figure');
     if (figure.length > 0) {

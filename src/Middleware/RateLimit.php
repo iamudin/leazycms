@@ -64,8 +64,7 @@ class RateLimit
         elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-
-        if ($redirectUrl && rtrim(urldecode($redirectUrl),'/') !== urldecode($request->fullUrl())) {
+        if ($redirectUrl && rtrim(trim(urldecode($redirectUrl),'/'),'=') !== rtrim(urldecode($request->fullUrl()),'=')) {
             return redirect($redirectUrl, 301);
         }
 

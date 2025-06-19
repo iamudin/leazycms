@@ -141,7 +141,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
 
     $post_field =  [
         'title'=>'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5|max:200'.$uniq,
-        'media'=> 'nullable|file|mimetypes:image/jpeg,image/png',
+        'media'=> 'nullable|file|mimetypes:image/jpeg,image/png,image/webp',
         'content'=> ['nullable',function ($attribute, $value, $fail) {
             if (strpos($value, '<?php') !== false) {
                 $fail("The $attribute field contains invalid content.");
@@ -163,7 +163,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         'title.min' => $module->datatable->data_title .' minimal 5 karakter',
         'title.max' => $module->datatable->data_title .' maksimal 200 karakter',
     ];
-
+    
     $request->validate(array_merge($post_field,$custom_f??[]),array_merge($custommsg,$msg??[]));
     if(strlen($post->slug) == 0 || $post->type=='docs'){
         $slug = str($request->title)->slug();

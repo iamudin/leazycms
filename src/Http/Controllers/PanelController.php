@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Leazycms\Web\Models\Notification;
 use Spatie\Backup\BackupDestination\BackupDestinationFactory;
 
 class PanelController extends Controller implements HasMiddleware
@@ -265,15 +264,37 @@ class PanelController extends Controller implements HasMiddleware
                     if ($value = $request->hasFile($key)) {
 
                         if ($key == 'favicon') {
-                            $outputPath = public_path('favicon.png');
-                            if (file_exists($outputPath)) {
-                                unlink($outputPath);
-                            }
-                            $image = Image::make($request->file('favicon')->getRealPath())
-                                ->resize(64, 64);
-                            $image->save($outputPath);
-                            if (file_exists($outputPath)) {
-                                rename($outputPath, public_path('favicon.ico'));
+                            if ($request->hasFile('favicon')) {
+                                $file = $request->file('favicon');
+                                if(!str_starts_with($file->getMimeType(), 'image/')){
+                                    return back()->with('danger', 'Favicon harus berupa gambar PNG atau JPEG.');
+                                }
+                                // Cek apakah Imagick tersedia
+                                if (!class_exists(\Imagick::class)) {
+                                    abort(500, 'Imagick extension tidak tersedia di server.');
+                                }
+
+                                $image = new \Imagick();
+                                $image->readImage($file->getRealPath());
+
+                                // Resize ke 64x64 atau sesuai standar favicon
+                                $image->resizeImage(64, 64, \Imagick::FILTER_LANCZOS, 1, true);
+
+                                // Atur format menjadi ico
+                                $image->setImageFormat('ico');
+
+                                // Path ke public/favicon.ico
+                                $outputPath = public_path('favicon.ico');
+
+                                // Hapus jika sudah ada
+                                if (file_exists($outputPath)) {
+                                    unlink($outputPath);
+                                }
+
+                                // Simpan ke public
+                                $image->writeImage($outputPath);
+                                $image->clear();
+                                $image->destroy();
                             }
                         } else {
 
@@ -295,7 +316,7 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['pwa'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
-                    $request->validate([$key => 'nullable|file|mimetypes:image/png']);
+                    $request->validate([$key => 'nullable|file|mimetypes:image/png,image/webp']);
 
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
@@ -303,7 +324,7 @@ class PanelController extends Controller implements HasMiddleware
                         $filename = $fid->addFile([
                             'file' => $request->file($key),
                             'purpose' => $key,
-                            'mime_type' => ['image/png'],
+                            'mime_type' => ['image/png','image/webp'],
                             'width' => $res,
                             'height' => $res
                         ]);

@@ -1173,13 +1173,7 @@ if (!function_exists('notification')) {
         return new \Leazycms\Web\Models\Notification;
     }
 }
-if (!function_exists('allow_mime')) {
 
-    function allow_mime()
-    {
-        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4';
-    }
-}
 if (!function_exists('mime_thumbnail')) {
     function mime_thumbnail($file)
     {

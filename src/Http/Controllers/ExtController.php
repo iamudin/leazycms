@@ -10,7 +10,10 @@ class ExtController extends Controller
 {
     public function service_worker(){
         $script = view('cms::layouts.sw')->render();
-    return Response::make($script, 200, ['Content-Type' => 'application/javascript']);
+        dd($script);
+        return Response::make($script)
+            ->header('Content-Type', 'application/javascript')
+            ->header('Content-Disposition', 'inline; filename="service-worker.js"');
     }
     public function manifest(){
         $manifest = [
@@ -33,7 +36,7 @@ class ExtController extends Controller
 
         return Response::json($manifest)
     ->header('Content-Type', 'application/json')
-    ->header('Content-Disposition', 'attachment; filename="site.manifest"');
+    ->header('Content-Disposition', 'inline; filename="site.manifest"');
     }
     public function sitemap_xml()
     {

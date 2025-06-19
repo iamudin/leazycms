@@ -73,7 +73,7 @@ class Post extends Model
 
     public function getThumbnailAttribute()
     {
-        return $this->media ? $this->media : noimage();
+        return $this->media && media_exists($this->media) ? $this->media : noimage();
     }
     public function getThumbnailTextAttribute()
     {

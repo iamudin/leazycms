@@ -4,7 +4,6 @@ var filesToCache = [
 
 ];
 
-// Cache on install
 self.addEventListener("install", event => {
     this.skipWaiting();
     event.waitUntil(
@@ -15,7 +14,6 @@ self.addEventListener("install", event => {
     )
 });
 
-// Clear cache on activate
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -29,7 +27,6 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Serve from Cache
 self.addEventListener("fetch", event => {
     event.respondWith(
         caches.match(event.request)

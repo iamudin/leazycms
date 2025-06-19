@@ -1,6 +1,89 @@
 <script type="text/javascript" src="{{url('backend/js/plugins/select2.min.js')}}"></script>
+<script>
+    const compressImage = async (file, { quality = 0.3 }) => {
+        const imageBitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width = imageBitmap.width;
+        canvas.height = imageBitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imageBitmap, 0, 0);
+
+        const blob = await new Promise(resolve =>
+            canvas.toBlob(resolve, 'image/webp', quality)
+        );
+
+        const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+
+        return new File([blob], newFileName, {
+            type: 'image/webp'
+        });
+    };
+
+    const getIdentifier = (input) => {
+        if (input.name) {
+            return input.name;
+        }
+        return 'input_' + Math.random().toString(36).substring(2, 8);
+    };
+
+    const fileselect = async (input) => {
+        const identifier = getIdentifier(input);
+        const previewId = `preview_${identifier}`;
+
+        let preview = document.getElementById(previewId);
+        if (!preview) {
+            preview = document.createElement('div');
+            preview.id = previewId;
+            preview.className = 'd-flex flex-wrap gap-3 mt-3';
+            input.insertAdjacentElement('afterend', preview);
+        }
+
+        preview.innerHTML = '';
+        const { files } = input;
+        const dataTransfer = new DataTransfer();
+
+        for (const file of files) {
+            const fileExt = file.name.toLowerCase();
+            const allowed = /\.(jpe?g|png)$/;
+
+            if (!allowed.test(fileExt)) {
+                alert(`File "${file.name}" tidak didukung. Hanya JPG, JPEG, dan PNG.`);
+                continue;
+            }
+
+            const originalSizeKB = (file.size / 1024).toFixed(2);
+            const compressedFile = await compressImage(file, { quality: 0.3 });
+            const compressedSizeKB = (compressedFile.size / 1024).toFixed(2);
+
+            dataTransfer.items.add(compressedFile);
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const wrapper = document.createElement('div');
+                wrapper.style.width = '150px';
+                wrapper.className = 'text-center';
+
+                wrapper.innerHTML = `
+    <img src="${e.target.result}" class="img-thumbnail mb-1" style="height: 120px; object-fit: cover;" alt="Preview">
+        <small class="text-muted d-block">⬇ ${originalSizeKB} KB → ${compressedSizeKB} KB</small>
+        `;
+                preview.appendChild(wrapper);
+            };
+            reader.readAsDataURL(compressedFile);
+        }
+
+        input.files = dataTransfer.files;
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.compress-image').forEach(input => {
+            input.addEventListener('change', () => fileselect(input));
+        });
+    });
+</script>
 
 <script>
+
     $('#select2').select2({
 
 placeholder: 'Pilih Tags',
@@ -58,7 +141,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || in_array(request()->segment(2),['polling','tags','user','files']))
+@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files']))
 <script>
 function deleteAlert(url) {
     swal(

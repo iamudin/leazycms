@@ -37,7 +37,7 @@ class UserController extends Controller implements HasMiddleware
         $user = $request->user();
         if ($request->isMethod('post')) {
             $data = $request->validate([
-                'photo' => 'nullable|file|mimetypes:image/jpeg,image/png',
+                'photo' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp',
                 'name' => 'required|string',
                 'username' => 'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
                 'email' => 'required|string|regex:/^[a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
@@ -47,7 +47,8 @@ class UserController extends Controller implements HasMiddleware
             $request['media'] =  $user->photo;
 
             if ($request->hasFile('photo')) {
-                $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg']]);
+                dd($request->file('photo'));
+                $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg','image/webp']]);
             }
             if ($pass = $request->password) {
                 $data['password'] = bcrypt($pass);
