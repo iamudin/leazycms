@@ -266,50 +266,37 @@ class PanelController extends Controller implements HasMiddleware
                         if ($key == 'favicon') {
                             if ($request->hasFile('favicon')) {
                                 $file = $request->file('favicon');
-                            
-                                if (!str_starts_with($file->getMimeType(), 'image/')) {
-                                    return back()->with('danger', 'Favicon harus berupa gambar PNG atau JPEG.');
+
+                                // Validasi MIME dan ekstensi
+                                $allowedMime = ['image/x-icon', 'image/vnd.microsoft.icon'];
+                                $allowedExt = ['ico'];
+
+                                $mime = $file->getMimeType();
+                                $ext = strtolower($file->getClientOriginalExtension());
+
+                                if (!in_array($mime, $allowedMime) || !in_array($ext, $allowedExt)) {
+                                    return back()->with('danger', 'Hanya file .ico yang diperbolehkan.');
                                 }
-                            
-                                if (!class_exists(\Imagick::class)) {
-                                    abort(500, 'Imagick extension tidak tersedia di server.');
+
+                                // Cek ukuran gambar
+                                $size = getimagesize($file->getRealPath());
+                                if ($size === false) {
+                                    return back()->with('danger', 'File favicon tidak valid.');
                                 }
-                            
-                                // Buat nama file sementara
-                                $filename = uniqid('favicon_') . '.' . $file->getClientOriginalExtension();
-                                $storageDir = storage_path('app/tmp');
-                            
-                                if (!file_exists($storageDir)) {
-                                    mkdir($storageDir, 0755, true);
+
+                                if ($size[0] !== 64 || $size[1] !== 64) {
+                                    return back()->with('danger', 'Favicon harus berukuran tepat 64x64 piksel.');
                                 }
-                            
-                                $tempPath = $storageDir . '/' . $filename;
-                            
-                                // Pindahkan file ke tempat aman
-                                $file->move($storageDir, $filename);
-                            
-                                // Pastikan file betul-betul ada sebelum proses
-                                if (!file_exists($tempPath)) {
-                                    abort(500, 'File sementara tidak ditemukan setelah move.');
+
+                                // Simpan ke public/favicon.ico
+                                $destination = public_path('favicon.ico');
+                                if (file_exists($destination)) {
+                                    unlink($destination);
                                 }
-                            
-                                // Proses dengan Imagick
-                                $image = new \Imagick($tempPath);
-                                $image->resizeImage(64, 64, \Imagick::FILTER_LANCZOS, 1, true);
-                                $image->setImageFormat('ico');
-                            
-                                $outputPath = public_path('favicon.ico');
-                                if (file_exists($outputPath)) {
-                                    unlink($outputPath);
-                                }
-                            
-                                $image->writeImage($outputPath);
-                                $image->clear();
-                                $image->destroy();
-                            
-                                unlink($tempPath); // hapus file sementara
+
+                                $file->move(public_path(), 'favicon.ico');
+
                             }
-                            
 
                         } else {
 
