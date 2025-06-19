@@ -266,48 +266,48 @@ class PanelController extends Controller implements HasMiddleware
                         if ($key == 'favicon') {
                             if ($request->hasFile('favicon')) {
                                 $file = $request->file('favicon');
-                            
+
                                 if (!str_starts_with($file->getMimeType(), 'image/')) {
                                     return back()->with('danger', 'Favicon harus berupa gambar PNG atau JPEG.');
                                 }
-                            
+
                                 if (!class_exists(\Imagick::class)) {
                                     abort(500, 'Imagick extension tidak tersedia di server.');
                                 }
-                            
+
                                 // Simpan file upload ke lokasi tetap sementara (bukan /tmp)
                                 $tempName = uniqid('favicon_') . '.' . $file->getClientOriginalExtension();
                                 $tempPath = storage_path('app/tmp/' . $tempName);
-                            
+
                                 // Pastikan folder tmp ada
                                 if (!file_exists(dirname($tempPath))) {
                                     mkdir(dirname($tempPath), 0755, true);
                                 }
-                            
+
                                 $file->move(dirname($tempPath), basename($tempPath));
-                            
+
                                 // Proses dengan Imagick
                                 $image = new \Imagick($tempPath);
-                            
+
                                 // Resize ke 64x64
                                 $image->resizeImage(64, 64, \Imagick::FILTER_LANCZOS, 1, true);
                                 $image->setImageFormat('ico');
-                            
+
                                 // Simpan ke public path
                                 $outputPath = public_path('favicon.ico');
-                            
+
                                 if (file_exists($outputPath)) {
                                     unlink($outputPath);
                                 }
-                            
+
                                 $image->writeImage($outputPath);
                                 $image->clear();
                                 $image->destroy();
-                            
+
                                 // (Opsional) Hapus file sementara
                                 unlink($tempPath);
                             }
-                            
+
                         } else {
 
                             $fid->update([
