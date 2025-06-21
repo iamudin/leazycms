@@ -156,8 +156,8 @@ class WebController extends Controller
             'detail' => $detail,
             'history' => $detail->history
         );
-        if(View::exists('template.'.template().'.'.$detail->type.'.'.$detail->id)){
-        return view('template.'.template().'.'.$detail->type.'.'.$detail->id, $data);
+        if(View::exists('template.'.template().'.'.$detail->type.'.'.$detail->slug)){
+        return view('template.'.template().'.'.$detail->type.'.'.$detail->slug, $data);
         }
         return view('cms::layouts.master', $data);
     }

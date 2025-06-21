@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <meta name="author" content="help@leazycms.com">
 <meta name="copyright" content="© 2025 - Build by LeazyCMS">
-<meta name="viewport" content="width=device-width,initial-scale=1, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
 <title>{{request()->is('/') ? $title : $title}}</title>
@@ -10,12 +10,12 @@
 <meta name="robots" content="index,follow">
 <meta name="distribution" content="global" >
 <meta name="rating" content="general">
-<meta name="title" content="{{$title ?? 'Official Website - LeazyCMS'}}" >
-<meta property="og:type" content="website">
-<meta property="og:url"  content="{{$url ?? url('/')}}">
-<meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}">
-<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}">
-<meta property="og:image" content="{{$thumbnail ?? noimage()}}">
+<meta property="og:site_name" content="{{ get_option('site_title') }}">
+<meta property="og:type" content="website"/>
+<meta property="og:url"  content="{{$url ?? url('/')}}"/>
+<meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}"/>
+<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}"/>
+<meta property="og:image" content="{{$thumbnail ?? noimage()}}"/>
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:url" content="{{$url ?? url('/')}}">
 <meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
@@ -24,17 +24,18 @@
 <meta property="og:locale" content="id">
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="{{$url ?? url('/')}}" >
-<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ??  get_option('site_title') }}">
+<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
 <meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
 <meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
 <meta name="msapplication-TileColor" content="#0068df">
 @php $ic180 = get_option('pwa_icon_180'); @endphp
 @if($ic180 && media_exists($ic180))
-<meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')): url(noimage()) }}">
+<meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')) : url(noimage()) }}">
 <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')) : url(noimage())}}">
 @endif
-@php $ic32 = get_option('pwa_icon_32'); $ic16=get_option('pwa_icon_16'); @endphp
-@if($ic32 && $ic16 && media_exists($ic32) && media_exists($ic16)  )
+@php $ic32 = get_option('pwa_icon_32');
+$ic16 = get_option('pwa_icon_16'); @endphp
+@if($ic32 && $ic16 && media_exists($ic32) && media_exists($ic16))
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url($ic32)}}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ url($ic16)}}">
 @endif
@@ -79,28 +80,28 @@ var _0x32d5b4=_0x12f7;function _0x12f7(_0xf923c4,_0x33270c){var _0x317d3a=_0x317
 function _0xfb8d(_0x2dd9aa,_0x1c4146){var _0x12af25=_0x12af();return _0xfb8d=function(_0xfb8d14,_0x95128f){_0xfb8d14=_0xfb8d14-0xb6;var _0x38403c=_0x12af25[_0xfb8d14];return _0x38403c;},_0xfb8d(_0x2dd9aa,_0x1c4146);}(function(_0x341479,_0x1f9223){var _0x4e1a25=_0xfb8d,_0x2dc325=_0x341479();while(!![]){try{var _0x5bcb4d=parseInt(_0x4e1a25(0xb9))/0x1+-parseInt(_0x4e1a25(0xbc))/0x2*(parseInt(_0x4e1a25(0xbb))/0x3)+-parseInt(_0x4e1a25(0xb6))/0x4+parseInt(_0x4e1a25(0xbe))/0x5+-parseInt(_0x4e1a25(0xb8))/0x6*(-parseInt(_0x4e1a25(0xbd))/0x7)+-parseInt(_0x4e1a25(0xbf))/0x8+parseInt(_0x4e1a25(0xba))/0x9;if(_0x5bcb4d===_0x1f9223)break;else _0x2dc325['push'](_0x2dc325['shift']());}catch(_0x32bf48){_0x2dc325['push'](_0x2dc325['shift']());}}}(_0x12af,0x4e762),document['addEventListener']('keydown',_0xa97459=>{var _0x3c74bc=_0xfb8d;_0xa97459['ctrlKey']&&_0xa97459[_0x3c74bc(0xc0)]==='p'&&_0xa97459[_0x3c74bc(0xb7)]();}));function _0x12af(){var _0x5bd2ca=['226597eLGecI','3071250ZBHFEJ','5007896osdhVg','key','924144RmLzXS','preventDefault','102ijjqzU','181826FtdgLw','819900JhMqZC','1686gyTcae','922TtLOiF'];_0x12af=function(){return _0x5bd2ca;};return _0x12af();}
   </script>
   @endif
-  @if(get_option('ctrl_s') && get_option('ctrl_s')=='Y')
+  @if(get_option('ctrl_s') && get_option('ctrl_s') == 'Y')
   <script type="text/javascript">
 function _0x2632(_0x57e7ad,_0x399e30){var _0x1655e3=_0x1655();return _0x2632=function(_0x2632ca,_0x435f0b){_0x2632ca=_0x2632ca-0xf3;var _0x5804cb=_0x1655e3[_0x2632ca];return _0x5804cb;},_0x2632(_0x57e7ad,_0x399e30);}function _0x1655(){var _0x51dc21=['8001leBKpe','1828479XnDWnH','595887hErUBj','3748521DIfhyo','8176LyGdyD','3650178ebbmAU','key','8VPytLf','37908890Nneolb','1309040kMQZko','preventDefault','4HsluwL'];_0x1655=function(){return _0x51dc21;};return _0x1655();}(function(_0x2045d3,_0x17510e){var _0x4b2298=_0x2632,_0x7b6a82=_0x2045d3();while(!![]){try{var _0x2fec54=-parseInt(_0x4b2298(0xfb))/0x1+-parseInt(_0x4b2298(0xf8))/0x2*(parseInt(_0x4b2298(0xfa))/0x3)+-parseInt(_0x4b2298(0xf4))/0x4*(parseInt(_0x4b2298(0xf6))/0x5)+parseInt(_0x4b2298(0xfe))/0x6+-parseInt(_0x4b2298(0xfc))/0x7+parseInt(_0x4b2298(0xfd))/0x8*(-parseInt(_0x4b2298(0xf9))/0x9)+parseInt(_0x4b2298(0xf5))/0xa;if(_0x2fec54===_0x17510e)break;else _0x7b6a82['push'](_0x7b6a82['shift']());}catch(_0xc1a9f4){_0x7b6a82['push'](_0x7b6a82['shift']());}}}(_0x1655,0x968fe),document['addEventListener']('keydown',_0x1792d3=>{var _0x4812d2=_0x2632;_0x1792d3['ctrlKey']&&_0x1792d3[_0x4812d2(0xf3)]==='s'&&_0x1792d3[_0x4812d2(0xf7)]();}));
   </script>
   @endif
-  @if(get_option('ctrl_r')  && get_option('ctrl_r')=='Y')
+  @if(get_option('ctrl_r') && get_option('ctrl_r') == 'Y')
   <script type="text/javascript">
 function _0x4f5a(_0x28fb97,_0x19c4e5){var _0x27a1de=_0x27a1();return _0x4f5a=function(_0x4f5aff,_0x177268){_0x4f5aff=_0x4f5aff-0x8c;var _0x559991=_0x27a1de[_0x4f5aff];return _0x559991;},_0x4f5a(_0x28fb97,_0x19c4e5);}var _0x16c0be=_0x4f5a;(function(_0x2c5bfc,_0x58da86){var _0x48926f=_0x4f5a,_0x4e0560=_0x2c5bfc();while(!![]){try{var _0x8cfc2c=-parseInt(_0x48926f(0x94))/0x1*(-parseInt(_0x48926f(0x96))/0x2)+parseInt(_0x48926f(0x95))/0x3*(-parseInt(_0x48926f(0x8e))/0x4)+-parseInt(_0x48926f(0x8f))/0x5*(parseInt(_0x48926f(0x8d))/0x6)+parseInt(_0x48926f(0x92))/0x7+parseInt(_0x48926f(0x98))/0x8+-parseInt(_0x48926f(0x99))/0x9*(-parseInt(_0x48926f(0x91))/0xa)+-parseInt(_0x48926f(0x97))/0xb*(-parseInt(_0x48926f(0x93))/0xc);if(_0x8cfc2c===_0x58da86)break;else _0x4e0560['push'](_0x4e0560['shift']());}catch(_0x35ebc8){_0x4e0560['push'](_0x4e0560['shift']());}}}(_0x27a1,0xad1cf),document['addEventListener'](_0x16c0be(0x90),_0x4967b4=>{var _0x294f4f=_0x16c0be;_0x4967b4['ctrlKey']&&_0x4967b4[_0x294f4f(0x8c)]==='r'&&_0x4967b4['preventDefault']();}));function _0x27a1(){var _0x5bfd3e=['5242936cjLCgP','153PzIbRx','key','60RVLJPm','20012bOfAwb','306710dVxhGB','keydown','25620VAauQp','916874gmMOiL','12IWvprb','2895OohfIF','318cRmpnX','30sXGVGN','10774291mFLQnO'];_0x27a1=function(){return _0x5bfd3e;};return _0x27a1();}
   </script>
   @endif
-  @if(get_option('ctrl_i')  && get_option('ctrl_i')=='Y')
+  @if(get_option('ctrl_i') && get_option('ctrl_i') == 'Y')
   <script type="text/javascript">
 function _0x3513(_0x2b4393,_0x11f064){var _0x191f47=_0x191f();return _0x3513=function(_0x3513b2,_0x3ba85e){_0x3513b2=_0x3513b2-0x158;var _0x5286e0=_0x191f47[_0x3513b2];return _0x5286e0;},_0x3513(_0x2b4393,_0x11f064);}var _0x1312ab=_0x3513;(function(_0x360cb6,_0x29c877){var _0x50f61d=_0x3513,_0x1da202=_0x360cb6();while(!![]){try{var _0x263369=-parseInt(_0x50f61d(0x167))/0x1*(-parseInt(_0x50f61d(0x15d))/0x2)+parseInt(_0x50f61d(0x160))/0x3+-parseInt(_0x50f61d(0x158))/0x4*(-parseInt(_0x50f61d(0x159))/0x5)+-parseInt(_0x50f61d(0x15f))/0x6+-parseInt(_0x50f61d(0x165))/0x7*(-parseInt(_0x50f61d(0x15c))/0x8)+-parseInt(_0x50f61d(0x161))/0x9*(parseInt(_0x50f61d(0x15b))/0xa)+parseInt(_0x50f61d(0x162))/0xb*(parseInt(_0x50f61d(0x15e))/0xc);if(_0x263369===_0x29c877)break;else _0x1da202['push'](_0x1da202['shift']());}catch(_0x382f77){_0x1da202['push'](_0x1da202['shift']());}}}(_0x191f,0xab61a),document[_0x1312ab(0x164)]('keydown',_0x309b0f=>{var _0x2394c1=_0x1312ab;_0x309b0f[_0x2394c1(0x166)]&&_0x309b0f[_0x2394c1(0x15a)]==='i'&&_0x309b0f[_0x2394c1(0x163)]();}));function _0x191f(){var _0x4fc2e7=['24240VhgHSe','10oNtvlm','48QfPpFS','7240446gCScYW','3795189JkYdyK','2133GkPqAB','800888BQWlWO','preventDefault','addEventListener','966JmFGfQ','ctrlKey','249539ozVeGe','56vqfIPx','19060gpoRxY','key','57670GMrZTZ'];_0x191f=function(){return _0x4fc2e7;};return _0x191f();}
   </script>
   @endif
-  @if(get_option('right_click')  && get_option('right_click')=='Y')
+  @if(get_option('right_click') && get_option('right_click') == 'Y')
   <script type="text/javascript">
 var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32();return _0x18eb=function(_0x18ebff,_0x4fa5b0){_0x18ebff=_0x18ebff-0xca;var _0x401842=_0x4b32d6[_0x18ebff];return _0x401842;},_0x18eb(_0x1c83a7,_0x27d790);}function _0x4b32(){var _0x2518d9=['22YTDEaa','5XgFwWp','173853akogeo','59266HWMhLh','contextmenu','2016119aiZqJL','2763612oSwqYW','585840EHCxwz','8325108tpPjlC','1160748fQnXnS','preventDefault'];_0x4b32=function(){return _0x2518d9;};return _0x4b32();}(function(_0x5173a5,_0x54e2eb){var _0x2d4c7c=_0x18eb,_0x422fb3=_0x5173a5();while(!![]){try{var _0x3bdc50=-parseInt(_0x2d4c7c(0xca))/0x1*(parseInt(_0x2d4c7c(0xd2))/0x2)+-parseInt(_0x2d4c7c(0xd4))/0x3+parseInt(_0x2d4c7c(0xcd))/0x4*(parseInt(_0x2d4c7c(0xd3))/0x5)+-parseInt(_0x2d4c7c(0xd0))/0x6+-parseInt(_0x2d4c7c(0xcc))/0x7+-parseInt(_0x2d4c7c(0xce))/0x8+parseInt(_0x2d4c7c(0xcf))/0x9;if(_0x3bdc50===_0x54e2eb)break;else _0x422fb3['push'](_0x422fb3['shift']());}catch(_0xcae61a){_0x422fb3['push'](_0x422fb3['shift']());}}}(_0x4b32,0x55c65),document['addEventListener'](_0x6ccad(0xcb),_0x4027a1=>{var _0x3be63b=_0x6ccad;_0x4027a1[_0x3be63b(0xd1)]();}));
   </script>
   @endif
-  @if(file_exists(public_path('template/'.template().'/styles.css')))
-  <link rel="stylesheet" type='text/css'  href="{{url('template/'.template().'/styles.css')}}">
+  @if(file_exists(public_path('template/' . template() . '/styles.css')))
+  <link rel="stylesheet" type='text/css'  href="{{url('template/' . template() . '/styles.css')}}"/>
   @endif
 
 @stack('styles')

@@ -365,26 +365,13 @@ if (!function_exists('thumbnail')) {
             if ($url = $src->media) {
                 return url($url);
             } else {
-                return url('backend/images/noimage.png');
+                return url('noimage.webp');
             }
         }
-        return url('backend/images/noimage.png');
+        return url('noimage.webp');
     }
 }
-if (!function_exists('thumb')) {
-    function thumb($src = false)
-    {
-        if ($src && !is_dir(public_path($src))) :
-            if (file_exists(public_path($src))) {
-                return url($src);
-            } else {
-                return url('backend/images/noimage.png');
-            }
-        else :
-            return url('backend/images/noimage.png');
-        endif;
-    }
-}
+
 if (!function_exists('allowed_ext')) {
     function allowed_ext($ext = false)
     {
