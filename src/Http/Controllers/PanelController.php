@@ -104,7 +104,7 @@ class PanelController extends Controller implements HasMiddleware
                 $country = json_decode($row->ip_location)->country ?? null;
                 $region = json_decode($row->ip_location)->region ?? null;
                 $code = json_decode($row->ip_location)->countryCode ?? null;
-                $ipinfo = $row->ip_location ? $region . ', ' . $city . '<br><img style="display:inline" height="10" src="' . thumb('backend/images/flags/' . str($code)->upper() . '.svg') . '"> ' . $country : 'N/A';
+                $ipinfo = $row->ip_location ? $region . ', ' . $city . '<br><img style="display:inline" height="10" src="' . url('backend/images/flags/' . str($code)->upper() . '.svg') . '"> ' . $country : 'N/A';
                 return '<span class="badge badge-info">' . $row->ip . '</span><br><small>' . $ipinfo . '</small>';
             })
             ->addColumn('reference', function ($row) {

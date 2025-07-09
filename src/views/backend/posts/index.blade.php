@@ -47,7 +47,7 @@
                 <div class="widget-small info coloured-icon"><i class="icon fa fa-tags fa-3x"></i>
                   <div class="info pl-3">
                     <p class="mt-2 text-muted">Kategori</p>
-                    <h2><b>{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count(); }}</b></h2>
+                    <h2><b>{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}</b></h2>
                   </div>
                 </div>
             </a>

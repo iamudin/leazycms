@@ -61,7 +61,7 @@ class Post extends Model
     {
         return $this->belongsTo(Category::class)->select($this->categoryselectcolumn);
     }
-
+   
     public function childs()
     {
         return $this->hasMany(Post::class, 'parent_id', 'id')->select($this->selected);
@@ -163,7 +163,6 @@ class Post extends Model
     {
         return collect(Cache::get('category_' . $type))->sortBy('sort');
     }
-
 
 
     function index_limit($type, $limit)
