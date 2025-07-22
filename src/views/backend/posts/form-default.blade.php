@@ -9,8 +9,8 @@
                 <h3 style="font-weight:normal">
                     <i class="fa {{ $module->icon }}" aria-hidden="true"></i> {{ get_post_type('title_crud') }}
                     <div class="btn-group pull-right">
-                        @if(View::exists('template.'.template().'.'.$post->type.'.'.$post->id))
-                        <a href="{{ route('appearance.editor').'?edit=/'.$post->type.'/'.$post->id.'.blade.php' }}" class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> Edit Halaman {!! help('Tombol ini akan muncul ketika '.$module->title.' ini memiliki custom page pada tampilan. Klik untuk mulai mengedit') !!}</a>
+                        @if(View::exists('template.'.template().'.'.$post->type.'.'.$post->slug))
+                        <a href="{{ route('appearance.editor').'?edit=/'.$post->type.'/'.$post->slug.'.blade.php' }}" class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> Edit Halaman {!! help('Tombol ini akan muncul ketika '.$module->title.' ini memiliki custom page pada tampilan. Klik untuk mulai mengedit') !!}</a>
                         @endif
                         <a href="{{ route(get_post_type()) }}" class="btn btn-danger btn-sm "
                         data-toggle="tooltip" title="Kembali Ke Index Data"> <i class="fa fa-undo" aria-hidden></i>
