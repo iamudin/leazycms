@@ -230,7 +230,6 @@ class PanelController extends Controller implements HasMiddleware
                 $key = _us($row[0]);
 
                 if ($row[1] == 'file') {
-                    $request->validate([$key => 'nullable|file|mimetypes:' . allow_mime()]);
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($request->hasFile($key)) {
                         $fid->update([
