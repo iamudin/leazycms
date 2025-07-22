@@ -193,7 +193,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     $data['shortcut'] =  Str::random(6);
     }
     if($module->web->detail){
-        $data['custom_page'] =  View::exists('template.'.template().'.'.$post->type.'.'.$post->id) ? '1' : '0';
+        $data['custom_page'] =  View::exists('template.'.template().'.'.$post->type.'.'.$post->slug) ? '1' : '0';
   }
     $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? str( preg_replace('/\s+/', ' ',strip_tags($request->content)))->words(25,'...') : null;
     $post->tags()->sync($request->tags, true);
