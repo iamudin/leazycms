@@ -158,6 +158,7 @@ class PanelController extends Controller implements HasMiddleware
         $data['web_type'] = config('modules.config.web_type');
         $data['option'] =  [
             ['Nama', 'text'],
+            ['Deskripsi', 'text'],
             ['Alamat', 'text'],
             ['Telepon', 'text'],
             ['Whatsapp', 'text'],
