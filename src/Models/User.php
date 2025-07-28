@@ -86,7 +86,7 @@ class User extends Authenticatable
     }
     public function hasRole($module,$action){
         if(!$this->isAdmin() && !$this->roles->where('module',$module)->where('action',$action)->where('level',$this->level)->count()){
-         abort('403','Unauthorized action');
+        return to_route('panel.dashboard')->with('danger','Akses terbatas');
         }
      }
     public function get_modules(){
