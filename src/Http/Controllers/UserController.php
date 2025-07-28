@@ -46,7 +46,6 @@ class UserController extends Controller implements HasMiddleware
             $request['media'] =  $user->photo;
 
             if ($request->hasFile('photo')) {
-                dd($request->file('photo'));
                 $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg','image/webp']]);
             }
             if ($pass = $request->password) {
