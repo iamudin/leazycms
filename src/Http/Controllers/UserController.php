@@ -120,9 +120,7 @@ class UserController extends Controller implements HasMiddleware
         $data['level'] = $request->level;
         $data['password'] = bcrypt($request->password);
         $data['host'] = $request->getHost();
-        if(in_array($request->level,$this->all_extension()->toArray()) && User::whereNotNull('host')->whereLevel($request->level)->count()){
-            return back()->with('danger','User Extension hanya wajib satu sebagai superadmin');
-        }
+       
         $data = User::create($data);
         if ($request->hasFile('photo')) {
             $data->update(['photo' => $data->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg']])]);
