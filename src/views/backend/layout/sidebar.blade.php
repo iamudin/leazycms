@@ -19,7 +19,7 @@
 
     <ul class="app-menu">
 
-        @if(!in_array(Auth::user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray()) )
+        @if(!in_array(Auth::user()->level, collect(config('modules.extension_module'))->pluck('path')->toArray()))
         <li>
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/dashboard') ? 'active' : '' }}"
@@ -30,9 +30,11 @@
         </li>
         @endif
         @foreach ($userprofile->isAdmin() ?
-        collect(get_module())->sortBy('position') :
-        collect(get_module())->sortBy('position')->whereIn('name',
-        $userprofile->get_modules->pluck('module')->toArray()) as $row)
+    collect(get_module())->sortBy('position') :
+    collect(get_module())->sortBy('position')->whereIn(
+        'name',
+        $userprofile->get_modules->pluck('module')->toArray()
+    ) as $row)
         <li class="treeview {{ active_item($row->name) ? 'is-expanded' : '' }}">
             <a
                 title="{{ $row->description }}"
@@ -73,7 +75,7 @@
             </ul>
         </li>
         @endforeach
-        @if(Auth::user()->level=='admin')
+        @if(Auth::user()->level == 'admin')
         <li>
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
@@ -120,7 +122,7 @@
         @if(config('app.sub_app_enabled'))
         @if ($ext = config('modules.extension_module'))
 
-        @if(Auth::user()->level=='admin')
+        @if(Auth::user()->level == 'admin')
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -129,9 +131,9 @@
         </li>
         @endif
         @foreach (json_decode(json_encode($ext)) as $row)
-        @if(Auth::user()->level!='admin' && Auth::user()->level ==$row->path || Auth::user()->level=='admin')
+        @if(Auth::user()->level != 'admin' && Auth::user()->level == $row->path || Auth::user()->level == 'admin')
         @if(auth()->user()->isAdmin())
-        <li class="treeview {{ Str::contains($row->path.'/'.request()->segment(3), collect($row->module)->pluck('path')->toArray()) ? 'is-expanded':null }}">
+        <li class="treeview {{ Str::contains($row->path . '/' . request()->segment(3), collect($row->module)->pluck('path')->toArray()) ? 'is-expanded' : null }}">
             <a
                 title="{{ $row->description }}"
                 class="app-menu__item"
@@ -143,9 +145,9 @@
             ></a>
             <ul class="treeview-menu">
 
-                @foreach (collect($row->module)->where('only_admin',true) as $module)
+                @foreach (collect($row->module)->where('only_admin', true) as $module)
                 <li>
-                    <a class="treeview-item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}" href="{{ route(config($row->path.'.route').$module->route) }}"
+                    <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}" href="{{ route(config($row->path . '.route') . $module->route) }}"
                         ><i class="icon fa {{ $module->icon }}"></i> {{ $module->name
                         }}</a
                     >
@@ -159,10 +161,10 @@
             </ul>
         </li>
         @else
-        @foreach (collect($row->module)->where('only_admin',false) as $module)
+        @foreach (collect($row->module)->where('only_admin', false) as $module)
         <li title="{{ $module->name }}">
             <a
-                class="app-menu__item {{ str_contains(url()->full(),$module->path) ? 'active' : '' }}"
+                class="app-menu__item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}"
                 href="{{ route($module->route) }}"
                 ><i class="app-menu__icon fa {{ $module->icon }}"></i>
                 <span class="app-menu__label">{{ $module->name }}</span></a
@@ -175,59 +177,55 @@
         @endif
         @endif
 
-        @if ($userprofile->level == 'admin')
-        <li
-            class="text-muted"
-            style="padding: 12px 10px; font-size: small; background: #000"
-        >
-            <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; ADMINISTRATOR
-        </li>
+        @if (Auth::user()->isAdmin())
+            <li
+                class="text-muted"
+                style="padding: 12px 10px; font-size: small; background: #000"
+            >
+                <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; ADMINISTRATOR
+            </li>
 
-        <li title="Pengguna">
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/appearance') ? 'active' : '' }}"
-                href="{{ admin_url('appearance') }}"
-                ><i class="app-menu__icon fa fa-paint-brush"></i>
-                <span class="app-menu__label">Tampilan</span></a
-            >
-        </li>
-        {{--
-        <li title="Pengguna">
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/ekstension') ? 'active' : '' }}"
-                href="{{ admin_url('ekstension') }}"
-                ><i class="app-menu__icon fa fa-puzzle-piece"></i>
-                <span class="app-menu__label">Ekstensi</span></a
-            >
-        </li>
-        --}}
+            <li class="treeview {{ active_item(['setting', 'appearance', 'cache']) ? 'is-expanded' : '' }}">
+                <a
+                    class="app-menu__item"
+                    href="#"
+                    data-toggle="treeview"
+                    ><i class="app-menu__icon fa fa-gear"></i
+                    ><span class="app-menu__label">Pengaturan</span
+                    ><i class="treeview-indicator fa fa-chevron-right"></i
+                >
+                </a>
 
-        <li title="Pengguna">
-            <a
-                class="app-menu__item {{ active_item(['user', 'role']) }}"
-                href="{{ route('user') }}"
-                ><i class="app-menu__icon fa fa-users"></i>
-                <span class="app-menu__label">Pengguna</span></a
-            >
-        </li>
-        <li title="Pengaturan">
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/setting') ? 'active' : '' }}"
-                href="{{ route('setting') }}"
-                ><i class="app-menu__icon fa fa-gears"></i>
-                <span class="app-menu__label">Pengaturan</span></a
-            >
-        </li>
-        {{--
-        <li title="Backup & Restore">
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/backup') ? 'active' : '' }}"
-                href="{{ route('backup') }}"
-                ><i class="app-menu__icon fa fa-database"></i>
-                <span class="app-menu__label">Backup & Restore</span></a
-            >
-        </li>
-        --}} @endif
+                <ul class="treeview-menu">
+                    <li>
+                        <a
+                            class="treeview-item {{active_item('appearance') }}"
+                            href="{{ route('appearance') }}"
+                            ><i class="icon fa fa-brush"></i> Tampilan</a>
+                    </li>
+                    <li>
+                        <a
+                            class="treeview-item {{active_item('setting') }}"
+                            href="{{ route('setting') }}"
+                            ><i class="icon fa fa-globe"></i> Website</a
+                        >      
+                            <li>
+                        <a
+                            class="treeview-item {{active_item(val: 'cache') }}"
+                            href="{{ route('cache-manager') }}"
+                            ><i class="icon fa fa-flash"></i> Cache</a
+                        >    
+                </ul>   
+            </li>
+                  <li title="Pengguna">
+                <a
+                    class="app-menu__item {{ active_item(['user', 'role']) }}"
+                    href="{{ route('user') }}"
+                    ><i class="app-menu__icon fa fa-users"></i>
+                    <span class="app-menu__label">Pengguna</span></a
+                >
+            </li>
+        @endif
 @if(Auth::user()->isAdmin())
         <li
             class="text-muted"

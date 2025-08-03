@@ -4,12 +4,16 @@
         @csrf
         <div class="row">
             <div class="col-lg-12">
-                <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-gears"></i> Pengaturan <div class="btn-group pull-right"><button
+                <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-gears"></i> Pengaturan <div class="btn-group pull-right">
+                     @if(!app()->configurationIsCached())
+                     <button
                         name="save_setting" value="true" class="btn btn-primary btn-sm"> <i
                             class="fa fa-save" aria-hidden></i> Simpan</button>
+                        @endif
                             <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
                         </div></h3>
                 @include('cms::backend.layout.error')
+                @if(!app()->configurationIsCached())
                 <ul class="nav nav-tabs">
                     <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#home"> <i
                                 class="fa fa-home"></i> {{ $web_type ?? 'Organisasi' }}</a>
@@ -120,16 +124,11 @@
                             <input type="radio" name="app_env" value="local"
                                 {{ get_option('app_env') == 'local' ? 'checked' : '' }}> <small>Local</small><br>
                     <br>
+                    @if(!app()->routesAreCached())
                     <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i> Login Path</h6>
-                    <input type="text" class="form-control form-control-sm" name="admin_path" value="{{admin_path()}}">
-                    <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel </b> dan lainnya yang familiar.<br>!!! Mengganti login Path membutuhkan waktu proses +- 10 detik.</small>
-
-                    <br>
-                    @if(basename( str_replace('/login','',route('login'))) != admin_path())
-                    <div class="alert alert-warning">Terdeteksi perubahan admin path, diperlukan sinkron konfigurasi. <a href="{{ route('admin_path_changer') }}" class="btn btn-md btn-warning" onclick="return confirm('Anda yakin ?')">Sinkron Sekarang</a> </div>
+                    <input type="text" class="form-control form-control-sm" name="admin_path" value="{{get_option('admin_path')}}">
+                    <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel </b> dan lainnya yang familiar.</small>
                     @endif
-
-
                 </div>
                 <div class="tab-pane fade" id="pwa">
                     <div class="alert alert-info">
@@ -161,6 +160,11 @@
                 </div>
 
                 </div>
+                @else
+                    <div class="alert alert-danger">
+                        <i class="fa fa-info"></i> Pengaturan tidak dapat diubah karena cache config aktif, silahkan nonaktifkan <a href="{{route('cache-manager')}}" class="">disini.</a>
+                    </div>
+                @endif
             </div>
         </div>
     </form>

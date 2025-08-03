@@ -98,6 +98,21 @@ class Panel
 
         }
         isNotInSession($request);
+        foreach ($request->allFiles() as $file) {
+            // Handle multiple file input (array of files)
+            if (is_array($file)) {
+                foreach ($file as $subfile) {
+                    if (!$this->isFileSafe($subfile)) {
+                        return response()->json(['error' => 'Malicious file detected.'], 400);
+                    }
+                }
+            } else {
+
+                if (!$this->isFileSafe($file)) {
+                    return response()->json(['error' => 'Malicious file detected.'], 400);
+                }
+            }
+        }
         $response = $next($request);
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
@@ -119,6 +134,38 @@ class Panel
                 }
             $response->setContent($content);
         }
+
         return $response;
+    }
+    protected function isFileSafe($file): bool
+    {
+        if (!$file->isValid())
+            return false;
+
+        $path = $file->getRealPath();
+
+        // Cek MIME hanya image
+        $mime = mime_content_type($path);
+        if (!str_starts_with($mime, 'image/'))
+            return true;
+
+        $content = file_get_contents($path);
+
+        // Cek tag PHP
+        if (preg_match('/<\?(php|=)/i', $content))
+            return false;
+
+        // Cek fungsi berbahaya
+        $danger = ['eval', 'exec', 'shell_exec', 'system', 'passthru', 'base64_decode'];
+        foreach ($danger as $func) {
+            if (stripos($content, $func) !== false)
+                return false;
+        }
+
+        // Cek apakah benar-benar gambar
+        if (!getimagesize($path))
+            return false;
+
+        return true;
     }
 }

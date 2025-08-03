@@ -359,33 +359,60 @@ class PanelController extends Controller implements HasMiddleware
                     rewrite_env(['APP_ENV' => $app_env]);
                 }
             }
-            if ($request->admin_path && get_option('admin_path') != $request->admin_path) {
-                $val = trim(str($request->admin_path)->slug());
-                if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
-                    return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
+            if (!app()->routesAreCached()) {
+                if ($request->admin_path) {
+                if (get_option('admin_path') != $request->admin_path) {
+                    $val = trim(str($request->admin_path)->slug());
+                    if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
+                        return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
+                    }
+                    $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
+                    return redirect()->to($request->admin_path . '/setting')->send()->with('success', 'Berhasil Diperbarui');
+                }else{
+                    return back()->send()->with('success', 'Berhasil Diperbarui');
                 }
-                $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
-            }
-            Artisan::call('config:cache');
+            }else{
+                return back()->send()->with('danger', 'Admin Path tidak boleh kosong');
 
-            return back()->send()->with('success', 'Berhasil');
+            }
+        }
+
+            return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
         return view('cms::backend.setting', $data);
     }
-    function admin_path(){
+    function admin_path(Request $request,$path){
+        $pathnew = base64_decode($path);
+        if ($pathnew && $pathnew != admin_path()) {
             Artisan::call('route:cache');
-            return redirect()->to(secure_url(route('setting', [], false)));
+            return redirect()->to(secure_url($pathnew.'/setting'));
+        }
+    }
+    public function cache(Request $request)
+    {
+        admin_only();
+        if ($request->isMethod('post')) {
+            if ($request->cache_config && $request->cache_config == 'Y' && !app()->configurationIsCached()) {
+                Artisan::call('config:cache');
+            }
+
+            if ($request->cache_config && $request->cache_config == 'N' && app()->configurationIsCached()) {
+                Artisan::call('config:clear');
+            }
+            if ($request->cache_route && $request->cache_route == 'Y' && !app()->routesAreCached()) {
+                Artisan::call('route:cache');
+            }
+            if ($request->cache_route && $request->cache_route == 'N' && app()->routesAreCached()) {
+                Artisan::call('route:clear');
+            }
+            return back()->send()->with('success', 'Berhasil di optimalkan');
+        }
+        return view('cms::backend.cache');
     }
     public function appearance(Request $request, Option $option)
     {
 
         admin_only();
-        if ($request->optimize) {
-                Artisan::call('config:cache');
-                Artisan::call('route:cache');
-                Artisan::call('view:cache');
-            return back()->send()->with('success', 'Berhasil di optimalkan');
-        }
         if ($request->isMethod('post')) {
             if ($file = $request->file('template')) {
                 $request->validate([
@@ -414,11 +441,9 @@ class PanelController extends Controller implements HasMiddleware
                             }
                         }
                     }
-                    if (count($success) > 0) {
-                        Artisan::call('config:cache');
-                    }
+
                 }
-                return back()->send();
+                return back()->send()->with('success', 'Berhasil diupdate');
             }
         }
         return view('cms::backend.appearance');

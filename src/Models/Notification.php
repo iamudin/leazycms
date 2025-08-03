@@ -23,10 +23,10 @@ class Notification extends Model
         return $this->belongsTo(User::class);
     }
     function get_unread_notifications(){
-        if(auth()->user()->isAdmin()){
+        if(auth()->user()?->isAdmin()){
             return self::where('is_read',false)->whereNull('user_id')->latest()->get();
         }else{
-            return self::whereBelongsTo(auth()->user())->where('is_read',false)->latest()->get();
+            return auth()->user() ? self::whereBelongsTo(auth()->user())->where('is_read',false)->latest()->get() : [];
         }
     }
     function mark_as_read(){
@@ -34,10 +34,10 @@ class Notification extends Model
     }
 
     function get_read_notifications(){
-        if(auth()->user()->isAdmin()){
+        if(auth()->user()?->isAdmin()){
             return self::where('is_read',true)->latest()->get();
         }else{
-            return self::whereBelongsTo(auth()->user())->where('is_read',true)->latest()->get();
+            return auth()->user() ? self::whereBelongsTo(auth()->user())->where('is_read',true)->latest()->get() : [];
         }
     }
 }
