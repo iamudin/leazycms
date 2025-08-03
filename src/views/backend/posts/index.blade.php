@@ -20,9 +20,9 @@
 
     <div class="row">
         @php
-        $publish = query()->onType(get_post_type())->published()->count();
-        $draft = query()->onType(get_post_type())->whereStatus('draft')->count();
-        $trash = query()->onType(get_post_type())->onlyTrashed()->count();
+        $publish = query()->whereBelongsTo(request()->user())->onType(get_post_type())->published()->count();
+        $draft = query()->whereBelongsTo(request()->user())->onType(get_post_type())->whereStatus('draft')->count();
+        $trash = query()->whereBelongsTo(request()->user())->onType(get_post_type())->onlyTrashed()->count();
 
         @endphp
               <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">

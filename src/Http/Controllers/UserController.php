@@ -2,17 +2,16 @@
 
 namespace Leazycms\Web\Http\Controllers;
 
+use Closure;
+use Illuminate\Http\Request;
+use Leazycms\Web\Models\Role;
+use Leazycms\Web\Models\User;
+use Illuminate\Validation\Rule;
+use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Http\Request;
-use Leazycms\Web\Models\User;
-use Leazycms\Web\Models\Role;
-use Yajra\DataTables\DataTables;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Http;
-
-use Closure;
 
 class UserController extends Controller implements HasMiddleware
 {
@@ -21,7 +20,7 @@ class UserController extends Controller implements HasMiddleware
         return [
             new Middleware('auth'),
             function (Request $request, Closure $next) {
-                if (!$request->user()->isAdmin()) {
+                if (!$request->user()->isAdmin() && !Route::is('user.account')) {
                     return redirect()->route('panel.dashboard')->send()->with('danger', 'Akses hanya admin');
                 }
                 return $next($request);
@@ -47,7 +46,6 @@ class UserController extends Controller implements HasMiddleware
             $request['media'] =  $user->photo;
 
             if ($request->hasFile('photo')) {
-                dd($request->file('photo'));
                 $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg','image/webp']]);
             }
             if ($pass = $request->password) {
@@ -120,9 +118,7 @@ class UserController extends Controller implements HasMiddleware
         $data['level'] = $request->level;
         $data['password'] = bcrypt($request->password);
         $data['host'] = $request->getHost();
-        if(in_array($request->level,$this->all_extension()->toArray()) && User::whereNotNull('host')->whereLevel($request->level)->count()){
-            return back()->with('danger','User Extension hanya wajib satu sebagai superadmin');
-        }
+       
         $data = User::create($data);
         if ($request->hasFile('photo')) {
             $data->update(['photo' => $data->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg']])]);
