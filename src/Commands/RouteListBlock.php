@@ -8,7 +8,7 @@ use Illuminate\Foundation\Console\RouteListCommand;
 
 class RouteListBlock extends Command
 {
-    protected $signature = 'route:lisst';
+    protected $signature = 'route:list';
     protected $description = 'This command is disabled';
 
     public function handle()

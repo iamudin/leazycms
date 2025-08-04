@@ -1,11 +1,9 @@
 <?php
 
 namespace Leazycms\Web\Commands;
-use Dotenv\Dotenv;
 use Leazycms\Web\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 
 class InstallCommand extends Command
@@ -63,11 +61,6 @@ class InstallCommand extends Command
                 "APP_TIMEZONE" => "Asia/Jakarta",
                " DB_COLLATION" => "utf8mb4_unicode_ci"
             ]);
-
-            // Bersihkan cache
-            Artisan::call('config:clear');
-            Artisan::call('cache:clear');
-
             // Paksa Laravel membaca ulang konfigurasi database
             config(['database.default' => 'mysql']);
             config(['database.connections.mysql.collation' => 'utf8mb4_unicode_ci']);
@@ -91,18 +84,13 @@ class InstallCommand extends Command
             ]);
 
             // Generate data dummy
-            $this->generate_dummy_content($domain);
-
-            // Cache konfigurasi baru
-            Artisan::call('config:cache');
-            Artisan::call('route:cache');
-
+           $auth = $this->generate_dummy_content($domain);
             Artisan::call('vendor:publish', ['--tag' => 'cms']);
 
             $this->info('Instalasi Berhasil! Silahkan akses: ');
             $this->line('Url login : ' . route('login'));
-            $this->line('Username  : adminsuper');
-            $this->line('Password  : password');
+            $this->line('Username  : '.$auth['username']);
+            $this->line('Password  : password'.$auth['password']);
         } else {
             $this->info('Laravel sudah terpasang module LEAZYCMS!');
         }
@@ -115,8 +103,10 @@ class InstallCommand extends Command
     }
     function generate_dummy_content($domain)
     {
-        $data = array('username' => 'adminsuper', 'password' => bcrypt('password'), 'host' => $domain, 'email' => 'email@'.$domain,'status' => 'active', 'slug' => 'admin-super', 'name' => 'Admin Web', 'url' => 'author/admin-web', 'photo' => null, 'level' => 'admin');
-        $id = User::UpdateOrcreate(['username' => 'adminsuper'], $data);
+        $username = str(str()->random(6))->lower();
+        $password = str(str()->random(8))->lower();
+        $data = array('username' => $username, 'password' => bcrypt($password), 'host' => $domain, 'email' => 'email@'.$domain,'status' => 'active', 'slug' => 'admin-super', 'name' => 'Admin Web', 'url' => 'author/admin-web', 'photo' => null, 'level' => 'admin');
+        $id = User::UpdateOrcreate(['username' => $username], $data);
         $id->posts()->updateOrcreate(
             [
                 'title' => $title = 'Header',
@@ -167,7 +157,7 @@ class InstallCommand extends Command
                 'name' => $row['name']
             ], ['value' => $row['value'], 'autoload' => $row['autoload']]);
         }
-        return true;
+        return ['username' => $username, 'password' => $password];
     }
     public function checkConnection($host, $username, $password, $db)
     {
