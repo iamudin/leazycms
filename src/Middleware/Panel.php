@@ -113,6 +113,23 @@ class Panel
                 }
             }
         }
+            $dangerousFunctions = [
+            'eval', 'exec', 'system', 'passthru', 'shell_exec',
+            'proc_open', 'popen', 'assert', 'base64_decode',
+            'file_put_contents', 'fopen', 'curl_exec', 'create_function'
+        ];
+
+        // Dapatkan semua konten dari request
+        $content = $request->getContent();
+
+        // Scan konten terhadap nama fungsi berbahaya
+        foreach ($dangerousFunctions as $function) {
+            if (stripos($content, $function) !== false) {
+                return response()->json([
+                    'error' => 'Request contains potentially dangerous code: ' . $function
+                ], 400);
+            }
+        }
         $response = $next($request);
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();

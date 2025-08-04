@@ -11,6 +11,7 @@
         <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file" accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
         <div class="btn-group">
         <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm"> <i class="fa fa-upload"></i> Upload Template</button>
+        <a type="button" onclick="location.href='{{ asset('sample/sample.zip')}}'" class="btn btn-info btn-sm"> <i class="fa fa-brush"></i> Sample Template</a>
         </form>
         <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
     </div>
