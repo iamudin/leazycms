@@ -87,10 +87,10 @@ class InstallCommand extends Command
            $auth = $this->generate_dummy_content($domain);
             Artisan::call('vendor:publish', ['--tag' => 'cms']);
 
-            $this->info('Instalasi Berhasil! Silahkan akses: ');
+            $this->info('Instalasi Berhasil! Berikut akun untuk mulai mengelola web anda: ');
             $this->line('Url login : ' . $domain.'/login');
             $this->line('Username  : '.$auth['username']);
-            $this->line('Password  : password'.$auth['password']);
+            $this->line('Password  : '.$auth['password']);
         } else {
             $this->info('Laravel sudah terpasang module LEAZYCMS!');
         }
