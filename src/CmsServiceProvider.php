@@ -15,6 +15,7 @@ use Illuminate\Support\ServiceProvider;
 use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Exceptions\NotFoundHandler;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Leazycms\Web\Commands\ResetPassword;
 use Leazycms\Web\Commands\RouteListBlock;
 
 class CmsServiceProvider extends ServiceProvider
@@ -77,7 +78,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->cmsHandler();
         $this->registerRoutes();
         $this->commands([
-            InstallCommand::class,RouteListBlock::class
+            InstallCommand::class,RouteListBlock::class,ResetPassword::class
         ]);
     }
     public function register()

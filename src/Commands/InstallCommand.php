@@ -88,7 +88,7 @@ class InstallCommand extends Command
             Artisan::call('vendor:publish', ['--tag' => 'cms']);
 
             $this->info('Instalasi Berhasil! Silahkan akses: ');
-            $this->line('Url login : ' . route('login'));
+            $this->line('Url login : ' . $domain.'/login');
             $this->line('Username  : '.$auth['username']);
             $this->line('Password  : password'.$auth['password']);
         } else {
@@ -130,7 +130,7 @@ class InstallCommand extends Command
             ['name' => 'post_perpage', 'value' => 10, 'autoload' => 1],
             ['name' => 'site_title', 'value' => 'Your Website Official', 'autoload' => 1],
             ['name' => 'template', 'value' => 'default', 'autoload' => 1],
-            ['name' => 'admin_path', 'value' => 'panel', 'autoload' => 1],
+            ['name' => 'admin_path', 'value' => 'login', 'autoload' => 1],
             ['name' => 'logo', 'value' => 'noimage.webp', 'autoload' => 1],
             ['name' => 'favicon', 'value' => 'noimage.webp', 'autoload' => 1],
             ['name' => 'site_url', 'value' => request()->getHttpHost(), 'autoload' => 1],
