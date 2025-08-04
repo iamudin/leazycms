@@ -82,7 +82,7 @@ class InstallCommand extends Command
                 'APP_INSTALLED' => true,
                 'APP_ENV' => 'production'
             ]);
-
+            clear_route();
             // Generate data dummy
            $auth = $this->generate_dummy_content($domain);
             Artisan::call('vendor:publish', ['--tag' => 'cms']);

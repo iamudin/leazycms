@@ -20,9 +20,9 @@ class ResetPassword extends Command
             $user->update([
                 'password'=>bcrypt($password)
             ]);
-            $this->info('url : '.route('login'));
-            $this->info('Username : '.$username);
-            $this->info('Password : '.$password);
+            $this->line('url : '.route('login'));
+            $this->line('Username : '.$username);
+            $this->line('Password : '.$password);
         }
     }
 
