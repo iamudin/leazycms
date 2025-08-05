@@ -56,7 +56,7 @@
                             <option value="default">Default</option>
                             @foreach ($home as $r)
                                 <option value="{{ $r }}"
-                                    {{ $r == get_option('home_page') ? 'selected' : '' }}>{{ str(str_replace('.blade.php','',$r))->upper(); }}</option>
+                                    {{ $r == get_option('home_page') ? 'selected' : '' }}>{{ str(str_replace('.blade.php','',$r))->upper() }}</option>
                             @endforeach
                         </select>
                         @foreach ($site_attribute as $r)

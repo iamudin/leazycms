@@ -125,7 +125,7 @@ class WebController extends Controller
                 'name' => strip_tags(substr($request->name,0,20)),
                 'email' => strip_tags(substr($request->email,0,50) ?? null),
                 'ip' => get_client_ip(),
-                'content' => nl2br(strip_tags(substr($request->content,0,500) ?? null)),
+                'content' => nl2br(strip_tags(substr($request->comment_content,0,500) ?? null)),
                 'link' => strip_tags($request->link ?? null),
                 'comment_meta' => $request->comment_meta ? cleanArrayValues($request->comment_meta) :[],
             ]);

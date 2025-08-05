@@ -88,8 +88,17 @@ class ExtController extends Controller
 
             foreach ($chunkedUrls as $index => $chunk) {
                 $filename = "sitemap_" . ($index + 1) . ".xml";
+
+                // Render Blade tanpa deklarasi XML
                 $sitemapContent = view('cms::layouts.sitemap-xml', ['urls' => $chunk])->render();
-                File::put(public_path($filename), $sitemapContent);
+
+                // Tambahkan deklarasi XML manual di awal string
+                $sitemapContentWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapContent;
+
+                // Simpan file ke direktori publik
+                File::put(public_path($filename), $sitemapContentWithDeclaration);
+
+                // Tambahkan ke daftar indeks
                 $sitemaps[] = [
                     'loc' => url($filename),
                     'lastmod' => now()->toIso8601String(),
@@ -98,8 +107,12 @@ class ExtController extends Controller
 
             // Generate indeks sitemap utama
             $sitemapIndexContent = view('cms::layouts.sitemap-index', ['sitemaps' => $sitemaps])->render();
-            File::put(public_path('sitemap.xml'), $sitemapIndexContent);
 
+            // Tambahkan deklarasi XML di awal konten
+            $sitemapIndexWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapIndexContent;
+
+            // Simpan ke file sitemap.xml
+            File::put(public_path('sitemap.xml'), $sitemapIndexWithDeclaration);
             return $sitemapIndexContent;
         });
 
