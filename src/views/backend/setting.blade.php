@@ -39,7 +39,7 @@
                                     <br>
                                 @else
                                     <input accept="{{ allow_mime() }}" {{ isset($r[2]) ? 'required' : '' }}
-                                        name="{{ _us($r[0]) }}" type="file" class="form-control-sm form-control-file">
+                                        name="{{ _us($r[0]) }}" type="file" class="compress-image form-control-sm form-control-file">
                                 @endif
                             @else
                                 <input {{ isset($r[2]) ? 'required' : '' }} type="text"
