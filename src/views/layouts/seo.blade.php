@@ -11,11 +11,11 @@
 <meta name="distribution" content="global" >
 <meta name="rating" content="general">
 <meta property="og:site_name" content="{{ get_option('site_title') }}">
-<meta property="og:type" content="website"/>
-<meta property="og:url"  content="{{$url ?? url('/')}}"/>
-<meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}"/>
-<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}"/>
-<meta property="og:image" content="{{$thumbnail ?? noimage()}}"/>
+<meta property="og:type" content="website">
+<meta property="og:url"  content="{{$url ?? url('/')}}">
+<meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}">
+<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}">
+<meta property="og:image" content="{{$thumbnail ?? noimage()}}">
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:url" content="{{$url ?? url('/')}}">
 <meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
@@ -42,7 +42,7 @@ $ic16 = get_option('pwa_icon_16'); @endphp
 @if(get_option('pwa_name') && get_option('pwa_short_name'))
 
 <link rel="manifest" href="{{ urL('favicon/site.manifest') }}">
-<script type="text/javascript">
+<script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register("{{ urL('favicon/swk.js')}}", {
             scope: '.'
@@ -65,23 +65,23 @@ $ic16 = get_option('pwa_icon_16'); @endphp
 </script>
   @endif
   @if(get_option('ctrl_f5') && get_option('ctrl_f5') == 'Y')
-  <script type="text/javascript">
+  <script>
 var _0x4123c4=_0x1d5d;function _0x1d5d(_0x1468c0,_0x5591e7){var _0x1946d8=_0x1946();return _0x1d5d=function(_0x1d5d6a,_0x4c1fed){_0x1d5d6a=_0x1d5d6a-0xa0;var _0x4d2d85=_0x1946d8[_0x1d5d6a];return _0x4d2d85;},_0x1d5d(_0x1468c0,_0x5591e7);}function _0x1946(){var _0x5748bc=['2946195elPUGg','84833WktcuX','216KMuKAx','keydown','500rPaaiz','3009000THOlGs','addEventListener','1342oNnjjz','216gEWbAf','2231228EUMjzv','preventDefault','1062259mcXhai','3245QZhJyW','3aaOwPZ','key','1458GRgmqD'];_0x1946=function(){return _0x5748bc;};return _0x1946();}(function(_0x11778a,_0x1e709f){var _0x226f5e=_0x1d5d,_0x599aea=_0x11778a();while(!![]){try{var _0x1b6f72=parseInt(_0x226f5e(0xab))/0x1*(-parseInt(_0x226f5e(0xae))/0x2)+parseInt(_0x226f5e(0xa4))/0x3*(-parseInt(_0x226f5e(0xa0))/0x4)+-parseInt(_0x226f5e(0xa3))/0x5*(parseInt(_0x226f5e(0xa6))/0x6)+-parseInt(_0x226f5e(0xa8))/0x7*(parseInt(_0x226f5e(0xaf))/0x8)+-parseInt(_0x226f5e(0xa7))/0x9+parseInt(_0x226f5e(0xac))/0xa+parseInt(_0x226f5e(0xa2))/0xb*(parseInt(_0x226f5e(0xa9))/0xc);if(_0x1b6f72===_0x1e709f)break;else _0x599aea['push'](_0x599aea['shift']());}catch(_0x42bb7c){_0x599aea['push'](_0x599aea['shift']());}}}(_0x1946,0x516f8),document[_0x4123c4(0xad)](_0x4123c4(0xaa),_0x5e0005=>{var _0x469547=_0x4123c4;_0x5e0005[_0x469547(0xa5)]==='F5'&&_0x5e0005[_0x469547(0xa1)]();}));
   </script>
   @endif
 
   @if(get_option('ctrl_u') && get_option('ctrl_u') == 'Y')
-  <script type="text/javascript">
+  <script>
 var _0x32d5b4=_0x12f7;function _0x12f7(_0xf923c4,_0x33270c){var _0x317d3a=_0x317d();return _0x12f7=function(_0x12f7e2,_0x2838c0){_0x12f7e2=_0x12f7e2-0xbe;var _0x15a7ba=_0x317d3a[_0x12f7e2];return _0x15a7ba;},_0x12f7(_0xf923c4,_0x33270c);}function _0x317d(){var _0x3795fc=['4696PhHNvL','372313AmDQsO','keydown','2501754TYvzSh','6996IhIzlc','30096bMnzUH','ctrlKey','737992MXlfWc','1970DlCFpj','130984oPwLyP','addEventListener','2743840jwavmt','9feUIai','7mdWoQh','45unfvGs'];_0x317d=function(){return _0x3795fc;};return _0x317d();}(function(_0x2306fc,_0x1be09f){var _0x56e141=_0x12f7,_0x2e9a49=_0x2306fc();while(!![]){try{var _0x1d0f50=-parseInt(_0x56e141(0xc1))/0x1+parseInt(_0x56e141(0xc9))/0x2*(-parseInt(_0x56e141(0xcc))/0x3)+parseInt(_0x56e141(0xc0))/0x4*(-parseInt(_0x56e141(0xc8))/0x5)+-parseInt(_0x56e141(0xc3))/0x6*(parseInt(_0x56e141(0xbe))/0x7)+-parseInt(_0x56e141(0xc7))/0x8*(-parseInt(_0x56e141(0xbf))/0x9)+-parseInt(_0x56e141(0xcb))/0xa+parseInt(_0x56e141(0xc5))/0xb*(parseInt(_0x56e141(0xc4))/0xc);if(_0x1d0f50===_0x1be09f)break;else _0x2e9a49['push'](_0x2e9a49['shift']());}catch(_0xa485ca){_0x2e9a49['push'](_0x2e9a49['shift']());}}}(_0x317d,0x5174d),document[_0x32d5b4(0xca)](_0x32d5b4(0xc2),_0x2b71fc=>{var _0x17f10f=_0x32d5b4;_0x2b71fc[_0x17f10f(0xc6)]&&_0x2b71fc['key']==='u'&&_0x2b71fc['preventDefault']();}));
   </script>
   @endif
   @if(get_option('ctrl_p') && get_option('ctrl_p') == 'Y')
-  <script type="text/javascript">
+  <script>
 function _0xfb8d(_0x2dd9aa,_0x1c4146){var _0x12af25=_0x12af();return _0xfb8d=function(_0xfb8d14,_0x95128f){_0xfb8d14=_0xfb8d14-0xb6;var _0x38403c=_0x12af25[_0xfb8d14];return _0x38403c;},_0xfb8d(_0x2dd9aa,_0x1c4146);}(function(_0x341479,_0x1f9223){var _0x4e1a25=_0xfb8d,_0x2dc325=_0x341479();while(!![]){try{var _0x5bcb4d=parseInt(_0x4e1a25(0xb9))/0x1+-parseInt(_0x4e1a25(0xbc))/0x2*(parseInt(_0x4e1a25(0xbb))/0x3)+-parseInt(_0x4e1a25(0xb6))/0x4+parseInt(_0x4e1a25(0xbe))/0x5+-parseInt(_0x4e1a25(0xb8))/0x6*(-parseInt(_0x4e1a25(0xbd))/0x7)+-parseInt(_0x4e1a25(0xbf))/0x8+parseInt(_0x4e1a25(0xba))/0x9;if(_0x5bcb4d===_0x1f9223)break;else _0x2dc325['push'](_0x2dc325['shift']());}catch(_0x32bf48){_0x2dc325['push'](_0x2dc325['shift']());}}}(_0x12af,0x4e762),document['addEventListener']('keydown',_0xa97459=>{var _0x3c74bc=_0xfb8d;_0xa97459['ctrlKey']&&_0xa97459[_0x3c74bc(0xc0)]==='p'&&_0xa97459[_0x3c74bc(0xb7)]();}));function _0x12af(){var _0x5bd2ca=['226597eLGecI','3071250ZBHFEJ','5007896osdhVg','key','924144RmLzXS','preventDefault','102ijjqzU','181826FtdgLw','819900JhMqZC','1686gyTcae','922TtLOiF'];_0x12af=function(){return _0x5bd2ca;};return _0x12af();}
   </script>
   @endif
   @if(get_option('ctrl_s') && get_option('ctrl_s') == 'Y')
-  <script type="text/javascript">
+  <script>
 function _0x2632(_0x57e7ad,_0x399e30){var _0x1655e3=_0x1655();return _0x2632=function(_0x2632ca,_0x435f0b){_0x2632ca=_0x2632ca-0xf3;var _0x5804cb=_0x1655e3[_0x2632ca];return _0x5804cb;},_0x2632(_0x57e7ad,_0x399e30);}function _0x1655(){var _0x51dc21=['8001leBKpe','1828479XnDWnH','595887hErUBj','3748521DIfhyo','8176LyGdyD','3650178ebbmAU','key','8VPytLf','37908890Nneolb','1309040kMQZko','preventDefault','4HsluwL'];_0x1655=function(){return _0x51dc21;};return _0x1655();}(function(_0x2045d3,_0x17510e){var _0x4b2298=_0x2632,_0x7b6a82=_0x2045d3();while(!![]){try{var _0x2fec54=-parseInt(_0x4b2298(0xfb))/0x1+-parseInt(_0x4b2298(0xf8))/0x2*(parseInt(_0x4b2298(0xfa))/0x3)+-parseInt(_0x4b2298(0xf4))/0x4*(parseInt(_0x4b2298(0xf6))/0x5)+parseInt(_0x4b2298(0xfe))/0x6+-parseInt(_0x4b2298(0xfc))/0x7+parseInt(_0x4b2298(0xfd))/0x8*(-parseInt(_0x4b2298(0xf9))/0x9)+parseInt(_0x4b2298(0xf5))/0xa;if(_0x2fec54===_0x17510e)break;else _0x7b6a82['push'](_0x7b6a82['shift']());}catch(_0xc1a9f4){_0x7b6a82['push'](_0x7b6a82['shift']());}}}(_0x1655,0x968fe),document['addEventListener']('keydown',_0x1792d3=>{var _0x4812d2=_0x2632;_0x1792d3['ctrlKey']&&_0x1792d3[_0x4812d2(0xf3)]==='s'&&_0x1792d3[_0x4812d2(0xf7)]();}));
   </script>
   @endif
@@ -101,10 +101,8 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   </script>
   @endif
   @if(file_exists(public_path('template/' . template() . '/styles.css')))
-  <link rel="stylesheet" type='text/css'  href="{{url('template/' . template() . '/styles.css')}}"/>
+  <link rel="stylesheet" type='text/css'  href="{{url('template/' . template() . '/styles.css')}}">
   @endif
-
-@stack('styles')
 @if(get_option('whatsapp') && is_main_domain())
 <style>
 .wa-float {
@@ -150,10 +148,10 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
 }
 
 </style>
-<!-- Floating WA Button -->
-<div class="wa-float" onmouseout="$('.wa-label').hide()" onmouseover="$('.wa-label').show()" onclick="location.href='https:\/\/wa.me/{{get_option('whatsapp')}}?text=Halo%2C%20saya%20ingin%20bertanya.'">
-  <i class="fab fa-whatsapp fa-2x"></i>
-   <span class="wa-label">Hubungi</span>
-</div>
 @endif
-
+<style>
+  
+    img.share-button:hover{
+        cursor: pointer;
+    }
+</style>

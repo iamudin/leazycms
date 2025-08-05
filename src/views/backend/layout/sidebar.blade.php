@@ -4,11 +4,10 @@
 <aside class="app-sidebar" style="background: #1D2327; font-size: 12px">
     <div class="app-sidebar__user" style="cursor: pointer; margin-bottom: 0">
         <img
+            alt="User Photo"
             class="app-sidebar__user-avatar"
             style="width: 30px; height: 30px"
-            src="{{ $userprofile->photo_user }}"
-            alt="User Image"
-        />
+            src="{{ $userprofile->photo_user }}">
         <div>
             <p class="app-sidebar__user-name">{{ $userprofile->name }}</p>
             <p class="app-sidebar__user-designation">

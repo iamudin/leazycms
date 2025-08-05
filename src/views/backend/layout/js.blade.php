@@ -1,4 +1,4 @@
-<script type="text/javascript" src="{{url('backend/js/plugins/select2.min.js')}}"></script>
+<script  src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 <script>
 const compressImage = async (file, { quality = 0.3 }) => {
     const imageBitmap = await createImageBitmap(file);

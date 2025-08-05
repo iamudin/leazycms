@@ -1,42 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
+    <meta charset="utf-8">
     <meta name="description" content="">
     <meta name="keywords" content="">
     <meta name="authord" content="">
-    <!-- Twitter meta-->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:site" content="">
     <meta property="twitter:creator" content="">
-    <!-- Open Graph Meta-->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="">
     <meta property="og:title" content="">
     <meta property="og:url" content="">
     <meta property="og:image" content="">
     <meta property="og:description" content="">
-    <title>{{ $title ? $title . ' - Admin Panel ' : 'Admin Panel ' }}
-    </title>
-    <meta charset="utf-8">
+    <title>{{ $title ? $title . ' - Admin Panel ' : 'Admin Panel ' }} </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="yes" name="apple-mobile-web-app-capable">
     <meta content="yes" name="apple-touch-fullscreen">
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('icon') ?? noimage() }}">
-    <meta name="theme-color" content="#009688" />
+    <meta name="theme-color" content="#009688">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Main CSS-->
     <link rel="stylesheet" type="text/css" href="{{ url('backend/css/main.css') }}">
     <!-- Font-icon css-->
-    <link rel="stylesheet" type="text/css"
-        href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" >
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>
-    <!-- Main Quill library -->
 
     <style>
         .pointer {
@@ -68,16 +61,7 @@
 
     @stack('styles')
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-</head>
-
-<body id="body" class="app sidebar-mini">
-    @include('cms::backend.layout.header')
-    @include('cms::backend.layout.sidebar')
-
-
-    <main class="app-content" style="background: #F0F0F1">
-
-        <style>
+      <style>
             body {
                 font-family: sans-serif;
             }
@@ -152,12 +136,22 @@
                 transition: all 0.3s ease-in-out;
             }
         </style>
+</head>
+
+<body id="body" class="app sidebar-mini">
+    @include('cms::backend.layout.header')
+    @include('cms::backend.layout.sidebar')
+
+
+    <main class="app-content" style="background: #F0F0F1">
+
+      
 
         @yield('content')
 
     </main>
 
-    <script type="text/javascript">
+    <script>
         $('.copy').click(function() {
             var $temp = $("<input>");
             $("body").append($temp);
@@ -177,17 +171,17 @@
         }
     </script>
     <!-- Essential javascripts for application to work-->
-    <script src="{{ url('backend/js/popper.min.js') }}"></script>
-    <script src="{{ url('backend/js/bootstrap.min.js') }}"></script>
-    <script src="{{ url('backend/js/main.js') }}"></script>
+    <script  src="{{ url('backend/js/popper.min.js') }}"></script>
+    <script  src="{{ url('backend/js/bootstrap.min.js') }}"></script>
+    <script  src="{{ url('backend/js/main.js') }}"></script>
     <!-- The javascript plugin to display page loading on top-->
-    <script src="{{ url('backend/js/plugins/pace.min.js') }}"></script>
+    <script  src="{{ url('backend/js/plugins/pace.min.js') }}"></script>
     <!-- Page specific javascripts-->
-    <script type="text/javascript" src="{{ url('backend/js/plugins/chart.js') }}"></script>
+    <script  src="{{ url('backend/js/plugins/chart.js') }}"></script>
 
-    <script type="text/javascript" src="{{ url('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
+    <script  src="{{ url('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
 
-    <script type="text/javascript" src="{{ url('backend/js/plugins/sweetalert.min.js') }}"></script>
+    <script  src="{{ url('backend/js/plugins/sweetalert.min.js') }}"></script>
     @stack('scripts')
 
 </body>

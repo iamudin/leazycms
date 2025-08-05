@@ -1008,6 +1008,12 @@ if (!function_exists('init_popup')) {
         return null;
     }
 }
+if (!function_exists('init_wabutton')) {
+    function init_wabutton()
+    {
+            return \Illuminate\Support\Facades\View::make('cms::layouts.floatwa');
+    }
+}
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
     {

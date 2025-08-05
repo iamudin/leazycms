@@ -189,6 +189,7 @@ class RateLimit
         $response =  $next($request);
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
+            
             $response->setContent($content);
         }
         return $response;

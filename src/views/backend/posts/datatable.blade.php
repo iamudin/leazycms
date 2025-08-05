@@ -1,4 +1,4 @@
-<script type="text/javascript">
+<script>
     window.addEventListener('DOMContentLoaded', function() {
      var sort_col = $('.datatable').find("th:contains('Dibuat')")[0].cellIndex;
         var table = $('.datatable').DataTable({
