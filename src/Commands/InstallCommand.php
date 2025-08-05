@@ -161,9 +161,7 @@ class InstallCommand extends Command
     }
     public function checkConnection($host, $username, $password, $db)
     {
-        $host = $host;
         $database = $db;
-        $username = $username;
         $password = $password ?? '';
 
         config([
