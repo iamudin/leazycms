@@ -27,10 +27,10 @@
                 </ul>
                 <div class="tab-content pt-2" id="myTabContent">
                     <div class="tab-pane fade active show" id="home">
-                        @if(is_array($option))
-                            @foreach ($option as $r)
-                                <small for="" class="text-muted">{{ $r[0] }}</small>
-                                @if ($r[1] == 'file')
+
+                        @foreach ($option ?? [] as $r)
+                            <small for="" class="text-muted">{{ $r[0] }}</small>
+                            @if ($r[1] == 'file')
                                 @if (get_option(_us($r[0])) && media_exists(get_option(_us($r[0]))))
                                     <br><a href="{{ url(get_option(_us($r[0]))) }}"
                                         class="btn btn-outline-info btn-sm">Lihat {{ $r[0] }}
@@ -45,11 +45,10 @@
                             @else
                                 <input {{ isset($r[2]) ? 'required' : '' }} type="text"
                                     class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}"
+                                    name="{{ _us($r[0]) }}" value="{{ get_option(_us($r[0])) }}">
                             @endif
-                            @endforeach
-                        @endif
+                        @endforeach
 
-                    </div>
                     </div>
                     <div class="tab-pane fade" id="profile">
 
