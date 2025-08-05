@@ -47,7 +47,7 @@ function web_footer(){
 if (!function_exists('getThumbUrl')) {
     function getThumbUrl($url)
     {
-        $response = \Illuminate\Support\Facades\Http::withOptions([
+        $response = Http::withOptions([
             'verify' => false,  // Menonaktifkan verifikasi SSL
         ])->get($url);
 
@@ -150,7 +150,7 @@ if (!function_exists('isNotInSession')) {
     {
         $user = $request->user();
         if ($user && md5(md5($request->session()->id())) != $user?->active_session) {
-            \Illuminate\Support\Facades\Auth::logout($request->user());
+            \Illuminate\Support\Facades\Auth::logout();
             $user->update(['active_session' => null]);
             return to_route('login')->with('error', 'Session is expired or another user was logged your account!')->send();
         }
@@ -161,8 +161,11 @@ if (!function_exists('isNotInSession')) {
 if (!function_exists('forbidden')) {
     function forbidden($request, $k = false)
     {
+        $rawKeywords = get_option('forbidden_keyword') ?? '';
+        $cleanedKeywords = str_replace(' ', '', $rawKeywords);
+        $keywords = explode(',', $cleanedKeywords);
         if($request->segment(2)!='appearance'){
-        if (get_option('forbidden_keyword') && str()->contains(str($request->fullUrl())->lower(), explode(",", str_replace(" ", "", get_option('forbidden_keyword') ?? '')))) {
+        if (get_option('forbidden_keyword') && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
             $redirect = get_option('forbidden_redirect');
             if (!$k) {
                 if (!empty($redirect) && str($redirect)->isUrl()) {
@@ -334,11 +337,7 @@ function BytesToMB($bytes, $precision = 2)
 {
     return round($bytes / 1048576, $precision);
 }
-function getWebDisk($host = false)
-{
 
-    return new \Leazycms\Web\Inc\Disk($host ? $host : false);
-}
 
 
 
@@ -471,13 +470,13 @@ if (!function_exists('regenerate_cache')) {
                 $with[] = 'user';
                 $with[] = 'category';
             }
-            \Illuminate\Support\Facades\Cache::forget($row);
-            \Illuminate\Support\Facades\Cache::rememberForever($row, function () use ($row, $with) {
+            Cache::forget($row);
+            Cache::rememberForever($row, function () use ($row, $with) {
                 return \Leazycms\Web\Models\Post::with($with ?? 'user')->whereType($row)->whereStatus('publish')->latest('created_at')->get();
             });
             if (get_module($row)->form->category) {
-                \Illuminate\Support\Facades\Cache::forget('category_' . $row);
-                \Illuminate\Support\Facades\Cache::rememberForever('category_' . $row, function () use ($row) {
+                Cache::forget('category_' . $row);
+                Cache::rememberForever('category_' . $row, function () use ($row) {
                     return \Leazycms\Web\Models\Category::with('posts')->whereType($row)->whereStatus('publish')->latest('created_at')->get();
                 });
             }
@@ -517,7 +516,6 @@ if (!function_exists('fcm_send_notification')) {
             "priority" => "high",
             "notification" => $notification,
             "data" => $data,
-            "priority" => 10
         ];
         //  dd($fcmNotification);
         // sendPushnotification($headers, $fcmNotification);
@@ -820,12 +818,12 @@ if (!function_exists('blade_path')) {
     function blade_path($blade)
     {
         $blades = 'template.' . template() . '.' . $blade;
-        if (\Illuminate\Support\Facades\View::exists($blades)) {
+        if (View::exists($blades)) {
             return $blades;
         } else {
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y' && auth()->check()) || !app()->environment('production') ) {
                 $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
-                \Illuminate\Support\Facades\View::share('blade', $path);
+                View::share('blade', $path);
                 return 'cms::layouts.warning';
             } else {
                 return undermaintenance();
@@ -1003,7 +1001,7 @@ if (!function_exists('init_popup')) {
     {
         $banners = get_banner('popup',5);
         if($banners){
-            return \Illuminate\Support\Facades\View::make('cms::layouts.popup',compact('banners'));
+            return  view()->make('cms::layouts.popup',compact('banners'));
         }
         return null;
     }
@@ -1011,7 +1009,7 @@ if (!function_exists('init_popup')) {
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
     {
-            return \Illuminate\Support\Facades\View::make('cms::layouts.floatwa');
+            return view()->make('cms::layouts.floatwa');
     }
 }
 if (!function_exists('init_meta_header')) {
@@ -1025,7 +1023,7 @@ if (!function_exists('init_meta_header')) {
         $site_meta_description = get_option('site_meta_description');
         if ($data) {
             $data['site_keyword'] = $site_meta_keyword;
-            return \Illuminate\Support\Facades\View::make('cms::layouts.seo', set_header_seo($data));
+            return view()->make('cms::layouts.seo', set_header_seo($data));
         } else {
             $page = request()->page ? ' Halaman ' . request()->page : '';
 
@@ -1056,7 +1054,7 @@ if (!function_exists('init_meta_header')) {
                 'thumbnail' => url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
                 'url' => request()->fullUrl(),
             ];
-            return \Illuminate\Support\Facades\View::make('cms::layouts.seo', $data ?? [null])->render();
+            return View::make('cms::layouts.seo', $data ?? [null])->render();
         }
     }
 }
@@ -1064,7 +1062,7 @@ if (!function_exists('init_meta_header')) {
 if (!function_exists('get_menu')) {
     function get_menu($name)
     {
-        $menu = \Illuminate\Support\Facades\Cache::get('menu')[$name] ?? [];
+        $menu = Cache::get('menu')[$name] ?? [];
         $menuIndex = [];
         foreach ($menu as $item) {
             $menuIndex[$item['menu_id']] = [
@@ -1219,8 +1217,8 @@ if (!function_exists('recache_banner')) {
                     })->toArray()
                 ];
             })->toArray();
-        \Illuminate\Support\Facades\Cache::forget('banner');
-        \Illuminate\Support\Facades\Cache::rememberForever('banner', function () use ($result) {
+        cache()->forget('banner');
+        cache()->rememberForever('banner', function () use ($result) {
             return $result;
         });
     }
@@ -1228,8 +1226,8 @@ if (!function_exists('recache_banner')) {
 if (!function_exists('recache_menu')) {
     function recache_menu()
     {
-        \Illuminate\Support\Facades\Cache::forget('menu');
-        \Illuminate\Support\Facades\Cache::rememberForever('menu', function () {
+        cache()->forget('menu');
+        cache()->rememberForever('menu', function () {
             return \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
         });
     }
@@ -1268,7 +1266,7 @@ if (!function_exists('banner_here')) {
 if (!function_exists('get_banner')) {
     function get_banner($name, $limit = 1)
     {
-        if ($cek = \Illuminate\Support\Facades\Cache::get('banner')[$name] ?? null) {
+        if ($cek = cache()->get('banner')[$name] ?? null) {
             $result =  collect(json_decode(json_encode($cek)));
             if ($limit > 1) {
                 $res = $result->take($limit);
@@ -1484,7 +1482,8 @@ if (!function_exists('system_keyword')) {
     function system_keyword($keyword)
     {
         $module_keyword = collect(get_module())->pluck('name')->toArray();
-        return in_array(str()->lower(strip_tags($keyword)), $module_keyword) ? true : false;
+        return in_array(strtolower(strip_tags($keyword)), $module_keyword) ? true : false;
+
     }
 }
 if (!function_exists('link_menu')) {
@@ -1516,7 +1515,7 @@ if (!function_exists('keyword_search')) {
 if (!function_exists('share_button')) {
     function share_button()
     {
-        return view()->make('cms::share.button',['url'=>url()->full()]);
+        return view()->make('cms::share.button',['url'=>request()->fullUrl()]);
     }
 }
 if (!function_exists('get_ext')) {
