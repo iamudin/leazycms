@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
@@ -35,14 +36,16 @@ if (!function_exists('polling_form')) {
     }
 }
 if (!function_exists('web_header')) {
-function web_header(){
-    return View::make(blade_path('header'));
-}
+    function web_header()
+    {
+        return View::make(blade_path('header'));
+    }
 }
 if (!function_exists('web_footer')) {
-function web_footer(){
-    return View::make(blade_path('footer'));
-}
+    function web_footer()
+    {
+        return View::make(blade_path('footer'));
+    }
 }
 if (!function_exists('getThumbUrl')) {
     function getThumbUrl($url)
@@ -164,22 +167,22 @@ if (!function_exists('forbidden')) {
         $rawKeywords = get_option('forbidden_keyword') ?? '';
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
         $keywords = explode(',', $cleanedKeywords);
-        if($request->segment(2)!='appearance'){
-        if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
-            $redirect = get_option('forbidden_redirect');
-            if (!$k) {
-                if (!empty($redirect) && str($redirect)->isUrl()) {
-                    return Redirect::to($redirect)->send();
-                } else {
-                    abort(403);
+        if ($request->segment(2) != 'appearance') {
+            if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
+                $redirect = get_option('forbidden_redirect');
+                if (!$k) {
+                    if (!empty($redirect) && str($redirect)->isUrl()) {
+                        return Redirect::to($redirect)->send();
+                    } else {
+                        abort(403);
+                    }
                 }
             }
-        }
-        if (get_option('block_ip') && in_array(get_client_ip(), explode(",", get_option('block_ip')))) {
-            abort(403);
+            if (get_option('block_ip') && in_array(get_client_ip(), explode(",", get_option('block_ip')))) {
+                abort(403);
+            }
         }
     }
-}
 }
 if (!function_exists('processVisitorData')) {
     function processVisitorData()
@@ -211,7 +214,7 @@ if (!function_exists('processVisitorData')) {
                         [
                             'ip' => $visitorData['ip'],
                             'session' => $visitorData['session'],
-                            'page' => substr($visitorData['page'],0,191),
+                            'page' => substr($visitorData['page'], 0, 191),
                         ],
                         [
                             'user_id' => $visitorData['user_id'],
@@ -220,7 +223,7 @@ if (!function_exists('processVisitorData')) {
                             'browser' => $visitorData['browser'],
                             'device' => $visitorData['device'],
                             'os' => $visitorData['os'],
-                            'reference' => substr($visitorData['reference'],0,191),
+                            'reference' => substr($visitorData['reference'], 0, 191),
                             'created_at' => $visitorData['created_at'],
                             'updated_at' => now(),
                             'times' => \Illuminate\Support\Facades\DB::raw('times + ' . $visitorData['times']), // ⬅️ Increment times
@@ -237,25 +240,24 @@ if (!function_exists('processVisitorData')) {
 if (!function_exists('ratelimiter')) {
     function ratelimiter($request, $limittime)
     {
-            $ip =get_client_ip();
-            $sessionId = $request->session()->getId();
-            $userAgent = $request->header('User-Agent');
-            $url = $request->fullUrl();
-            $referer = $request->header('referer');
-            $limittime = (int)$limittime;
-            $limitduration = (int)get_option('limit_duration');
-            $key = generateRateLimitKey($ip, $sessionId, $userAgent, $url, $referer);
-            $maxAttempts = $limittime > 0 ? $limittime : 10;
-            $decayMinutes = $limitduration > 0 ? $limitduration : 1;
-            if (Cache::has($key)) {
-                $attempts = cache::get($key);
-                if ($attempts >= $maxAttempts) {
-                    return abort(429);
-                }
+        $ip = get_client_ip();
+        $sessionId = $request->session()->getId();
+        $userAgent = $request->header('User-Agent');
+        $url = $request->fullUrl();
+        $referer = $request->header('referer');
+        $limittime = (int)$limittime;
+        $limitduration = (int)get_option('limit_duration');
+        $key = generateRateLimitKey($ip, $sessionId, $userAgent, $url, $referer);
+        $maxAttempts = $limittime > 0 ? $limittime : 10;
+        $decayMinutes = $limitduration > 0 ? $limitduration : 1;
+        if (Cache::has($key)) {
+            $attempts = cache::get($key);
+            if ($attempts >= $maxAttempts) {
+                return abort(429);
             }
-            Cache::increment($key);
-            Cache::put($key, Cache::get($key), now()->addMinutes($decayMinutes));
-
+        }
+        Cache::increment($key);
+        Cache::put($key, Cache::get($key), now()->addMinutes($decayMinutes));
     }
 }
 if (!function_exists('generateRateLimitKey')) {
@@ -561,14 +563,15 @@ if (!function_exists('rewrite_env')) {
 }
 if (!function_exists('cached')) {
 
-function cached(){
-    return app()->configurationIsCached();
-}
+    function cached()
+    {
+        return app()->configurationIsCached();
+    }
 }
 if (!function_exists('get_option')) {
     function get_option($val = false)
     {
-            return config('modules.option.' . $val) ?? null;
+        return config('modules.option.' . $val) ?? null;
     }
 }
 
@@ -617,7 +620,7 @@ if (!function_exists('getlistmenu')) {
     <input type="hidden" class="desc-' . $value->menu_id . '" name="menu_description[]" value="' . $value->menu_description . '">
     <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . $value->menu_link . '">
     <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . $value->menu_icon . '">
-      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="'.link_menu($value->menu_link).'"  title="Klik untuk mengunjungi"><i>' . $value->menu_link . '</i></a></code><span style="float:right"><a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'.modal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
+      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . $value->menu_link . '</i></a></code><span style="float:right"><a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'.modal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
       ' . ceksubmenu($me, $value->menu_id) . '
     </li>
     ';
@@ -667,27 +670,27 @@ if (!function_exists('is_admin')) {
 if (!function_exists('use_module')) {
     function use_module($module_selected)
     {
-        if(!cached()){
-        foreach ($module_selected as $module => $attr) {
-            if (config('modules.menu.' . $module) !== null) {
-                $module_config = config('modules.menu.' . $module);
-                if (is_array($attr)) { // Add this check
-                    foreach ($attr as $attr_key => $attr_value) {
-                        if (is_array($attr_value)) {
-                            foreach ($attr_value as $sub_attr_key => $sub_attr_value) {
-                                $module_config[$attr_key][$sub_attr_key] = $sub_attr_value;
+        if (!cached()) {
+            foreach ($module_selected as $module => $attr) {
+                if (config('modules.menu.' . $module) !== null) {
+                    $module_config = config('modules.menu.' . $module);
+                    if (is_array($attr)) { // Add this check
+                        foreach ($attr as $attr_key => $attr_value) {
+                            if (is_array($attr_value)) {
+                                foreach ($attr_value as $sub_attr_key => $sub_attr_value) {
+                                    $module_config[$attr_key][$sub_attr_key] = $sub_attr_value;
+                                }
+                            } else {
+                                $module_config[$attr_key] = $attr_value;
                             }
-                        } else {
-                            $module_config[$attr_key] = $attr_value;
                         }
                     }
+                    config(['modules.menu.' . $module => $module_config]);
+                    add_module($module_config);
                 }
-                config(['modules.menu.' . $module => $module_config]);
-                add_module($module_config);
             }
         }
     }
-}
 }
 if (!function_exists('processMenu')) {
     function processMenu($menu, $datanya, &$mnews, $parent = 0)
@@ -821,7 +824,7 @@ if (!function_exists('blade_path')) {
         if (View::exists($blades)) {
             return $blades;
         } else {
-            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y' && auth()->check()) || !app()->environment('production') ) {
+            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y' && auth()->check()) || !app()->environment('production')) {
                 $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
@@ -833,22 +836,22 @@ if (!function_exists('blade_path')) {
 }
 
 if (!function_exists('initial_helper')) {
-function initial_helper(){
-    if($var = request('enablededitortemplate')){
-        if($var=='enabled'){
-            Cache::forever('enablededitortemplate','1');
-        }else{
-            Cache::forget('enablededitortemplate');
+    function initial_helper()
+    {
+        if ($var = request('enablededitortemplate')) {
+            if ($var == 'enabled') {
+                Cache::forever('enablededitortemplate', '1');
+            } else {
+                Cache::forget('enablededitortemplate');
+            }
+        }
+        if ($var = request('statusenablededitortemplate')) {
+            if (Cache::has('enablededitortemplate')) {
+                dd(['status' => 'Feature Enabled']);
+            }
+            dd(['status' => 'Feature Disabled']);
         }
     }
-if($var = request('statusenablededitortemplate')){
-    if(Cache::has('enablededitortemplate')){
-        dd(['status'=>'Feature Enabled']);
-}
-        dd(['status'=>'Feature Disabled']);
-
-}
-}
 }
 if (!function_exists('template')) {
     function template()
@@ -940,9 +943,10 @@ if (!function_exists('isPrePanel')) {
     }
 }
 if (!function_exists('not_allow_adminpath')) {
-    function not_allow_adminpath(){
-   return  array_merge(['slot','gacor','maxwin','bokep','xxx','panel','judi','admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel',admin_path()], collect(get_module())->pluck('name')->toArray());
-}
+    function not_allow_adminpath()
+    {
+        return  array_merge(['slot', 'gacor', 'maxwin', 'bokep', 'xxx', 'panel', 'judi', 'admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel', admin_path()], collect(get_module())->pluck('name')->toArray());
+    }
 }
 if (!function_exists('isPre')) {
     function isPre($string)
@@ -976,30 +980,41 @@ if (!function_exists('set_header_seo')) {
                 $dom = new \DOMDocument();
                 $dom->loadHTML('<?xml encoding="utf-8" ?>' . $data->content);
                 $images = $dom->getElementsByTagName('img');
-                $firstImageSrc = $images->length > 0 ? $images->item(0)->getAttribute('src') : null;
-            
+
+                $validImageSrc = null;
+
+                // Cari gambar pertama yang BUKAN base64
+                foreach ($images as $img) {
+                    $src = $img->getAttribute('src');
+                    if (strpos($src, 'data:image') !== 0) {
+                        $validImageSrc = $src;
+                        break;
+                    }
+                }
+
                 $hasThumbnailField = get_module($data->type)->form->thumbnail;
-            
+
                 if ($hasThumbnailField) {
                     if ($data->media && media_exists($data->media)) {
                         return url($data->thumbnail);
                     }
-            
-                    if ($firstImageSrc) {
-                        return $firstImageSrc;
+
+                    if ($validImageSrc) {
+                        return $validImageSrc;
                     }
-            
+
                     $preview = get_option('preview');
                     return url($preview && media_exists($preview) ? $preview : noimage());
                 } else {
-                    if ($firstImageSrc) {
-                        return $firstImageSrc;
+                    if ($validImageSrc) {
+                        return $validImageSrc;
                     }
-            
+
                     $preview = get_option('preview');
                     return url($preview && media_exists($preview) ? $preview : noimage());
                 }
             })(),
+
             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
         );
     }
@@ -1021,7 +1036,7 @@ if (!function_exists('set_header_seo')) {
 if (!function_exists('get_domain_extension')) {
     function get_domain_extension($extension)
     {
-        return collect(config('modules.extension_module'))->where('path',$extension)->first()['url'] ?? null;
+        return collect(config('modules.extension_module'))->where('path', $extension)->first()['url'] ?? null;
     }
 }
 if (!function_exists('preload')) {
@@ -1041,9 +1056,9 @@ if (!function_exists('cleanArrayValues')) {
 if (!function_exists('init_popup')) {
     function init_popup()
     {
-        $banners = get_banner('popup',5);
-        if($banners){
-            return  view()->make('cms::layouts.popup',compact('banners'));
+        $banners = get_banner('popup', 5);
+        if ($banners) {
+            return  view()->make('cms::layouts.popup', compact('banners'));
         }
         return null;
     }
@@ -1051,7 +1066,7 @@ if (!function_exists('init_popup')) {
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
     {
-            return view()->make('cms::layouts.floatwa');
+        return view()->make('cms::layouts.floatwa');
     }
 }
 if (!function_exists('init_meta_header')) {
@@ -1090,7 +1105,7 @@ if (!function_exists('init_meta_header')) {
                 $pn = null;
             }
             $data = [
-                'description' => $pn ?  'Lihat ' . $pn.' di '.$site_title : (!request()->is('/') ? 'Halaman Tidak Ditemukan' :  ($site_meta_description ?? $site_desc)),
+                'description' => $pn ?  'Lihat ' . $pn . ' di ' . $site_title : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : ($site_meta_description ?? $site_desc)),
                 'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title . ($site_desc ? ' - ' . $site_desc : '')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
@@ -1150,8 +1165,6 @@ if (!function_exists('load_default_module')) {
         ];
         use_module($default);
     }
-
-
 }
 if (!function_exists('paginate')) {
     function paginate($items, $perpage = false)
@@ -1339,9 +1352,10 @@ if (!function_exists('banner_here')) {
 }
 if (!function_exists('get_client_ip')) {
 
-function get_client_ip() {
-    return request()->header('CF-Connecting-IP') ?? request()->getClientIp();
-  }
+    function get_client_ip()
+    {
+        return request()->header('CF-Connecting-IP') ?? request()->getClientIp();
+    }
 }
 
 if (!function_exists('get_ip_info')) {
@@ -1357,54 +1371,55 @@ if (!function_exists('get_ip_info')) {
 }
 if (!function_exists('renderTemplateFile')) {
     function renderTemplateFile($items, $parentPath = '')
-{
-    echo '<ul style="list-style:none;padding:0 0 0 14px">';
-    foreach ($items as $item) {
-        $currentPath = $parentPath . '/' . $item['name'];
-        if (isset($item['children']) && !empty($item['children'])) {
-            echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
-            renderTemplateFile($item['children'], $currentPath);
-            echo '</li>';
-        } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
-            echo '<li><a href="' . route('appearance.editor') . '?edit=' . htmlspecialchars($currentPath) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
-        } else {
-            echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
+    {
+        echo '<ul style="list-style:none;padding:0 0 0 14px">';
+        foreach ($items as $item) {
+            $currentPath = $parentPath . '/' . $item['name'];
+            if (isset($item['children']) && !empty($item['children'])) {
+                echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
+                renderTemplateFile($item['children'], $currentPath);
+                echo '</li>';
+            } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
+                echo '<li><a href="' . route('appearance.editor') . '?edit=' . htmlspecialchars($currentPath) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
+            } else {
+                echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
+            }
         }
+        echo '</ul>';
     }
-    echo '</ul>';
-}
 }
 if (!function_exists('is_local')) {
-function is_local(){
-    return request()->ip() == '127.0.0.1' || request()->ip() == '::1' ? true : false;
-}
+    function is_local()
+    {
+        return request()->ip() == '127.0.0.1' || request()->ip() == '::1' ? true : false;
+    }
 }
 if (!function_exists('getDirectoryContents')) {
     function getDirectoryContents($path = null, &$results = [], $parentPath = '')
-{
-    if (is_null($path)) {
-        $path = base_path('resources/views/template/' . template());
-    }
-
-    $files = scandir($path);
-
-    foreach ($files as $key => $value) {
-        $fullPath = $path . DIRECTORY_SEPARATOR . $value;
-        $currentPath = $parentPath . '/' . $value;
-        if (is_dir($fullPath) && $value != "." && $value != "..") {
-            $directory = [
-                'name' => $value,
-                'children' => []
-            ];
-            getDirectoryContents($fullPath, $directory['children'], $currentPath);
-            $results[] = $directory;
-        } elseif (!is_dir($fullPath)) {
-            $results[] = ['name' => $value, 'children' => []];
+    {
+        if (is_null($path)) {
+            $path = base_path('resources/views/template/' . template());
         }
-    }
 
-    return $results;
-}
+        $files = scandir($path);
+
+        foreach ($files as $key => $value) {
+            $fullPath = $path . DIRECTORY_SEPARATOR . $value;
+            $currentPath = $parentPath . '/' . $value;
+            if (is_dir($fullPath) && $value != "." && $value != "..") {
+                $directory = [
+                    'name' => $value,
+                    'children' => []
+                ];
+                getDirectoryContents($fullPath, $directory['children'], $currentPath);
+                $results[] = $directory;
+            } elseif (!is_dir($fullPath)) {
+                $results[] = ['name' => $value, 'children' => []];
+            }
+        }
+
+        return $results;
+    }
 }
 
 if (!function_exists('make_custom_view')) {
@@ -1525,7 +1540,6 @@ if (!function_exists('system_keyword')) {
     {
         $module_keyword = collect(get_module())->pluck('name')->toArray();
         return in_array(strtolower(strip_tags($keyword)), $module_keyword) ? true : false;
-
     }
 }
 if (!function_exists('link_menu')) {
@@ -1557,7 +1571,7 @@ if (!function_exists('keyword_search')) {
 if (!function_exists('share_button')) {
     function share_button()
     {
-        return view()->make('cms::share.button',['url'=>request()->fullUrl()]);
+        return view()->make('cms::share.button', ['url' => request()->fullUrl()]);
     }
 }
 
@@ -1631,7 +1645,7 @@ if (!function_exists('getRateLimiterKey')) {
     function getRateLimiterKey($req)
     {
         // Modify this method to create a unique key based on IP and session ID
-        return md5(get_client_ip(). '|' . $req->userAgent() . '|' . request()->fullUrl() . '|' . $req->header('referer'));
+        return md5(get_client_ip() . '|' . $req->userAgent() . '|' . request()->fullUrl() . '|' . $req->header('referer'));
     }
 }
 if (!function_exists('add_extension')) {
