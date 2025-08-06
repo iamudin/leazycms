@@ -1518,20 +1518,7 @@ if (!function_exists('share_button')) {
         return view()->make('cms::share.button',['url'=>request()->fullUrl()]);
     }
 }
-if (!function_exists('get_ext')) {
-    function get_ext($file)
-    {
-        // dd($file);
-        if (!empty($file)) :
-            $file_name = $file;
-            $temp = explode('.', $file_name);
-            $extension = end($temp);
-            return $extension;
-        else :
-            return false;
-        endif;
-    }
-}
+
 
 if (!function_exists('undermaintenance')) {
     function undermaintenance()
