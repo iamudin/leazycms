@@ -971,11 +971,53 @@ if (!function_exists('set_header_seo')) {
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
-            'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? url($data->thumbnail) : url(get_option('preview') && media_exists(get_option('preview')) ?  get_option('preview') : noimage())) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : url(noimage()))),
+            'thumbnail' => (function () use ($data) {
+                libxml_use_internal_errors(true);
+                $dom = new \DOMDocument();
+                $dom->loadHTML('<?xml encoding="utf-8" ?>' . $data->content);
+                $images = $dom->getElementsByTagName('img');
+                $firstImageSrc = $images->length > 0 ? $images->item(0)->getAttribute('src') : null;
+            
+                $hasThumbnailField = get_module($data->type)->form->thumbnail;
+            
+                if ($hasThumbnailField) {
+                    if ($data->media && media_exists($data->media)) {
+                        return url($data->thumbnail);
+                    }
+            
+                    if ($firstImageSrc) {
+                        return $firstImageSrc;
+                    }
+            
+                    $preview = get_option('preview');
+                    return url($preview && media_exists($preview) ? $preview : noimage());
+                } else {
+                    if ($firstImageSrc) {
+                        return $firstImageSrc;
+                    }
+            
+                    $preview = get_option('preview');
+                    return url($preview && media_exists($preview) ? $preview : noimage());
+                }
+            })(),
             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
         );
     }
 }
+
+// if (!function_exists('set_header_seo')) {
+//     function set_header_seo($data)
+//     {
+//         $desctitle = !\Illuminate\Support\Str::contains(get_module($data->type)->title, \Illuminate\Support\Str::of($data->title)->explode(' ')[0]) ? get_module($data->type)->title . ' ' . $data->title : $data->title;
+//         return array(
+//             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
+//             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
+//             'title' => $data->title,
+//             'thumbnail' => get_module($data->type)->form->thumbnail ? ($data->media && media_exists($data->media) ? url($data->thumbnail) : url(get_option('preview') && media_exists(get_option('preview')) ?  get_option('preview') : noimage())) : (get_thumbnail() ?  get_thumbnail() : url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : url(noimage()))),
+//             'url' => (!empty($data->url)) ? url($data->url) : url('/'),
+//         );
+//     }
+// }
 if (!function_exists('get_domain_extension')) {
     function get_domain_extension($extension)
     {

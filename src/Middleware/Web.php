@@ -51,14 +51,7 @@ class Web
                 }
 
                 // Cache jika class mengandung lz-thumbnail
-                if (strpos($attributes, 'class="') !== false && strpos($attributes, 'lz-thumbnail') !== false) {
-                    if (strpos($matches[2], 'noimage.webp') === false && !empty($matches[2])) {
-                        $keycache = md5($request->fullUrl());
-                        if (!Cache::has($keycache)) {
-                            Cache::put($keycache, $matches[2], now()->addSeconds(1800));
-                        }
-                    }
-                }
+         
 
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
