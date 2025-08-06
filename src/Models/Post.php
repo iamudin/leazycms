@@ -40,6 +40,30 @@ class Post extends Model
             }
         });
 
+        static::saving(function ($post) {
+            if (empty($post->media) && !empty($post->content)) {
+                libxml_use_internal_errors(true);
+                $dom = new \DOMDocument();
+                $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->content);
+                $imgs = $dom->getElementsByTagName('img');
+        
+                foreach ($imgs as $img) {
+                    $src = $img->getAttribute('src');
+                    if (strpos($src, 'data:image') !== 0) {
+                        // Simpan ke dalam cache langsung saat saving
+                        Cache::put('thumbnail_' . $post->id, $src);
+                        break;
+                    }
+                }
+            }
+        });
+        
+        static::saved(function ($post) {
+            if (!empty($post->media)) {
+                // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
+                Cache::forget('thumbnail_' . $post->id);
+            }
+        });
     }
     public function user()
     {
@@ -73,7 +97,16 @@ class Post extends Model
 
     public function getThumbnailAttribute()
     {
-        return $this->media && media_exists($this->media) ? $this->media : noimage();
+       
+    if ($this->media && media_exists($this->media)) {
+        return $this->media;
+    }
+    // Cek cache
+    $cacheKey = 'thumbnail_' . $this->id;
+    if (Cache::has($cacheKey)) {
+        return Cache::get($cacheKey);
+    }
+    return noimage();
     }
     public function getThumbnailTextAttribute()
     {
