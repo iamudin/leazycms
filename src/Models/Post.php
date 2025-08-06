@@ -41,7 +41,7 @@ class Post extends Model
         });
 
         static::saving(function ($post) {
-            if (empty($post->media) && !empty($post->content)) {
+            if (empty($post->media) && !empty($post->content) || $post->media && !media_exists($post->media)) {
                 libxml_use_internal_errors(true);
                 $dom = new \DOMDocument();
                 $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->content);
@@ -59,7 +59,7 @@ class Post extends Model
         });
         
         static::saved(function ($post) {
-            if (!empty($post->media)) {
+            if (!empty($post->media) && media_exists($post->media)) {
                 // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
                 Cache::forget('thumbnail_' . $post->id);
             }
