@@ -34,11 +34,6 @@ class Web
                     $content
                 );
             }
-
-
-            if (get_option('forbidden_keyword') && Str::contains($content, explode(",", str_replace(",'", "", str_replace("',", "", get_option("forbidden_keyword")))))) {
-                abort('403');
-            }
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use ($request) {
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
 

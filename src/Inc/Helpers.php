@@ -165,7 +165,7 @@ if (!function_exists('forbidden')) {
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
         $keywords = explode(',', $cleanedKeywords);
         if($request->segment(2)!='appearance'){
-        if (get_option('forbidden_keyword') && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
+        if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
             $redirect = get_option('forbidden_redirect');
             if (!$k) {
                 if (!empty($redirect) && str($redirect)->isUrl()) {
