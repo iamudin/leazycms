@@ -332,7 +332,7 @@ return [
                 'looping_name'=>'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['File', 'file','required','image/png,image/jpeg'],
+                    ['File', 'file','required'],
                     ['Tanggal Entry','datetime']
                 ),
             ],

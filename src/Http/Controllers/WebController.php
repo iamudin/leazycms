@@ -184,7 +184,9 @@ class WebController extends Controller
         if ($request->isMethod('post') && $request->keyword){
             return redirect('search/' . str($request->keyword)->slug());
         }
-        abort_if(empty($slug), '404');
+        if(empty($slug)){
+            return to_route('home');
+        }
         $query = str_replace('-', ' ', str($slug)->slug());
         $type = collect(get_module())->where('public', true)->where('web.detail', true)->pluck('name')->toArray();
         $index = Post::select((new Post)->selected)->wherein('type', $type)
@@ -194,7 +196,7 @@ class WebController extends Controller
             ->orwhere('content', 'like', '%' . $query . '%')
             ->published()
             ->latest('created_at')
-            ->paginate(get_option('post_perpage'));
+            ->paginate(20);
         $data = array(
             'keyword' => ucwords($query),
             'index' => $index

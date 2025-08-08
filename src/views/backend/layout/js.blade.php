@@ -95,9 +95,15 @@ const fileselect = async (targetInput) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.compress-image').forEach(inp => {
-        inp.addEventListener('change', () => fileselect(inp));
+        inp.addEventListener('change', () => {
+            const file = inp.files[0];
+            if (file && file.type.startsWith('image/')) {
+                fileselect(inp);
+            }
+        });
     });
 });
+
 </script>
 
 <script>

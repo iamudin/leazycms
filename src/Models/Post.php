@@ -114,7 +114,7 @@ class Post extends Model
     }
     public function getCreatedAttribute()
     {
-        return $this->created_at->format('d F Y H:i T');
+        return $this->created_at->translatedFormat('d F Y H:i T');
     }
 
     public function getUpdatedAttribute()
