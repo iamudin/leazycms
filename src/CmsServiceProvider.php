@@ -112,16 +112,6 @@ class CmsServiceProvider extends ServiceProvider
                 $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                 config(['modules.option' => $options]);
             }
-            if (empty(Cache::has('media'))) {
-                media_caching();
-            }
-            if (empty(Cache::has('menu'))) {
-                recache_menu();
-                regenerate_cache();
-            }
-            if (empty(Cache::has('banner'))) {
-                recache_banner();
-            }
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && config('app.debug') == true)) {
                 Config::set(['app.debug' => true]);
             } else {

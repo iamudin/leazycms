@@ -146,7 +146,6 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 }
             }
-            Artisan::call('config:cache');
             return back()->with('success', 'Berhasil Diupdate');
         }
         return view('cms::backend.option');
@@ -405,6 +404,15 @@ class PanelController extends Controller implements HasMiddleware
             if ($request->cache_route && $request->cache_route == 'N' && app()->routesAreCached()) {
                 Artisan::call('route:clear');
             }
+            if ($request->cache_media && $request->cache_media == 'Y' && !cache()->has('media')) {
+                media_caching();
+                recache_menu();
+                regenerate_cache();
+                recache_banner();
+            }
+            if ($request->cache_media && $request->cache_media == 'N' && cache()->has('media')) {
+                Cache::forget('media');
+            }
             return back()->send()->with('success', 'Berhasil di optimalkan');
         }
         return view('cms::backend.cache');
@@ -516,19 +524,9 @@ class PanelController extends Controller implements HasMiddleware
             }
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
-
-              $update =  \Leazycms\Web\Models\Option::where('name','template')->update([
+            \Leazycms\Web\Models\Option::where('name','template')->update([
                     'value'=>$mainFolderName
                 ]);
-                if($update){
-                    Artisan::call('config:cache');
-                    Artisan::call('view:cache');
-                    while (get_option('template') !== $mainFolderName) {
-                    Artisan::call('config:cache');
-                    Artisan::call('view:cache');
-                    sleep(1); // opsional
-                    }
-                }
             return to_route('appearance');
         } else {
             return back()->with('danger', 'Template Gagal Diupload');

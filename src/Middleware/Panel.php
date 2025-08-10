@@ -107,7 +107,6 @@ class Panel
                     }
                 }
             } else {
-
                 if (!$this->isFileSafe($file)) {
                     return response()->json(['error' => 'Malicious file detected.'], 400);
                 }
@@ -161,27 +160,36 @@ class Panel
 
         $path = $file->getRealPath();
 
-        // Cek MIME hanya image
-        $mime = mime_content_type($path);
-        if (!str_starts_with($mime, 'image/'))
+        if (filesize($path) > 5 * 1024 * 1024) {
             return true;
+        }
 
         $content = file_get_contents($path);
 
-        // Cek tag PHP
-        if (preg_match('/<\?(php|=)/i', $content))
+        if (preg_match('/<\?(php|=)/i', $content)){
             return false;
+        }
 
         // Cek fungsi berbahaya
-        $danger = ['eval', 'exec', 'shell_exec', 'system', 'passthru', 'base64_decode'];
+        $danger = [
+            'eval',
+            'exec',
+            'system',
+            'passthru',
+            'shell_exec',
+            'proc_open',
+            'popen',
+            'assert',
+            'base64_decode',
+            'file_put_contents',
+            'fopen',
+            'curl_exec',
+            'create_function'
+        ];
         foreach ($danger as $func) {
             if (stripos($content, $func) !== false)
                 return false;
         }
-
-        // Cek apakah benar-benar gambar
-        if (!getimagesize($path))
-            return false;
 
         return true;
     }
