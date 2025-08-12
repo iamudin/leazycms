@@ -379,7 +379,7 @@ class Post extends Model
         if (get_module($type)->cache) {
             return $this->cachedpost($type)->where('parent_id', $id);
         } else {
-            $q = $this->selected()
+            $q = $this->select($this->selected)
             ->onType($type)
             ->published()
             ->where('parent_id', $id)

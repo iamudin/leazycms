@@ -91,7 +91,7 @@ public function destroy(Request $request){
     if($post->trashed() && $request->user()->isAdmin()){
         $post->forceDelete();
     }
-    if($request->user()->isAdmin() ||  ($request->user()->isOperator() && $post->user_id != $request->user()->id)){
+    if($request->user()->isAdmin() ||  (!$request->user()->isAdmin() && $post->user_id == $request->user()->id)){
         if(empty($post->title) && $post->status=='draft'){
             $post->forceDelete();
         }else {

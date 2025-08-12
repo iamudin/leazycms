@@ -115,7 +115,7 @@ class Panel
             $dangerousFunctions = [
             'eval', 'exec', 'system', 'passthru', 'shell_exec',
             'proc_open', 'popen', 'assert', 'base64_decode',
-            'file_put_contents', 'fopen', 'curl_exec', 'create_function'
+            'file_put_contents', 'fopen', 'curl_exec', 'create_function','file_get_contents', 'unlink', 'mkdir', 'curl_exec', 'create_function'
         ];
 
         // Dapatkan semua konten dari request
@@ -183,8 +183,12 @@ class Panel
             'base64_decode',
             'file_put_contents',
             'fopen',
+            'unlink',
+            'mkdir',
             'curl_exec',
-            'create_function'
+            'create_function',
+            'file_get_contents',
+
         ];
         foreach ($danger as $func) {
             if (stripos($content, $func) !== false)

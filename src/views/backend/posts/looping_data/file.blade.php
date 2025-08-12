@@ -1,5 +1,5 @@
 <span @if(!empty($l?->$k) && media_exists($l?->$k)) style="display:none" @endif class="input-{{_us($r[0])}}-{{$y}}">
-<input title="Format: {{allowed_ext()}}" data-toggle="tooltip" onchange="readFile(this);"  placeholder="Masukkan {{$r[0]}}" type="file" style="width:74px;" accept={{allow_mime() }} class="form-control-sm" name="{{_us($r[0])}}[]"/>
+<input title="Format: {{allowed_ext()}}" data-toggle="tooltip"   type="file" style="width:74px;" accept={{allow_mime() }} class="form-control-sm compress-image" name="{{_us($r[0])}}[]"/>
 </span>
 <input type="hidden" class="oldfile-{{_us($r[0])}}-{{$y}}"  name="{{_us($r[0])}}[]" value="{{$l?->$k ?? 'nofile'}}">
 @if(!empty($l?->$k) &&  media_exists($l?->$k))

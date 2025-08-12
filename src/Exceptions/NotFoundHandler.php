@@ -72,7 +72,7 @@ class NotFoundHandler extends ExceptionHandler
         }
             forbidden($request);
 
-            if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
+            if (get_option('site_maintenance') == 'Y') {
                 return undermaintenance();
             }
             if ($request->expectsJson()) {

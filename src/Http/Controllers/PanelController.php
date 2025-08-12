@@ -34,6 +34,20 @@ class PanelController extends Controller implements HasMiddleware
     {
         return view('cms::backend.files.index');
     }
+
+    function menu_target(Request $request)
+    {
+        $search = $request->q ? strip_tags($request->q) : null;
+        $type = collect(get_module())->where('web.detail', '=',true)->pluck('name')->toArray();
+        return query()
+            ->whereIn('type', $type)
+            ->select('url', 'title')
+            ->where('title', 'like', "%{$search}%")
+            ->orWhere('url', 'like', "{$search}%")
+            ->published()
+            ->limit(10)
+            ->get();
+    }
     function comments()
     {
         return view('cms::backend.comments.index');

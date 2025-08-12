@@ -112,8 +112,8 @@ class RateLimit
             }
             if ($modul->form->post_parent && ($request->is($modul->name . '/' . $modul->form->post_parent[1]) || $request->is($modul->name . '/' . $modul->form->post_parent[1] . '/*'))) {
                 $attr['detail_visited'] = false;
-                $attr['view_type'] = 'post_parent';
-                $attr['view_path'] = $modul->name . '.post_parent';
+                $attr['view_type'] = 'post-parent';
+                $attr['view_path'] = $modul->name . '.post-parent';
                 config([
                     'modules.current' => $attr
                 ]);

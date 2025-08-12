@@ -131,18 +131,18 @@ document.querySelectorAll('.fa-edit').forEach(icon => {
                     <?php
                     if (isset($pp[1])) {
                         if (isset($pp[2]) && $pp[2] != 'all') {
-                            $par = query()->withwherehas('category', function ($q) {
+                            $par = query()->withwherehas('category', function ($q) use ($pp) {
                                 $q->where('slug', $pp[2]);
                             })
                                 ->whereType($pp[1])
                                 ->with('parent.parent.parent')
-                                ->whereStatus('publish')
+                                ->published()
                                 ->select('id', 'title','parent_id')
                                 ->get();
                         } else {
                             $par = query()->whereType($pp[1])
                                 ->with('parent.parent.parent')
-                                ->whereStatus('publish')
+                                ->published()
                                 ->select('id', 'title','parent_id')
                                 ->get();
                         }

@@ -204,25 +204,26 @@ class WebController extends Controller
         return view('cms::layouts.master', $data);
     }
 
-    public function post_parent(Post $post, Request $request, $slug = null)
+    public function post_parent(Request $request, $slug = null)
     {
         $modul = get_module(get_post_type());
         abort_if(empty($slug), '404');
-        $post_parent = $post->where('type', $modul->post_parent[1])->where('slug', 'like', $slug . '%')->select('id', 'title', 'slug')->first();
+        $post_parent = query()->onType( $modul->form->post_parent[1])->where('slug', 'like', $slug . '%')
+        ->select('id', 'title', 'slug')->published()->first();
         abort_if(empty($post_parent), '404');
         if ($post_parent->slug != $slug){
             return redirect($modul->name . '/' . $request->segment(2) . '/' . $post_parent->slug);
         }
         $title = $post_parent->title;
         $post_name = $modul->title;
-        config(['modules.page_name' => $post_name . ' ' . $title]);
-        $index = $post->index_child($modul->name,$post_parent->id,true);
+        config(['modules.page_name' => $modul->title.' di '.$modul->form->post_parent[0].' '.$post_name . ' ' . $title]);
+        $index = query()->index_child($modul->name,$post_parent->id,true);
         $data = array(
         'index' => $index,
         'title' => $post_name . ' ' . $title, 'icon' => $modul->icon,
-        'post_type' => $modul->name
+        'module' => $modul
         );
-        return view('views::layouts.master', $data);
+        return view('cms::layouts.master', $data);
     }
     public function archive(Request $request, Post $post, $year = null, $month = null, $date = null)
     {

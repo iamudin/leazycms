@@ -15,16 +15,16 @@
           @if($looping_data)
 
           <!--  -->
-          @foreach(json_decode(json_encode($looping_data)) as $y=> $l)
+          @foreach(json_decode(json_encode($looping_data)) as $y => $l)
           <tr id='data-{{$y}}'>
-          @foreach($module->form->looping_data as $ky=>$r)
-          <?php $k = _us($r[0]);?>
-          <td align="center" @if('file'==$r[1])  onmouseover="$('.edit-{{_us($r[0])}}-{{$y}}').show()" onmouseout="$('.edit-{{_us($r[0])}}-{{$y}}').hide()" @endif>
-             @if('file'==$r[1])
+          @foreach($module->form->looping_data as $ky => $r)
+          <?php         $k = _us($r[0]);?>
+          <td align="center" @if('file' == $r[1])  onmouseover="$('.edit-{{_us($r[0])}}-{{$y}}').show()" onmouseout="$('.edit-{{_us($r[0])}}-{{$y}}').hide()" @endif>
+             @if('file' == $r[1])
              <?php
-if(!empty($l->$k) && media_exists($l->$k)){
-  $f[$y] = true;
-}
+            if (!empty($l->$k) && media_exists($l->$k)) {
+               $f[$y] = true;
+            }
 ?>
             @include('cms::backend.posts.looping_data.file')
              @elseif(is_array($r[1]))
@@ -54,30 +54,26 @@ if(!empty($l->$k) && media_exists($l->$k)){
           @endif
        </tbody>
        <tfoot style="background:#f7f7f7">
-          <tr>
-             <td colspan="{{count($module->form->looping_data)+1}}" align="right">
-            <button style="display:none" type="button" class="btn btn-sm btn-outline-danger delbut" onclick="$('.coldata tr.nw:last').remove();$('.btnadd').show();$('.delbut').hide();">&nbsp;&nbsp;<i class="fa fa-times" aria-hidden></i></button> <button onclick="$('.coldata').append('<tr class=\'nw\'>'+ $('.addcol').html()+'</tr>');$('.coldata tr.nw select').removeAttr('disabled');$('.coldata tr.nw textarea').removeAttr('disabled');$('.coldata tr.nw input').removeAttr('disabled');$('.delbut').show();$('.btnadd').hide()" type="button" class="btn btn-sm btn-outline-info btnadd" name="button"> &nbsp; <i class="fa fa-plus"></i></button></td>
-          </tr>
-          <tr style="display:none" class="addcol">
+       
+          <tr  class="addcol">
              @foreach($module->form->looping_data as $r)
-             <td class="text-center">
-                @if($r[1]=='file')
-                <input  disabled onchange="readFile(this)" type="{{$r[1]}}"  class="form-control-sm" style="width:74px;"   name="{{_us($r[0])}}[]" >
-                @elseif(is_array($r[1]))
-             <select disabled  class="form-control form-control-sm" name="{{_us($r[0])}}[]">
-                <option value="">-pilih {{ucwords(mb_strtolower($r[0]))}}-</option>
-                @foreach($r[1] as $r)
-                <option value="{{$r}}">{{$r}}</option>
-                @endforeach
-             </select>
-             @elseif($r[1]=='textarea')
-             <textarea disabled placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}"  class="form-control" name="{{_us($r[0])}}[]"></textarea>
-             @else
-
-                <input style="min-width:80px" disabled placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}" type="{{$r[1]}}"  class="form-control form-control-sm"  name="{{_us($r[0])}}[]" >
+                  <td class="text-center">
+                  @if($r[1] == 'file')
+                  <input  onchange="this.removeAttribute('disabled');this.hide()" onmouseover="this.removeAttribute('disabled');" onmouseleave="if(this.value.trim() === '') this.setAttribute('disabled','disabled');" disabled accept="{{allow_mime()}}" title="Format : {{allowed_ext()}}" type="{{$r[1]}}"  class="form-control-sm compress-image" style="width:74px;"   name="{{_us($r[0])}}[]" >
+             @elseif(is_array($r[1]))
+                  <select onmouseover="this.removeAttribute('disabled'); this.focus();" onmouseleave="if(this.value.trim() === '') this.setAttribute('disabled','disabled');" disabled  class="form-control form-control-sm" name="{{_us($r[0])}}[]">
+                  <option value="">-pilih {{ucwords(mb_strtolower($r[0]))}}-</option>
+                  @foreach($r[1] as $r)
+                  <option value="{{$r}}">{{$r}}</option>
+                  @endforeach
+                  </select>
+                  @elseif($r[1] == 'textarea')
+                  <textarea onmouseover="this.removeAttribute('disabled'); this.focus();" onmouseleave="if(this.value.trim() === '') this.setAttribute('disabled','disabled');" disabled placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}"  class="form-control" name="{{_us($r[0])}}[]"></textarea>
+               @else
+                   <input onmouseover="this.removeAttribute('disabled'); this.focus();" onmouseleave="if(this.value.trim() === '') this.setAttribute('disabled','disabled');" style="min-width:80px" disabled placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}" type="{{$r[1]}}"  class="form-control form-control-sm"  name="{{_us($r[0])}}[]" >
                 @endif
-             </td>
-             @endforeach
+                  </td>
+           @endforeach
              <td></td>
           </tr>
        </tfoot>
