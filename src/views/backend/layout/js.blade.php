@@ -80,14 +80,14 @@ const fileselect = async (targetInput) => {
 
     for (const file of files) {
         const fileExt = file.name.toLowerCase();
-        const allowed = /\.(jpe?g|png)$/;
+        const allowed = /\.(jpe?g|png|webp|gif)$/;
 
         if (!allowed.test(fileExt)) {
-            alert(`File "${file.name}" tidak didukung. Hanya JPG, JPEG, dan PNG.`);
+            alert(`File "${file.name}" tidak didukung. Hanya JPG, JPEG, dan PNG`);
             continue;
         }
-
-        await compressAndPreview(file, preview, dataTransfer, 0.3); 
+     
+            await compressAndPreview(file, preview, dataTransfer, 0.3); 
     }
 
     input.files = dataTransfer.files;
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.compress-image').forEach(inp => {
         inp.addEventListener('change', () => {
             const file = inp.files[0];
-            if (file && file.type.startsWith('image/')) {
+            if (file && file.type.startsWith('image/') && !file.type.includes('gif')) {
                 fileselect(inp);
             }
         });

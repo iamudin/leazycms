@@ -25,8 +25,8 @@
                                     title="Hapus data" class="fa fa-trash text-danger pointer"
                                     onclick="media_destroy('{{ get_option(_us($field[0])) }}')"></i><br>
                             @else
-                                <input @if (isset($field[2])) required @endif type="file"
-                                    class="form-control-sm form-control-file" name="{{ _us($field[0]) }}">
+                                <input @if (isset($field[2])) required @endif type="file" accept="{{ $field[2] }}"
+                                    class="compress-image form-control-sm form-control-file" name="{{ _us($field[0]) }}">
                             @endif
                         @elseif($field[1] == 'textarea')
                         <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">

@@ -116,13 +116,13 @@ class LoginController extends Controller
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
                 if (is_main_domain()){
-                    if (config('sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
+                    if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Auth::logout();
                     } else {
                         return redirect()->intended('/' . admin_path());
                     }
                 } else {
-                    if(config('sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())){
+                    if(config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())){
                         return redirect()->intended('/login');
                     }else{
                         Auth::logout();

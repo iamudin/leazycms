@@ -143,12 +143,12 @@ class PanelController extends Controller implements HasMiddleware
                 foreach ($row as $field) {
                     $key = _us($field[0]);
                     if ($request->$key) {
-                        if($field[1]!='text' && is_array($field[1])){
+                        if($field[1]=='file'){
                             if($request->hasFile(_us($field[0]))){
                             $value = (new Flc)->addFile([
                                     'file'=>$request->file(_us($field[0])),
                                     'purpose'=> _us($field[0]),
-                                    'mime_type'=> $field[1],
+                                    'mime_type'=> explode(',',$field[2]),
                                     'self_upload'=> true,
                                     ]);
                            $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
