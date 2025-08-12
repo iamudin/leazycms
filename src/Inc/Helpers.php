@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
-
+use Illuminate\Support\Str;
 if (!function_exists('query')) {
     function query()
     {
