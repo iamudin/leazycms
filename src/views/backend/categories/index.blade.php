@@ -8,18 +8,21 @@
 
     <a href="{{route(get_post_type())}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
 </div>
-</div>
-<div class="col-lg-4">
 @include('cms::backend.layout.error')
+</div>
+@if(auth()->user()->isAdmin() || (!auth()->user()->isAdmin() && $dothing))
+<div class="col-lg-4">
 @include('cms::backend.categories.form')
 </div>
-<div class="col-lg-8">
+@endif
+<div {{auth()->user()->isAdmin() || (!auth()->user()->isAdmin() && $dothing) ? 'class=col-lg-8' : 'class=col-lg-12'}}>
 
 <table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%">
 <thead style="text-transform:uppercase;color:#444">
   <tr>
 
     <th style="width:5px;vertical-align: middle">NO</th>
+    <th style="vertical-align: middle;width:60px">Icon</th>
     <th style="vertical-align: middle">Nama</th>
     <th style="width:100px;vertical-align: middle">Data</th>
     <th style="width:15px;vertical-align: middle">Aksi</th>
@@ -53,11 +56,18 @@
                     searchable: false
                 },
                 {
+                    data: 'thumbnail',
+                    name: 'thumbnail',
+                    orderable: false,
+                    searchable: false
+                },
+                {
                     data: 'name',
                     name: 'name',
                     orderable: false,
                     searchable: true
                 },
+              
                 {
                     data: 'posts_count',
                     name: 'posts_count',

@@ -18,7 +18,8 @@ class CategoryController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $request->user()->hasRole('category'.get_post_type(),__FUNCTION__);
-        return view('cms::backend.categories.index',['category'=>null]);
+        $dothing = !$request->user()->hasRole('category'.get_post_type(),'create','noredirect') ? true : false;
+        return view('cms::backend.categories.index',['category'=>null,'dothing'=>$dothing]);
     }
     public function datatable(Request $request)
     {
@@ -36,7 +37,11 @@ class CategoryController extends Controller implements HasMiddleware
             ->addColumn('name', function ($row) {
                 return '<span class="text-primary">'.$row->name.'</span>';
             })
-            ->rawColumns(['action','name'])
+            ->addColumn('thumbnail', function ($row) {
+                return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
+
+            })
+            ->rawColumns(['action','name','thumbnail'])
             ->toJson();
 }
 public function create(Request $request){
@@ -47,7 +52,7 @@ public function store(Request $request){
 
     $data = $request->validate([
         'name'=>'required|max:100|min:3|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'. Rule::unique('categories')->where('type',get_post_type()),
-        'icon'=> 'nullable|mimetypes:image/jpeg,image/png',
+        'icon'=> 'nullable|mimetypes:image/jpeg,image/png,image/webp',
         'sort'=>'nullable|numeric',
         'description'=>'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:200|',
         'status'=>'required|string|in:publish,draft',
@@ -71,14 +76,16 @@ public function store(Request $request){
 }
 public function edit(Request $request,Category $category){
     $request->user()->hasRole('category'.get_post_type(),'update');
-    return view('cms::backend.categories.index',['category'=>$category]);
+    $dothing = !$request->user()->hasRole('category'.get_post_type(),'update','noredirect') ? true : false;
+
+    return view('cms::backend.categories.index',['category'=>$category,'dothing'=>$dothing]);
 }
 public function update(Request $request, Category $category){
     $request->user()->hasRole('category'.get_post_type(),'update');
 
     $data = $request->validate([
         'name'=>'required|max:100|min:3|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'.Rule::unique('categories')->where('type',get_post_type())->ignore($category->id),
-        'icon'=> 'nullable|mimetypes:image/jpeg,image/png',
+        'icon'=> 'nullable|mimetypes:image/jpeg,image/png,image/webp',
         'sort'=>'nullable|numeric',
         'description'=>'max:200|nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
         'status'=>'required|string|in:publish,draft',
@@ -100,8 +107,9 @@ public function update(Request $request, Category $category){
     return to_route(get_post_type().'.category')->with('success','Kategori '.current_module()->title.' berhasil ditambah');
 }
 public function destroy(Request $request,Category $category){
-    $request->user()->hasRole('category'.get_post_type(),'delete');
-    $category->delete();
+    if(!$request->user()->hasRole('category'.get_post_type(),'delete')){
+        $category->delete();
+    }
 }
 }
 

@@ -30,7 +30,7 @@
                 @if($user && $user->photo && media_exists($user->photo))
                 <br><img src="{{ $user->photo_user}}" style="height: 70px" class="img-thumbnail"> <a href="javascript:void(0)" onclick="media_destroy('{{ $user->photo }}')" class="btn-danger btn-sm"> <i class="fa fa-trash text-white"></i> </a>
                 @else
-                  <input accept="image/png,image/jpeg"  class=" form-control-sm form-control-file " name="photo"  type="file">
+                  <input accept="image/png,image/jpeg,image/webp"  class="compress-image form-control-sm form-control-file " name="photo"  type="file">
                 @endif
             </div>
 

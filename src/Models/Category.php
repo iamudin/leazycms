@@ -1,11 +1,11 @@
 <?php
 namespace Leazycms\Web\Models;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
-
 class Category extends Model
 {
-    use Fileable;
+    use Fileable,SoftDeletes;
 
     protected $fillable=[
         'type','url','status','name','description','slug','icon','sort','visited'

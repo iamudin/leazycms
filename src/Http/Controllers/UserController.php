@@ -151,7 +151,7 @@ class UserController extends Controller implements HasMiddleware
     {
         $data = $request->validate([
             'name' => 'required|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:100',
-            'foto' => 'nullable|mimetypes:image/jpeg,image/png',
+            'foto' => 'nullable|mimetypes:image/jpeg,image/png,image/webp',
             'email' => 'required|email|max:50|' . Rule::unique('users')->ignore($user->id),
             'username' => 'required|string|min:5|max:20|regex:/^[a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
             'status' => 'required|string|in:active,blocked',

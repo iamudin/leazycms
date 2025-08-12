@@ -1,5 +1,7 @@
 <?php
+
 namespace Leazycms\Web\Models;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
@@ -8,7 +10,7 @@ use Leazycms\FLC\Traits\Fileable;
 
 class User extends Authenticatable
 {
-    use SoftDeletes,Fileable;
+    use SoftDeletes, Fileable;
 
     /**
      * The attributes that are mass assignable.
@@ -43,7 +45,7 @@ class User extends Authenticatable
     ];
 
 
-    protected $casts=[
+    protected $casts = [
         'email_verified_at' => 'datetime',
         'user_data' => 'array',
 
@@ -69,27 +71,40 @@ class User extends Authenticatable
     {
         return $query->withCount('posts');
     }
-    public function isActive(){
+    public function isActive()
+    {
         return $this->status == '1';
     }
-    public function isAdmin(){
+    public function isAdmin()
+    {
         return $this->level == 'admin';
     }
-    public function isOperator(){
+    public function isOperator()
+    {
         return $this->level == 'operator';
     }
-    public function isUser(){
+    public function isUser()
+    {
         return $this->level == 'user';
     }
-    public function roles(){
-        return $this->hasMany(Role::class,'level','level');
+    public function roles()
+    {
+        return $this->hasMany(Role::class, 'level', 'level');
     }
-    public function hasRole($module,$action){
-        if(!$this->isAdmin() && !$this->roles->where('module',$module)->where('action',$action)->where('level',$this->level)->count()){
-        return redirect(route('panel.dashboard'))->send()->with('danger','Akses terbatas');
+    public function hasRole($module, $action,$noredirect=false)
+    {
+        if (!$this->isAdmin() && !$this->roles->where('module', $module)->where('action', $action)->where('level', $this->level)->count()) {
+            if ($action == 'delete') {
+                return true;
+            }
+            if($noredirect){
+                return true;
+            }
+            return redirect(route('panel.dashboard'))->send()->with('danger', 'Akses terbatas');
         }
-     }
-    public function get_modules(){
+    }
+    public function get_modules()
+    {
         return $this->roles()->where('action', 'index');
     }
 }
