@@ -27,6 +27,7 @@
                             title="Klik Untuk Menyalin alamat URL {{ $module->title }}" data-toggle="tooltip"
                             class="pointer copy pull-right badge badge-primary" data-copy="{{ url($post->url) }}"><i
                                 class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
+                                @push('scripts')
                                 <script>
   function enableCustomSlugEdit(postUrl, slug) {
     const urlElement = document.querySelector('.url');
@@ -103,6 +104,7 @@ document.querySelectorAll('.fa-edit').forEach(icon => {
 });
 
                                 </script>
+                                @endpush
                 @endif
                 @include('cms::backend.layout.error')
             </div>
@@ -186,7 +188,7 @@ document.querySelectorAll('.fa-edit').forEach(icon => {
                         <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Gambar</p>
 
                         <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}"/>
-                        <input accept="image/png,image/jpeg" type="file" class="compress-image form-control-file form-control-sm"
+                        <input accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="compress-image form-control-file form-control-sm"
                             name="media" value="">
                         @if ($module->web->index && $module->web->detail)
                             <span style="padding:10px">
