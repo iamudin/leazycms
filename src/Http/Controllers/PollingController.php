@@ -97,7 +97,7 @@ class PollingController extends Controller implements HasMiddleware
            $image =  $option->addFile([
                 'file'=>$request->file('image'),
                 'purpose'=>'image_polling_'.$option->id,
-                'mime_type'=>['image/jpeg','image/png']
+                'mime_type'=> ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
             ]);
 
             $option->update([
@@ -118,7 +118,7 @@ class PollingController extends Controller implements HasMiddleware
            $image =  $result->addFile([
                 'file'=>$request->file('image'),
                 'purpose'=>'image_polling_'.$result->id,
-                'mime_type'=>['image/jpeg','image/png']
+                'mime_type'=>['image/jpeg','image/png','image/webp','image/gif']
             ]);
 
             $result->update([

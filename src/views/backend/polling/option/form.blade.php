@@ -22,7 +22,7 @@
 
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Gambar </label>
-                 <input type="file" class="form-control-file" name="image" accept="image/png,image/jpeg">
+                 <input type="file" class="compress-image form-control-file" name="image" accept="image/png,image/jpeg,image/webp,image/gif">
             </div>
 
             <div class="form-group mt-2  mb-2 text-right">
