@@ -183,7 +183,14 @@
             >
                 <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; ADMINISTRATOR
             </li>
-
+             {{-- <li title="Webmail">
+                <a
+                    class="app-menu__item {{ active_item(['email']) }}"
+                    href="{{ route('email.index') }}"
+                    ><i class="app-menu__icon fa fa-at"></i>
+                    <span class="app-menu__label">Webmail</span></a
+                >
+            </li> --}}
             <li class="treeview {{ active_item(['setting', 'appearance', 'cache']) ? 'is-expanded' : '' }}">
                 <a
                     class="app-menu__item"
