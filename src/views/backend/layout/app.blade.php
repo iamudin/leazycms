@@ -170,6 +170,7 @@
             $temp.remove();
         }
     </script>
+
     <!-- Essential javascripts for application to work-->
     <script  src="{{ url('backend/js/popper.min.js') }}"></script>
     <script  src="{{ url('backend/js/bootstrap.min.js') }}"></script>

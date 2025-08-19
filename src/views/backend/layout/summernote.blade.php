@@ -1,3 +1,4 @@
+
 <div class="modal fade" id="embedModal" tabindex="-1" role="dialog" aria-labelledby="embedModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -28,9 +29,95 @@
       </div>
     </div>
   </div>
+<div class="modal fade aiModal" id="aiModal" tabindex="-1" role="dialog" aria-labelledby="aiModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
 
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiModalLabel">Generate Artikel dengan AI</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <textarea id="aiPrompt" class="form-control" rows="4"
+                    placeholder="Masukkan perintah artikel..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+    
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" id="btnGenerateAI" data-dismiss="modal" class="btn btn-primary">Generate</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+@push('scripts')
+    <script src="https://js.puter.com/v2/"></script>
+@endpush
 <script type="text/javascript">
     $(document).ready(function() {
+         let firstRequest = true;
+        function aiButton(context) {
+            var ui = $.summernote.ui;
+            return ui.button({
+                contents: '<i class="note-icon-magic"></i> AI Generate',
+                tooltip: 'Generate Artikel dengan AI',
+                click: function () {
+                     $('#btnGenerateAI').removeAttr('disabled');
+                    $('#btnGenerateAI').text('Generate');
+                    var myModal = new bootstrap.Modal(document.getElementById('aiModal'));
+                    myModal.show();
+                }
+            }).render();
+        }
+        $('#btnGenerateAI').on('click', async function () {
+            let prompt = $('#aiPrompt').val().trim();
+            if (!prompt) {
+                alert("Masukkan prompt terlebih dahulu!");
+                return;
+            }else{
+            $('#btnGenerateAI').attr('disabled', true);
+            $('#btnGenerateAI').text('Generating...');
+            }
+
+            let current = $('#editor').summernote('code');
+
+            if (!firstRequest) {
+                current += "<br><br>";
+                $('#editor').summernote('code', current);
+            }
+            firstRequest = false;
+
+            const resp = await puter.ai.chat(prompt, { model: 'gpt-4o-mini', stream: true });
+
+            let carry = "";
+            for await (const part of resp) {
+                if (part?.text) {
+                    carry += part.text;
+                    if ((carry.match(/\*\*/g) || []).length % 2 === 0) {
+                        let processed = carry
+                            .replaceAll('\n', '<br>')
+                            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                        current += processed;
+                        $('#editor').summernote('code', current);
+                        carry = "";
+                    }
+                }
+            }
+
+            if (carry) {
+                let processed = carry
+                    .replaceAll('\n', '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                current += processed;
+                $('#editor').summernote('code', current);
+            }
+              $('#aiModal').hide();
+            $('.modal-backdrop').hide();
+        });
 
         $("#editor").summernote({
             placeholder: 'Tulis isi..',
@@ -99,8 +186,11 @@
                 ['insert', ['picture', 'link', 'video', 'hr','embedUrl']],
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help','codeview']],
+                ['custom', ['aiGenerate']],
         ],
+      
         buttons: {
+            aiGenerate: aiButton,
             embedUrl: function() {
                 var ui = $.summernote.ui;
                 var button = ui.button({
@@ -126,7 +216,11 @@
                     .css('padding', '5px');
             },
         });
+
+        
     });
+
+    
         async function compressToWebP(file, quality = 0.3) {
             const imageBitmap = await createImageBitmap(file);
             const canvas = document.createElement('canvas');
@@ -142,41 +236,6 @@
             const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
             return new File([blob], newFileName, { type: 'image/webp' });
         }
-   /* function uploadImage(file) {
-        if (file) {
-            var allowedTypes = ['image/jpeg', 'image/png'];
-            if (!allowedTypes.includes(file.type)) {
-                alert('Pilih hanya format gambar: jpg atau png.');
-            }else{
-        var data = new FormData();
-        data.append("file", file);
-        data.append("post","{{ $post?->id }}");
-        data.append("_token", "{{ csrf_token() }}");
-        $.ajax({
-            url: "{{ route('upload_image_summernote') }}",
-            type: 'POST',
-            data: data,
-            contentType: false,
-            processData: false,
-            success: function(response) {
-                var actualImageUrl = response.url;
-                var figureHTML = `
-                        <figure style="text-align: center; margin: 10px 0;">
-                            <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
-                            <figcaption style="font-style: italic; color: #666;"><small>Ilustrasi Gambar Disini</small></figcaption>
-                        </figure>
-                    `;
-                $('#editor').summernote("pasteHTML", figureHTML);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error('Error uploading image: ', textStatus, errorThrown);
-            }
-        });
-            }
-        }
-    }
-        */
-    
 
         async function uploadImage(file) {
             if (!file) return;
@@ -260,5 +319,6 @@
         }
     });
 </script>
+
 <!-- Modal -->
 

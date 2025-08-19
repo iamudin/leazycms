@@ -17,7 +17,6 @@
   </div>
 
   <div class="col-lg-12">
-
     <div class="row">
       @php
         $publish = request()->user()->isAdmin()? query()->onType(get_post_type())->published()->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->published()->count();
