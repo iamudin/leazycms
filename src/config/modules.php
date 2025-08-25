@@ -675,5 +675,6 @@ return [
         'installed'=>env('APP_INSTALLED',0),
         'public_path'=>env('PUBLIC_PATH',null),
         'version'=>null,
+        'template'=> env('TEMPLATE_PATH',null)
 ];
 

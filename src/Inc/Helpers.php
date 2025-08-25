@@ -856,7 +856,7 @@ if (!function_exists('initial_helper')) {
 if (!function_exists('template')) {
     function template()
     {
-        return get_option('template') ?? 'default';
+        return config('modules.template') ?? get_option('template');
     }
 }
 if (!function_exists('get_sidebar')) {
