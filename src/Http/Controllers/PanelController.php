@@ -61,7 +61,7 @@ class PanelController extends Controller implements HasMiddleware
     {
         // $this->toDashboard($request);
         $user = $request->user();
-        $posts = Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
+        $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
         $da = array();
         for ($i = 0; $i <= 6; $i++) {
             array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
