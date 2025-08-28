@@ -114,7 +114,7 @@ class Panel
             }
         }
             $dangerousFunctions = [
-            'eval', 'exec', 'system', 'passthru', 'shell_exec',
+            'eval', ' system',' exec', 'passthru', 'shell_exec',
             'proc_open', 'popen', 'assert', 'base64_decode',
             'file_put_contents', 'fopen', 'curl_exec', 'create_function','file_get_contents', 'unlink', 'mkdir', 'curl_exec', 'create_function'
         ];
@@ -156,8 +156,10 @@ class Panel
     }
     protected function isFileSafe($file): bool
     {
-        if (!$file->isValid())
-            return false;
+        if (!$file->isValid()){
+           return false;
+
+        }
 
         $path = $file->getRealPath();
 
@@ -167,14 +169,14 @@ class Panel
 
         $content = file_get_contents($path);
         if (preg_match('/<\?(php|=)/i', $content)){
-            return false;
+           return false;
         }
 
         // Cek fungsi berbahaya
         $danger = [
             'eval',
-            'exec',
-            'system',
+            ' exec',
+            ' system',
             'passthru',
             'shell_exec',
             'proc_open',
@@ -190,9 +192,12 @@ class Panel
             'file_get_contents',
 
         ];
+        
         foreach ($danger as $func) {
-            if (stripos($content, $func) !== false)
-                return false;
+            if (stripos($content, $func) !== false){
+             return false;
+              
+            }
         }
 
         return true;

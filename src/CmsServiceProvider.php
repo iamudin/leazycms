@@ -6,7 +6,6 @@ use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
 use Leazycms\Web\Middleware\Panel;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
@@ -115,7 +114,7 @@ class CmsServiceProvider extends ServiceProvider
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && config('app.debug') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
-                Config::set(['app.debug' => false]);
+                Config::set(['app.debug' => true]);
             }
         }
         catch (\Exception $e) {

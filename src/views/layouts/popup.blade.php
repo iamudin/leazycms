@@ -1,4 +1,3 @@
-@if(get_post_type())
  <style>
     /* Gunakan style yang sama seperti sebelumnya, ditambahkan tombol navigasi */
     .modals {
@@ -36,9 +35,11 @@
 
     .modals-content {
       width: 100%;
-    min-height: 100%;
     }
-
+    #modal-data {
+      max-height: 80vh;
+      overflow: auto;
+    }
     .modals-header h3 {
       padding: 0 0 12px 0;
       font-size: 20px;
@@ -58,7 +59,7 @@
     .modals-header {
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
-      padding: 18px 0 0 0;
+      padding: 18px 0 10px 0;
     }
 
     .closes-btn {
@@ -114,9 +115,11 @@
       <div class="modals-header">
         <h3 id="bannerTitle">Loading...</h3>
       </div>
+      <div id="modal-data">
       <a id="bannerLink" href="#" title="">
         <img id="bannerImage" src="" class="modals-content fade show">
       </a>
+      </div>
       <div class="modals-footer">
         <label>
           <input type="checkbox" id="dontShowAgain" /> Jangan tampilkan lagi di sesi ini
@@ -124,8 +127,10 @@
       </div>
 
       <!-- Navigasi kiri-kanan -->
+      @if(count($banners)>1)
       <span class="nav-btn prev-btn" id="prevBtn">&#10094;</span>
       <span class="nav-btn next-btn" id="nextBtn">&#10095;</span>
+      @endif
     </div>
   </div>
 
@@ -217,4 +222,3 @@ bannerImage.addEventListener("touchend", function(e) {
       }
     };
   </script>
-@endif

@@ -140,12 +140,14 @@
                     ->with('parent.parent.parent')
                     ->published()
                     ->select('id', 'title', 'parent_id')
+                    ->whereNotIn('id',[$post->id])
                     ->get();
             } else {
                 $par = query()->whereType($pp[1])
                     ->with('parent.parent.parent')
                     ->published()
                     ->select('id', 'title', 'parent_id')
+                    ->whereNotIn('id',[$post->id])
                     ->get();
             }
         }
@@ -242,7 +244,7 @@
                     @if ($module->web->sortable)
                     <small for="">Urutan {!! help('Urutan konten yang akan ditampilkan') !!}</small>
                     <select class="form-control form-control-sm" name="sort">
-                        @php $count = query()->whereType(get_post_type())->count();@endphp
+                        @php $count = query()->onType(get_post_type())->count();@endphp
                         @for ($i = 1; $i <= $count; $i++)
                             <option value="{{ $i }}"  {{ $post->sort == $i ? 'selected=selected' : '' }}>{{ $i }}
                             </option>

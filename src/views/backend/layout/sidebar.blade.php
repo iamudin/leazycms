@@ -67,7 +67,7 @@
                     <a
                         class="treeview-item @if (request()->segment(3) == 'category') active @endif"
                         href="{{ Route::has($row->name . '.category') ? route($row->name . '.category') : '' }}"
-                        ><i class="icon fa fa-tags"></i> Category</a
+                        ><i class="icon fa fa-tags"></i> Kategori</a
                     >
                     @endif
                 </li>

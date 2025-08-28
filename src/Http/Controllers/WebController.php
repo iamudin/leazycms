@@ -216,7 +216,7 @@ class WebController extends Controller
         }
         $title = $post_parent->title;
         $post_name = $modul->title;
-        config(['modules.page_name' => $modul->title.' di '.$modul->form->post_parent[0].' '.$post_name . ' ' . $title]);
+        config(['modules.page_name' => $modul->title.' di '.$modul->form->post_parent[0].' ' . $title]);
         $index = query()->index_child($modul->name,$post_parent->id,true);
         $data = array(
         'index' => $index,

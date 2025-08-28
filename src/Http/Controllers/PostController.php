@@ -292,7 +292,7 @@ public function recache($type){
 }
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->withCount('childs','comments')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->withCount('childs','comments')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected,['data_loop']))->with('user', 'category','tags')->with('parent.parent.parent')->withCount('childs','comments')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category','tags')->with('parent.parent.parent')->withCount('childs','comments')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
         if($current_module->web->sortable){
             $data->orderBy('sort','ASC');
@@ -426,7 +426,17 @@ public function recache($type){
 
             ->addColumn('parents', function ($row) use($current_module){
                 if ($current_module->form->post_parent){
-                    return $row->parent?->title ?? '<span class="text-muted">__</span>';
+                    $parent = null;
+                 if($row->parent){
+                    $parent .= $row->parent->title;
+                     if($row->parent->parent){
+                    $parent .= ' - '.$row->parent->parent->title;
+                     if($row->parent->parent->parent){
+                    $parent .= ' - '.$row->parent->parent->parent->title;
+                 }
+                 }
+                 }
+                 return $parent ?? '_';
                 }
 
             })
