@@ -1050,6 +1050,30 @@ if (!function_exists('init_popup')) {
         return null;
     }
 }
+if (!function_exists('short_content')) {
+function short_content($content, $limit = 20)
+{
+    // 1. Hapus semua tag HTML
+    $text = strip_tags($content);
+
+    // 2. Decode HTML entities (&nbsp;, &amp;, dll.)
+    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    // 3. Bersihkan spasi ganda
+    $text = preg_replace('/\s+/', ' ', trim($text));
+
+    // 4. Potong jadi array kata
+    $words = explode(' ', $text);
+
+    // 5. Ambil sesuai limit
+    if (count($words) > $limit) {
+        $words = array_slice($words, 0, $limit);
+        return implode(' ', $words) . '...';
+    }
+
+    return implode(' ', $words);
+}
+}
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
     {

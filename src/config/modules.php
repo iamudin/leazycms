@@ -208,7 +208,7 @@ return [
             'icon' => 'fa-sitemap',
             'route' => ['index', 'create', 'show', 'update', 'delete'],
             'datatable' => [
-                'custom_column' => false,
+                'custom_column' => 'Website',
                 'data_title' => 'Nama Unit',
             ],
             'form' => [
@@ -221,9 +221,15 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
+                    ['Pemerintahan','break'],
+                    ['Kepala','text'],
+                    ['Sekretaris','text'],
+                    ['Kantor','break'],
                     ['Alamat','text'],
                     ['Email','text'],
-                    ['Telepon','text'],
+                    ['Telp','text'],
+                    ['Link SIPPN','text'],
+                    ['Google Maps','text'],
                     ['Instagram','text'],
                     ['Facebook','text'],
                     ['Website','text'],
@@ -318,9 +324,9 @@ return [
             'cache' => false,
             'active' => true,
         ],
-        'document' => [
+        'download' => [
             'position' => 3,
-            'name' => 'document',
+            'name' => 'download',
             'title' => 'Dokumen',
             'description' => 'Menu Untuk Mengelola Dokumen',
             'parent' => false,
@@ -416,6 +422,7 @@ return [
                 'looping_data' => false,
                 'custom_field' => [
                     ['File', 'file','required'],
+                    ['Tahun', 'number'],
                     ['Tanggal Entry', 'datetime-local'],
                  
                 ],

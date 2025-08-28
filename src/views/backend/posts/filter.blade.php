@@ -46,8 +46,21 @@
     <div class="col-12">
         <small>{{ $parent[0] }}</small>
         <select id="parent_id"  data-live-search="true"  class="selectpicker form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
+            @php 
+            $parentdata = query()->with('parent.parent.parent')->onType($parent[1])->published()->select('title','id','parent_id','category_id');
+            @endphp
+            @if(isset($parent[2]))
+            @php 
+            $parentdata = $parentdata->whereHas('category',function($q) use($parent){
+                $q->whereSlug($parent[2]); })->get()
+            @endphp
+            @else 
+            @php 
+            $parentdata = $parentdata->get();
+            @endphp
+            @endif
             <option value="">Pilih</option>
-            @foreach(query()->with('parent.parent.parent')->onType($parent[1])->published()->select('title','id','parent_id')->get() as $row)
+            @foreach($parentdata as $row)
             <option value="{{ $row->id }}">{{ $row->title }} {{ $row->parent? ' - '.$row->parent->title.($row->parent->parent? ' - '.$row->parent->parent->title:'') : ''}}</option>
             @endforeach
         </select>
