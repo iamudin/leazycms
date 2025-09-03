@@ -196,7 +196,7 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
     if($module->web->detail){
         $data['custom_page'] =  View::exists('template.'.template().'.'.$post->type.'.'.$post->slug) ? '1' : '0';
   }
-    $data['short_content'] =  isset($request->content) && strlen($request->content) > 0 ? short_content($request->conntent) : null;
+    $data['short_content'] = isset($data['content']) && strlen($data['content']) > 0 ? short_content($data['content']) : null;
     $post->tags()->sync($request->tags, true);
     $data['allow_comment'] =   isset($request->allow_comment) ? 'Y': 'N';
 
