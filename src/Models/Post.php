@@ -385,9 +385,9 @@ class Post extends Model
             ->where('parent_id', $id)
             ->latest('created_at');
             if($perpage){
-                $q->paginate(get_option('post_perpage'));
+              return  $q->paginate(get_option('post_perpage'));
             }else{
-                $q->get();
+               return $q->get();
             }
         }
     }
