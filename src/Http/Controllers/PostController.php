@@ -111,6 +111,7 @@ abort_if(!is_numeric($id),'403');
 }
 public function update(Request $request, Post $post){
     $request->user()->hasRole(get_post_type(),'update');
+
     $module = current_module();
     if($post->type=='page' && in_array(str($request->title)->lower(),not_allow_adminpath())){
         return back()->with('danger','Nama Halaman tidak di izinkan');
@@ -159,7 +160,8 @@ $uniq = $module->form->unique_title ? '|'. Rule::unique('posts')->where('type',$
         'status'=> 'required|string|in:draft,publish'
     ];
     $custommsg = [
-        'title.unique' => $module->datatable->data_title .' Sudah digunakan',
+        'title.required' => $module->datatable->data_title .' Tidak boleh kosong',
+            'title.unique' => $module->datatable->data_title . ' Sudah digunakan',
         'title.min' => $module->datatable->data_title .' minimal 5 karakter',
         'title.max' => $module->datatable->data_title .' maksimal 200 karakter',
     ];

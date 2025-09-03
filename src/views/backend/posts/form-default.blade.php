@@ -1,9 +1,7 @@
 @extends('cms::backend.layout.app', ['title' => get_post_type('title_crud')])
 @section('content')
-        <form class="editor-form" action="{{ route(get_post_type() . '.update', $post->id) }}" method="post"
+        <form class="editorForm" action="{{ route(get_post_type() . '.update', $post->id) }}" method="POST"
             enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
             <div class="row">
                 <div class="col-lg-12">
                     <h3 style="font-weight:normal">
@@ -29,81 +27,82 @@
                                     class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
                                     @push('scripts')
                                     <script>
-      function enableCustomSlugEdit(postUrl, slug) {
-        const urlElement = document.querySelector('.url');
-        const customUrlElement = document.querySelector('.custom-url');
-        const editButton = document.querySelector('.fa-edit');
 
-        const baseUrl = postUrl.replace(slug, '');
-        urlElement.innerHTML = baseUrl;
+                                              function enableCustomSlugEdit(postUrl, slug) {
+                                                const urlElement = document.querySelector('.url');
+                                                const customUrlElement = document.querySelector('.custom-url');
+                                                const editButton = document.querySelector('.fa-edit');
 
-        customUrlElement.innerHTML = `
-            <input type='text' name='custom_slug' autofocus
-                   style='border:none;border-radius:5px;color:#004A43;width:300px;background:transparent'
-                   value='${slug}'
-                   maxlength='100'
-                   oninput="validateAndUpdateSlug('${baseUrl}', this)">
-            <i class="fa fa-check ml-2 pointer" onclick="finalizeSlugEdit('${baseUrl}', this)"></i>
-        `;
+                                                const baseUrl = postUrl.replace(slug, '');
+                                                urlElement.innerHTML = baseUrl;
 
-        if (editButton) {
-            editButton.style.display = 'none';
-        }
-    }
+                                                customUrlElement.innerHTML = `
+                                                    <input type='text' name='custom_slug' autofocus
+                                                           style='border:none;border-radius:5px;color:#004A43;width:300px;background:transparent'
+                                                           value='${slug}'
+                                                           maxlength='100'
+                                                           oninput="validateAndUpdateSlug('${baseUrl}', this)">
+                                                    <i class="fa fa-check ml-2 pointer" onclick="finalizeSlugEdit('${baseUrl}', this)"></i>
+                                                `;
 
-    function validateAndUpdateSlug(baseUrl, inputElement) {
-        let newSlug = inputElement.value.replace(/[^a-z\-\^0-9]/g, '');
-        if (newSlug && !/^[a-z0-9]/.test(newSlug[0])) {
-            newSlug = newSlug.slice(1);
-        }
-        while (/--/.test(newSlug)) {
-            newSlug = newSlug.replace(/--/g, '-');
-        }
-        if (newSlug.length > 100) {
-            newSlug = newSlug.slice(0, 100);
-        }
-        inputElement.value = newSlug;
+                                                if (editButton) {
+                                                    editButton.style.display = 'none';
+                                                }
+                                            }
 
-        const urlElement = document.querySelector('.url');
-        urlElement.innerHTML = `${baseUrl}`;
-    }
+                                            function validateAndUpdateSlug(baseUrl, inputElement) {
+                                                let newSlug = inputElement.value.replace(/[^a-z\-\^0-9]/g, '');
+                                                if (newSlug && !/^[a-z0-9]/.test(newSlug[0])) {
+                                                    newSlug = newSlug.slice(1);
+                                                }
+                                                while (/--/.test(newSlug)) {
+                                                    newSlug = newSlug.replace(/--/g, '-');
+                                                }
+                                                if (newSlug.length > 100) {
+                                                    newSlug = newSlug.slice(0, 100);
+                                                }
+                                                inputElement.value = newSlug;
 
-    function finalizeSlugEdit(baseUrl, checkButton) {
-        const inputElement = document.querySelector('.custom-url input');
-        const editButton = document.querySelector('.fa-edit');
+                                                const urlElement = document.querySelector('.url');
+                                                urlElement.innerHTML = `${baseUrl}`;
+                                            }
 
-        if (inputElement) {
-            let slug = inputElement.value;
-            if (slug.endsWith('-')) {
-                slug = slug.slice(0, -1);
-            }
+                                            function finalizeSlugEdit(baseUrl, checkButton) {
+                                                const inputElement = document.querySelector('.custom-url input');
+                                                const editButton = document.querySelector('.fa-edit');
 
-            inputElement.value = slug;
-            inputElement.setAttribute('type', 'hidden');
-        }
+                                                if (inputElement) {
+                                                    let slug = inputElement.value;
+                                                    if (slug.endsWith('-')) {
+                                                        slug = slug.slice(0, -1);
+                                                    }
 
-        if (checkButton) {
-            checkButton.style.display = 'none';
-        }
+                                                    inputElement.value = slug;
+                                                    inputElement.setAttribute('type', 'hidden');
+                                                }
 
-        if (editButton) {
-            editButton.style.display = 'inline';
-        }
+                                                if (checkButton) {
+                                                    checkButton.style.display = 'none';
+                                                }
 
-        const urlElement = document.querySelector('.url');
-        const slug = inputElement.value;
-        urlElement.innerHTML = `${baseUrl}${slug}`;
-    }
+                                                if (editButton) {
+                                                    editButton.style.display = 'inline';
+                                                }
 
-    document.querySelectorAll('.fa-edit').forEach(icon => {
-        icon.addEventListener('click', function () {
-            const postUrl = this.dataset.postUrl;
-            const slug = this.dataset.slug;
-            enableCustomSlugEdit(postUrl, slug);
-        });
-    });
+                                                const urlElement = document.querySelector('.url');
+                                                const slug = inputElement.value;
+                                                urlElement.innerHTML = `${baseUrl}${slug}`;
+                                            }
 
-                                    </script>
+                                            document.querySelectorAll('.fa-edit').forEach(icon => {
+                                                icon.addEventListener('click', function () {
+                                                    const postUrl = this.dataset.postUrl;
+                                                    const slug = this.dataset.slug;
+                                                    enableCustomSlugEdit(postUrl, slug);
+                                                });
+                                            });
+
+                                                                            </script>
                                     @endpush
                     @endif
                     @include('cms::backend.layout.error')
@@ -131,26 +130,26 @@
 
                     @if ($pp = $module->form->post_parent)
                         <?php
-        if (isset($pp[1])) {
-            if (isset($pp[2]) && $pp[2] != 'all') {
-                $par = query()->withwherehas('category', function ($q) use ($pp) {
-                    $q->where('slug', $pp[2]);
-                })
-                    ->whereType($pp[1])
-                    ->with('parent.parent.parent')
-                    ->published()
-                    ->select('id', 'title', 'parent_id')
-                    ->whereNotIn('id',[$post->id])
-                    ->get();
-            } else {
-                $par = query()->whereType($pp[1])
-                    ->with('parent.parent.parent')
-                    ->published()
-                    ->select('id', 'title', 'parent_id')
-                    ->whereNotIn('id',[$post->id])
-                    ->get();
-            }
+    if (isset($pp[1])) {
+        if (isset($pp[2]) && $pp[2] != 'all') {
+            $par = query()->withwherehas('category', function ($q) use ($pp) {
+                $q->where('slug', $pp[2]);
+            })
+                ->whereType($pp[1])
+                ->with('parent.parent.parent')
+                ->published()
+                ->select('id', 'title', 'parent_id')
+                ->whereNotIn('id', [$post->id])
+                ->get();
+        } else {
+            $par = query()->whereType($pp[1])
+                ->with('parent.parent.parent')
+                ->published()
+                ->select('id', 'title', 'parent_id')
+                ->whereNotIn('id', [$post->id])
+                ->get();
         }
+    }
                         ?>
                         <h6>{{ $pp[0] }}</h6>
                         <select @if (isset($pp[3]) && $pp[3] == 'required') required @endif  data-live-search="true"  class="selectpicker form-control form-control-sm"
@@ -290,7 +289,7 @@
                             </label>
                         </div>
                     </div>
-                    <button type="submit" data-toggle="tooltip" title="Simpan Perubahan"  class="btn btn-md btn-primary w-100 add">SIMPAN</button><br><br>
+                    <button type="submit" data-toggle="tooltip" title="Simpan Perubahan"  class="btn btn-md btn-primary w-100 add"> <i class="fa fa-save"></i> <span class="text-save">Simpan</span> </button><br><br>
                 </>
             </div>
         </form>
@@ -304,6 +303,66 @@
             @endpush
             @include('cms::backend.layout.summernote')
         @endif
-        @include('cms::backend.layout.js')
+        @push('scripts')
+                <script>
+                      $('.editorForm').on('submit', function (e) {
+                            e.preventDefault();
+                            $('.text-save').html('Menyimpan...');
+                            $('.btn-primary').attr('disabled', 'disabled');
+                            let form = this;
+                            let actionUrl = $(form).attr('action');
+                            let formData = new FormData(form);
+                            formData.append('_method', 'PUT');
+                          $.ajaxSetup({
+                              headers: {
+                                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                              }
+                          });
+
+                            $.ajax({
+                                url: actionUrl,
+                                method: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                success: function (response) {
+                                    notif('Berhasil menyimpan perubahan!', 'success');
+                                    $('.text-save').html('Simpan');
+                                    $('.btn-primary').removeAttr('disabled');
+                                    location.reload();
+                                },
+                               error: function (xhr) {
+
+                                    try {
+                                        let res = JSON.parse(xhr.responseText); 
+                                        let allMsg = [];
+
+                                        if (res.errors) {
+                                            Object.values(res.errors).forEach(arrMsg => {
+                                                allMsg = allMsg.concat(arrMsg);
+                                            });
+
+                                            let finalMsg = allMsg.join('<br>');
+
+                                            notif(finalMsg, 'danger'); 
+                                        } else if (res.message) {
+                                            notif(res.message, 'danger');
+                                        } else {
+                                            notif('Gagal menyimpan perubahan!', 'danger');
+                                        }
+                                    } catch (e) {
+                                        notif('Gagal menyimpan perubahan!', 'danger');
+                                    }
+
+                                    $('.text-save').html('Simpan');
+                                    $('.btn-primary').removeAttr('disabled');
+                                }
+
+                            });
+                        });
+                    </script>
+            @include('cms::backend.layout.js')
+
+        @endpush
 
 @endsection

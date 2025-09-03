@@ -1,6 +1,6 @@
 @extends('cms::backend.layout.app',['title'=>get_post_type('title_crud')])
 @section('content')
-<form class="editor-form" action="{{URL::full()}}" method="post" enctype="multipart/form-data">
+<form class="editorForm" action="{{URL::full()}}" method="post" enctype="multipart/form-data">
    @csrf
    @method('PUT')
    <div class="row">
@@ -44,11 +44,10 @@
                </label>
             </div>
          </div>
-         <button @if(Auth::user()->level=='admin' || Auth::user()==$post->author) name="save" value="@if(empty($post))add @else {{$post->id}} @endif" type="submit" data-toggle="tooltip" title="Simpan Perubahan" @else type="button"  onclick="alert('Anda bukan pemilik konten ini!')" @endif class="btn btn-md btn-outline-primary w-100 add">SIMPAN</button><br><br>
+         <button type="submit" data-toggle="tooltip" title="Simpan Perubahan" class="btn btn-md btn-outline-primary w-100 add">SIMPAN</button><br><br>
       </div>
    </div>
 </form>
-@include('cms::backend.layout.js')
 @push('styles')
 <style>
 .autocomplete-box {
@@ -188,6 +187,7 @@
 
 @push('scripts')
 <script>
+                    
 const inputs = document.getElementById('link_target');
 const listBox = document.getElementById('autocomplete-list');
 
@@ -286,6 +286,7 @@ document.addEventListener('click', function(e) {
      $('.add').click();
     }
     </script>
+@include('cms::backend.layout.js')
 
 @endpush
 @endsection
