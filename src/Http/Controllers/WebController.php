@@ -70,7 +70,7 @@ class WebController extends Controller
     }
     public function tags($slug)
     {
-        $tag = Tag::select('name', 'visited', 'id')->whereSlug($slug)->first();
+        $tag = Tag::select('name', 'visited', 'id','slug')->whereSlug($slug)->first();
         abort_if(empty($tag), 404);
         config(['modules.page_name' =>$tag->name]);
 
@@ -85,8 +85,8 @@ class WebController extends Controller
             'index' => $post,
             'tag' => $tag
         );
-        if(View::exists('template.'.template().'.tags.'.$tag->id)){
-            return view('template.'.template().'.tags.'.$tag->id, $data);
+        if(View::exists('template.'.template().'.tags.'.str($tag->slug)->lower())){
+            return view('template.'.template().'.tags.'. str($tag->slug)->lower(), $data);
         }
         return view('cms::layouts.master', $data);
     }

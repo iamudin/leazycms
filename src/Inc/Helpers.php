@@ -1113,7 +1113,10 @@ if (!function_exists('init_meta_header')) {
                     $pn = $get_page_name . $page;
                 } elseif (request()->segment(2) == 'category') {
                     $pn = $get_page_name . $page;
-                } elseif (get_module(get_post_type())->form->post_parent) {
+                } elseif (request()->is('tags/*')) {
+                    $pn = $get_page_name . $page;
+                }
+                elseif (get_module(get_post_type())->form->post_parent) {
                     $pn = $get_page_name . $page;
                 } else {
                     $pn = $get_page_name . $page;
@@ -1122,9 +1125,7 @@ if (!function_exists('init_meta_header')) {
                 $pn = 'Hasil Pencarian  "' . ucwords(str_replace('-', ' ', request()->slug)) . '"' . $page;
             } elseif (request()->is('author') || request()->is('author/*')) {
                 $pn = $get_page_name . $page;
-            } elseif (request()->is('tags/*')) {
-                $pn = $get_page_name . $page;
-            } else {
+            }  else {
                 $pn = null;
             }
             $data = [
