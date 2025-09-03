@@ -1019,6 +1019,18 @@ if (!function_exists('set_header_seo')) {
         );
     }
 }
+if (!function_exists('enc64')) {
+function enc64($val)
+{
+    return base64_encode(base64_encode($val));
+}
+}
+if (!function_exists( 'dec64')) {
+    function dec64($val)
+    {
+        return base64_decode(base64_decode($val));
+    }
+}
 
 if (!function_exists('get_domain_extension')) {
     function get_domain_extension($extension)
@@ -1367,7 +1379,7 @@ if (!function_exists('renderTemplateFile')) {
                 renderTemplateFile($item['children'], $currentPath);
                 echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
-                echo '<li><a href="' . route('appearance.editor') . '?edit=' . htmlspecialchars($currentPath) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
+                echo '<li><a href="' . route('appearance.editor') . '?edit=' .enc64( htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {
                 echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
             }

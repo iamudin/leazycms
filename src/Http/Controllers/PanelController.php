@@ -546,17 +546,20 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with('danger', 'Template Gagal Diupload');
         }
     }
+
     public function editorTemplate(Request $request)
     {
+
         if(!is_local() && !Cache::has('enablededitortemplate')){
             return to_route('appearance');
         }
         admin_only();
+        $defaultfile = enc64('/home.blade.php');
         $path = resource_path('views/template/' . template());
-        if (!file_exists($path . '/home.blade.php')) {
-            File::put($path . '/home.blade.php', '<h1>Your Script Here</h1>');
+        if (!file_exists($path . dec64($defaultfile))) {
+            File::put($path . dec64($defaultfile), '<h1>Your Script Here</h1>');
         }
-        $file = $request->edit ?? '/home.blade.php';
+        $file = $request->edit ? dec64($request->edit) : dec64($defaultfile);
 
         if ($file == '/styles.css') {
             $file = '/styles.css';
@@ -642,10 +645,11 @@ class PanelController extends Controller implements HasMiddleware
                             fwrite($myfile, $data);
                             fclose($myfile);
                         }
+                        return response()->json(['msg' => 'success', 'file' => $file]);
                     }
-
-                    return back()->with('success', 'Perubahan Tersimpan');
                     break;
+
+
             }
         }
         $src = $file && file_exists($path . $file) && is_file($path . $file) ? (file_get_contents($path . $file) ? file_get_contents($path . $file) : 'Here You Script') : null;
