@@ -90,7 +90,6 @@ class Web
         }
         $this->securityHeaders($response, $request);
         (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
-        processVisitorData();
         return $response;
     }
 

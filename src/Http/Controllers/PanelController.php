@@ -59,7 +59,7 @@ class PanelController extends Controller implements HasMiddleware
     }
     function index(Request $request)
     {
-        // $this->toDashboard($request);
+        processVisitorData();
         $user = $request->user();
         $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
         $da = array();
