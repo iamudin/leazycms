@@ -1,20 +1,29 @@
 <script  src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 <script>
-const compressImage = async (file, { quality = 0.3 }) => {
-    const imageBitmap = await createImageBitmap(file);
-    const canvas = document.createElement('canvas');
-    canvas.width = imageBitmap.width;
-    canvas.height = imageBitmap.height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageBitmap, 0, 0);
+    const compressImage = async (file, { quality = 0.3, maxWidth = 1500 } = {}) => {
+        const imageBitmap = await createImageBitmap(file);
 
-    const blob = await new Promise(resolve =>
-        canvas.toBlob(resolve, 'image/webp', quality)
-    );
+        let { width, height } = imageBitmap;
+        if (width > maxWidth) {
+            const scale = maxWidth / width;
+            width = maxWidth;
+            height = Math.round(height * scale);
+        }
 
-    const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
-    return new File([blob], newFileName, { type: 'image/webp' });
-};
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imageBitmap, 0, 0, width, height);
+
+        const blob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, 'image/webp', quality)
+        );
+
+        const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+        return new File([blob], newFileName, { type: 'image/webp' });
+    };
 
 const getIdentifier = (input) => input.name || 'input_' + Math.random().toString(36).substring(2, 8);
 
