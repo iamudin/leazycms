@@ -10,7 +10,6 @@ class ExtController extends Controller
 {
     public function service_worker(){
         $script = view('cms::layouts.sw')->render();
-        dd($script);
         return Response::make($script)
             ->header('Content-Type', 'application/javascript')
             ->header('Content-Disposition', 'inline; filename="service-worker.js"');
