@@ -144,8 +144,6 @@ class WebController extends Controller
         }
 
         config(['modules.data' => $detail]);
-        (new VisitorController)->visitor_counter();
-
         if ($detail->redirect_to) {
             return redirect($detail->redirect_to);
         }

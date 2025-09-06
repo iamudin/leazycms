@@ -8,7 +8,7 @@ class VisitorController
 
     public function visitor_counter()
     {
-
+      
         if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && strpos(url()->full(),'editortemplate')==false && !is_local()){
             $data = config('modules.data');
 
