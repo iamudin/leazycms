@@ -1,14 +1,11 @@
 <?php
 
-use Illuminate\Support\Str;
-use Leazycms\Web\Models\Visitor;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 if (!function_exists('query')) {
     function query()
     {
@@ -187,117 +184,56 @@ if (!function_exists('forbidden')) {
         }
     }
 }
-function normalize_page(string $page): string
-{
-    $page = trim($page);
-    if ($page === '') return '/';
+if (!function_exists('processVisitorData')) {
+    function processVisitorData()
+    {
+        if (!Cache::has('visit_to_db')) {
+            $cacheKey = 'visitor_sorted';
+            $visitorDataList = Cache::pull($cacheKey, []);
 
-    // ambil path + query saja
-    $parsed = parse_url($page);
-    $path = $parsed['path'] ?? '/';
-    // rapiin double slashes
-    $path = preg_replace('#/+#', '/', $path);
-    // hapus trailing slash kecuali root
-    if ($path !== '/') $path = rtrim($path, '/');
+            if (!empty($visitorDataList)) {
+                // Step 1: Group by ip + session + page
+                $groupedVisitors = [];
 
-    $query = $parsed['query'] ?? '';
-    if ($query !== '') {
-        parse_str($query, $qarr);
-        ksort($qarr); // canonical order
-        $query = http_build_query($qarr);
-        return $path . '?' . $query;
-    }
+                foreach ($visitorDataList as $data) {
+                    if (!is_array($data)) continue;
 
-    return $path;
-}
+                    $key = $data['ip'] . '|' . $data['session'] . '|' . $data['page'];
 
-function processVisitorData()
-{
-    if (!Cache::has('visit_to_db')) {
-        $cacheKey = 'visitor_sorted';
-        $visitorDataList = Cache::pull($cacheKey, []);
-
-        if (!empty($visitorDataList)) {
-            // group by ip + session + normalized page
-            $groupedVisitors = [];
-
-            foreach ($visitorDataList as $data) {
-                if (!is_array($data)) continue;
-
-                $normalizedPage = normalize_page($data['page'] ?? '');
-                $key = ($data['ip'] ?? '') . '|' . ($data['session'] ?? '') . '|' . $normalizedPage;
-
-                if (!isset($groupedVisitors[$key])) {
-                    $groupedVisitors[$key] = $data;
-                    $groupedVisitors[$key]['page_normalized'] = $normalizedPage;
-                    $groupedVisitors[$key]['page_hash'] = md5($normalizedPage);
-                    $groupedVisitors[$key]['times'] = 1;
-                } else {
-                    $groupedVisitors[$key]['times'] += 1;
-                }
-            }
-
-            $visitorModel = new Visitor();
-            $table = $visitorModel->getTable();
-            $now = now();
-            $twoMinAgo = now()->subMinutes(5);
-
-            foreach ($groupedVisitors as $v) {
-                $pageHash = $v['page_hash'];
-                $pageToStore = substr($v['page_normalized'], 0, 191);
-                $timesToAdd = (int) $v['times'];
-
-                // Raw UPDATE: hanya satu row (row terbaru) dalam 2 menit terakhir
-                $sql = "UPDATE `{$table}`
-                        SET `times` = `times` + ?, `updated_at` = ?
-                        WHERE `ip` = ? AND `session` = ? AND `page_hash` = ? AND `updated_at` >= ?
-                        ORDER BY `id` DESC
-                        LIMIT 1";
-
-                $bindings = [
-                    $timesToAdd,
-                    $now,
-                    $v['ip'] ?? null,
-                    $v['session'] ?? null,
-                    $pageHash,
-                    $twoMinAgo,
-                ];
-
-                $affected = DB::update($sql, $bindings);
-
-                if ($affected === 0) {
-                    // Tidak ada row yang diupdate → insert baru
-                    try {
-                        Visitor::create([
-                            'ip' => $v['ip'] ?? null,
-                            'session' => $v['session'] ?? null,
-                            'page' => $pageToStore,
-                            'page_hash' => $pageHash,
-                            'user_id' => $v['user_id'] ?? null,
-                            'post_id' => $v['post_id'] ?? null,
-                            'ip_location' => $v['ip_location'] ?? null,
-                            'browser' => $v['browser'] ?? null,
-                            'device' => $v['device'] ?? null,
-                            'os' => $v['os'] ?? null,
-                            'reference' => substr($v['reference'] ?? '', 0, 191),
-                            'created_at' => $v['created_at'] ?? $now,
-                            'updated_at' => $now,
-                            'times' => $timesToAdd,
-                        ]);
-                    } catch (QueryException $ex) {
-                        // Race condition: kemungkinan ada insert bersamaan -> coba increment fallback
-                        // (asumsikan ada unique index pada ip+session+page_hash)
-                        DB::update(
-                            "UPDATE `{$table}` SET `times` = `times` + ?, `updated_at` = ? WHERE `ip` = ? AND `session` = ? AND `page_hash` = ? ORDER BY `id` DESC LIMIT 1",
-                            [$timesToAdd, $now, $v['ip'] ?? null, $v['session'] ?? null, $pageHash]
-                        );
+                    if (!isset($groupedVisitors[$key])) {
+                        $groupedVisitors[$key] = $data;
+                        $groupedVisitors[$key]['times'] = 1;
+                    } else {
+                        $groupedVisitors[$key]['times'] += 1;
                     }
                 }
-            }
-        }
 
-        // Lock supaya nggak double eksekusi
-        Cache::put('visit_to_db', true, now()->addMinutes(5));
+                foreach ($groupedVisitors as $visitorData) {
+                    \Leazycms\Web\Models\Visitor::updateOrCreate(
+                        [
+                            'ip' => $visitorData['ip'],
+                            'session' => $visitorData['session'],
+                            'page' => substr($visitorData['page'], 0, 191),
+                        ],
+                        [
+                            'user_id' => $visitorData['user_id'],
+                            'post_id' => $visitorData['post_id'],
+                            'ip_location' => $visitorData['ip_location'],
+                            'browser' => $visitorData['browser'],
+                            'device' => $visitorData['device'],
+                            'os' => $visitorData['os'],
+                            'reference' => substr($visitorData['reference'], 0, 191),
+                            'created_at' => $visitorData['created_at'],
+                            'updated_at' => now(),
+                            'times' => \Illuminate\Support\Facades\DB::raw('times + ' . $visitorData['times']), // ⬅️ Increment times
+                        ]
+                    );
+                }
+            }
+
+            // Step 3: Set Cache lock supaya nggak double eksekusi
+            Cache::put('visit_to_db', true, now()->addMinutes(5));
+        }
     }
 }
 if (!function_exists('ratelimiter')) {
