@@ -100,8 +100,9 @@ class CmsServiceProvider extends ServiceProvider
     protected function cmsHandler()
     {
         Carbon::setLocale('ID');
+        config(['app.timezone' => config('modules.timezone')]);
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
-
+        
         if (DB::connection()->getDatabaseName() && $this->checkAllTables()) {
             try{
                 if(!config('modules.version')){
