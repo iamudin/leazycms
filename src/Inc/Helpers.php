@@ -178,10 +178,37 @@ if (!function_exists('forbidden')) {
                     }
                 }
             }
-            if (get_option('block_ip') && in_array(get_client_ip(), explode(",", get_option('block_ip')))) {
-                abort(403);
+            $clientIp = get_client_ip();
+            
+            // 2. Ambil daftar allow & block (string bisa kosong)
+            $allowOption = trim((string) get_option('allow_ip'));
+            $blockOption = trim((string) get_option('block_ip'));
+
+            // 3. Konversi ke array, kosong jadi array kosong
+            $allowIpsRaw = $allowOption !== '' ? array_map('trim', explode(',', $allowOption)) : [];
+            $blockIpsRaw = $blockOption !== '' ? array_map('trim', explode(',', $blockOption)) : [];
+
+            // 4. Filter hanya IP valid dari kedua list
+            $allowIps = array_values(array_filter($allowIpsRaw, fn($ip) => is_ip($ip)));
+            $blockIps = array_values(array_filter($blockIpsRaw, fn($ip) => is_ip($ip)));
+
+            // 5. Logika prioritas
+            if (in_array($clientIp, $allowIps, true)) {
+                // di allow → lanjut, meskipun ada di block
+            } elseif (in_array($clientIp, $blockIps, true)) {
+                abort(403, 'Access Denied');
             }
         }
+    }
+}
+
+if (!function_exists('is_ip')) {
+    function is_ip($ip)
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            return true;
+        }
+        return false;
     }
 }
 if (!function_exists('processVisitorData')) {
@@ -196,7 +223,8 @@ if (!function_exists('processVisitorData')) {
                 $groupedVisitors = [];
 
                 foreach ($visitorDataList as $data) {
-                    if (!is_array($data)) continue;
+                    if (!is_array($data))
+                        continue;
 
                     $key = $data['ip'] . '|' . $data['session'] . '|' . $data['page'];
 
@@ -244,8 +272,8 @@ if (!function_exists('ratelimiter')) {
         $userAgent = $request->header('User-Agent');
         $url = $request->fullUrl();
         $referer = $request->header('referer');
-        $limittime = (int)$limittime;
-        $limitduration = (int)get_option('limit_duration');
+        $limittime = (int) $limittime;
+        $limitduration = (int) get_option('limit_duration');
         $key = generateRateLimitKey($ip, $sessionId, $userAgent, $url, $referer);
         $maxAttempts = $limittime > 0 ? $limittime : 10;
         $decayMinutes = $limitduration > 0 ? $limitduration : 1;
@@ -577,7 +605,8 @@ if (!function_exists('get_option')) {
 if (!function_exists('admin_path')) {
     function admin_path()
     {
-        return get_option('admin_path') ?? 'admin';;
+        return get_option('admin_path') ?? 'admin';
+        ;
     }
 }
 
@@ -586,7 +615,7 @@ if (!function_exists('add_module')) {
     {
         $data = config('modules.used');
         if (!empty(collect($data)->where('name', $array['name'])->first())) {
-            foreach (collect($data)->where('name', $array['name']) as $key => $row) :
+            foreach (collect($data)->where('name', $array['name']) as $key => $row):
                 $data[$key] = $array;
             endforeach;
         } else {
@@ -619,7 +648,7 @@ if (!function_exists('getlistmenu')) {
     <input type="hidden" class="desc-' . $value->menu_id . '" name="menu_description[]" value="' . $value->menu_description . '">
     <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . $value->menu_link . '">
     <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . $value->menu_icon . '">
-      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link),60,'...') . '</i></a></code><span style="float:right"><a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'.modal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
+      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span style="float:right"><a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'.modal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
       ' . ceksubmenu($me, $value->menu_id) . '
     </li>
     ';
@@ -944,7 +973,7 @@ if (!function_exists('isPrePanel')) {
 if (!function_exists('not_allow_adminpath')) {
     function not_allow_adminpath()
     {
-        return  array_merge(['slot', 'gacor', 'maxwin', 'bokep', 'xxx', 'panel', 'judi', 'admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel', admin_path()], collect(get_module())->pluck('name')->toArray());
+        return array_merge(['slot', 'gacor', 'maxwin', 'bokep', 'xxx', 'panel', 'judi', 'admin', 'login', 'adminpanel', 'webadmin', 'masuk', 'sipanel', admin_path()], collect(get_module())->pluck('name')->toArray());
     }
 }
 if (!function_exists('isPre')) {
@@ -1019,12 +1048,12 @@ if (!function_exists('set_header_seo')) {
     }
 }
 if (!function_exists('enc64')) {
-function enc64($val)
-{
-    return base64_encode(base64_encode($val));
+    function enc64($val)
+    {
+        return base64_encode(base64_encode($val));
+    }
 }
-}
-if (!function_exists( 'dec64')) {
+if (!function_exists('dec64')) {
     function dec64($val)
     {
         return base64_decode(base64_decode($val));
@@ -1056,34 +1085,34 @@ if (!function_exists('init_popup')) {
     {
         $banners = get_banner('popup', 5);
         if ($banners) {
-            return  view()->make('cms::layouts.popup', compact('banners'));
+            return view()->make('cms::layouts.popup', compact('banners'));
         }
         return null;
     }
 }
 if (!function_exists('short_content')) {
-function short_content($content, $limit = 20)
-{
-    // 1. Hapus semua tag HTML
-    $text = strip_tags($content);
+    function short_content($content, $limit = 20)
+    {
+        // 1. Hapus semua tag HTML
+        $text = strip_tags($content);
 
-    // 2. Decode HTML entities (&nbsp;, &amp;, dll.)
-    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // 2. Decode HTML entities (&nbsp;, &amp;, dll.)
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-    // 3. Bersihkan spasi ganda
-    $text = preg_replace('/\s+/', ' ', trim($text));
+        // 3. Bersihkan spasi ganda
+        $text = preg_replace('/\s+/', ' ', trim($text));
 
-    // 4. Potong jadi array kata
-    $words = explode(' ', $text);
+        // 4. Potong jadi array kata
+        $words = explode(' ', $text);
 
-    // 5. Ambil sesuai limit
-    if (count($words) > $limit) {
-        $words = array_slice($words, 0, $limit);
-        return implode(' ', $words) . '...';
+        // 5. Ambil sesuai limit
+        if (count($words) > $limit) {
+            $words = array_slice($words, 0, $limit);
+            return implode(' ', $words) . '...';
+        }
+
+        return implode(' ', $words);
     }
-
-    return implode(' ', $words);
-}
 }
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
@@ -1114,8 +1143,7 @@ if (!function_exists('init_meta_header')) {
                     $pn = $get_page_name . $page;
                 } elseif (request()->is('tags/*')) {
                     $pn = $get_page_name . $page;
-                }
-                elseif (get_module(get_post_type())->form->post_parent) {
+                } elseif (get_module(get_post_type())->form->post_parent) {
                     $pn = $get_page_name . $page;
                 } else {
                     $pn = $get_page_name . $page;
@@ -1124,11 +1152,11 @@ if (!function_exists('init_meta_header')) {
                 $pn = 'Hasil Pencarian  "' . ucwords(str_replace('-', ' ', request()->slug)) . '"' . $page;
             } elseif (request()->is('author') || request()->is('author/*')) {
                 $pn = $get_page_name . $page;
-            }  else {
+            } else {
                 $pn = null;
             }
             $data = [
-                'description' => $pn ?  'Lihat ' . $pn . ' di ' . $site_title : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : ($site_meta_description ?? $site_desc)),
+                'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : ($site_meta_description ?? $site_desc)),
                 'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman Tidak Ditemukan' : $site_title . ($site_desc ? ' - ' . $site_desc : '')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
@@ -1139,28 +1167,28 @@ if (!function_exists('init_meta_header')) {
     }
 }
 if (!function_exists('clean_url')) {
-function clean_url(string $url, string $action = 'http'): string
-{
-    // Normalisasi spasi & trim
-    $url = trim($url);
+    function clean_url(string $url, string $action = 'http'): string
+    {
+        // Normalisasi spasi & trim
+        $url = trim($url);
 
-    // Regex cek prefix http atau https
-    $hasHttp = preg_match('#^https?://#i', $url);
+        // Regex cek prefix http atau https
+        $hasHttp = preg_match('#^https?://#i', $url);
 
-    if ($action === 'http') {
-        // Tambah https:// kalau belum ada http:// atau https://
-        if (!$hasHttp) {
-            $url = 'https://' . $url;
+        if ($action === 'http') {
+            // Tambah https:// kalau belum ada http:// atau https://
+            if (!$hasHttp) {
+                $url = 'https://' . $url;
+            }
+        } elseif ($action === 'nohttp') {
+            // Hapus http:// atau https:// kalau ada
+            if ($hasHttp) {
+                $url = preg_replace('#^https?://#i', '', $url);
+            }
         }
-    } elseif ($action === 'nohttp') {
-        // Hapus http:// atau https:// kalau ada
-        if ($hasHttp) {
-            $url = preg_replace('#^https?://#i', '', $url);
-        }
+
+        return $url;
     }
-
-    return $url;
-}
 }
 if (!function_exists('get_menu')) {
     function get_menu($name)
@@ -1169,7 +1197,7 @@ if (!function_exists('get_menu')) {
         $menuIndex = [];
         foreach ($menu as $item) {
             $menuIndex[$item['menu_id']] = [
-                'id' => (int)$item['menu_id'],
+                'id' => (int) $item['menu_id'],
                 'name' => $item['menu_name'],
                 'icon' => $item['menu_icon'],
                 'url' => link_menu($item['menu_link']),
@@ -1368,7 +1396,7 @@ if (!function_exists('get_banner')) {
     function get_banner($name, $limit = 1)
     {
         if ($cek = cache()->get('banner')[$name] ?? null) {
-            $result =  collect(json_decode(json_encode($cek)));
+            $result = collect(json_decode(json_encode($cek)));
             if ($limit > 1) {
                 $res = $result->take($limit);
                 $banner = array();
@@ -1394,7 +1422,9 @@ if (!function_exists('get_banner')) {
     }
 }
 if (!function_exists('banner_here')) {
-    function banner_here($name) {}
+    function banner_here($name)
+    {
+    }
 }
 if (!function_exists('get_client_ip')) {
 
@@ -1426,7 +1456,7 @@ if (!function_exists('renderTemplateFile')) {
                 renderTemplateFile($item['children'], $currentPath);
                 echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
-                echo '<li><a href="' . route('appearance.editor') . '?edit=' .enc64( htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
+                echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {
                 echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
             }
@@ -1540,7 +1570,7 @@ if (!function_exists('get_tgl')) {
             'Sabtu'
         );
         $bulan = array(
-            1 =>   'Jan',
+            1 => 'Jan',
             'Feb',
             'Mar',
             'Apr',
@@ -1561,10 +1591,10 @@ if (!function_exists('get_tgl')) {
         return match (true) {
             $type == 'day' => $hari_array[date('w', strtotime($tanggal))],
             $type == 'year' => $pecahkan[2],
-            $type == 'monthyear' => $bulan[(int)$pecahkan[1]] . ' ' . $pecahkan[2],
-            $type == 'month' => $bulan[(int)$pecahkan[1]],
+            $type == 'monthyear' => $bulan[(int) $pecahkan[1]] . ' ' . $pecahkan[2],
+            $type == 'month' => $bulan[(int) $pecahkan[1]],
             $type == 'date' => $pecahkan[0],
-            $type == 'datemonth' => $pecahkan[0] . ' ' . $bulan[(int)$pecahkan[1]],
+            $type == 'datemonth' => $pecahkan[0] . ' ' . $bulan[(int) $pecahkan[1]],
             default => NULL
         };
     }

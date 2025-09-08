@@ -222,6 +222,7 @@ class PanelController extends Controller implements HasMiddleware
         $data['security'] = array(
 
             ['Block IP', '0.0.0.0,0.0.1.0,..,..'],
+            ['Allow IP', '0.0.0.0,0.0.1.0,..,..'],
             ['Forbidden Keyword', 'Judi Online, Gacor, xxx, other'],
             ['Forbidden Redirect', 'Eg: https://yourpage.url or other'],
             ['Time Limit Login', 'default 10 times'],
