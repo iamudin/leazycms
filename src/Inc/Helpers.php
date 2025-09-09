@@ -192,11 +192,15 @@ if (!function_exists('forbidden')) {
             $allowIps = array_values(array_filter($allowIpsRaw, fn($ip) => is_ip($ip)));
             $blockIps = array_values(array_filter($blockIpsRaw, fn($ip) => is_ip($ip)));
 
-            // 5. Logika prioritas
-            if (in_array($clientIp, $allowIps, true)) {
-                // di allow → lanjut, meskipun ada di block
-            } elseif (in_array($clientIp, $blockIps, true)) {
-                abort(403, 'Access Denied');
+            if (!empty($allowIps)) {
+                if (!in_array($clientIp, $allowIps, true)) {
+                    abort(403, 'Access Denied (Not in allow list)');
+                }
+            } else {
+                // 5. Tidak ada allow list → cek block
+                if (in_array($clientIp, $blockIps, true)) {
+                    abort(403, 'Access Denied (Blocked IP)');
+                }
             }
         }
     }
