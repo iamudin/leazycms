@@ -215,10 +215,12 @@ class Post extends Model
     {
            if($type){
             return User::whereHas('posts')->withCount(['posts' => function($q) use($type){
-                $q->onType($type);
+                $q->published()->onType($type);
             }])->get();
            } else{
-            return User::whereHas('posts')
+            return User::whereHas('posts',function ($q){
+                $q->published();
+            })
             ->withCountPosts()
             ->get();
            }
@@ -227,7 +229,7 @@ class Post extends Model
     function index_sort_by_category($type,$sortby='sort',$sort='ASC')
     {
             return Category::withWhereHas('posts',function($q) use($sortby,$sort){
-                $q->orderBy($sortby,$sort);
+                $q->published()->orderBy($sortby,$sort);
             })
             ->onType($type)
             ->published()
@@ -239,7 +241,9 @@ class Post extends Model
         if (get_module($type)?->cache) {
             return collect($this->categories($type)->values());
         } else {
-            return Category::whereHas('posts')->withCountPosts()
+            return Category::whereHas('posts',function($q){
+                $q->published();
+            })->withCountPosts()
             ->onType($type)
             ->published()
             ->orderBy('sort','ASC')
@@ -264,13 +268,15 @@ class Post extends Model
     {
         if($type){
         return Tag::whereStatus('publish')->whereHas('posts',function($q)use($type){
-            $q->onType($type);
+            $q->published()->onType($type);
         })->withCount(['posts as posts_count' => function ($query) use ($type) {
-            $query->onType($type);
+            $query->published()->onType($type);
         }])->get();
 
         }
-        return Tag::whereStatus('publish')->whereHas('posts')->get();
+        return Tag::whereStatus('publish')->whereHas('posts',function($q){
+            $q->published();
+        })->get();
     }
     function index_sort($type,$order='asc',$limit=false)
     {
