@@ -147,7 +147,7 @@ class Panel
                 if (in_array($request->segment(2),['docs','appearance'])) {
                     $content = isPrePanel($content);
                 } else {
-                    $content = preg_replace('/\s+/', ' ', $content);
+                    $content = minify_all_one_line( $content);
                 }
             $response->setContent($content);
         }
