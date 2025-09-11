@@ -949,6 +949,22 @@ if (!function_exists('is_day')) {
             return true;
     }
 }
+
+if (!function_exists('minify_all_one_line')) {
+function minify_all_one_line($html) {
+    $html = preg_replace_callback(
+        '/<script\b[^>]*>.*?<\/script>/is',
+        function ($matches) {
+            $script = $matches[0];
+            $script = preg_replace('/(^|\s)\/\/(?!\/)(.*)/m', '/*$2*/', $script);
+            return $script;
+        },
+        $html
+    );
+    $html = preg_replace('/\s+/', ' ', $html);
+    return trim($html);
+}
+}
 if (!function_exists('isPrePanel')) {
 
     function isPrePanel($content)
