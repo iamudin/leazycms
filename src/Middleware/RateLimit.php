@@ -64,8 +64,8 @@ class RateLimit
         elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-        if ($redirectUrl && rtrim(trim(urldecode($redirectUrl),'/'),'=') !== rtrim(urldecode($request->fullUrl()),'=')) {
-            return redirect($redirectUrl, 301);
+        if ($redirectUrl && rtrim(trim(urldecode($scheme . '://' . $appUrlHost . $request->getRequestUri()),'/'),'=') !== rtrim(urldecode($scheme . '://' . $appUrlHost . $uri),'=')) {
+           return redirect($redirectUrl, 301);
         }
 
     if(!is_main_domain()){
