@@ -1,33 +1,46 @@
+ 
  <style>
-    /* Gunakan style yang sama seperti sebelumnya, ditambahkan tombol navigasi */
-    .modals {
-      position: fixed;
-      z-index: 1000;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(231, 231, 231, 0.9);
-      overflow: auto;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-    }
+  /* Backdrop hanya blur (tanpa overlay warna) */
+.modals {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;              /* top:0; left:0; right:0; bottom:0; */
+  overflow: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+  background: transparent;              /* no color overlay */
+  -webkit-backdrop-filter: blur(10px);  /* Safari */
+  backdrop-filter: blur(10px);          /* Chrome/Edge/Firefox (where supported) */
+}
 
-    .modals.show {
-      opacity: 1;
-      visibility: visible;
-    }
+/* tetap pakai class show untuk menampilkan */
+.modals.show {
+  opacity: 1;
+  visibility: visible;
+}
 
-    .modals-inner {
-      max-width: 800px;
-      margin: 60px auto;
-      background: #111;
-      padding: 0;
-      border-radius: 10px;
-      text-align: center;
-      transform: translateY(-20px);
-      transition: transform 0.4s ease;
-      position: relative;
-    }
+/* jaga agar inner tetap kontras & terbaca */
+.modals-inner {
+  max-width: 800px;
+  margin: 60px auto;
+  background: rgba(17,17,17,0.75); /* semi-transparant agar konten terbaca di atas blur */
+  padding: 0;
+  border-radius: 10px;
+  text-align: center;
+  transform: translateY(-20px);
+  transition: transform 0.4s ease;
+  position: relative;
+}
+
+/* fallback bila browser tidak mendukung backdrop-filter:
+   tambahkan sedikit bayangan agar tetap terbaca */
+@supports not (backdrop-filter: blur(1px)) {
+  .modals {
+    background-color: rgba(0,0,0,0.25);
+  }
+}
+
 
     .modals.show .modals-inner {
       transform: translateY(0);

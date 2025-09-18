@@ -1,6 +1,6 @@
 <script  src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 <script>
-    const compressImage = async (file, { quality = 0.3, maxWidth = 1500 } = {}) => {
+    const compressImage = async (file, { quality = 1.0, maxWidth = 1700 } = {}) => {
         const imageBitmap = await createImageBitmap(file);
 
         let { width, height } = imageBitmap;
@@ -40,9 +40,9 @@ const compressAndPreview = async (file, preview, dataTransfer, quality) => {
         wrapper.className = 'text-center position-relative';
 
         wrapper.innerHTML = `
-            <img src="${e.target.result}" class="img-thumbnail mb-1" style="height: 120px; object-fit: cover;" alt="Preview">
+            <img src="${e.target.result}" class="img-thumbnail mb-1 ml-2" style="height: 120px; object-fit: cover;" alt="Preview">
             <small class="text-muted d-block">⬇ ${originalSizeKB} KB → ${compressedSizeKB} KB</small>
-            <select class="form-select form-select-sm mt-1 compression-select">
+            <select class="form-select form-select-sm mt-1 compression-select mb-2">
                 <option value="0.3" ${quality === 0.3 ? 'selected' : ''}>Kecil (30%)</option>
                 <option value="0.6" ${quality === 0.6 ? 'selected' : ''}>Sedang (60%)</option>
                 <option value="0.85" ${quality === 0.85 ? 'selected' : ''}>Tinggi (85%)</option>
@@ -92,11 +92,11 @@ const fileselect = async (targetInput) => {
         const allowed = /\.(jpe?g|png|webp|gif)$/;
 
         if (!allowed.test(fileExt)) {
-            alert(`File "${file.name}" tidak didukung. Hanya JPG, JPEG, dan PNG`);
+            alert(`File "${file.name}" tidak didukung. Hanya JPG, JPEG,GIF dan PNG`);
             continue;
         }
      
-            await compressAndPreview(file, preview, dataTransfer, 0.3); 
+            await compressAndPreview(file, preview, dataTransfer, 1.0); 
     }
 
     input.files = dataTransfer.files;
@@ -174,7 +174,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files']))
+@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files','comments']))
 <script>
 function deleteAlert(url) {
     swal(

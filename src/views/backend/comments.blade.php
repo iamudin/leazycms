@@ -2,54 +2,60 @@
 @section('content')
 <div class="row">
 <div class="col-lg-12"><h3 style="font-weight:normal"><i class="fa fa-comments" aria-hidden="true"></i> Tanggapan</h3>
-  <br>
-<table class="table table-hover table-bordered" style="font-size:small" id="sampleTable">
-<thead>
-  <tr style="background:#f7f7f7">
+
+    <div class="table-responsive"> <table class="table datatable" style="font-size:small;width:100%">
+  <thead><tr>
     <th width="2%">No</th>
-    <th width="10%">Waktu</th>
-    <th>Pengirim</th>
-    <th>Isi Tanggapan</th>
-    <th width="40px">Status</th>
-  </tr>
-</thead>
-<tbody style="background:#fff">
+    <th width="15%">Pengirim</th>
+    <th width="15%">Isi</th>
+    <th width="20%">Waktu</th>
+    <th width="10%">Aksi</th>
 
-@foreach($comments as $k=>$row)
-<tr>
-  <td>{{$k+1}}</td>
-  <td><small class="badge">{{$row->created_at}}</small></td>
-  <td width="20%"> <i class="fa fa-user" aria-hidden></i> {{$row->name}}<br>
-    <i class="fa fa-link" aria-hidden></i> {{$row->link ?? '-'}}<br>
-      <i class="fa fa-at" aria-hidden></i> {{$row->email ?? '-'}}
-  </td>
-  <td>{!!$row->content!!}<br>
+  </tr></thead>
+  <tbody>
 
-<b class="text-muted">Pada : </b><br> <h6><a target="_blank" href="{{url($row->post->url)}}">{{$row->post->title}}</a></h6>
-  </td>
-  <td title="Klik Untuk Mengganti status Diterima atau Draft" class="pointer" onclick="$('.status').val('{{$row->id}}');$('.form').submit()">
- @if($row->status==1) <span class="badge badge-success"> Publish </span> @else <span class="badge badge-warning">Draft</span> @endif
+  </tbody>
+  </table>
+  </div>
 
-              </td>
-</tr>
-@endforeach
-</tbody>
-
-</table>
 </div>
 </div>
-<form action="{{URL::full()}}" class="form" method="post">
-@csrf
-<input type="hidden" class="status" name="status" value="">
-</form>
-@if(request()->post)
 <script type="text/javascript">
-$(function () {
+          window.addEventListener('DOMContentLoaded', function() {
+        var table = $('.datatable').DataTable({
+        processing: true,
+        serverSide: true,
 
-$('input[type=search]').val('{{request()->post}}').keyup();
-});
-</script>
-@endif
+        ajax: {
+                method: "POST",
+                url: "{{ route('comments') }}",
+                data: function (d){
+                 d._token = "{{csrf_token()}}";
+            }
+          },
+        columns: [
+            {
+                    className: 'text-center',
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: false
+                },
+            {data: 'sender', name: 'sender'},
+            {data: 'content', name: 'content'},
+            {data: 'created_at', name: 'created_at', orderable: true},
+            {data: 'action', name: 'action'},
+        ],
+        responsive: true,
+        /*    order: [
+                [sort_col, 'desc']
+            ]*/
+    });
+
+          });
+    </script>
+
+</div>
 @push('styles')
 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.4.1/css/rowReorder.dataTables.min.css">
@@ -63,4 +69,6 @@ $('input[type=search]').val('{{request()->post}}').keyup();
      <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
      <script type="text/javascript">$('#sampleTable').DataTable();</script>
 @endpush
+</div>
+</div>
 @endsection

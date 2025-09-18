@@ -28,7 +28,6 @@ class RateLimit
         $appUrlHost = parse_url($appUrl, PHP_URL_HOST);
         $isLocal = in_array($request->ip(), ['127.0.0.1', '::1']);
         $redirectUrl = null;
-
         // Deteksi apakah pakai Cloudflare
         $cfVisitor = $request->server('HTTP_CF_VISITOR');
         $isHttpsViaCf = $cfVisitor ? (json_decode($cfVisitor, true)['scheme'] ?? 'http') === 'https' : false;
@@ -49,7 +48,6 @@ class RateLimit
         elseif (!$isLocal && !$isHttps && app()->environment('production')) {
             $redirectUrl = 'https://' . $host . $uri;
         }
-
         // 3. Validasi domain jika sub_app_enabled diaktifkan
         elseif (config('app.sub_app_enabled')) {
             $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
@@ -60,12 +58,12 @@ class RateLimit
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
         }
-        // 4. Jika sub_app_enabled = false, host tetap harus sama dengan app.url
         elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-        if ($redirectUrl && rtrim(trim(urldecode($scheme . '://' . $appUrlHost . $request->getRequestUri()),'/'),'=') !== rtrim(urldecode($scheme . '://' . $appUrlHost . $uri),'=')) {
-           return redirect($redirectUrl, 301);
+
+        if ($redirectUrl && urldecode($scheme . '://' . $appUrlHost . preg_replace('#/+#', '/', $request->getRequestUri())) !== urldecode($scheme . '://' . $appUrlHost . $uri)) {
+          return redirect(preg_replace('#/+#', '/', $redirectUrl), 301);
         }
 
     if(!is_main_domain()){

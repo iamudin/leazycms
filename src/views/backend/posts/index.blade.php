@@ -121,6 +121,37 @@
   </div>
   @include('cms::backend.posts.filter')
   @include('cms::backend.posts.datatable')
+
+  <!-- Modal Komentar -->
+<div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Komentar  <span id="modalPostId"></span></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Loader -->
+        <div id="commentLoader" class="text-center my-3" style="display:none;">
+          <div class="spinner-border text-info" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Daftar komentar -->
+        <ul id="commentList" class="list-group"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
   @push('styles')
 
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.4.1/css/rowReorder.dataTables.min.css">
@@ -128,6 +159,60 @@
 
   @endpush
   @push('scripts')
+  <script>
+function show_comment(post_id) {
+  // Reset tampilan
+
+  $("#commentList").empty();
+  $("#commentLoader").show();
+
+  // Tampilkan modal
+  $("#commentModal").modal("show");
+
+  // Panggil AJAX POST
+  $.ajax({
+    url: "{{ route('comments.get',null) }}/"+post_id,          // ganti dengan route/URL backend kamu
+    type: "GET",
+    success: function(res) {
+      $("#commentLoader").hide();
+        $("#modalPostId").text(res.title);
+      let comments = res.comments || []; // sesuaikan dengan struktur JSON
+
+      if (comments.length === 0) {
+        $("#commentList").append(`<li class="list-group-item text-muted">Belum ada komentar</li>`);
+      } else {
+     comments.forEach(c => {
+  $("#commentList").append(`
+    <li class="list-group-item">
+      <strong>
+        <i class="fa fa-user"></i> ${c.name}
+        <code>${
+          new Date(c.created_at).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+          }) + " " +
+          new Date(c.created_at).toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        }</code>
+      </strong>
+      <br>
+      <small>${c.content}</small>
+    </li>
+  `);
+});
+
+      }
+    },
+    error: function(xhr) {
+      $("#commentLoader").hide();
+      $("#commentList").append(`<li class="list-group-item text-danger">Gagal memuat komentar</li>`);
+    }
+  });
+}
+</script>
   <script>
     $(function () {
     $('#select-all').prop('checked',false);

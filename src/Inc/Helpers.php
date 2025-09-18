@@ -1100,6 +1100,14 @@ if (!function_exists('cleanArrayValues')) {
         }, $array);
     }
 }
+if (!function_exists('init_goup')) {
+    function init_goup()
+    {
+      
+            return view()->make('cms::layouts.goup');
+       
+    }
+}
 if (!function_exists('init_popup')) {
     function init_popup()
     {

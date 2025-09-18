@@ -7,11 +7,12 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
-use Leazycms\FLC\Models\File as Flc;
+use Leazycms\FLC\Models\Comment;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
+use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Artisan;
@@ -48,8 +49,55 @@ class PanelController extends Controller implements HasMiddleware
             ->limit(10)
             ->get();
     }
-    function comments()
+    function get_comments(Request $request,Post $post){
+        $data = $post->load('comments');
+        return $data;
+
+    }
+    function comments(Request $request,Comment $comment)
     {
+        if($request->isMethod('delete')){
+            $comment->delete();
+        }
+
+        if($request->isMethod('post')){
+        $data = Comment::with('user')->latest();
+         return Datatables::of($data)
+            ->addIndexColumn()
+            ->filter(
+                function ($instance) use ($request) {
+
+                }
+            )
+            ->addColumn('created_at', function ($row) {
+                return '<code>' . Carbon::parse($row->created_at)->diffForHumans() . '</code>';
+            })
+           ->addColumn('content', function ($row) {
+                return '<p>'.$row->content.'</p>';
+            })
+             ->addColumn('reference', function ($row) {
+                return '<a target="_blank" href="'.$row->reference.'">'.$row->reference.'</a>';
+            })
+            ->addColumn('sender', function ($row) {
+                $sender = "<small>";
+                $sender .= '<i class="fa fa-user"></i> '.$row->name;
+                $sender .= '<br><i class="fa fa-envelope"></i> '.($row->email ?? '-');
+                $sender .= '<br><i class="fa fa-link"></i> '.($row->link ?? '-');
+                $sender .= '<br><i class="fa fa-globe"></i> '.($row->ip ?? '-');
+                $sender .= "</small>";
+                
+                return $sender;
+            })
+            ->addColumn('action', function ($row) {
+                $btn = '<div class="btn-group">';
+                $btn .= '<button onclick="deleteAlert(\''.route('comments',$row->id).'\')" class="btn btn-sm btn-danger fa fa-trash-alt"></button>';
+                $btn .= '</div>';
+                return $btn;
+            })
+            ->rawColumns(['created_at','sender','action','content','DT_RowIndex','reference'])
+            ->toJson();
+        }
+
         return view('cms::backend.comments.index');
     }
     protected function toDashboard($request)
