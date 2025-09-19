@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class ServiceMonitor
 {
+  
     public function fetchAll(): array
     {
         $sites = query()
@@ -17,13 +18,13 @@ class ServiceMonitor
         // Simpan ID supaya bisa dipasangkan setelah pool
         $siteIds = $sites->pluck('id')->all();
 
-
+        
         $responses = Http::pool(function ($pool) use ($sites) {
             return $sites->map(
                 fn($site) =>
                 $pool->withHeaders([
-                    'User-Agent' => 'LeazycmsMonitorBot'
-                ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/9acb44549b41563697bb490144ec6258")
+                    'User-Agent' => enc64(md5($site->title))
+                ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/". enc64(md5($site->title)))
             )->all();
         });
 
@@ -50,6 +51,7 @@ class ServiceMonitor
                     'maintenance' => $json['maintenance'],
                     'editor_template_enabled' => $json['editor_template_enabled'],
                     'user_count' => $json['user_count'] ?? null,
+                    'api_key' => $json['api_key'],
                     'active_modules' => $json['active_modules'] ?? null,
                 ];
             } else {

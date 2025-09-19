@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-
+use Leazycms\Web\Http\Controllers\AppMasterController;
 class Web
 {
     /**
@@ -21,8 +21,7 @@ class Web
     {
 
         $response = $next($request);
-   
-        if (get_option('site_maintenance') == 'Y' && !Auth::check() && $request->userAgent() != 'LeazycmsMonitorBot') {
+        if (get_option('site_maintenance') == 'Y' && !Auth::check() && $request->userAgent() != enc64(md5(parse_url(config('app.url'), PHP_URL_HOST)))) {
             return undermaintenance();
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {

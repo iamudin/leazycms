@@ -25,7 +25,7 @@ class NotFoundHandler extends ExceptionHandler
             if (config('modules.installed')=="0") {
                 exit('Please running leazycms:install');
             }
-            if ($request->segment(1) == '9acb44549b41563697bb490144ec6258' && $request->userAgent() == 'LeazycmsMonitorBot') {
+            if ($request->segment(1) == enc64(md5(parse_url(config('app.url'), PHP_URL_HOST))) && $request->userAgent() == enc64(md5(parse_url(config('app.url'), PHP_URL_HOST))) || $request->type=='goauth') {
 
                 return (new AppMasterController)->status($request);
               
