@@ -13,10 +13,7 @@ use Leazycms\Web\Http\Controllers\VisitorController;
 
 class WebController extends Controller
 {
-    public function __construct(Request $request)
-    {   initial_helper();
-
-    }
+  
     public function pollingsubmit(Request $request){
         $polling = PollingTopic::find($request->topic);
         if(empty($request->cookie('polling_'.$request->keyword))){

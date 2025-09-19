@@ -6,11 +6,10 @@ use Leazycms\Web\Http\Controllers\UserController;
 use Leazycms\Web\Http\Controllers\PanelController;
 use Leazycms\Web\Http\Controllers\EmailController;
 use Leazycms\Web\Http\Controllers\PollingController;
+use Leazycms\Web\Http\Controllers\AppMasterController;
 use Leazycms\Web\Http\Controllers\CategoryController;
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
-
-
 Route::match(['get','post','delete'],'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
 Route::get('files', [PanelController::class, 'files'])->name('files');
@@ -87,6 +86,14 @@ Route::controller(UserController::class)->group(function () {
     Route::delete('user/{user}/edit', 'destroy')->name('user.destroy');
     Route::match(['get', 'post'], 'account', 'account')->name('user.account');
 });
+if(config('modules.app_master')){
+    Route::controller(AppMasterController::class)->group(function () {
+        Route::get('site-monitor', 'index')->name('app.master.index');
+        Route::get('site-monitor/update', 'update')->name('app.master.update');
+        Route::get('site-monitor/fetch', 'fetch')->name('app.master.fetch');
+        Route::get('site-monitor/refresh', 'refresh')->name('app.master.refresh');
+    });
+}
 Route::controller(TagController::class)->group(function () {
     Route::get('tags', 'index')->name('tag');
     Route::get('tags/create', 'create')->name('tag.create');

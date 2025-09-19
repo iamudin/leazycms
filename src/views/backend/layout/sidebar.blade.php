@@ -183,6 +183,16 @@
             >
                 <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; ADMINISTRATOR
             </li>
+            @if(config('modules.app_master'))
+              <li title="Monitor Situs">
+                <a
+                    class="app-menu__item {{ active_item(['site-monitor']) }}"
+                    href="{{ route('app.master.index') }}"
+                    ><i class="app-menu__icon fa fa-desktop"></i>
+                    <span class="app-menu__label">Monitor Situs</span></a
+                >
+            </li>
+            @endif
              {{-- <li title="Webmail">
                 <a
                     class="app-menu__item {{ active_item(['email']) }}"

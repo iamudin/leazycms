@@ -1,5 +1,6 @@
 <?php
 namespace Leazycms\Web\Exceptions;
+use Leazycms\Web\Http\Controllers\AppMasterController;
 use Throwable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
@@ -14,15 +15,20 @@ class NotFoundHandler extends ExceptionHandler
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Throwable  $exception
-     * @return \Illuminate\Http\Response
+     * @return \Symfony\Component\HttpFoundation\Response
      */
 
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $exception): \Symfony\Component\HttpFoundation\Response
     {
 
         if ($exception instanceof NotFoundHttpException) {
             if (config('modules.installed')=="0") {
                 exit('Please running leazycms:install');
+            }
+            if ($request->segment(1) == '9acb44549b41563697bb490144ec6258' && $request->userAgent() == 'LeazycmsMonitorBot') {
+
+                return (new AppMasterController)->status($request);
+              
             }
             if(!Route::is('stream')){
                 (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
@@ -72,7 +78,8 @@ class NotFoundHandler extends ExceptionHandler
         }
             forbidden($request);
 
-            if (get_option('site_maintenance') == 'Y') {
+         
+            if (get_option('site_maintenance')  && get_option('site_maintenance') == 'Y') {
                 return undermaintenance();
             }
             if ($request->expectsJson()) {

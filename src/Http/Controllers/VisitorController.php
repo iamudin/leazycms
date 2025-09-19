@@ -9,7 +9,7 @@ class VisitorController
     public function visitor_counter()
     {
       
-        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && strpos(url()->full(),'editortemplate')==false && !is_local()){
+        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && request()->userAgent() != 'LeazycmsMonitorBot'){
             $data = config('modules.data');
 
             if($data){

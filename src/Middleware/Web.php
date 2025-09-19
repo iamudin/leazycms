@@ -21,7 +21,8 @@ class Web
     {
 
         $response = $next($request);
-        if (get_option('site_maintenance') == 'Y' && !Auth::check()) {
+   
+        if (get_option('site_maintenance') == 'Y' && !Auth::check() && $request->userAgent() != 'LeazycmsMonitorBot') {
             return undermaintenance();
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
