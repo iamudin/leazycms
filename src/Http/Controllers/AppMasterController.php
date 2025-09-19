@@ -13,7 +13,7 @@ class AppMasterController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('auth', except: ['status','loginFromMonitor','endpoint','loginProxy',]),
+            new Middleware('auth', except: ['status','loginFromMonitor','endpoint','loginProxy']),
         ];
     }
     // app/Http/Controllers/MasterController.php
