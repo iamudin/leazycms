@@ -54,6 +54,8 @@ class ServiceMonitor
                     'maintenance' => $json['maintenance'],
                     'editor_template_enabled' => $json['editor_template_enabled'],
                     'user_count' => $json['user_count'] ?? null,
+                    'cms_version' => $json['cms_version'] ?? null,
+                    'theme_version' => $json['theme_version'] ?? null,
                     'api_key' => $json['api_key'],
                     'active_modules' => $json['active_modules'] ?? null,
                 ];

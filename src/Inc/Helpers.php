@@ -77,6 +77,7 @@ if (!function_exists('getThumbUrl')) {
         return null; // Jika gambar dengan class 'lz-thumbnail' tidak ditemukan
     }
 }
+
 if (!function_exists('getLatestVersion')) {
     function getLatestVersion($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
     {
@@ -118,6 +119,59 @@ if (!function_exists('no_http_url')) {
     function no_http_url($domain)
     {
         return parse_url($domain, PHP_URL_HOST);
+    }
+}
+if (!function_exists('get_cms_version')) {
+    function get_cms_version()
+    {
+        $update = null;
+        $current = get_leazycms_version();
+        $latest = getLatestVersion();
+         if (version_compare(ltrim($latest, 'v'), ltrim($current, 'v'), '<=')) {
+            $update = "Up to date";
+        }else{
+            $update = "Update available: $latest";
+
+        }
+        return get_leazycms_version() . ' (' . $update . ')';
+    }
+}
+if (!function_exists('get_theme_version')) {
+    function get_theme_version()
+    {
+        
+        $themePath = resource_path("views/template/".template()."/theme.json");
+
+        if (file_exists($themePath)) {
+            $theme = json_decode(file_get_contents($themePath), true);
+            $apiUrl = "https://api.github.com/repos/".$theme['github']."/tags";
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'LaravelCMS-Updater'); // wajib
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$response) {
+                return;
+            }
+
+            $tags = json_decode($response, true);
+
+            if (!$tags || !isset($tags[0]['name'])) {
+                return;
+            }
+
+            $latestTag = $tags[0]['name'];
+            if (version_compare(ltrim($latestTag, 'v'), ltrim($theme['version'], 'v'), '<=')) {
+                $update = "Up to date";
+
+            } else {
+                $update = "Update available: $latestTag";
+
+            }
+            return isset($theme['name']) && isset($theme['version']) ?  $theme['name'] . ' v' . $theme['version'] . ' (' . $update . ')' : null;
+        }
+        
     }
 }
 if (!function_exists('get_leazycms_version')) {

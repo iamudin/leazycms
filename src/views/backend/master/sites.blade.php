@@ -9,8 +9,10 @@
               <thead>
                 <tr>
                   <th>Situs</th>
+                  <th>Versi CMS</th>
+                  <th>Versi Tema</th>
                   <th>Maintenance</th>
-                  <th>Editor</th>
+                  <th>Template Editor</th>
                   <th>User</th>
                   <th>Modules</th>
                   <th style="min-width:100px">HTTP/Time</th>
@@ -31,6 +33,8 @@
           resp.data.forEach(item => {
             rows += `<tr data-id="${item.id}">
               <td>${item.domain}</td>
+              <td>${item.cms_version}</td>
+              <td>${item.theme_version}</td>
               <td>
                 <button class="btn-toggle-maintenance btn btn-sm ${item.maintenance ? 'btn-success' : 'btn-danger'}" 
                         data-status="${item.maintenance ? 1 : 0}">

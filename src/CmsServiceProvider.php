@@ -2,6 +2,7 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
+use Leazycms\Web\Commands\ThemeUpdateCommand;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
 use Leazycms\Web\Middleware\Panel;
@@ -17,7 +18,6 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Leazycms\Web\Commands\ResetPassword;
 use Leazycms\Web\Commands\RouteListBlock;
 use Leazycms\Web\Commands\UpdateCMS;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 class CmsServiceProvider extends ServiceProvider
 {
     protected function registerRoutes()
@@ -78,7 +78,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->cmsHandler();
         $this->registerRoutes();
         $this->commands([
-            InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class
+            InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class
         ]);
     }
   
