@@ -483,6 +483,10 @@ class PanelController extends Controller implements HasMiddleware
     {
 
         admin_only();
+        if($request->act && $request->act=='updatetemplate'){
+            Artisan::call('cms:update-template '.template());
+            return back()->send()->with('success','Template Berhasil diupdate');
+        }
         if ($request->isMethod('post')) {
             if ($file = $request->file('template')) {
                 $request->validate([
@@ -708,6 +712,7 @@ class PanelController extends Controller implements HasMiddleware
             'php' => 'application/x-httpd-php',
             'css' => 'text/css',
             'js' => 'text/javascript',
+            'json' => 'application/json',
             default => 'application/x-httpd-php'
         };
 

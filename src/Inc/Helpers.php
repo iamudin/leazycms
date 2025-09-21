@@ -137,14 +137,14 @@ if (!function_exists('get_cms_version')) {
     }
 }
 if (!function_exists('get_theme_version')) {
-    function get_theme_version()
+    function get_theme_version($version=false)
     {
         
         $themePath = resource_path("views/template/".template()."/theme.json");
 
         if (file_exists($themePath)) {
             $theme = json_decode(file_get_contents($themePath), true);
-            $apiUrl = "https://api.github.com/repos/".$theme['github']."/tags";
+            $apiUrl = "https://api.github.com/repos/".$theme['repo']."/tags";
             $ch = curl_init($apiUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'LaravelCMS-Updater'); // wajib
@@ -169,7 +169,16 @@ if (!function_exists('get_theme_version')) {
                 $update = "Update available: $latestTag";
 
             }
-            return isset($theme['name']) && isset($theme['version']) ?  $theme['name'] . ' v' . $theme['version'] . ' (' . $update . ')' : null;
+            if($version ){
+                if ($update != "Up to date") {
+                    return "<sup class='badge badge-info'>Update v" . $latestTag . " tersedia</sup>";
+                }
+            }else{
+                return isset($theme['name']) && isset($theme['version']) ? $theme['name'] . ' v' . $theme['version'] . ' (' . $update . ')' : null;
+
+            }
+            
+           
         }
         
     }
@@ -1116,6 +1125,18 @@ if (!function_exists('dec64')) {
     }
 }
 
+if (!function_exists('template_info')) {
+    function template_info()
+    {
+        $path = resource_path('views/template/' . template() . '/theme.json');
+        if (file_exists($path)) {
+            $info = json_decode(file_get_contents($path), true);
+            return view()->make('cms::layouts.themeinfo', compact('info'));
+        }
+        return null;
+    }
+}
+
 if (!function_exists('get_domain_extension')) {
     function get_domain_extension($extension)
     {
@@ -1519,10 +1540,13 @@ if (!function_exists('renderTemplateFile')) {
         foreach ($items as $item) {
             $currentPath = $parentPath . '/' . $item['name'];
             if (isset($item['children']) && !empty($item['children'])) {
-                echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
-                renderTemplateFile($item['children'], $currentPath);
-                echo '</li>';
+                    echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
+                    renderTemplateFile($item['children'], $currentPath);
+                    echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
+                if($item['name'] == 'theme.json'){
+                    continue;
+                }
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {
                 echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';

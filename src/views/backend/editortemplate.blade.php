@@ -39,7 +39,7 @@
                                                     <form action="{{ url()->full() }}" class="editorForm" method="post" enctype="multipart/form-data">
                                                         @csrf
                                                         @if($e = dec64(request()->edit))
-                                                    <h6 > <i class="fa fa-edit"></i> {{  'Edit : ' . $e  }} @if(!str($e)->contains(['modules.blade.php', 'home.', 'header', 'footer', 'styles', 'scripts']))<i onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer" title="Delete this file "></i>@endif
+                                                    <h6 > <i class="fa fa-edit"></i> {{  'Edit : ' . $e  }} @if(!str(basename($e))->contains(['modules.blade.php', 'home.blade.php', 'header.blade.php', 'footer.blade.php', 'styles.css', 'scripts.css']))<i onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer" title="Delete this file "></i>@endif
                                                         @if(str(request()->edit)->contains('modules'))
                                                         <span class="pointer badge badge-primary pull-right"><i class="fa fa-question-circle"></i> Petunjuk Custom Modul</span>
                                                         @endif

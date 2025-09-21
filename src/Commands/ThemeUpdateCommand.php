@@ -24,10 +24,10 @@ class ThemeUpdateCommand extends Command
         // Baca metadata theme lokal
         $theme = json_decode(File::get($themePath), true);
         $localVersion = $theme['version'] ?? '0.0.0';
-        $repo = $theme['github'] ?? null; // format: username/repo
+        $repo = $theme['repo'] ?? null; // format: username/repo
 
         if (!$repo) {
-            $this->error("Theme [$slug] tidak punya field 'github' di theme.json");
+            $this->error("Tema tidak bisa diupgrade");
             return;
         }
         // Ambil daftar tags dari GitHub
@@ -39,14 +39,14 @@ class ThemeUpdateCommand extends Command
         curl_close($ch);
 
         if (!$response) {
-            $this->error("Failed to connect GitHub API.");
+            $this->error("Gagal terhubung ke server.");
             return;
         }
 
         $tags = json_decode($response, true);
 
         if (!$tags || !isset($tags[0]['name'])) {
-            $this->error("GitHub tags data tidak valid.");
+            $this->error("Tema tidak Valid.");
             return;
         }
 
