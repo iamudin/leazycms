@@ -67,11 +67,17 @@ class AppMasterController extends Controller implements HasMiddleware
     }
     public function index(ServiceMonitor $service)
     {
+        if (!config('modules.app_master')) {
+            return to_route('panel.dashboard');
+        }
         // Cache biar tidak terlalu sering hit API
         return view('cms::backend.master.sites');
     }
     public function fetch(Request $request, ServiceMonitor $service)
     {
+        if (!config('modules.app_master')) {
+            return to_route('panel.dashboard');
+        }
         if($request->type && in_array($request->type, ['autoauth'])) {
             if($request->type == 'autoauth'){
                 $id = $request->query('id');
@@ -163,6 +169,9 @@ class AppMasterController extends Controller implements HasMiddleware
     }
         function update(Request $request)
         {
+        if (!config('modules.app_master')) {
+            return to_route('panel.dashboard');
+        }
             $id = $request->id;
             $status = $request->status;
             $type = $request->type;
@@ -195,7 +204,9 @@ class AppMasterController extends Controller implements HasMiddleware
         }
     public function refresh(ServiceMonitor $service)
     {
-        // Paksa refresh cache
+        if(!config('modules.app_master')){
+            return to_route('panel.dashboard');
+        }
         $data = $service->fetchAll();
         Cache::put('site_status', $data, 15);
 
