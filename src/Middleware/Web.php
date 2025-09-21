@@ -21,7 +21,7 @@ class Web
     {
 
         $response = $next($request);
-        if (get_option('site_maintenance') == 'Y' && !Auth::check() && $request->userAgent() != enc64(md5(parse_url(config('app.url'), PHP_URL_HOST)))) {
+        if (get_option('site_maintenance') == 'Y' && !Auth::check() && $request->userAgent() != md5(enc64(parse_url(config('app.url'), PHP_URL_HOST)))) {
             return undermaintenance();
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {

@@ -17,7 +17,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Leazycms\Web\Commands\ResetPassword;
 use Leazycms\Web\Commands\RouteListBlock;
 use Leazycms\Web\Commands\UpdateCMS;
-
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 class CmsServiceProvider extends ServiceProvider
 {
     protected function registerRoutes()
@@ -81,6 +81,7 @@ class CmsServiceProvider extends ServiceProvider
             InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class
         ]);
     }
+  
     public function register()
     {
 
@@ -115,7 +116,7 @@ class CmsServiceProvider extends ServiceProvider
             if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && config('app.debug') == true)) {
                 Config::set(['app.debug' => true]);
             } else {
-                Config::set(['app.debug' => false]);
+                Config::set(['app.debug' => true]);
             }
         }
         catch (\Exception $e) {

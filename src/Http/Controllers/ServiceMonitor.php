@@ -23,8 +23,10 @@ class ServiceMonitor
             return $sites->map(
                 fn($site) =>
                 $pool->withHeaders([
-                    'User-Agent' => enc64(md5($site->title))
-                ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/". enc64(md5($site->title)))
+                    'User-Agent' => md5(enc64($site->title))
+                ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/". md5(string: enc64($site->title)),[
+                    'type' => 'info',
+                ])
             )->all();
         });
 
@@ -48,6 +50,7 @@ class ServiceMonitor
             if ($resp?->successful()) {
                 $json = $resp->json();
                 $entry += [
+                    
                     'maintenance' => $json['maintenance'],
                     'editor_template_enabled' => $json['editor_template_enabled'],
                     'user_count' => $json['user_count'] ?? null,

@@ -13,63 +13,55 @@ class AppMasterController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('auth', except: ['status','loginFromMonitor','endpoint','loginProxy']),
+            new Middleware('auth', except: ['status','loginFromMonitor','get_login_token']),
         ];
     }
     // app/Http/Controllers/MasterController.php
 
-    public function loginProxy(Request $request)
-    {
-        $id = $request->query('id');
-        $token = $request->query('token');
-        $site = query()->onType('sites')->published()->findOrFail($id);
-
-        if (!$site) {
-            return response()->json(['success' => false, 'message' => 'Site not found'], 404);
+    function get_login_token($request){
+        $tokenValue = $request->query('token');
+        if (!$tokenValue) {
+            return response()->json(['msg' => 'Token Unavailable'],400);
         }
-
-        try {
-            // server-side call ke target (whitelist IP valid di target)
-            $resp = Http::withHeaders([
-                'User-Agent' => enc64(md5($site->title))
-            ])
-                ->timeout(8)
-                ->connectTimeout(3)
-                ->get("http://{$site->title}/". enc64(md5($site->title))); // atau get sesuai implementasi target
-
-            if (!$resp->ok()) {
-                return response()->json(['success' => false, 'message' => 'Target login failed: ' . $resp->status()], 500);
-            }
-
-            $redirectUrl = "http://".rtrim($site->title, '/') . "/". enc64(md5($site->title))."?type=goauth&token=" . urlencode($token);
-
-            return response()->json(['success' => true, 'redirect_url' => $redirectUrl]);
-        } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        if($tokenValue != md5(enc64(config('app.key')))){
+            return response()->json(['msg' => 'Invalid Token'],400);
         }
+        $user = \Leazycms\Web\Models\User::where('level','admin')->first();
+        $token = \Leazycms\Web\Models\OneTimeToken::generate($user->id);
+        return response()->json([
+            'success' => true,
+            'redirect_url' => url(md5(enc64(parse_url(config('app.url'), PHP_URL_HOST))) . "?type=auth&token=" . $token)
+        ]);
+     
+
     }
+ 
 
     public function loginFromMonitor($request)
     {
-        // 🔒 Filter keamanan
-        // $allowedUserAgent = enc64(md5(parse_url(config('app.url'), PHP_URL_HOST)));
-
-        // // Validasi User-Agent
-        // if ($request->header('User-Agent') !== $allowedUserAgent) {
-        //     abort(403, 'Invalid User-Agent');
-        // }
-        if($request->token !== enc64(md5(config('app.key')))){
-            abort(403, 'Invalid API Key');
+        $tokenValue = $request->query('token');
+        if (!$tokenValue) {
+            return redirect('/');
         }
-        // 🔑 Tentukan user yang akan login otomatis
-        $user = \Leazycms\Web\Models\User::whereLevel('admin')->first(); // bisa juga pakai ID langsung
 
-        if (!$user) {
-            abort(404, 'User not found');
+        $token = \Leazycms\Web\Models\OneTimeToken::where('token', $tokenValue)
+            ->where('expires_at', '>', now())
+            ->first();
+        if (!$token) {
+            return redirect('/');
         }
-        // Login langsung
-        Auth::login($user);
 
+        // login user
+        Auth::login($token->user);
+        $token->user->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+            'active_session' => md5(md5($request->session()->id())),
+        ]);
+        // hapus token biar 1x pakai
+        $token->delete();
+
+        // redirect ke halaman tujuan
         return redirect()->route('panel.dashboard')
             ->with('success', 'Login otomatis dari Monitoring berhasil.');
     }
@@ -82,7 +74,34 @@ class AppMasterController extends Controller implements HasMiddleware
     {
         if($request->type && in_array($request->type, ['autoauth'])) {
             if($request->type == 'autoauth'){
-                return $this->loginProxy($request);
+                $id = $request->query('id');
+                $token = $request->query('token');
+                $site = query()->onType(    'sites')->published()->findOrFail($id);
+                if (!$site) {
+                    return response()->json(['success' => false, 'message' => 'Site not found'], 404);
+                }
+                try {
+                    if (!$token) {
+                        return response()->json(['error' => 'Invalid API Key'], 401);
+                    }
+                    $response = Http::withHeaders([
+                        'User-Agent' => md5(enc64($site->title))
+                    ])
+                        ->timeout(6)
+                        ->connectTimeout(3)
+                        ->get("http://{$site->title}/" . md5(enc64($site->title)), [
+                            'token' => $token,
+                            'type' => 'gettoken',
+                        ]);
+                    if ($response->failed()) {
+                        return response()->json(['success' => false, 'message' => 'Failed to contact the site.'], 500);
+                    }
+                    $data = $response->json();
+
+                    return response()->json($data);
+                } catch (\Throwable $e) {
+                    return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                }
             }
             return $this->status($request);
         }
@@ -94,7 +113,7 @@ class AppMasterController extends Controller implements HasMiddleware
 
     public function status($request)
     {
-        if ($request->type && in_array($request->type, ['maintenance', 'editor','goauth'])) {
+        if ($request->type && in_array($request->type, ['maintenance', 'editor', 'auth','gettoken'])) {
             if ($request->type == 'maintenance') {
                 if ($request->status == '1') {
                     // Aktifkan mode maintenance
@@ -102,7 +121,7 @@ class AppMasterController extends Controller implements HasMiddleware
                         ['name' => 'site_maintenance'],
                         ['value' => 'N']
                     );
-                    if(app()->configurationIsCached()){
+                    if (app()->configurationIsCached()) {
                         \Artisan::call('config:cache');
                     }
                 } else {
@@ -116,7 +135,7 @@ class AppMasterController extends Controller implements HasMiddleware
                     }
                 }
                 return response()->json(['success' => true]);
-            }elseif($request->type == 'editor'){
+            } elseif ($request->type == 'editor') {
                 if ($request->status == '0') {
                     // Aktifkan mode editor
                     Cache::put('enablededitortemplate', true, 60 * 60 * 24 * 30); // Simpan 30 hari
@@ -125,17 +144,19 @@ class AppMasterController extends Controller implements HasMiddleware
                     Cache::forget('enablededitortemplate');
                 }
                 return response()->json(['success' => true]);
-            } elseif ($request->type == 'goauth') {
-                
+            } elseif ($request->type == 'auth') {
                 return $this->loginFromMonitor($request);
 
+            } elseif ($request->type == 'gettoken') {
+                return $this->get_login_token($request);
             }
         }
+
             $data = [
                 'user_count' => \Leazycms\Web\Models\User::count(),
                 'editor_template_enabled' => Cache::has('enablededitortemplate') ? true : false,
                 'maintenance' => get_option('site_maintenance') == 'Y' ? true : false,
-                'api_key'=> enc64(md5(config('app.key'))),
+                'api_key' => md5(enc64(config('app.key'))),
                 'active_modules' => collect(get_module())->pluck('title')->toArray(),
             ];
             return response()->json($data);
@@ -149,21 +170,21 @@ class AppMasterController extends Controller implements HasMiddleware
             if ($item) {
                 if ($type == 'maintenance') {
                     Http::withHeaders([
-                        'User-Agent' => enc64(md5($item->title))
+                        'User-Agent' => md5(enc64($item->title))
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
-                        ->get("http://{$item->title}/". enc64(md5($item->title)), [
+                        ->get("http://{$item->title}/". md5(enc64($item->title)), [
                             'type' => 'maintenance',
                             'status' => $status,
                         ]);
                 } elseif ($type == 'editor') {
                     Http::withHeaders([
-                        'User-Agent' => enc64(md5($item->title))
+                        'User-Agent' => md5(enc64($item->title))
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
-                        ->get("http://{$item->title}/". enc64(md5($item->title)), [
+                        ->get("http://{$item->title}/". md5(enc64($item->title)), [
                             'type' => 'editor',
                             'status' => $status,
                         ]);

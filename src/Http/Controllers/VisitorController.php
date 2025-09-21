@@ -9,7 +9,7 @@ class VisitorController
     public function visitor_counter()
     {
       
-        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && request()->userAgent() != enc64(md5(parse_url(config('app.url'), PHP_URL_HOST)))) {
+        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && request()->segment(1) != md5(enc64(parse_url(config('app.url'), PHP_URL_HOST))) ) {
             $data = config('modules.data');
 
             if($data){
