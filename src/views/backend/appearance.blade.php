@@ -64,7 +64,23 @@
 
             <ul class="list-group mb-3">
               {{template_info()}}
+                  <div class="mb-5 text-right">
+      <form  class="list-group-item py-0 px-1 m-0" action="{{ url()->full() }}" method="post" enctype="multipart/form-data">
+        @csrf
+        <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
+          accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
+          <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm w-100 my-1"> <i class="fa fa-upload"></i>
+            Upload Template</button>
+          <a type="button" onclick="location.href='{{ asset('sample/sample.zip')}}'" class="btn btn-info btn-sm w-100 my-1"> <i
+              class="fa fa-brush"></i> Sample Template</a>
+                    @if(Cache::has('enablededitortemplate') || is_local())
+            <a href="{{ route('appearance.editor') }}" class="btn btn-outline-primary btn-sm btn-md w-100 my-1"> <i class="fa fa-code"></i>
+              Edit Template</a>
 
+        @endif
+      </form>
+  
+    </div>
         </ul>
 
       </div>
@@ -104,23 +120,7 @@
       </form>
           @endif
       <iframe  src="{{ url('/') }}" frameborder="0" class="w-100 preview" style="height: 80vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
-      <div class="mb-5 text-right">
-      <form action="{{ url()->full() }}" method="post" enctype="multipart/form-data">
-        @csrf
-        <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
-          accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
-        <div class="btn-group">
-          <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm"> <i class="fa fa-upload"></i>
-            Upload Template</button>
-          <a type="button" onclick="location.href='{{ asset('sample/sample.zip')}}'" class="btn btn-info btn-sm"> <i
-              class="fa fa-brush"></i> Sample Template</a>
-      </form>
-        @if(Cache::has('enablededitortemplate') || is_local())
-            <a href="{{ route('appearance.editor') }}" class="btn btn-outline-primary btn-sm btn-md"> <i class="fa fa-code"></i>
-              Edit Template</a>
-
-        @endif
-      </div></div>
+  
 
       </div>
 

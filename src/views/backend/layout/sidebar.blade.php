@@ -251,7 +251,7 @@
             ><sup class="text-danger">{{ get_leazycms_version() }}</sup>
             <a
                 target="_blank"
-                href="https://leazycms.com/docs"
+                href="https://leazycms.web.id/docs"
                 class="pull-right"
             >
                 <i class="fa fa-book"></i> Docs</a
