@@ -190,6 +190,7 @@ class WebController extends Controller
             ->orwhere('description', 'like', '%' . $query . '%')
             ->orwhere('content', 'like', '%' . $query . '%')
             ->published()
+            ->where('type','!=','page')
             ->latest('created_at')
             ->paginate(20);
         $data = array(

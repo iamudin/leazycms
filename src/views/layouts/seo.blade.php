@@ -1,10 +1,10 @@
 <meta charset="utf-8">
-<meta name="author" content="help@leazycms.com">
+<meta name="author" content="Abu Umar's House">
 <meta name="copyright" content="© 2025 - Build by LeazyCMS">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
-<title>{{request()->is('/') ? $title : $title}}</title>
+<title>{{$title}}</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="index,follow">
@@ -30,8 +30,8 @@
 <meta name="msapplication-TileColor" content="#0068df">
 @php $ic180 = get_option('pwa_icon_180'); @endphp
 @if($ic180 && media_exists($ic180))
-<meta name="msapplication-TileImage" content="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')) : url(noimage()) }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ get_option('pwa_icon_180') ? url(get_option('pwa_icon_180')) : url(noimage())}}">
+<meta name="msapplication-TileImage" content="{{ url(get_option('pwa_icon_180'))  }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url(get_option('pwa_icon_180'))}}">
 @endif
 @php $ic32 = get_option('pwa_icon_32');
 $ic16 = get_option('pwa_icon_16'); @endphp

@@ -1310,17 +1310,15 @@ if (!function_exists('load_default_module')) {
             'berita' => ['active' => true],
             'agenda' => ['active' => true],
             'pengumuman' => ['active' => true],
-            'document' => ['active' => true],
             'menu' => ['active' => true],
             'banner' => ['active' => true],
             'galeri' => ['active' => true],
             'page' => ['active' => true],
-            'countdown' => ['active' => true],
             'sambutan' => ['active' => true],
             'unit-kerja' => ['active' => true],
             'kepegawaian' => ['active' => true],
-            'link-terkait' => ['active' => true],
             'layanan' => ['active' => true],
+            'faq' => ['active' => true],
         ];
         if(config('modules.app_master')){
             $default['sites'] = ['active' => true];
