@@ -26,7 +26,6 @@ class AppMasterController extends Controller implements HasMiddleware
         if($tokenValue != md5(enc64(config('app.key')))){
             return response()->json(['msg' => 'Invalid Token'],400);
         }
-        dd(config('app.url'));
         $user = \Leazycms\Web\Models\User::where('level','admin')->first();
         $token = \Leazycms\Web\Models\OneTimeToken::generate($user->id);
         return response()->json([
