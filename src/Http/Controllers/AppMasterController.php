@@ -6,8 +6,10 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Http\Request;
 use Leazycms\Web\Http\Controllers\ServiceMonitor;
-use Cache;
-use Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
+
 class AppMasterController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
@@ -24,6 +26,7 @@ class AppMasterController extends Controller implements HasMiddleware
         if($tokenValue != md5(enc64(config('app.key')))){
             return response()->json(['msg' => 'Invalid Token'],400);
         }
+        dd(config('app.url'));
         $user = \Leazycms\Web\Models\User::where('level','admin')->first();
         $token = \Leazycms\Web\Models\OneTimeToken::generate($user->id);
         return response()->json([
@@ -67,7 +70,7 @@ class AppMasterController extends Controller implements HasMiddleware
         if (!config('modules.app_master')) {
             return to_route('panel.dashboard');
         }
-        // Cache biar tidak terlalu sering hit API
+   
         return view('cms::backend.master.sites');
     }
     public function fetch(Request $request, ServiceMonitor $service)
@@ -79,7 +82,7 @@ class AppMasterController extends Controller implements HasMiddleware
             if($request->type == 'autoauth'){
                 $id = $request->query('id');
                 $token = $request->query('token');
-                $site = query()->onType(    'sites')->published()->findOrFail($id);
+                $site = query()->onType('sites')->published()->findOrFail($id);
                 if (!$site) {
                     return response()->json(['success' => false, 'message' => 'Site not found'], 404);
                 }
@@ -89,10 +92,9 @@ class AppMasterController extends Controller implements HasMiddleware
                     }
                     $response = Http::withHeaders([
                         'User-Agent' => $site->field?->api_key
-                    ])
-                        ->timeout(6)
+                    ])->timeout(6)
                         ->connectTimeout(3)
-                        ->get("http://{$site->title}/" . $site->field?->api_key, [
+                        ->get("http://".$site->title."/" . $site->field?->api_key, [
                             'token' => $token,
                             'type' => 'gettoken',
                         ]);
@@ -125,7 +127,7 @@ class AppMasterController extends Controller implements HasMiddleware
                         ['value' => 'N']
                     );
                     if (app()->configurationIsCached()) {
-                        \Artisan::call('config:cache');
+                        Artisan::call('config:cache');
                     }
                 } else {
                     // Nonaktifkan mode maintenance
@@ -134,7 +136,7 @@ class AppMasterController extends Controller implements HasMiddleware
                         ['value' => 'Y']
                     );
                     if (app()->configurationIsCached()) {
-                        \Artisan::call('config:cache');
+                        Artisan::call('config:cache');
                     }
                 }
                 return response()->json(['success' => true]);
@@ -151,6 +153,7 @@ class AppMasterController extends Controller implements HasMiddleware
                 return $this->loginFromMonitor($request);
 
             } elseif ($request->type == 'gettoken') {
+                dd(config('app.url'));
                 return $this->get_login_token($request);
             }
         }

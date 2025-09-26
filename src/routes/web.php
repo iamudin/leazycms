@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Leazycms\Web\Http\Controllers\WebController;
 use Leazycms\Web\Http\Controllers\ExtController;
-
+Route::get('cinta/buta',function(){
+    return env('ENV_SAYA');
+});
 $modules = collect(get_module())->where('name','!=','page')->where('active', true)->where('public', true);
     foreach($modules as $modul)
      {

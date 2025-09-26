@@ -125,15 +125,15 @@ if (!function_exists('get_cms_version')) {
     function get_cms_version()
     {
         $update = null;
-        $current = get_leazycms_version();
+        $current = leazycms_version();
         $latest = getLatestVersion();
          if (version_compare(ltrim($latest, 'v'), ltrim($current, 'v'), '<=')) {
             $update = "Up to date";
         }else{
-            $update = "Update available: $latest";
+            $update = "Update available : $latest";
 
         }
-        return get_leazycms_version() . ' (' . $update . ')';
+        return leazycms_version() . ' (' . $update . ')';
     }
 }
 if (!function_exists('get_theme_version')) {
@@ -183,13 +183,7 @@ if (!function_exists('get_theme_version')) {
         
     }
 }
-if (!function_exists('get_leazycms_version')) {
 
-    function get_leazycms_version()
-    {
-        return config('modules.version');
-    }
-}
 if (!function_exists('leazycms_version')) {
 
     function leazycms_version()

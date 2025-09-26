@@ -106,9 +106,7 @@ class CmsServiceProvider extends ServiceProvider
         
         if (DB::connection()->getDatabaseName() && $this->checkAllTables()) {
             try{
-                if(!config('modules.version')){
-                    config(['modules.version' => leazycms_version()]);
-                }
+         
             if(!config('modules.option')){
                 $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                 config(['modules.option' => $options]);

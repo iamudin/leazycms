@@ -7,10 +7,11 @@
 
 </div>
     <div class="col-lg-12">
-        @if($latestv = getLatestVersion() )
-        @if(get_leazycms_version() != $latestv)
+      @if($versi = leazycms_version())
+      @php $latestv = getLatestVersion(); @endphp
+        @if($versi  != $latestv)
         <div class="alert alert-info">
-            <strong> <i class="fa fa-sync"></i> New Version {{ $latestv }} Update Available!</strong> You are currently running version {{ get_leazycms_version()}}
+            <strong> <i class="fa fa-sync"></i> New Version {{ $latestv }} Update Available!</strong> You are currently running version {{ $versi }}
         </div>
         @endif
         @endif
