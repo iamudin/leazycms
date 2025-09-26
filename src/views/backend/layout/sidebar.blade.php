@@ -241,6 +241,14 @@
                     <span class="app-menu__label">Pengguna</span></a
                 >
             </li>
+                      <li title="API Key">
+                <a
+                    class="app-menu__item {{ active_item(['apikey']) }}"
+                    href="{{ route('apikey') }}"
+                    ><i class="app-menu__icon fa fa-key"></i>
+                    <span class="app-menu__label">API Key</span></a
+                >
+            </li>
         @endif
 @if(Auth::user()->isAdmin())
         <li

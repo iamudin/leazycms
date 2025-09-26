@@ -28,7 +28,7 @@ class AppMasterController extends Controller implements HasMiddleware
         $token = \Leazycms\Web\Models\OneTimeToken::generate($user->id);
         return response()->json([
             'success' => true,
-            'redirect_url' => url(md5(enc64(parse_url(config('app.url'), PHP_URL_HOST))) . "?type=auth&token=" . $token)
+            'redirect_url' => url(api_key() . "?type=auth&token=" . $token)
         ]);
      
 
@@ -41,7 +41,6 @@ class AppMasterController extends Controller implements HasMiddleware
         if (!$tokenValue) {
             return redirect('/');
         }
-
         $token = \Leazycms\Web\Models\OneTimeToken::where('token', $tokenValue)
             ->where('expires_at', '>', now())
             ->first();
@@ -89,11 +88,11 @@ class AppMasterController extends Controller implements HasMiddleware
                         return response()->json(['error' => 'Invalid API Key'], 401);
                     }
                     $response = Http::withHeaders([
-                        'User-Agent' => md5(enc64($site->title))
+                        'User-Agent' => $site->field?->api_key
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
-                        ->get("http://{$site->title}/" . md5(enc64($site->title)), [
+                        ->get("http://{$site->title}/" . $site->field?->api_key, [
                             'token' => $token,
                             'type' => 'gettoken',
                         ]);
@@ -179,21 +178,21 @@ class AppMasterController extends Controller implements HasMiddleware
             if ($item) {
                 if ($type == 'maintenance') {
                     Http::withHeaders([
-                        'User-Agent' => md5(enc64($item->title))
+                        'User-Agent' => $item->field?->api_key
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
-                        ->get("http://{$item->title}/". md5(enc64($item->title)), [
+                        ->get("http://{$item->title}/". $item->field?->api_key, [
                             'type' => 'maintenance',
                             'status' => $status,
                         ]);
                 } elseif ($type == 'editor') {
                     Http::withHeaders([
-                        'User-Agent' => md5(enc64($item->title))
+                        'User-Agent' => $item->field?->api_key
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
-                        ->get("http://{$item->title}/". md5(enc64($item->title)), [
+                        ->get("http://{$item->title}/". $item->field?->api_key, [
                             'type' => 'editor',
                             'status' => $status,
                         ]);

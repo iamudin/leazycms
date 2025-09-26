@@ -14,7 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
-use Intervention\Image\Facades\Image;
+use Str;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -135,6 +135,54 @@ class PanelController extends Controller implements HasMiddleware
             'posts' => $posts,
             'visitor' => $visitorCounts
         ]);
+    }
+    function generate_key(){
+
+        $key = Str::random(32);
+        rewrite_env(['ENV_KEY'=> $key]);
+        return $key;
+    }
+    public function apikey(Request $request){
+        admin_only();
+  
+
+        if ($request->isMethod('post')) {
+
+            $envKey = config('modules.env_key');
+
+            $wasEncrypted = file_exists(base_path('.env.encrypted'));
+            // Jika terenkripsi → decrypt dulu
+            if ($wasEncrypted) {
+             Artisan::call('env:decrypt', [
+                    '--force' => true,
+                    '--key' => $envKey,
+                ]);
+            }
+
+            if (app()->configurationIsCached()) {
+                Artisan::call('config:clear');
+                $key = $this->generate_key();
+                Artisan::call('config:cache');
+                if ($wasEncrypted) {
+                    Artisan::call('env:encrypt', [
+                        '--force' => true,
+                        '--key' => $key,
+                    ]);
+                    $envFile = base_path('.env');
+                    if (file_exists($envFile)) {
+                        unlink($envFile);
+                    }
+                }
+
+            } else {
+                $this->generate_key();
+            }
+
+            
+
+            return to_route('apikey')->with('success', 'APP_KEY berhasil digenerate ulang!');
+        }
+        return view('cms::backend.apikey', ['key'=>config('modules.env_key') ? md5(enc64(config('modules.env_key'))) : null]);
     }
     public function visitor(Request $request)
     {
@@ -449,16 +497,58 @@ class PanelController extends Controller implements HasMiddleware
             return redirect()->to(secure_url($pathnew.'/setting'));
         }
     }
+
+    function unconfiguredCache(){
+
+        $envKey = config('modules.env_key');
+
+        $wasEncrypted = file_exists(base_path('.env.encrypted'));
+        // Jika terenkripsi → decrypt dulu
+        if ($wasEncrypted) {
+            Artisan::call('env:decrypt', [
+                '--force' => true,
+                '--key' => $envKey,
+            ]);
+        }
+
+        if (app()->configurationIsCached()) {
+            Artisan::call('config:clear');
+        } 
+    }
+    function reconfiguredCache()
+    {
+
+        $envKey = config('modules.env_key');
+
+        $wasEncrypted = file_exists(base_path('.env.encrypted'));
+        // Jika terenkripsi → decrypt dulu
+        if ($wasEncrypted) {
+            Artisan::call('env:decrypt', [
+                '--force' => true,
+                '--key' => $envKey,
+            ]);
+        }
+
+        if (!app()->configurationIsCached()) {
+            Artisan::call('config:cache');
+            if($wasEncrypted){
+                $envFile = base_path('.env');
+                if (file_exists($envFile)) {
+                    unlink($envFile);
+                }
+            }
+        }
+    }
     public function cache(Request $request)
     {
         admin_only();
         if ($request->isMethod('post')) {
             if ($request->cache_config && $request->cache_config == 'Y' && !app()->configurationIsCached()) {
-                Artisan::call('config:cache');
+                $this->reconfiguredCache();
             }
 
             if ($request->cache_config && $request->cache_config == 'N' && app()->configurationIsCached()) {
-                Artisan::call('config:clear');
+                $this->unconfiguredCache();
             }
             if ($request->cache_route && $request->cache_route == 'Y' && !app()->routesAreCached()) {
                 Artisan::call('route:cache');

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class ServiceMonitor
 {
-  
+
     public function fetchAll(): array
     {
         $sites = query()
@@ -15,26 +15,21 @@ class ServiceMonitor
             ->select('id', 'title', 'data_field')
             ->get();
 
-        // Simpan ID supaya bisa dipasangkan setelah pool
         $siteIds = $sites->pluck('id')->all();
 
-        
         $responses = Http::pool(function ($pool) use ($sites) {
             return $sites->map(
                 fn($site) =>
                 $pool->withHeaders([
-                    'User-Agent' => md5(enc64($site->title))
-                ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/". md5(string: enc64($site->title)),[
-                    'type' => 'info',
-                ])
+                    'User-Agent' => $site->field?->api_key
+                ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/" . $site->field?->api_key, [
+                            'type' => 'info',
+                        ])
             )->all();
         });
 
-        // Gabungkan ID -> response
         $responses = array_combine($siteIds, $responses);
 
-
-        // Susun hasil akhir
         $results = [];
         foreach ($sites as $site) {
             $resp = $responses[$site->id] ?? null;
@@ -49,16 +44,22 @@ class ServiceMonitor
 
             if ($resp?->successful()) {
                 $json = $resp->json();
-                $entry += [
-                    
-                    'maintenance' => $json['maintenance'],
-                    'editor_template_enabled' => $json['editor_template_enabled'],
-                    'user_count' => $json['user_count'] ?? null,
-                    'cms_version' => $json['cms_version'] ?? null,
-                    'theme_version' => $json['theme_version'] ?? null,
-                    'api_key' => $json['api_key'],
-                    'active_modules' => $json['active_modules'] ?? null,
-                ];
+
+                // Pastikan response sesuai format (array dan punya field wajib)
+                if (is_array($json) && isset($json['maintenance'], $json['editor_template_enabled'], $json['api_key'])) {
+                    $entry += [
+                        'maintenance' => $json['maintenance'],
+                        'editor_template_enabled' => $json['editor_template_enabled'],
+                        'user_count' => $json['user_count'] ?? null,
+                        'cms_version' => $json['cms_version'] ?? null,
+                        'theme_version' => $json['theme_version'] ?? null,
+                        'api_key' => $json['api_key'],
+                        'active_modules' => $json['active_modules'] ?? null,
+                    ];
+                } else {
+                    // skip kalau format salah → langsung lanjut ke site berikutnya
+                    continue;
+                }
             } else {
                 $entry['error'] = $resp?->reason() ?? 'no_response';
             }
@@ -73,6 +74,6 @@ class ServiceMonitor
             ],
             'data' => $results,
         ];
-
     }
+
 }

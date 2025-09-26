@@ -641,7 +641,7 @@ return [
             'active' => true,
         ],
         'sites' => [
-            'position' => 10,
+            'position' => 15,
             'name' => 'sites',
             'title' => 'Situs',
             'description' => 'Menu Untuk Mengelola Situs',
@@ -657,7 +657,7 @@ return [
                 'post_parent' => false,
                 'thumbnail' => true,
                 'editor' => false,
-                'category' => true,
+                'category' => false,
                 'tag' => false,
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
@@ -678,6 +678,7 @@ return [
                     ['Whatsapp', 'text'],
                     ['Email', 'text'],
                     ['Login', 'break'],
+                    ['API Key', 'text'],
                     ['URL Login', 'text'],  
                     ['Username', 'text'],
                     ['Password', 'text'],
@@ -911,5 +912,6 @@ return [
     'public_path' => env('PUBLIC_PATH', null),
     'version' => null,
     'timezone' => env('APP_TIMEZONE','Asia/Jakarta'),
-    'template' => env('TEMPLATE_PATH', null)
+    'template' => env('TEMPLATE_PATH', null),
+    'env_key'=>env('ENV_KEY',null)
 ];

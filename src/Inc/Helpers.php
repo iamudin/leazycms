@@ -1302,6 +1302,11 @@ if (!function_exists('get_menu')) {
         return collect(json_decode(json_encode($menuTree)));
     }
 }
+if (!function_exists('api_key')) {
+    function api_key(){
+        return config('modules.env_key') ? md5(enc64(config('modules.env_key'))) : null;
+    }
+}
 if (!function_exists('load_default_module')) {
 
     function load_default_module()
@@ -1536,17 +1541,22 @@ if (!function_exists('renderTemplateFile')) {
     {
         echo '<ul style="list-style:none;padding:0 0 0 14px">';
         foreach ($items as $item) {
+        
             $currentPath = $parentPath . '/' . $item['name'];
+                if (str($currentPath)->contains(['.git','assets','dummy'])) {
+                continue;
+            }
             if (isset($item['children']) && !empty($item['children'])) {
                     echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
                     renderTemplateFile($item['children'], $currentPath);
                     echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
-                if($item['name'] == 'theme.json'){
+                if(str($item['name'])->contains('json')){
                     continue;
                 }
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {
+              
                 echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
             }
         }

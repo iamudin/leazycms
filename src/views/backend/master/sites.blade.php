@@ -1,7 +1,7 @@
 @extends('cms::backend.layout.app', ['title' => 'Monitor Situs'])
 
 @section('content')
-            <h2>Monitor Situs</h2>
+            <h2> <i class="fa fa-desktop"></i> Monitor Situs</h2>
             <button id="refreshBtn" class="btn btn-sm btn-primary">Segarkan</button>
             <p id="meta" class="text-muted small">Memuat...</p>
 
