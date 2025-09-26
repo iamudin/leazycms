@@ -152,7 +152,6 @@ class AppMasterController extends Controller implements HasMiddleware
                 return $this->loginFromMonitor($request);
 
             } elseif ($request->type == 'gettoken') {
-                dd(config('app.url'));
                 return $this->get_login_token($request);
             }
         }
