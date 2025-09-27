@@ -69,7 +69,7 @@ class AppMasterController extends Controller implements HasMiddleware
         if (!config('modules.app_master')) {
             return to_route('panel.dashboard');
         }
-   
+
         return view('cms::backend.master.sites');
     }
     public function fetch(Request $request, ServiceMonitor $service)
@@ -117,7 +117,7 @@ class AppMasterController extends Controller implements HasMiddleware
 
     public function status($request)
     {
-        if ($request->type && in_array($request->type, ['maintenance', 'editor', 'auth','gettoken'])) {
+        if ($request->type && in_array($request->type, ['maintenance', 'editor', 'auth','gettoken','updatetheme','cacheroute'])) {
             if ($request->type == 'maintenance') {
                 if ($request->status == '1') {
                     // Aktifkan mode maintenance
@@ -154,6 +154,15 @@ class AppMasterController extends Controller implements HasMiddleware
             } elseif ($request->type == 'gettoken') {
                 return $this->get_login_token($request);
             }
+            elseif ($request->type == 'cacheroute') {
+                if ($request->status == '1') {
+                Artisan::call('route:clear');
+                }else{
+                Artisan::call('route:cache');
+                }
+            }  elseif ($request->type == 'updatetheme') {
+                Artisan::call('cms:update-template '.template());
+            }
         }
 
             $data = [
@@ -162,6 +171,7 @@ class AppMasterController extends Controller implements HasMiddleware
                 'maintenance' => get_option('site_maintenance') == 'Y' ? true : false,
                 'api_key' => md5(enc64(config('app.key'))),
                 'cms_version' => get_cms_version() ?? null,
+                'route_cached' => app()->routesAreCached() ? true: false,
                 'theme_version' => get_theme_version() ?? null,
                 'active_modules' => collect(get_module())->pluck('title')->toArray(),
             ];
@@ -195,6 +205,28 @@ class AppMasterController extends Controller implements HasMiddleware
                         ->connectTimeout(3)
                         ->get("http://{$item->title}/". $item->field?->api_key, [
                             'type' => 'editor',
+                            'status' => $status,
+                        ]);
+                }
+                elseif ($type == 'cacheroute') {
+                    Http::withHeaders([
+                        'User-Agent' => $item->field?->api_key
+                    ])
+                        ->timeout(6)
+                        ->connectTimeout(3)
+                        ->get("http://{$item->title}/". $item->field?->api_key, [
+                            'type' => 'cacheroute',
+                            'status' => $status,
+                        ]);
+                }
+                 elseif ($type == 'updatetheme') {
+                    Http::withHeaders([
+                        'User-Agent' => $item->field?->api_key
+                    ])
+                        ->timeout(6)
+                        ->connectTimeout(3)
+                        ->get("http://{$item->title}/". $item->field?->api_key, [
+                            'type' => 'updatetheme',
                             'status' => $status,
                         ]);
                 }

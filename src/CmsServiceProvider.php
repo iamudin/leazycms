@@ -104,7 +104,7 @@ class CmsServiceProvider extends ServiceProvider
         config(['app.timezone' => config('modules.timezone')]);
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
         
-        if (DB::connection()->getDatabaseName() && $this->checkAllTables()) {
+        if (DB::connection()->getDatabaseName()) {
             try{
          
             if(!config('modules.option')){

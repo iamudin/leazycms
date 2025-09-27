@@ -14,7 +14,7 @@
     <h6>{{$info['version'] ?? null}}</h6>
     {!!$version!!}
 </li>
-@if($version && str($version)->contains('tersedia'))
+@if($version && str($version)->contains('tersedia') && !Cache::has('enablededitortemplate'))
 <li class="list-group-item p-0 m-0">
     <button onclick="location.href='{{url()->current()}}?act=updatetemplate'" class="btn btn-sm btn-outline-primary w-100"> <i class="fa fa-sync"></i> Update Sekarang</button>
 </li>
