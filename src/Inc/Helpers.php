@@ -79,6 +79,11 @@ if (!function_exists('getThumbUrl')) {
 }
 
 if (!function_exists('getLatestVersion')) {
+    function this_agent(){
+        return md5(enc64(no_http_url(config('app.url'))));
+    }
+}
+if (!function_exists('getLatestVersion')) {
     function getLatestVersion($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
     {
         $url = "https://repo.packagist.org/p2/{$packageName}.json";

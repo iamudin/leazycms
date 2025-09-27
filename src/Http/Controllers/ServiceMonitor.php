@@ -21,7 +21,7 @@ class ServiceMonitor
             return $sites->map(
                 fn($site) =>
                 $pool->withHeaders([
-                    'User-Agent' => $site->field && isset($site->field->api_key) ? $site->field->api_key : null
+                    'User-Agent' => md5(enc64($site->title))
                 ])->timeout(6)->connectTimeout(3)->get("http://{$site->title}/" . ($site->field && isset($site->field->api_key) ? $site->field->api_key : null), [
                             'type' => 'info',
                         ])

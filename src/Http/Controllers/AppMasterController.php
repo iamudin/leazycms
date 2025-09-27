@@ -90,7 +90,7 @@ class AppMasterController extends Controller implements HasMiddleware
                         return response()->json(['error' => 'Invalid API Key'], 401);
                     }
                     $response = Http::withHeaders([
-                        'User-Agent' => $site->field?->api_key
+                        'User-Agent' => md5(enc64($site->title))
                     ])->timeout(6)
                         ->connectTimeout(3)
                         ->get("http://".$site->title."/" . $site->field?->api_key, [
@@ -189,7 +189,7 @@ class AppMasterController extends Controller implements HasMiddleware
             if ($item) {
                 if ($type == 'maintenance') {
                     Http::withHeaders([
-                        'User-Agent' => $item->field?->api_key
+                        'User-Agent' => md5(enc64($item->title))
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
@@ -199,7 +199,7 @@ class AppMasterController extends Controller implements HasMiddleware
                         ]);
                 } elseif ($type == 'editor') {
                     Http::withHeaders([
-                        'User-Agent' => $item->field?->api_key
+                        'User-Agent' => md5(enc64($item->title))
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
@@ -210,7 +210,7 @@ class AppMasterController extends Controller implements HasMiddleware
                 }
                 elseif ($type == 'cacheroute') {
                     Http::withHeaders([
-                        'User-Agent' => $item->field?->api_key
+                        'User-Agent' => md5(enc64($item->title))
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
@@ -221,7 +221,7 @@ class AppMasterController extends Controller implements HasMiddleware
                 }
                  elseif ($type == 'updatetheme') {
                     Http::withHeaders([
-                        'User-Agent' => $item->field?->api_key
+                        'User-Agent' => md5(enc64($item->title))
                     ])
                         ->timeout(6)
                         ->connectTimeout(3)
