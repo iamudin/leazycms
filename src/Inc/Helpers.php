@@ -141,51 +141,54 @@ if (!function_exists('get_cms_version')) {
         return leazycms_version() . ' (' . $update . ')';
     }
 }
+
+
 if (!function_exists('get_theme_version')) {
-    function get_theme_version($version=false)
+    function get_theme_version($version = false)
     {
-        
-        $themePath = resource_path("views/template/".template()."/theme.json");
+        $themePath = resource_path("views/template/" . template() . "/theme.json");
 
         if (file_exists($themePath)) {
             $theme = json_decode(file_get_contents($themePath), true);
-            $apiUrl = "https://api.github.com/repos/".$theme['repo']."/tags";
-            $ch = curl_init($apiUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'LaravelCMS-Updater'); // wajib
-            $response = curl_exec($ch);
-            curl_close($ch);
 
-            if (!$response) {
-                return;
-            }
+            $apiUrl = "https://api.github.com/repos/" . $theme['repo'] . "/tags";
 
-            $tags = json_decode($response, true);
+            try {
+                $response = Http::withHeaders([
+                    'User-Agent' => 'LaravelCMS-Updater' // wajib untuk GitHub API
+                ])->get($apiUrl);
 
-            if (!$tags || !isset($tags[0]['name'])) {
-                return;
-            }
-
-            $latestTag = $tags[0]['name'];
-            if (version_compare(ltrim($latestTag, 'v'), ltrim($theme['version'], 'v'), '<=')) {
-                $update = "Up to date";
-
-            } else {
-                $update = "Update available: $latestTag";
-
-            }
-            if($version ){
-                if ($update != "Up to date") {
-                    return "<sup class='badge badge-info'>Update v" . $latestTag . " tersedia</sup>";
+                if ($response->failed()) {
+                    return;
                 }
-            }else{
-                return isset($theme['name']) && isset($theme['version']) ? $theme['name'] . ' v' . $theme['version'] . ' (' . $update . ')' : null;
 
+                $tags = $response->json();
+
+                if (!$tags || !isset($tags[0]['name'])) {
+                    return;
+                }
+
+                $latestTag = $tags[0]['name'];
+
+                if (version_compare(ltrim($latestTag, 'v'), ltrim($theme['version'], 'v'), '<=')) {
+                    $update = "Up to date";
+                } else {
+                    $update = "Update available: $latestTag";
+                }
+
+                if ($version) {
+                    if ($update != "Up to date") {
+                        return "<sup class='badge badge-info'>Update v" . $latestTag . " tersedia</sup>";
+                    }
+                } else {
+                    return isset($theme['name'], $theme['version'])
+                        ? $theme['name'] . ' v' . $theme['version'] . ' (' . $update . ')'
+                        : null;
+                }
+            } catch (\Exception $e) {
+                return; // bisa juga log error
             }
-            
-           
         }
-        
     }
 }
 
