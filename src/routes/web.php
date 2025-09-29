@@ -1,11 +1,7 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use Leazycms\Web\Http\Controllers\WebController;
 use Leazycms\Web\Http\Controllers\ExtController;
-Route::get('cinta/buta',function(){
-    return env('ENV_SAYA');
-});
 $modules = collect(get_module())->where('name','!=','page')->where('active', true)->where('public', true);
     foreach($modules as $modul)
      {
@@ -26,7 +22,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
                         Route::match(['get', 'post'], '/{slug}', 'detail');
                     }
                     if ($modul->web->archive){
-                        Route::match(['get', 'post'],'archive/{year?}/{month?}/{date?}', 'archive');
+                        Route::match(['get', 'post'],'archive/{year?}/{month?}/{date?}', 'archive')->where(['year' => '20[0-9]{2}','month' => '(0[1-9]|1[0-2])','date' => '(0[1-9]|[12][0-9]|3[01])']);
                     }
                     if ($modul->form->category) {
                         Route::match(['get', 'post'], 'category/{slug}','category');

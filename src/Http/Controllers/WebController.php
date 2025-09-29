@@ -223,41 +223,34 @@ class WebController extends Controller
     }
     public function archive(Request $request, Post $post, $year = null, $month = null, $date = null)
     {
+        $type = get_post_type();
+        abort_if($year > date('Y'), 404);
+
         if ($year && !$month && !$date) {
-            if (is_year($year)) {
                 $periode = $year;
-                $data = $post->whereType(get_post_type())->whereStatus('publish')->whereYear('created_at', $year)->paginate(get_option('post_perpage'));
-            } else {
-                return to_route(get_post_type() . '.archive', []);
-            }
+                $data = $post->onType($type)->published()->whereYear('created_at', $year)->paginate(get_option('post_perpage'));
         } elseif ($year && $month && !$date) {
 
-            if (is_year($year) && is_month($month)) {
                 $periode = blnindo($month) . ' ' . $year;
-                $data = $post->whereType(get_post_type())
-                    ->whereStatus('publish')
+                $data = $post->onType($type)
+                    ->published()
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->paginate(get_option('post_perpage'));
-            } else {
-                return to_route(get_post_type() . '.archive', [$year]);
-            }
+          
         } elseif ($year && $month && $date) {
 
-            if (is_year($year) && is_month($month) && is_day($date)) {
+
                 $periode = ((substr($date, 0, 1) == '0') ? substr($date, 1, 2) : $date) . ' ' . blnindo($month) . ' ' . $year;
-                $data = $post->whereType(get_post_type())->whereStatus('publish')
+                $data = $post->onType($type)
+                ->published()
                     ->whereDate('created_at', $year . '-' . $month . '-' . $date)
                     ->paginate(get_option('post_perpage'));
-            } else {
-                return to_route(get_post_type() . '.archive', [$year, $month]);
-            }
-        } else {
-            return to_route(get_post_type() . '.archive', [date('Y')]);
-        }
+        
+        } 
 
         $data = array(
-            'title' => 'Arsip ' . get_module(get_post_type())->title . ' ' . $periode,
+            'title' => 'Arsip ' . get_module($type)->title . ' ' . $periode,
             'icon' => 'fa-archive',
             'index' => $data
         );
