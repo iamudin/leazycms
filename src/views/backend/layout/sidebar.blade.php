@@ -127,12 +127,12 @@
                             <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; CUSTOM MENU
                 </li>
                 @foreach(collect($custom)->where('show_in_sidebar', true) as $cs)
-                        <li title="{{$cs['name']}}">
+                        <li title="{{$cs['title']}}">
                     <a
                         class="app-menu__item {{ active_item($cs['path']) }}"
                         href="{{ admin_url($cs['path']) }}"
                         ><i class="app-menu__icon fa {{$cs['icon']}}"></i>
-                        <span class="app-menu__label">{{$cs['name']}}</span></a
+                        <span class="app-menu__label">{{$cs['title']}}</span></a
                     >
                 </li>
                 @endforeach

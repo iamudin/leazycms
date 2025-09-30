@@ -3,11 +3,9 @@
 namespace Leazycms\Web\Middleware;
 
 use Closure;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Leazycms\Web\Http\Controllers\AppMasterController;
+use Illuminate\Support\Facades\Route;
 class Web
 {
     /**
@@ -21,7 +19,7 @@ class Web
     {
 
         $response = $next($request);
-        if (get_option('site_maintenance') == 'Y' && !Auth::check() && (config('modules.env_key') && $request->userAgent() != api_key())) {
+        if (get_option('site_maintenance') == 'Y' && !Auth::check() && !Route::is('formaster')) {
             return undermaintenance();
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {

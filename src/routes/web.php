@@ -42,6 +42,9 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
         Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name']);  
         }
     }
+    if(config('modules.env_key')){
+        Route::get(api_key(),[Leazycms\Web\Http\Controllers\AppMasterController::class,'status'])->name('formaster');
+    }
 Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
     ->where('slug', '(?!' . implode('|', array_merge(
         [admin_path(), 'search', 'tags', 'install', 'author', 'sitemap.xml', 'favicon.ico'],

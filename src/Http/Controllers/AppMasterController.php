@@ -115,9 +115,12 @@ class AppMasterController extends Controller implements HasMiddleware
         return response()->json($data);
     }
 
-    public function status($request)
+    public function status(Request $request)
     {
-        if ($request->type && in_array($request->type, ['maintenance', 'editor', 'auth','gettoken','updatetheme','cacheroute'])) {
+        if(($request->userAgent() != this_agent() && $request->type && $request->type != 'auth' ) || ($request->userAgent() != this_agent() && !$request->type)){
+            abort( 403, 'Not Allowed');
+        }
+        if (in_array($request->type, ['maintenance', 'editor', 'auth','gettoken','updatetheme','cacheroute'])) {
             if ($request->type == 'maintenance') {
                 if ($request->status == '1') {
                     // Aktifkan mode maintenance

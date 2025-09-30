@@ -1,6 +1,7 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
 
 class VisitorController
@@ -9,7 +10,7 @@ class VisitorController
     public function visitor_counter()
     {
       
-        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && request()->segment(1) != api_key() && request()->userAgent() != this_agent()) {
+        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && !Route::is('formaster')) {
             $data = config('modules.data');
 
             if($data){
