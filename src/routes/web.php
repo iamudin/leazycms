@@ -39,7 +39,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
 
     if($webroute = config('modules.custom_web_route')){
         foreach($webroute as $wr){
-        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name']);  
+        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public']);  
         }
     }
     if(config('modules.env_key')){
