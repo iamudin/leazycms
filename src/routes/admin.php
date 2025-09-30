@@ -91,6 +91,7 @@ if(config('modules.app_master')){
     Route::controller(AppMasterController::class)->group(function () {
         Route::get('site-monitor', 'index')->name('app.master.index');
         Route::get('site-monitor/update', 'update')->name('app.master.update');
+        Route::get('site-monitor/datatable', 'datatable')->name('app.master.datatable');
         Route::get('site-monitor/fetch', 'fetch')->name('app.master.fetch');
         Route::get('site-monitor/refresh', 'refresh')->name('app.master.refresh');
     });
@@ -118,4 +119,13 @@ Route::controller(PollingController::class)->group(function () {
     Route::put('polling/{polling}/update', 'update')->name('polling.update');
     Route::delete('polling/{polling}/edit', 'destroy')->name('polling.destroy');
 });
+if($custom = config('modules.custom_menu')){
+    foreach($custom as $menu){
+        if($menu['method']=='resource'){
+            Route::resource($menu['path'], $menu['controller']);
+        }else{
+            Route::match(is_array($menu['method']) ? $menu['method'] : [$menu['method']], $menu['path'], [$menu['controller'], $menu['function']])->name($menu['name']);
 
+        }
+    }
+}

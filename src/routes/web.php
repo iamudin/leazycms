@@ -37,9 +37,17 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
     Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
     Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
 
-    Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
-->where('slug', '(?!' . implode('|', array_merge([admin_path(),'search','tags','install','author','sitemap.xml','favicon.ico'],$modules->pluck('name')
-->toArray())) . ')[a-zA-Z0-9-_]+')->middleware(['public']);
+    if($webroute = config('modules.custom_web_route')){
+        foreach($webroute as $wr){
+        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name']);  
+        }
+    }
+Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
+    ->where('slug', '(?!' . implode('|', array_merge(
+        [admin_path(), 'search', 'tags', 'install', 'author', 'sitemap.xml', 'favicon.ico'],
+        $modules->pluck('name')->toArray()
+    )) . ')[a-zA-Z0-9-_]+')
+    ->middleware(['public']);
 
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public']);
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');

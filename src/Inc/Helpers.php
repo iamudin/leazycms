@@ -12,6 +12,53 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+if (!function_exists('add_route')) {
+    function add_route($type,$array)
+    {
+        if($type=='admin'){
+            /* sample for admin route + menu sidebar show :
+            add_route('admin', [
+                'title' => 'Pendaftaran Anggota',
+                'name' => 'pendaftaran',
+                'icon' => 'fa-list',
+                'path' => 'pendaftaran',
+                'method' => ['get'],
+                'function' => 'index',
+                'controller' => \App\Http\Controllers\DataController::class,
+                'show_in_sidebar' => true,
+            ]);
+            */
+            $custom_menu = config('modules.custom_menu') ?? [];
+            $custom_menu[] = $array;
+            // simpan kembali ke config runtime
+            config(['modules.custom_menu' => $custom_menu]);
+
+            return $custom_menu;
+        }elseif($type=='public'){
+            /*
+        Sample for public route like this: 
+        add_route('public',[
+          'path'       => 'menu1',
+          'method'     => 'post',
+          'function'   => 'myfunction',
+          'controller' => \App\Http\Controllers\NameController::class
+      ]);
+      */
+            $route= config('modules.custom_web_route') ?? [];
+            $route[] = $array;
+
+            // simpan kembali ke config runtime
+            config(['modules.custom_web_route' => $route]);
+
+            return $route;
+    }
+        return null;
+      
+  
+    }
+}
+
+
 if (!function_exists('is_main_domain')) {
     function is_main_domain()
     {

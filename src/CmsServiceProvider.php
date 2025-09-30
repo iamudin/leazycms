@@ -103,25 +103,32 @@ class CmsServiceProvider extends ServiceProvider
         Carbon::setLocale('ID');
         config(['app.timezone' => config('modules.timezone')]);
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
-        
-        if (DB::connection()->getDatabaseName()) {
-            try{
-         
-            if(!config('modules.option')){
-                $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
-                config(['modules.option' => $options]);
+
+        if (
+            DB::connection()->getDatabaseName() &&
+            (config('modules.installed', false) ? true : $this->checkAllTables())
+        ) {
+            try {
+                if (!config('modules.option')) {
+                    $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
+                    config(['modules.option' => $options]);
+                }
+
+                if (
+                    (get_option('site_maintenance') && get_option('site_maintenance') == 'Y')
+                    || (!$this->app->environment('production') && config('app.debug') == true)
+                ) {
+                    Config::set(['app.debug' => true]);
+                } else {
+                    Config::set(['app.debug' => true]);
+                }
+            } catch (\Exception $e) {
+                return abort(500, $e->getMessage());
             }
-            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y') || (!$this->app->environment('production') && config('app.debug') == true)) {
-                Config::set(['app.debug' => true]);
-            } else {
-                Config::set(['app.debug' => false]);
-            }
+
+            $this->loadTemplateConfig();
         }
-        catch (\Exception $e) {
-        return abort('500',$e->getMessage());
-    }
-        $this->loadTemplateConfig();
-        }
+
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }

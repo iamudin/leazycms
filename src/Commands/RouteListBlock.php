@@ -13,7 +13,7 @@ class RouteListBlock extends Command
 
     public function handle()
     {
-        if (Cache::has('enablededitortemplate')) {
+        if (is_local()) {
             // Jika enableviewroute aktif, jalankan route:list asli
             $this->call(RouteListCommand::class);
         } else {
