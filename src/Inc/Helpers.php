@@ -82,6 +82,20 @@ if (!function_exists('web_header')) {
         return View::make(blade_path('header'));
     }
 }
+
+if (!function_exists('datatable_asset')) {
+    function datatable_asset($type)
+    {
+        if($type=='style'){
+            return View::make('cms::backend.layout.dtstyle');
+
+        }elseif($type=='js'){
+            return View::make('cms::backend.layout.dtjs');
+
+        }
+        return null;
+    }
+}
 if (!function_exists('web_footer')) {
     function web_footer()
     {
@@ -572,7 +586,8 @@ if (!function_exists('active_item')) {
                 }
             }
         } else {
-            if (request()->is(admin_path() . '/' . $val) || request()->is(admin_path() . '/' . $val . '/*') || request()->is(admin_path() . '/' . $val . '/*/*'))
+            $firstSegment = explode('/', trim($val, '/'))[0];
+            if (request()->is(admin_path() . '/' . $firstSegment) || request()->is(admin_path() . '/' . $firstSegment . '/*') || request()->is(admin_path() . '/' . $firstSegment . '/*/*'))
                 return 'active';
         }
     }
