@@ -120,7 +120,7 @@ class CmsServiceProvider extends ServiceProvider
                 ) {
                     Config::set(['app.debug' => true]);
                 } else {
-                    Config::set(['app.debug' => true]);
+                    Config::set(['app.debug' => false]);
                 }
             } catch (\Exception $e) {
                 return abort(500, $e->getMessage());
