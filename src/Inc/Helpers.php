@@ -13,48 +13,42 @@ if (!function_exists('query')) {
     }
 }
 if (!function_exists('add_route')) {
-    function add_route($type,$array)
+    function add_route($type, $array)
     {
-        if($type=='admin'){
-            /* sample for admin route + menu sidebar show :
-            add_route('admin', [
-                'title' => 'Pendaftaran Anggota',
-                'name' => 'pendaftaran',
-                'icon' => 'fa-list',
-                'path' => 'pendaftaran',
-                'method' => ['get'],
-                'function' => 'index',
-                'controller' => \App\Http\Controllers\DataController::class,
-                'show_in_sidebar' => true,
-            ]);
-            */
+        if ($type == 'admin') {
+            // daftar key wajib untuk admin
+            $requiredKeys = ['title', 'name', 'icon', 'path', 'method', 'function', 'controller', 'show_in_sidebar'];
+        } elseif ($type == 'public') {
+            // daftar key wajib untuk public
+            $requiredKeys = ['name', 'path', 'method', 'function', 'controller'];
+        } else {
+            return null;
+        }
+
+        // validasi: cek semua required key ada
+        foreach ($requiredKeys as $key) {
+            if (!array_key_exists($key, $array)) {
+                // kalau ada key wajib yang tidak ada, langsung return false
+                return false;
+            }
+        }
+
+        // kalau valid → simpan ke config
+        if ($type == 'admin') {
             $custom_menu = config('modules.custom_menu') ?? [];
             $custom_menu[] = $array;
-            // simpan kembali ke config runtime
             config(['modules.custom_menu' => $custom_menu]);
 
             return $custom_menu;
-        }elseif($type=='public'){
-            /*
-        Sample for public route like this: 
-        add_route('public',[
-          'path'       => 'menu1',
-          'method'     => 'post',
-          'function'   => 'myfunction',
-          'controller' => \App\Http\Controllers\NameController::class
-      ]);
-      */
-            $route= config('modules.custom_web_route') ?? [];
+        } elseif ($type == 'public') {
+            $route = config('modules.custom_web_route') ?? [];
             $route[] = $array;
-
-            // simpan kembali ke config runtime
             config(['modules.custom_web_route' => $route]);
 
             return $route;
-    }
+        }
+
         return null;
-      
-  
     }
 }
 

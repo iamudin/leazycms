@@ -119,23 +119,23 @@
         </li>
         @endif
           @if(Auth::user()->level == 'admin')
-          @if($custom = collect(config('modules.custom_menu'))->where('show_in_sidebar',true))
-            <li
-                class="text-muted"
-                style="padding: 12px 10px; font-size: small; background: #000"
-            >
-                        <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; CUSTOM MENU
-            </li>
-            @foreach($custom as $cs)
-                    <li title="{{$cs['name']}}">
-                <a
-                    class="app-menu__item {{ active_item($cs['path']) }}"
-                    href="{{ admin_url($cs['path']) }}"
-                    ><i class="app-menu__icon fa {{$cs['icon']}}"></i>
-                    <span class="app-menu__label">{{$cs['name']}}</span></a
+              @if($custom = config('modules.custom_menu'))
+                <li
+                    class="text-muted"
+                    style="padding: 12px 10px; font-size: small; background: #000"
                 >
-            </li>
-            @endforeach
+                            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; CUSTOM MENU
+                </li>
+                @foreach(collect($custom)->where('show_in_sidebar', true) as $cs)
+                        <li title="{{$cs['name']}}">
+                    <a
+                        class="app-menu__item {{ active_item($cs['path']) }}"
+                        href="{{ admin_url($cs['path']) }}"
+                        ><i class="app-menu__icon fa {{$cs['icon']}}"></i>
+                        <span class="app-menu__label">{{$cs['name']}}</span></a
+                    >
+                </li>
+                @endforeach
             @endif
         @endif
         @if(config('app.sub_app_enabled'))

@@ -140,19 +140,27 @@ class CmsServiceProvider extends ServiceProvider
         $configFile = resource_path("views/template/{$templateName}/modules.blade.php");
 
         if (file_exists($configFile)) {
-            ob_start();
-            include $configFile;
-            ob_end_clean();
-            if (isset($config)) {
-                foreach($config ?? [] as $key=>$row){
-                    if(!config('modules.config.'.$key)){
-                        config(['modules.config.'.$key => $row]);
+            try {
+                ob_start();
+                $config = [];
+                // suppress error pakai @ agar tidak fatal
+                @include $configFile;
+                ob_end_clean();
+
+                if (!empty($config) && is_array($config)) {
+                    foreach ($config as $key => $row) {
+                        if (!config('modules.config.' . $key)) {
+                            config(['modules.config.' . $key => $row]);
+                        }
                     }
                 }
+            } catch (\Throwable $e) {
+                // kalau ada error, jangan lakukan apa-apa
+                \Log::warning("Template config gagal diload: " . $e->getMessage());
             }
         }
-
     }
+
     /**
      * Summary of register
      * @return void
