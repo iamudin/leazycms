@@ -7,14 +7,7 @@
 
 </div>
     <div class="col-lg-12">
-      @if($versi = leazycms_version())
-      @php $latestv = getLatestVersion(); @endphp
-        @if($versi  != $latestv)
-        <div class="alert alert-info">
-            <strong> <i class="fa fa-sync"></i> New Version {{ $latestv }} Update Available!</strong> You are currently running version {{ $versi }}
-        </div>
-        @endif
-        @endif
+
   <div class="row">
     @foreach($type as $row)
           <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{Route::has($row->name) ? route($row->name) : ''}}'">

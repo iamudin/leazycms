@@ -910,7 +910,6 @@ return [
     'app_master' => env('APP_MASTER', false),
     'installed' => env('APP_INSTALLED', 0),
     'public_path' => env('PUBLIC_PATH', null),
-    'version' => null,
     'timezone' => env('APP_TIMEZONE','Asia/Jakarta'),
     'template' => env('TEMPLATE_PATH', null),
     'env_key'=>env('ENV_KEY',null),

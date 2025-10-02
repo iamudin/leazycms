@@ -173,9 +173,9 @@ class AppMasterController extends Controller implements HasMiddleware
                 'editor_template_enabled' => Cache::has('enablededitortemplate') ? true : false,
                 'maintenance' => get_option('site_maintenance') == 'Y' ? true : false,
                 'api_key' => md5(enc64(config('app.key'))),
-                'cms_version' => get_cms_version() ?? null,
+                'cms_version' => current_cms_version(),
                 'route_cached' => app()->routesAreCached() ? true: false,
-                'theme_version' => get_theme_version() ?? null,
+                'theme_version' => current_theme_version(),
                 'active_modules' => collect(get_module())->pluck('title')->toArray(),
             ];
             return response()->json($data);

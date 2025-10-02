@@ -278,7 +278,7 @@
             style="padding: 12px 10px; font-size: small; background: #000"
         >
             <small>Build by: </small><b class="text-white">Leazycms</b
-            ><sup class="text-danger">{{ leazycms_version() }}</sup>
+            ><sup class="text-danger">{{ current_cms_version() }}</sup>
             <a
                 target="_blank"
                 href="https://leazycms.web.id/docs"

@@ -168,13 +168,13 @@ if (!function_exists('getThumbUrl')) {
     }
 }
 
-if (!function_exists('getLatestVersion')) {
+if (!function_exists('this_agent')) {
     function this_agent(){
         return md5(enc64(no_http_url(config('app.url'))));
     }
 }
-if (!function_exists('getLatestVersion')) {
-    function getLatestVersion($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
+if (!function_exists('latest_version')) {
+    function latest_version($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
     {
         $url = "https://repo.packagist.org/p2/{$packageName}.json";
         $retryCount = 0;
@@ -216,90 +216,25 @@ if (!function_exists('no_http_url')) {
         return parse_url($domain, PHP_URL_HOST);
     }
 }
-if (!function_exists('get_cms_version')) {
-    function get_cms_version()
-    {
-        $update = null;
-        $current = leazycms_version();
-        $latest = getLatestVersion();
-         if (version_compare(ltrim($latest, 'v'), ltrim($current, 'v'), '<=')) {
-            $update = "Up to date";
-        }else{
-            $update = "Update available : $latest";
-
-        }
-        return leazycms_version() . ' (' . $update . ')';
-    }
-}
 
 
-if (!function_exists('get_theme_version')) {
-    function get_theme_version($version = false)
+if (!function_exists('current_theme_version')) {
+    function current_theme_version()
     {
         $themePath = resource_path("views/template/" . template() . "/theme.json");
 
         if (file_exists($themePath)) {
             $theme = json_decode(file_get_contents($themePath), true);
-
-            $apiUrl = "https://api.github.com/repos/" . $theme['repo'] . "/tags";
-
-            try {
-                $response = Http::withHeaders([
-                    'User-Agent' => 'LaravelCMS-Updater' // wajib untuk GitHub API
-                ])->get($apiUrl);
-
-                if ($response->failed()) {
-                    return;
-                }
-
-                $tags = $response->json();
-
-                if (!$tags || !isset($tags[0]['name'])) {
-                    return;
-                }
-
-                $latestTag = $tags[0]['name'];
-
-                if (version_compare(ltrim($latestTag, 'v'), ltrim($theme['version'], 'v'), '<=')) {
-                    $update = "Up to date";
-                } else {
-                    $update = "Update available: $latestTag";
-                }
-
-                if ($version) {
-                    if ($update != "Up to date") {
-                        return "<sup class='badge badge-info'>Update v" . $latestTag . " tersedia</sup>";
-                    }
-                } else {
-                    return isset($theme['name'], $theme['version'])
-                        ? $theme['name'] . ' v' . $theme['version'] . ' (' . $update . ')'
-                        : null;
-                }
-            } catch (\Exception $e) {
-                return; // bisa juga log error
-            }
+            return isset($theme['version']) ? $theme['name']." ".ltrim($theme['version'], 'v') : null;
         }
     }
 }
 
-if (!function_exists('leazycms_version')) {
+if (!function_exists('current_cms_version')) {
 
-    function leazycms_version()
+    function current_cms_version($key='version')
     {
-        $composerLockPath = base_path('composer.lock');
-
-        $composerLockContents = file_get_contents($composerLockPath);
-
-        $composerData = json_decode($composerLockContents, true);
-
-        $packageVersion = null;
-        foreach ($composerData['packages'] as $package) {
-            if ($package['name'] === 'leazycms/web') {
-                $packageVersion = $package['version'];
-                break;
-            }
-        }
-        return $packageVersion;
+        return  json_decode(file_get_contents(__DIR__.'/../version'),true)[$key] ?? null;
     }
 }
 
@@ -1218,7 +1153,26 @@ if (!function_exists('dec64')) {
         return base64_decode(base64_decode($val));
     }
 }
+if (!function_exists('cms_update_checker')) {
+ function cms_update_checker()
+    {
+        $current = current_cms_version();
 
+        $latest = latest_version(); // misalnya versi terbaru dari repo / config
+
+        if ($current && version_compare($current, $latest, '<')) {
+            $status = "Perlu update (current: $current, latest: $latest)";
+        } elseif ($current && version_compare($current, $latest, '=')) {
+            $status = "Sudah versi terbaru ($current)";
+        } elseif ($current && version_compare($current, $latest, '>')) {
+            $status = "Versi lokal lebih tinggi ($current > $latest)";
+        } else {
+            $status = "File version tidak ditemukan";
+        }
+
+        return $status;
+    }
+    }
 if (!function_exists('template_info')) {
     function template_info()
     {
