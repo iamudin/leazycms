@@ -1298,6 +1298,11 @@ if (!function_exists('init_wabutton')) {
         return view()->make('cms::layouts.floatwa');
     }
 }
+if (!function_exists('page_name')) {
+function page_name($name){
+    config(['modules.page_name'=>$name]);
+}
+}
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
     {
