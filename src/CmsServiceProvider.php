@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Leazycms\Web\Commands\ThemeUpdateCommand;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Leazycms\Web\Middleware\Panel;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +66,7 @@ class CmsServiceProvider extends ServiceProvider
             __DIR__ . '/views/template' => resource_path('views/template')
         ], 'cms');
     }
+  
     public function boot()
     {
 
@@ -126,8 +128,8 @@ class CmsServiceProvider extends ServiceProvider
                 return abort(500, $e->getMessage());
             }
 
-            $this->loadTemplateConfig();
         }
+            $this->loadTemplateConfig();
 
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
@@ -147,7 +149,7 @@ class CmsServiceProvider extends ServiceProvider
                 ob_end_clean();
             } catch (\Throwable $e) {
                 // kalau ada error, jangan lakukan apa-apa
-                \Log::warning("Template config gagal diload: " . $e->getMessage());
+                Log::warning("Template config gagal diload: " . $e->getMessage());
             }
         }
     }

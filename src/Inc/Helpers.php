@@ -855,6 +855,7 @@ if (!function_exists('is_admin')) {
         return auth()->user()->level == 'admin' ? true : false;
     }
 }
+
 if (!function_exists('use_module')) {
     function use_module($module_selected)
     {
@@ -1411,17 +1412,9 @@ if (!function_exists('load_default_module')) {
     {
         $default = [
             'berita' => ['active' => true],
-            'agenda' => ['active' => true],
-            'pengumuman' => ['active' => true],
             'menu' => ['active' => true],
             'banner' => ['active' => true],
-            'galeri' => ['active' => true],
             'page' => ['active' => true],
-            'sambutan' => ['active' => true],
-            'unit-kerja' => ['active' => true],
-            'kepegawaian' => ['active' => true],
-            'layanan' => ['active' => true],
-            'faq' => ['active' => true],
         ];
         if(config('modules.app_master')){
             $default['sites'] = ['active' => true];
