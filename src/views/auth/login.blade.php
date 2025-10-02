@@ -176,7 +176,7 @@ outline: none;
             <button class="btn btn-warning btn-block"><i class="fa fa-sign-in fa-lg fa-fw"></i>MASUK</button>
           </div>
           <div class="form-group text-white credit text-center mt-4">
-            <small>Build with &#10084; by LeazyCMS v{{ leazycms_version() ?? '0.0' }}</small></div>
+            <small>Build with &#10084; by LeazyCMS v{{ current_cms_version() ?? '0.0' }}</small></div>
         </form>
       </div>
     </section>
