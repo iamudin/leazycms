@@ -369,7 +369,7 @@ class Post extends Model
 
     function index_recent($type, $except = null)
     {
-        if (get_module($type)->cache) {
+        if (get_module($type)?->cache) {
             return $except ? $this->cachedpost($type)->whereNotIn('id', [$except])->take(5) : $this->cachedpost($type)->take(5);
         } else {
             $query = $this->selectedColumn()->onType($type)->published();
@@ -382,7 +382,7 @@ class Post extends Model
 
     function index_child($type, $id,$perpage=false)
     {
-        if (get_module($type)->cache) {
+        if (get_module($type)?->cache) {
             return $this->cachedpost($type)->where('parent_id', $id);
         } else {
             $q = $this->select($this->selected)
@@ -404,7 +404,7 @@ class Post extends Model
     function detail($type, $name = false)
     {
         if ($name) {
-            if (get_module($type)->form->category) {
+            if (get_module($type)?->form?->category) {
                 $with[] = 'category';
             }
 
@@ -415,7 +415,7 @@ class Post extends Model
                 ->with(array_merge($with??[],['user']))
                 ->first();
         } else {
-            if (get_module($type)->cache) {
+            if (get_module($type)?->cache) {
                 return collect($this->cachedpost($type))->first();
             } else {
                 return $this->onType($type)->published()->first();
