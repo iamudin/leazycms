@@ -173,6 +173,43 @@ if (!function_exists('this_agent')) {
         return md5(enc64(no_http_url(config('app.url'))));
     }
 }
+if (!function_exists('latest_theme_version')) {
+    function latest_theme_version()
+    {
+        $themePath = resource_path("views/template/".template()."/theme.json");
+
+        if (!File::exists($themePath)) {
+            return null;
+        }
+
+        $theme = json_decode(File::get($themePath), true);
+        $repo = $theme['repo'] ?? null; // format: username/repo
+
+        if (!$repo) {
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'LaravelCMS-VersionChecker'
+            ])->get("https://api.github.com/repos/{$repo}/tags");
+
+            if ($response->failed()) {
+                return null;
+            }
+
+            $tags = $response->json();
+
+            if (!$tags || !isset($tags[0]['name'])) {
+                return null;
+            }
+
+            return $tags[0]['name']; // hanya return versi terbaru
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+}
 if (!function_exists('latest_version')) {
     function latest_version($packageName = 'leazycms/web', $maxRetries = 1, $retryDelay = 1)
     {
@@ -209,6 +246,7 @@ if (!function_exists('latest_version')) {
         return null;
     }
 }
+
 if (!function_exists('no_http_url')) {
 
     function no_http_url($domain)
@@ -225,6 +263,7 @@ if (!function_exists('current_theme_version')) {
 
         if (file_exists($themePath)) {
             $theme = json_decode(file_get_contents($themePath), true);
+           
             return isset($theme['version']) ? $theme['name']." ".ltrim($theme['version'], 'v') : null;
         }
     }

@@ -90,7 +90,7 @@
   $template_asset = config('modules.config.option.template_asset') ?? null;
           @endphp
           @if($template_asset && is_array($template_asset))
-              <h6> <i class="fa fa-file"></i> Template Assets <small class="text-muted">(optional)</small> </h6>
+              <h6> <i class="fa fa-gear"></i> Template Setting <small class="text-muted">(optional)</small> </h6>
               <form action="{{ URL::current() }}" method="post" enctype="multipart/form-data">
                   @csrf
               <div class="row">
