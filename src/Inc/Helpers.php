@@ -12,38 +12,72 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+  if (!function_exists('add_option')) {
+    function add_option($key, $array)
+    {
+        // ambil config saat ini
+        $options = config('modules.config.option', []);
+
+        // cek apakah sudah ada key tersebut
+        if (!array_key_exists($key, $options)) {
+            // jika belum ada, tambahkan
+            $options[$key] = $array;
+
+            // set ulang config (runtime saja, tidak menulis file)
+            config(['modules.config.option' => $options]);
+        }
+
+        return config('modules.config.option');
+    }
+}
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {
         if ($type == 'admin') {
-            // daftar key wajib untuk admin
             $requiredKeys = ['title', 'name', 'icon', 'path', 'method', 'function', 'controller', 'show_in_sidebar'];
         } elseif ($type == 'public') {
-            // daftar key wajib untuk public
             $requiredKeys = ['name', 'path', 'method', 'function', 'controller'];
         } else {
             return null;
         }
 
-        // validasi: cek semua required key ada
+        // validasi key wajib
         foreach ($requiredKeys as $key) {
             if (!array_key_exists($key, $array)) {
-                // kalau ada key wajib yang tidak ada, langsung return false
                 return false;
             }
         }
 
-        // kalau valid → simpan ke config
         if ($type == 'admin') {
-            $custom_menu = config('modules.custom_menu') ?? [];
-            $custom_menu[] = $array;
-            config(['modules.custom_menu' => $custom_menu]);
+            $custom_menu = config('modules.custom_menu', []);
+
+            // cek duplikat → berdasarkan name + path + method
+            $exists = collect($custom_menu)->first(function ($item) use ($array) {
+                return $item['name'] === $array['name']
+                    && $item['path'] === $array['path']
+                    && $item['method'] === $array['method'];
+            });
+
+            if (!$exists) {
+                $custom_menu[] = $array;
+                config(['modules.custom_menu' => $custom_menu]);
+            }
 
             return $custom_menu;
         } elseif ($type == 'public') {
-            $route = config('modules.custom_web_route') ?? [];
-            $route[] = $array;
-            config(['modules.custom_web_route' => $route]);
+            $route = config('modules.custom_web_route', []);
+
+            // cek duplikat → berdasarkan name + path + method
+            $exists = collect($route)->first(function ($item) use ($array) {
+                return $item['name'] === $array['name']
+                    && $item['path'] === $array['path']
+                    && $item['method'] === $array['method'];
+            });
+
+            if (!$exists) {
+                $route[] = $array;
+                config(['modules.custom_web_route' => $route]);
+            }
 
             return $route;
         }
@@ -51,6 +85,7 @@ if (!function_exists('add_route')) {
         return null;
     }
 }
+
 
 
 if (!function_exists('is_main_domain')) {

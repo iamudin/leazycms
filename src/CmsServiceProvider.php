@@ -142,18 +142,9 @@ class CmsServiceProvider extends ServiceProvider
         if (file_exists($configFile)) {
             try {
                 ob_start();
-                $config = [];
                 // suppress error pakai @ agar tidak fatal
                 @include $configFile;
                 ob_end_clean();
-
-                if (!empty($config) && is_array($config)) {
-                    foreach ($config as $key => $row) {
-                        if (!config('modules.config.' . $key)) {
-                            config(['modules.config.' . $key => $row]);
-                        }
-                    }
-                }
             } catch (\Throwable $e) {
                 // kalau ada error, jangan lakukan apa-apa
                 \Log::warning("Template config gagal diload: " . $e->getMessage());

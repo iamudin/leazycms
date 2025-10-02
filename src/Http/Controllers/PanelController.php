@@ -228,14 +228,17 @@ class PanelController extends Controller implements HasMiddleware
             ->rawColumns(['created_at', 'ip_location', 'reference', 'page'])
             ->toJson();
     }
-    public function option(Request $request, Option $option)
+    public function option(Request $request, $slug=null)
     {
-        if (empty(config('modules.config.option'))) {
+
+        $data = config('modules.config.option.'._us($slug));
+        if (empty($data)) {
             return to_route('panel.dashboard');
         }
+
         if ($request->isMethod('post')) {
-            foreach (config('modules.config.option') as $row) {
-                foreach ($row as $field) {
+            $option = new Option;
+                foreach ($data as $field) {
                     $key = _us($field[0]);
                     if ($request->$key) {
                         if($field[1]=='file'){
@@ -253,11 +256,10 @@ class PanelController extends Controller implements HasMiddleware
                         }
 
                     }
-                }
             }
             return back()->with('success', 'Berhasil Diupdate');
         }
-        return view('cms::backend.option');
+        return view('cms::backend.option',compact('data','slug'));
     }
     public function setting(Request $request, Option $option)
     {
@@ -585,7 +587,7 @@ class PanelController extends Controller implements HasMiddleware
                 return $this->template_uploader($file);
             }
             if ($ta = $request->template_asset) {
-                $ar_ta = config('modules.config.template_asset') ?? null;
+                $ar_ta = config('modules.config.option.template_asset') ?? null;
                 if ($ar_ta) {
                     $success = array();
                     foreach ($ar_ta as $row) {

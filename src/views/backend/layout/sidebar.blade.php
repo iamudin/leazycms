@@ -23,7 +23,7 @@
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/dashboard') ? 'active' : '' }}"
                 href="{{ route('panel.dashboard') }}"
-                ><i class="app-menu__icon fa fa-dashboard"></i>
+                ><i class="app-menu__icon fa fa-dashboard text-danger"></i>
                 <span class="app-menu__label">Dahsboard</span></a
             >
         </li>
@@ -40,7 +40,7 @@
                 class="app-menu__item"
                 href="#"
                 data-toggle="treeview"
-                ><i class="app-menu__icon fa {{ $row->icon }}"></i
+                ><i class="app-menu__icon text-danger fa {{ $row->icon }}"></i
                 ><span class="app-menu__label">{{ $row->title }}</span
                 ><i class="treeview-indicator fa fa-chevron-right"></i
             ></a>
@@ -49,7 +49,7 @@
                     <a
                         class="treeview-item @if (request()->segment(4) == 'edit') active @endif"
                         href="{{ Route::has($row->name . '.create') ? route($row->name . '.create') : '' }}"
-                        ><i class="icon fa fa-plus"></i> Tambah {{ $row->title
+                        ><i class="icon fa fa-plus text-warning"></i> Tambah {{ $row->title
                         }}</a
                     >
                 </li>
@@ -57,7 +57,7 @@
                     <a
                         class="treeview-item @if (active_item($row->name) && !request()->segment(3)) active @endif"
                         href="{{ Route::has($row->name) ? route($row->name) : '' }}"
-                        ><i class="icon fa fa-table"></i> Daftar {{ $row->title
+                        ><i class="icon fa fa-table text-info"></i> Daftar {{ $row->title
                         }}</a
                     >
                     @if ($row->form->category)
@@ -67,7 +67,7 @@
                     <a
                         class="treeview-item @if (request()->segment(3) == 'category') active @endif"
                         href="{{ Route::has($row->name . '.category') ? route($row->name . '.category') : '' }}"
-                        ><i class="icon fa fa-tags"></i> Kategori</a
+                        ><i class="icon fa fa-tags text-success"></i> Kategori</a
                     >
                     @endif
                 </li>
@@ -75,48 +75,50 @@
         </li>
         @endforeach
         @if(Auth::user()->level == 'admin')
-        <li>
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
-                href="{{ admin_url('tags') }}"
-                ><i class="app-menu__icon fa fa-hashtag"></i>
-                <span class="app-menu__label">Tags</span></a
-            >
-        </li>
-        <li title="Komentar Pengunjung">
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
-                href="{{ admin_url('comments') }}"
-                ><i class="app-menu__icon fa fa-comments"></i>
-                <span class="app-menu__label">Komentar</span></a
-            >
-        </li>
-        <li>
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/files') ? 'active' : '' }}"
-                href="{{ admin_url('files') }}"
-                ><i class="app-menu__icon fa fa-folder"></i>
-                <span class="app-menu__label">File Manager</span></a
-            >
-        </li>
-        <li>
-            <a
-                class="app-menu__item {{ Request::is(admin_path() . '/polling') ? 'active' : '' }}"
-                href="{{ admin_url('polling') }}"
-                ><i class="app-menu__icon fa fa-poll"></i>
-                <span class="app-menu__label">Polling</span></a
-            >
-        </li>
+            <li>
+                <a
+                    class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
+                    href="{{ admin_url('tags') }}"
+                    ><i class="app-menu__icon fa fa-hashtag text-danger"></i>
+                    <span class="app-menu__label ">Tags</span></a
+                >
+            </li>
+            <li title="Komentar Pengunjung">
+                <a
+                    class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
+                    href="{{ admin_url('comments') }}"
+                    ><i class="app-menu__icon fa fa-comments text-danger"></i>
+                    <span class="app-menu__label">Komentar</span></a
+                >
+            </li>
+            <li>
+                <a
+                    class="app-menu__item {{ Request::is(admin_path() . '/files') ? 'active' : '' }}"
+                    href="{{ admin_url('files') }}"
+                    ><i class="app-menu__icon fa fa-folder  text-danger"></i>
+                    <span class="app-menu__label">File Manager</span></a
+                >
+            </li>
+            <li>
+                <a
+                    class="app-menu__item {{ Request::is(admin_path() . '/polling') ? 'active' : '' }}"
+                    href="{{ admin_url('polling') }}"
+                    ><i class="app-menu__icon fa fa-poll  text-danger"></i>
+                    <span class="app-menu__label">Polling</span></a
+                >
+            </li>
         @endif
-        @if ($option = config('modules.config.option') && request()->segment(1) == admin_path())
+       @if($option = array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template_asset', ARRAY_FILTER_USE_BOTH))
+        @foreach($option as $k => $row)
         <li>
             <a
-                class="app-menu__item {{ Request::is(admin_path() . '/option') ? 'active' : '' }}"
-                href="{{ admin_url('option') }}"
-                ><i class="app-menu__icon fa fa-table"></i>
-                <span class="app-menu__label">Data Web</span></a
+                class="app-menu__item {{ Request::is(admin_path() . '/option/' . str($k)->slug()) ? 'active' : '' }}"
+                href="{{ route('option', str($k)->slug()) }}"
+                ><i class="app-menu__icon fa fa-list-alt text-warning"></i>
+                <span class="app-menu__label">{{str($k)->headline()}}</span></a
             >
         </li>
+        @endforeach
         @endif
           @if(Auth::user()->level == 'admin')
               @if($custom = config('modules.custom_menu'))
@@ -131,7 +133,7 @@
                     <a
                         class="app-menu__item {{ active_item($cs['path']) }}"
                         href="{{ admin_url($cs['path']) }}"
-                        ><i class="app-menu__icon fa {{$cs['icon']}}"></i>
+                        ><i class="app-menu__icon fa {{$cs['icon']}} text-primary"></i>
                         <span class="app-menu__label">{{$cs['title']}}</span></a
                     >
                 </li>
@@ -158,7 +160,7 @@
                 class="app-menu__item"
                 href="#"
                 data-toggle="treeview"
-                ><i class="app-menu__icon fa {{ $row->icon }}"></i
+                ><i class="app-menu__icon fa {{ $row->icon }} text-success"></i
                 ><span class="app-menu__label">{{ $row->name }}</span
                 ><i class="treeview-indicator fa fa-chevron-right"></i
             ></a>
@@ -185,7 +187,7 @@
             <a
                 class="app-menu__item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}"
                 href="{{ route($module->route) }}"
-                ><i class="app-menu__icon fa {{ $module->icon }}"></i>
+                ><i class="app-menu__icon fa {{ $module->icon }} text-warning"></i>
                 <span class="app-menu__label">{{ $module->name }}</span></a
             >
         </li>
@@ -208,7 +210,7 @@
                 <a
                     class="app-menu__item {{ active_item(['site-monitor']) }}"
                     href="{{ route('app.master.index') }}"
-                    ><i class="app-menu__icon fa fa-desktop"></i>
+                    ><i class="app-menu__icon fa fa-desktop text-danger"></i>
                     <span class="app-menu__label">Monitor Situs</span></a
                 >
             </li>
@@ -226,7 +228,7 @@
                     class="app-menu__item"
                     href="#"
                     data-toggle="treeview"
-                    ><i class="app-menu__icon fa fa-gear"></i
+                    ><i class="app-menu__icon fa fa-gear text-danger"></i
                     ><span class="app-menu__label">Pengaturan</span
                     ><i class="treeview-indicator fa fa-chevron-right"></i
                 >
@@ -237,19 +239,19 @@
                         <a
                             class="treeview-item {{active_item('appearance') }}"
                             href="{{ route('appearance') }}"
-                            ><i class="icon fa fa-brush"></i> Tampilan</a>
+                            ><i class="icon fa fa-brush text-primary"></i> Tampilan</a>
                     </li>
                     <li>
                         <a
                             class="treeview-item {{active_item('setting') }}"
                             href="{{ route('setting') }}"
-                            ><i class="icon fa fa-globe"></i> Website</a
+                            ><i class="icon fa fa-globe text-success"></i> Website</a
                         >      
                             <li>
                         <a
                             class="treeview-item {{active_item(val: 'cache') }}"
                             href="{{ route('cache-manager') }}"
-                            ><i class="icon fa fa-flash"></i> Cache</a
+                            ><i class="icon fa fa-flash text-warning"></i> Cache</a
                         >    
                 </ul>   
             </li>
@@ -257,7 +259,7 @@
                 <a
                     class="app-menu__item {{ active_item(['user', 'role']) }}"
                     href="{{ route('user') }}"
-                    ><i class="app-menu__icon fa fa-users"></i>
+                    ><i class="app-menu__icon fa fa-users text-danger"></i>
                     <span class="app-menu__label">Pengguna</span></a
                 >
             </li>
@@ -265,7 +267,7 @@
                 <a
                     class="app-menu__item {{ active_item(['apikey']) }}"
                     href="{{ route('apikey') }}"
-                    ><i class="app-menu__icon fa fa-key"></i>
+                    ><i class="app-menu__icon fa fa-key text-danger"></i>
                     <span class="app-menu__label">API Key</span></a
                 >
             </li>

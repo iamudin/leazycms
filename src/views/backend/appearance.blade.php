@@ -87,10 +87,10 @@
 
       <div class="col-lg-10">
           @php
-  $template_asset = config('modules.config.template_asset') ?? null;
+  $template_asset = config('modules.config.option.template_asset') ?? null;
           @endphp
           @if($template_asset && is_array($template_asset))
-              <h6> <i class="fa fa-image"></i> Template Assets <small class="text-muted">(optional)</small> </h6>
+              <h6> <i class="fa fa-file"></i> Template Assets <small class="text-muted">(optional)</small> </h6>
               <form action="{{ URL::current() }}" method="post" enctype="multipart/form-data">
                   @csrf
               <div class="row">
@@ -101,7 +101,7 @@
               @endphp
               <div class="col-lg-6">
               <div class="form-group">
-                  <small for="">{{ $row[0] }}</small><br>
+                  <small for="">{{ str($row[0])->headline() }}</small><br>
                   @if($row[1] == 'file')
                   @if($asset = get_option($keyasset) && media_exists(get_option($keyasset)))
                   <a href="{{ get_option($keyasset)}}" target="_blank" class="btn btn-outline-primary">{{ basename(get_option($keyasset)) }}</a>

@@ -820,7 +820,7 @@ return [
             'title' => 'Menu',
             'description' => 'Menu Untuk Mengelola Agenda',
             'parent' => false,
-            'icon' => 'fa-list',
+            'icon' => 'fa-list-ul',
             'route' => ['index', 'create', 'show', 'update', 'delete'],
             'datatable' => [
                 'custom_column' => false,
@@ -899,7 +899,7 @@ return [
         'web_type' => null,
         'option' => array(),
         'template_asset' => array(),
-        'templaet_info' => array(),
+        'template_info' => array(),
     ],
     'option' => array(),
     'used' => array(),
@@ -915,5 +915,6 @@ return [
     'template' => env('TEMPLATE_PATH', null),
     'env_key'=>env('ENV_KEY',null),
     'custom_menu' => null,
-    'custom_web_route'=>null
+    'custom_web_route'=>null,
+    'sidebar'=>null
 ];
