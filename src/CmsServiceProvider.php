@@ -2,23 +2,25 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
-use Leazycms\Web\Commands\ThemeUpdateCommand;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Leazycms\Web\Middleware\Panel;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Leazycms\Web\Commands\AssetLink;
+use Leazycms\Web\Commands\UpdateCMS;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 use Leazycms\Web\Middleware\RateLimit;
 use Illuminate\Support\ServiceProvider;
-use Leazycms\Web\Commands\InstallCommand;
-use Leazycms\Web\Exceptions\NotFoundHandler;
-use Illuminate\Contracts\Debug\ExceptionHandler;
 use Leazycms\Web\Commands\ResetPassword;
+use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Commands\RouteListBlock;
-use Leazycms\Web\Commands\UpdateCMS;
+use Leazycms\Web\Exceptions\NotFoundHandler;
+use Leazycms\Web\Commands\ThemeUpdateCommand;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+
 class CmsServiceProvider extends ServiceProvider
 {
     protected function registerRoutes()
@@ -80,7 +82,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->cmsHandler();
         $this->registerRoutes();
         $this->commands([
-            InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class
+            InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class,AssetLink::class
         ]);
     }
   

@@ -1,11 +1,11 @@
 <?php
-
 namespace Leazycms\Web\Commands;
-
 use ZipArchive;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Artisan;
 
 class ThemeUpdateCommand extends Command
 {
@@ -27,6 +27,7 @@ class ThemeUpdateCommand extends Command
             $this->warn("Update template tidak di izinkan");
             return;
         }
+
         // Baca metadata theme lokal
         $theme = json_decode(File::get($themePath), true);
         $localVersion = $theme['version'] ?? '0.0.0';
@@ -37,20 +38,18 @@ class ThemeUpdateCommand extends Command
             return;
         }
 
-        // Ambil daftar tags dari GitHub
+        // Ambil daftar tags dari GitHub pakai Http::get
         $apiUrl = "https://api.github.com/repos/{$repo}/tags";
-        $ch = curl_init($apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'LaravelCMS-Updater'); // wajib
-        $response = curl_exec($ch);
-        curl_close($ch);
+        $response = Http::withHeaders([
+            'User-Agent' => 'LaravelCMS-Updater'
+        ])->get($apiUrl);
 
-        if (!$response) {
+        if (!$response->ok()) {
             $this->error("Gagal terhubung ke server.");
             return;
         }
 
-        $tags = json_decode($response, true);
+        $tags = $response->json();
 
         if (!$tags || !isset($tags[0]['name'])) {
             $this->error("Tema tidak Valid.");
@@ -67,6 +66,7 @@ class ThemeUpdateCommand extends Command
         }
 
         $this->info("Update ditemukan: {$latestTag}");
+
         // === Backup sebelum update ===
         if (File::isDirectory($extractPath)) {
             $backupDir = storage_path("app/backups/template/{$slug}/" . now()->format('Ymd_His'));
@@ -77,17 +77,19 @@ class ThemeUpdateCommand extends Command
         } else {
             File::makeDirectory($extractPath, 0755, true);
         }
-        // Download zip dari tag
-        $zipPath = storage_path("app/{$slug}.zip");
-        $options = [
-            "http" => [
-                "header" => "User-Agent: PHP\r\n"
-            ]
-        ];
 
-        $context = stream_context_create($options);
-        $content = file_get_contents($downloadUrl, false, $context);
-        file_put_contents($zipPath, $content);
+        // Download zip dari tag pakai Http::get
+        $zipPath = storage_path("app/{$slug}.zip");
+        $zipResponse = Http::withHeaders([
+            'User-Agent' => 'LaravelCMS-Updater'
+        ])->get($downloadUrl);
+
+        if (!$zipResponse->ok()) {
+            $this->error("Gagal download file update.");
+            return;
+        }
+
+        File::put($zipPath, $zipResponse->body());
 
         $zip = new ZipArchive;
         if ($zip->open($zipPath) === TRUE) {
@@ -110,55 +112,31 @@ class ThemeUpdateCommand extends Command
                 File::makeDirectory($extractPath, 0755, true);
             }
 
-            // --- Pisahkan assets dari source remote ---
-            $remoteAssets = $subDir . '/assets';
-
-            // Copy semua isi kecuali folder assets ke resources/views/template/$slug
+            // === Copy semua isi repo ke resources/views/template/{slug} ===
             foreach (File::directories($subDir) as $dir) {
-                if (basename($dir) !== 'assets') {
-                    File::copyDirectory($dir, $extractPath . '/' . basename($dir));
-                }
-            }
-            foreach (File::files($subDir) as $file) {
-                File::copy($file->getPathname(), $extractPath . '/' . $file->getFilename());
-            }
+                $targetDir = $extractPath . '/' . basename($dir);
 
-            // === Sinkronisasi folder assets ===
-            $localAssets = public_path("template/$slug");
-            if (File::isDirectory($remoteAssets)) {
-                if (!File::isDirectory($localAssets)) {
-                    File::makeDirectory($localAssets, 0755, true);
-                }
-
-                $remoteFiles = collect(File::allFiles($remoteAssets))
-                    ->reject(fn($f) => $f->getExtension() === 'php');
-                $localFiles = collect(File::allFiles($localAssets))
-                    ->reject(fn($f) => $f->getExtension() === 'php');
-
-                $remoteCount = $remoteFiles->count();
-                $localCount  = $localFiles->count();
-
-                $remoteSize = $remoteFiles->sum(fn($f) => $f->getSize());
-                $localSize  = $localFiles->sum(fn($f) => $f->getSize());
-
-                if ($remoteCount !== $localCount || $remoteSize !== $localSize) {
-                    $this->info("Sinkronisasi assets ke public/template/$slug ...");
-                    if (File::isDirectory($localAssets)) {
-                        File::deleteDirectory($localAssets);
-                    }
-
-                    foreach ($remoteFiles as $file) {
-                        $target = $localAssets . '/' . $file->getRelativePathname();
+                // Jika folder assets → skip file php
+                if (basename($dir) === 'assets') {
+                    File::ensureDirectoryExists($targetDir);
+                    foreach (File::allFiles($dir) as $file) {
+                        if ($file->getExtension() === 'php') {
+                            $this->warn("Skip file PHP di assets: " . $file->getRelativePathname());
+                            continue;
+                        }
+                        $target = $targetDir . '/' . $file->getRelativePathname();
                         File::ensureDirectoryExists(dirname($target));
                         File::copy($file->getPathname(), $target);
                     }
-
-                    $this->info("Assets berhasil diupdate.");
                 } else {
-                    $this->info("Assets sudah up to date, tidak perlu diupdate.");
+                    // Folder lain langsung copy
+                    File::copyDirectory($dir, $targetDir);
                 }
-            } else {
-                $this->info("Tidak ada folder assets di theme remote, dilewati.");
+            }
+
+            // Copy file di root repo (theme.json, readme, dll)
+            foreach (File::files($subDir) as $file) {
+                File::copy($file->getPathname(), $extractPath . '/' . $file->getFilename());
             }
 
             // Bersihkan tmp & zip
@@ -170,6 +148,7 @@ class ThemeUpdateCommand extends Command
             File::put($themePath, json_encode($theme, JSON_PRETTY_PRINT));
 
             $this->info("Theme [$slug] berhasil diupdate ke {$latestTag}!");
+              Artisan::call("cms:link-asset $slug --force");
         } else {
             $this->error("Gagal extract zip update.");
         }
