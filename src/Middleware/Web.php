@@ -24,8 +24,8 @@ class Web
         }
         if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
             $content = $response->getContent();
-
-            if (strpos($content, '<head>') !== false) {
+            
+            if (strpos($content, '<head>') !== false && !is_custom_web_route_matched()) {
                 $content = str_replace(
                     '<head>',
                     '<head>' . init_meta_header(),
@@ -53,6 +53,7 @@ class Web
 
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
+            if(!is_custom_web_route_matched()){
             $footer = '';
             $footer .= $request->is('/') ? init_popup() : null;
             $footer .= init_wabutton();
@@ -71,6 +72,8 @@ class Web
                 $footer . '</body>',
                 $content
             );
+            }
+
             if (strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
                 $content = str_replace(
                     '</body>',

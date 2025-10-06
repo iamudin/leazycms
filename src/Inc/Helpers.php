@@ -106,6 +106,36 @@ if (!function_exists('add_route')) {
         return null;
     }
 }
+if (!function_exists('is_custom_web_route_matched')) {
+    function is_custom_web_route_matched(): bool
+    {
+        $routes = config('modules.custom_web_route', []);
+        $currentUrl = request()->fullUrl();
+        $currentPath = '/' . ltrim(request()->path(), '/');
+
+        foreach ($routes as $route) {
+            if (!isset($route['path'])) {
+                continue;
+            }
+
+            $path = $route['path'];
+
+            // Deteksi domain/subdomain
+            if (preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $path)) {
+                if (rtrim($currentUrl, '/') === rtrim($path, '/')) {
+                    return true;
+                }
+            } else {
+                if (rtrim($currentPath, '/') === rtrim($path, '/')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}
+
 if (!function_exists('get_non_domain_routes')) {
     function get_non_domain_routes()
     {
