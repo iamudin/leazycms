@@ -72,6 +72,13 @@ class Web
                 $footer . '</body>',
                 $content
             );
+            }else{
+                 $footer = '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
+                 $content = preg_replace(
+                '/<\/body>/',
+                $footer . '</body>',
+                $content
+            );
             }
 
             if (strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
