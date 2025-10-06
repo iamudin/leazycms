@@ -14,7 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
-use Str;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -586,29 +586,28 @@ class PanelController extends Controller implements HasMiddleware
                 ]);
                 return $this->template_uploader($file);
             }
-            if ($ta = $request->template_asset) {
+            if ($request->template_setting) {
                 $ar_ta = config('modules.config.option.template_asset') ?? null;
-                if ($ar_ta) {
-                    $success = array();
-                    foreach ($ar_ta as $row) {
-                        $key = _us($row[0]);
-                        if (isset($ta[$key]) && is_file($ta[$key])) {
-                            $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
-                            $filename = $fid->addFile([
-                                'file' => $ta[$key],
-                                'purpose' => $key,
-                                'mime_type' => explode(",", $row[2]),
-                            ]);
-                            $fid->update([
-                                'value' => $filename
-                            ]);
-                            if (basename($filename)) {
-                                array_push($success, basename($filename));
+                   foreach ($ar_ta as $field) {
+                    $key = _us($field[0]);
+                    if ($request->$key) {
+                        if($field[1]=='file'){
+                            if($request->hasFile(_us($field[0]))){
+                            $value = (new Flc)->addFile([
+                                    'file'=>$request->file(_us($field[0])),
+                                    'purpose'=> _us($field[0]),
+                                    'width'=> 1700,
+                                    'mime_type'=> explode(',',$field[2]),
+                                    'self_upload'=> true,
+                                    ]);
+                           $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                             }
+                        }else{
+                            $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
                         }
-                    }
 
-                }
+                    }
+            }
                 return back()->send()->with('success', 'Berhasil diupdate');
             }
         }

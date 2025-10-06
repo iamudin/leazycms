@@ -31,6 +31,26 @@ if (!function_exists('query')) {
         return config('modules.config.option');
     }
 }
+
+if (!function_exists('get_domain_routes')) {
+    function get_domain_routes()
+    {
+        $routes = config('modules.custom_web_route', []);
+        
+        return collect($routes)->filter(function ($route) {
+            // pastikan key path ada
+            if (!isset($route['path'])) {
+                return false;
+            }
+
+            $path = $route['path'];
+
+            // regex deteksi domain/subdomain (http/https + domain)
+            return preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $path);
+        })->values()->all();
+    }
+}
+
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {
@@ -86,8 +106,42 @@ if (!function_exists('add_route')) {
         return null;
     }
 }
+if (!function_exists('get_non_domain_routes')) {
+    function get_non_domain_routes()
+    {
+        $routes = config('modules.custom_web_route', []);
 
+        return collect($routes)->filter(function ($route) {
+            // pastikan key path ada
+            if (!isset($route['path'])) {
+                return false;
+            }
 
+            $path = $route['path'];
+
+            // regex deteksi domain/subdomain
+            $isDomain = preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $path);
+
+            // ambil hanya yang BUKAN domain
+            return !$isDomain;
+        })->values()->all();
+    }
+}
+if (!function_exists('get_path_domain')) {
+    function get_path_domain($url)
+    {
+        // pastikan format URL valid
+        if (!preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}/i', $url)) {
+            return null;
+        }
+
+        // parse URL agar mudah ambil path-nya
+        $parsed = parse_url($url);
+
+        // jika tidak ada path, kembalikan '/'
+        return $parsed['path'] ?? '/';
+    }
+}
 
 if (!function_exists('is_main_domain')) {
     function is_main_domain()

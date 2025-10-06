@@ -6,8 +6,14 @@
         <h3 style="font-weight:normal;float: left;"> <i class="fa fa-paint-brush"></i> Tampilan </h3>
 
 
+              <div class="btn-group  pull-right">
+                @if(config('modules.config.option.template_asset'))
+                  <button class="btn btn-primary btn-sm" onclick="$('.template-setting').trigger('submit')"> <i class="fa fa-save" ></i> Simpan</button>
 
-              <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm pull-right"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
+                @endif
+                  <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
+              </div>
+            
           </div>
 
 
@@ -89,37 +95,56 @@
           @php
   $template_asset = config('modules.config.option.template_asset') ?? null;
           @endphp
+          
           @if($template_asset && is_array($template_asset))
-              <h6> <i class="fa fa-gear"></i> Template Setting <small class="text-muted">(optional)</small> </h6>
-              <form action="{{ URL::current() }}" method="post" enctype="multipart/form-data">
+              <h6> <i class="fa fa-gear"></i> Template Setting</h6>
+              <form action="{{ URL::current() }}" class="template-setting mb-4" method="post" enctype="multipart/form-data">
                   @csrf
-              <div class="row">
+                  <input type="hidden" name="template_setting" value="true">
+                  <div class="row">
+             @foreach ($template_asset as $field)
+                    <div class="col-lg-3">
+                      @if(is_array($field[1]))
+                            <small>{{ str($field[0])->headline() }}</small><br>
+                            <select name="{{_us($field[0])}}" class="form-control form-control-sm">
+                                <option value="">--pilih--</option>
+                                @foreach($field[1] as $row)
+                                <option value="{{ $row }}" {{ get_option(_us($field[0])) && get_option(_us($field[0]))==$row ? 'selected':null }}>{{str( $row)->upper() }}</option>
+                                @endforeach
+                            </select>
+                        @elseif ($field[1] == 'file')
+                            <small>{{ str($field[0])->headline() }}</small><br>
 
-              @foreach($template_asset as $row)
-              @php
-      $keyasset = _us($row[0]);
-              @endphp
-              <div class="col-lg-6">
-              <div class="form-group">
-                  <small for="">{{ str($row[0])->headline() }}</small><br>
-                  @if($row[1] == 'file')
-                  @if($asset = get_option($keyasset) && media_exists(get_option($keyasset)))
-                  <a href="{{ get_option($keyasset)}}" target="_blank" class="btn btn-outline-primary">{{ basename(get_option($keyasset)) }}</a>
-                  <i class="fa fa-trash text-danger pointer" onclick="media_destroy('{{ get_option($keyasset)}}')"></i>
-                  @else
-                  <input accept="{{ $row[2] }}" type="file" name="template_asset[{{$keyasset}}]" onchange="this.form.submit()">
-                  @endif
-                  @else
+                                @if (media_exists(get_option(_us($field[0]))))
+                                    <a href="{{get_option(_us($field[0])) }}" target="_blank"
+                                        class="btn btn-sm btn-outline-primary mb-2">{{ basename(get_option(_us($field[0]))) }}</a> <i
+                                        title="Hapus File" class="fa fa-trash text-danger pointer"
+                                        onclick="media_destroy('{{ get_option(_us($field[0])) }}')"></i><br>
+                                @else
+                                    <input @if (isset($field[2])) required @endif type="file" accept="{{ $field[3] ?? null }}"
+                                        class="compress-image form-control-sm form-control-file mb-2" name="{{ _us($field[0]) }}">
+                                @endif
+                        @elseif($field[1] == 'textarea')
+                            <small>{{ str($field[0])->headline() }}</small><br>
 
-                  @endif
-              </div>
-              </div>
-              @endforeach
+                            <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">
+                                {{ get_option(_us($field[0])) }}
+                            </textarea>
+                            
+                      
+                        @else
+                            <small>{{ str($field[0])->headline() }}</small><br>
 
-          </div>
+                                <input @if (isset($field[2])) required @endif type="{{ $field[1]  }}"
+                                    class="form-control form-control-sm mb-2" name="{{ _us($field[0]) }}"
+                                    placeholder="Masukkan {{ $field[0] }}" value="{{ get_option(_us($field[0])) }}">
+                        @endif
+                          </div>
+                    @endforeach
+                          </div>
       </form>
           @endif
-      <iframe  src="{{ url('/') }}" frameborder="0" class="w-100 preview" style="height: 80vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
+      <iframe  src="{{ url('/') }}?reload={{ time() }}" frameborder="0" class="w-100 preview" style="height: 80vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
   
 
       </div>

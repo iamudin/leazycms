@@ -13,7 +13,15 @@
                 </h3>
 
                     @foreach ($data as $field)
-                        @if ($field[1] == 'file')
+                      @if(is_array($field[1]))
+                            <span>{{ str($field[0])->headline() }}</span><br>
+                            <select name="{{_us($field[0])}}" >
+                                <option value="">--pilih--</option>
+                                @foreach($field[1] as $row)
+                                <option value="{{ $row }}" {{ get_option(_us($field[0])) ? get_option(_us($field[0]))==$row ?'selected':null }}>{{ $row }}</option>
+                                @endforeach
+                            </select>
+                        @elseif ($field[1] == 'file')
                             <span>{{ str($field[0])->headline() }}</span><br>
 
                                 @if (media_exists(get_option(_us($field[0]))))
@@ -31,6 +39,7 @@
                             <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">
                                 {{ get_option(_us($field[0])) }}
                             </textarea>
+                            
                         @elseif($field[1] == 'break')
                         <br>
                             <span style="font-weight:bold;margin-bottom:0;line-height:0px">{{ str($field[0])->headline() }}</span><br>

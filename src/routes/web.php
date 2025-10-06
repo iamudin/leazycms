@@ -37,7 +37,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
     Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
     Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
 
-    if($webroute = config('modules.custom_web_route')){
+    if($webroute = get_non_domain_routes()){
         foreach($webroute as $wr){
         Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public']);  
         }

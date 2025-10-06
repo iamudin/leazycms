@@ -35,12 +35,17 @@ class CmsServiceProvider extends ServiceProvider
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/auth.php');
         });
-
+        
         Route::middleware(['web'])
         ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST):null)
         ->group(function () {
             $this->loadRoutesFrom(__DIR__.'/routes/web.php');
         });
+        if($webroute = get_domain_routes()){
+        foreach($webroute as $wr){
+             Route::middleware(['web'])->domain(parse_url($wr['path'], PHP_URL_HOST))->match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], get_path_domain($wr['path']), [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public']);  
+        }
+    }
     }
     protected function registerResources()
     {
