@@ -110,7 +110,9 @@ if (!function_exists('is_custom_web_route_matched')) {
     function is_custom_web_route_matched(): bool
     {
         $routes = config('modules.custom_web_route', []);
-        $currentUrl = request()->fullUrl();
+
+        // Ambil URL saat ini TANPA query string
+        $currentUrl = strtok(request()->fullUrl(), '?');
         $currentPath = '/' . ltrim(request()->path(), '/');
 
         foreach ($routes as $route) {
@@ -120,13 +122,16 @@ if (!function_exists('is_custom_web_route_matched')) {
 
             $path = $route['path'];
 
+            // Hapus query string dari path pada config juga (kalau ada)
+            $cleanPath = strtok($path, '?');
+
             // Deteksi domain/subdomain
-            if (preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $path)) {
-                if (rtrim($currentUrl, '/') === rtrim($path, '/')) {
+            if (preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $cleanPath)) {
+                if (rtrim($currentUrl, '/') === rtrim($cleanPath, '/')) {
                     return true;
                 }
             } else {
-                if (rtrim($currentPath, '/') === rtrim($path, '/')) {
+                if (rtrim($currentPath, '/') === rtrim($cleanPath, '/')) {
                     return true;
                 }
             }
@@ -135,6 +140,7 @@ if (!function_exists('is_custom_web_route_matched')) {
         return false;
     }
 }
+
 
 if (!function_exists('get_non_domain_routes')) {
     function get_non_domain_routes()
