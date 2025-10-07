@@ -10,7 +10,7 @@ class VisitorController
     public function visitor_counter($status_code=200)
     {
       
-        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && is_local() && !Route::is('formaster')) {
+        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && !Route::is('formaster')) {
             $data = config('modules.data');
 
             if($data){
