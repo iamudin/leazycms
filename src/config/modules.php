@@ -913,7 +913,7 @@ return [
     'timezone' => env('APP_TIMEZONE','Asia/Jakarta'),
     'template' => env('TEMPLATE_PATH', null),
     'env_key'=>env('ENV_KEY',null),
-    'custom_menu' => null,
-    'custom_web_route'=>null,
-    'sidebar'=>null
+    'custom_menu' => array(),
+    'custom_web_route'=>array(),
+    'sidebar'=>array()
 ];
