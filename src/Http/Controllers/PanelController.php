@@ -222,10 +222,13 @@ class PanelController extends Controller implements HasMiddleware
             ->addColumn('times', function ($row) {
                 return $row->times;
             })
+            ->addColumn('status', function ($row) {
+                return $row->status == '200' ? '<span class="badge badge-success">200</span>' : '<span class="badge badge-danger">404</span>';
+            })
             ->addColumn('page', function ($row) {
                 return '<a href="' . $row->page . '">' . str($row->page)->limit(70) . '</a>';
             })
-            ->rawColumns(['created_at', 'ip_location', 'reference', 'page'])
+            ->rawColumns(['created_at', 'ip_location', 'reference', 'page','status'])
             ->toJson();
     }
     public function option(Request $request, $slug=null)

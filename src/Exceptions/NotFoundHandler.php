@@ -23,10 +23,10 @@ class NotFoundHandler extends ExceptionHandler
 
         if ($exception instanceof NotFoundHttpException) {
             if (config('modules.installed')=="0") {
-                exit('Please running leazycms:install');
+                exit('Please running cms:install');
             }
             if(!Route::is('stream')){
-                (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
+                (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter('404');
             }
          $uri = $request->getRequestUri();
         $host = $request->getHost();

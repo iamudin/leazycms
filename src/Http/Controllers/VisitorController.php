@@ -7,10 +7,10 @@ use Carbon\Carbon;
 class VisitorController
 {
 
-    public function visitor_counter()
+    public function visitor_counter($status_code=200)
     {
       
-        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && !is_local() && !Route::is('formaster')) {
+        if(config('modules.installed') && strpos(request()->headers->get('referer')??'no',admin_path())==false && is_local() && !Route::is('formaster')) {
             $data = config('modules.data');
 
             if($data){
@@ -31,6 +31,7 @@ class VisitorController
                 'page' => url()->full(),
                 'reference' => request()->headers->get('referer') ?? '',
                 'created_at' => now(),
+                'status' => $status_code ?? null,
             ];
 
             // Cache key for visitor list and sorted set

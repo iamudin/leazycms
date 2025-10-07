@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
+use Leazycms\Web\Models\Visitor;
 if (!function_exists('query')) {
     function query()
     {
@@ -477,6 +478,7 @@ if (!function_exists('processVisitorData')) {
                             'reference' => substr($visitorData['reference'], 0, 191),
                             'created_at' => $visitorData['created_at'],
                             'updated_at' => now(),
+                            'status' => $visitorData['status'],
                             'times' => \Illuminate\Support\Facades\DB::raw('times + ' . $visitorData['times']), // ⬅️ Increment times
                         ]
                     );
@@ -486,6 +488,46 @@ if (!function_exists('processVisitorData')) {
             // Step 3: Set Cache lock supaya nggak double eksekusi
             Cache::put('visit_to_db', true, now()->addMinutes(5));
         }
+    }
+}
+if (!function_exists('stats_visitor')) {
+function stats_visitor()
+    {
+        $stats = [
+            'total_visitors' => Visitor::count(),
+            'unique_visitors' => Visitor::distinct('ip_location')->count(),
+            'today_visitors' => Visitor::whereDate('created_at', today())->count(),
+            'total_404' => Visitor::where('status', 404)->count(),
+            'top_countries' => DB::table('visitors')
+    ->selectRaw("
+        JSON_UNQUOTE(JSON_EXTRACT(ip_location, '$.country')) AS country,
+        JSON_UNQUOTE(JSON_EXTRACT(ip_location, '$.city')) AS city,
+        COUNT(*) AS total
+    ")
+    ->groupBy('country', 'city')
+    ->orderByDesc('total')
+    ->limit(5)
+    ->get(),
+            'top_browsers' => Visitor::select('browser', DB::raw('count(*) as total'))
+                                     ->groupBy('browser')->orderByDesc('total')->take(5)->get(),
+            'top_devices' => DB::table('visitors')
+    ->select('device', DB::raw('COUNT(*) as total'))
+    ->groupBy('device')
+    ->orderByDesc('total')
+    ->get()
+    ->toArray() // ✅ ubah ke array
+        ];
+
+        // Data tren 7 hari
+        $trend = Visitor::selectRaw('DATE(created_at) as date, COUNT(*) as total')
+                        ->where('created_at', '>=', now()->subDays(6))
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->get();
+        $stats['trend_labels'] = $trend->pluck('date')->map(fn($d) => date('d M', strtotime($d)));
+        $stats['trend_values'] = $trend->pluck('total');
+
+        return view()->make('cms::backend.stats', compact('stats'));
     }
 }
 if (!function_exists('ratelimiter')) {
