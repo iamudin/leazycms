@@ -98,8 +98,8 @@ class Web
             $response->setContent($content);
         }
         $this->securityHeaders($response, $request);
-        (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter();
-        processVisitorData();
+        tracking_visitor();
+        forbidden($request);
         return $response;
     }
 

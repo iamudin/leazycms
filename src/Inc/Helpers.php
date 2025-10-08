@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
+use Jenssegers\Agent\Agent;
 use Leazycms\Web\Models\Visitor;
+use Leazycms\Web\Models\VisitorLog;
 if (!function_exists('query')) {
     function query()
     {
@@ -1745,7 +1747,7 @@ if (!function_exists('get_client_ip')) {
 if (!function_exists('get_ip_info')) {
     function get_ip_info()
     {
-        if (config('app.env') == 'production') {
+        if (!is_local()){
             $data = \Stevebauman\Location\Facades\Location::get(get_client_ip());
             return $data ? json_encode(['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName]) : json_encode(array());
         } else {
@@ -1780,6 +1782,160 @@ if (!function_exists('renderTemplateFile')) {
         echo '</ul>';
     }
 }
+if (!function_exists('tracking_visitor')) {
+    function tracking_visitor($status_code = 200)
+    {
+        if (
+            config('modules.installed')
+            && strpos(request()->headers->get('referer') ?? 'no', admin_path()) == false
+            && is_local()
+            && !Route::is('formaster')
+        ) {
+            $agent = ['os' => os(), 'device' => device(), 'browser' => browser()];
+            $data = config('modules.data');
+            $ip = get_client_ip();
+            $userAgent = substr(request()->userAgent(), 0, 255);
+            $location = json_decode(json_encode(get_ip_info()));
+            $page = request()->path();
+            $referer = request()->headers->get('referer');
+            $sessionId = session()->id();
+            $status = $status_code;
+
+            // 🧠 Jika 404, abaikan session id dan cukup buat 1x visitor per IP + User Agent
+            $visitorQuery = Visitor::query()
+                ->select(['id', 'last_activity'])
+                ->where('ip', $ip)
+                ->where('user_agent', $userAgent);
+
+            if ($status != '404') {
+                $visitorQuery->where('session', $sessionId);
+            }
+
+            $visitor = $visitorQuery->first();
+
+            // 🧩 Update / Create Visitor
+            if ($visitor) {
+                if (
+                    !$visitor->last_activity ||
+                    now()->timestamp - strtotime($visitor->last_activity) > 60
+                ) {
+                    $visitor->update(['last_activity' => now()]);
+                }
+            } else {
+                $visitor = Visitor::create([
+                    'ip' => $ip,
+                    'user_agent' => $userAgent,
+                    'browser' => $agent['browser'],
+                    'session' => $status === 404 ? null : $sessionId,
+                    'user_id' => $data?->user?->id ?? null,
+                    'os' => $agent['os'],
+                    'device' => $agent['device'],
+                    'domain' => request()->getHost(),
+                    'country' => $location->country ?? null,
+                    'region' => $location->region_name ?? null,
+                    'city' => $location->city ?? null,
+                    'country_code' => $location->countryCode ?? null,
+                    'last_activity' => now(),
+                ]);
+            }
+
+            // 🧾 Catat Log Halaman
+            $logQuery = VisitorLog::query()
+                ->where('visitor_id', $visitor->id)
+                ->where('page', $page);
+
+            if ($status === 404) {
+                // Untuk 404, abaikan session_id, karena identitasnya sudah sama
+                $logQuery->where('status_code', 404);
+            }
+
+            $log = $logQuery->first();
+
+            if (!$log) {
+                $log = VisitorLog::create([
+                    'visitor_id' => $visitor->id,
+                    'page' => $page,
+                    'reference' => $referer,
+                    'status_code' => $status,
+                    'post_id' => $data?->id ?? null,
+                    'tried' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                if ($status != '404' && $data) {
+                    $data->increment('visited');
+                }
+            } else {
+                // Untuk 404, jangan increment terus menerus
+                if ($status != '404') {
+                    $log->increment('tried');
+                }
+            }
+        }
+    }
+}
+
+if (!function_exists('browser')) {
+
+  function browser()
+    {
+        $userAgent = request()->header('User-Agent');
+
+        if (strpos($userAgent, 'MSIE') !== false) {
+            $browser = 'Internet Explorer';
+        } elseif (strpos($userAgent, 'Trident') !== false) {
+            $browser = 'Internet Explorer';
+        } elseif (strpos($userAgent, 'Firefox') !== false) {
+            $browser = 'Mozilla Firefox';
+        } elseif (strpos($userAgent, 'Chrome') !== false) {
+            $browser = 'Google Chrome';
+        } elseif (strpos($userAgent, 'Safari') !== false) {
+            $browser = 'Apple Safari';
+        } elseif (strpos($userAgent, 'Opera') !== false || strpos($userAgent, 'OPR') !== false) {
+            $browser = 'Opera';
+        } else {
+            $browser = 'Unknown';
+        }
+
+        return $browser;
+    }
+}
+if (!function_exists('os')) {
+     function os()
+    {
+        $userAgent = request()->header('User-Agent');
+
+        if (strpos($userAgent, 'Windows') !== false) {
+            $os = 'Windows';
+        } elseif (strpos($userAgent, 'Macintosh') !== false) {
+            $os = 'Mac OS';
+        } elseif (strpos($userAgent, 'Android') !== false) {
+            $os = 'Android';
+        } elseif (strpos($userAgent, 'iOS') !== false) {
+            $os = 'iOS';
+        } elseif (strpos($userAgent, 'Linux') !== false) {
+            $os = 'Linux';
+        } else {
+            $os = 'Unknown OS';
+        }
+        return $os;
+    }
+    }
+if (!function_exists('device')) {
+     function device()
+    {
+        $userAgent = request()->header('User-Agent');
+
+        if (strpos($userAgent, 'Mobi') !== false) {
+            $deviceType = 'Mobile';
+        } else {
+            $deviceType = 'Desktop';
+        }
+
+        return $deviceType;
+    }
+    }
 if (!function_exists('is_local')) {
     function is_local()
     {

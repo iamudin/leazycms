@@ -1,161 +1,107 @@
-<div class="row mt-3">
-    <div class="col-md-3 mb-3">
-        <div class="card text-center shadow-sm border-left-primary">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Total Pengunjung</h6>
-                <h4 class="font-weight-bold text-primary">{{ $stats['total_visitors'] ?? 0 }}</h4>
-            </div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>📊 Statistik Pengunjung</h3>
+        <form method="GET" class="form-inline">
+            <label class="mr-2">Filter Domain:</label>
+            <select name="domain" class="form-control" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                @foreach($domains as $d)
+                    <option value="{{ $d }}" {{ $domain == $d ? 'selected' : '' }}>{{ $d }}</option>
+                @endforeach
+            </select>
+        </form>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center shadow-sm border-left-success">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Pengunjung Unik</h6>
-                <h4 class="font-weight-bold text-success">{{ $stats['unique_visitors'] ?? 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center shadow-sm border-left-info">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Hari Ini</h6>
-                <h4 class="font-weight-bold text-info">{{ $stats['today_visitors'] ?? 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center shadow-sm border-left-danger">
-            <div class="card-body">
-                <h6 class="text-muted mb-1">Error 404</h6>
-                <h4 class="font-weight-bold text-danger">{{ $stats['total_404'] ?? 0 }}</h4>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Grafik & Pie -->
-<div class="row">
-    <div class="col-lg-8 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="font-weight-bold text-primary mb-0">Tren Kunjungan 7 Hari Terakhir</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="visitorTrend" height="120"></canvas>
+    <div class="row text-center">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="text-muted">Pengunjung Unik</h5>
+                    <h3>{{ number_format($stats->unique_visitors ?? 0) }}</h3>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="font-weight-bold text-primary mb-0">Perangkat Pengunjung</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="deviceChart"></canvas>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="text-muted">Total Page Views</h5>
+                    <h3>{{ number_format($stats->total_pageviews ?? 0) }}</h3>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Lokasi & Browser -->
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="font-weight-bold text-primary mb-0">Negara / Kota Teratas</h6>
-            </div>
-            <div class="card-body p-0">
-                <table class="table mb-0">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Negara</th>
-                            <th>Kota</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($stats['top_countries'] ?? [] as $row)
-                            <tr>
-                                <td>{{ $row->country ?? '-' }}</td>
-                                <td>{{ $row->city ?? '-' }}</td>
-                                <td>{{ $row->total ?? 0 }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center text-muted">Belum ada data</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="text-muted">Error 404</h5>
+                    <h3 class="text-danger">{{ number_format($stats->total_404 ?? 0) }}</h3>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="font-weight-bold text-primary mb-0">Browser Terpopuler</h6>
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Tren Kunjungan 7 Hari Terakhir</strong>
+        </div>
+        <div class="card-body">
+            <canvas id="visitorChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-info text-white">📱 Perangkat</div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        @foreach($deviceData as $d)
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ $d->device ?: 'Tidak Diketahui' }}
+                                <span class="badge badge-primary badge-pill">{{ $d->total }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <table class="table mb-0">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Browser</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($stats['top_browsers'] ?? [] as $row)
-                            <tr>
-                                <td>{{ ucfirst($row->browser) }}</td>
-                                <td>{{ $row->total }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2" class="text-center text-muted">Belum ada data</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-success text-white">🌍 Negara</div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        @foreach($countryData as $c)
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ $c->country ?: 'Tidak Diketahui' }}
+                                <span class="badge badge-success badge-pill">{{ $c->total }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Grafik Tren Pengunjung
-    const ctxTrend = document.getElementById('visitorTrend').getContext('2d');
-    new Chart(ctxTrend, {
+    const ctx = document.getElementById('visitorChart');
+    new Chart(ctx, {
         type: 'line',
         data: {
-            labels: @json($stats['trend_labels'] ?? []),
+            labels: {!! json_encode($chartData->pluck('date')) !!},
             datasets: [{
-                label: 'Jumlah Pengunjung',
-                data: @json($stats['trend_values'] ?? []),
+                label: 'Kunjungan Harian',
+                data: {!! json_encode($chartData->pluck('total')) !!},
                 borderColor: '#007bff',
                 backgroundColor: 'rgba(0,123,255,0.1)',
+                borderWidth: 2,
                 fill: true,
                 tension: 0.3
             }]
         },
         options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
+            scales: {
+                y: { beginAtZero: true }
+            }
         }
-    });
-
-    // Pie Chart Perangkat
-    const ctxDevice = document.getElementById('deviceChart').getContext('2d');
-    new Chart(ctxDevice, {
-        type: 'pie',
-        data: {
-            labels: @json(array_column($stats['top_devices'] ?? [], 'device')),
-            datasets: [{
-                data: @json(array_column($stats['top_devices'] ?? [], 'total')),
-                backgroundColor: ['#007bff', '#28a745', '#ffc107']
-            }]
-        },
-        options: { responsive: true }
     });
 </script>

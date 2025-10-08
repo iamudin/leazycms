@@ -49,74 +49,14 @@
   </div>
   </div>
   <div class="col-lg-4">
-    <div class="card" style="padding:15px">
-    <h4 for="" style="margin-bottom:20px"> <i class="fa fa-bar-chart" aria-hidden="true"></i> Grafik Pengunjung Mingguan</h4>
-    @include('cms::backend.visitor-chart')
-  </div>
+ 
   </div>
   <div class="col-lg-12 mt-3">
-    <div class="card" style="padding:15px">
-    <h4 for=""  style="margin-bottom:20px"> <i class="fa fa-info" aria-hidden="true"></i> Rincian Trafik <span class="pull-right"><small>Pilih </small> <input max="{{date('Y-m-d')}}"  onchange="$('.datatable').DataTable().ajax.reload();" style="width:120px" type="date" class="form-control-sm " id="timevisit" ></span></h4>
-
-    <div class="table-responsive"> <table class="table datatable" style="font-size:small;width:100%">
-    <thead><tr>
-      <th width="18%">Time</th>
-      <th width="15%">Page</th>
-      <th width="15%">Reference</th>
-      <th width="20%">IP</th>
-      <th width="10%">Browser</th>
-      <th width="10%">Device</th>
-      <th width="10%">OS</th>
-      <th width="10%">Tried</th><th width="10%">Status</th>
-    </tr></thead>
-    <tbody>
-
-    </tbody>
-    </table>
-    </div>
+  @include('cms::backend.stats')
+  </div>
 
   </div>
-  </div>
-  <script type="text/javascript">
-            window.addEventListener('DOMContentLoaded', function() {
-        /*  var sort_col = $('.datatable').find("th:contains('Time')")[0].cellIndex;*/
-          var table = $('.datatable').DataTable({
-          processing: true,
-          serverSide: true,
 
-          ajax: {
-                  method: "POST",
-                  url: "{{ route('visitor.data') }}",
-                  data: function (d){
-                   d._token = "{{csrf_token()}}";
-                   d.timevisit = $("#timevisit").val();
-                   d.timevisit = $("#timevisit").val();
-                   d.search = $("input[type=search]").val();
-              }
-            },
-          columns: [
-
-              {data: 'created_at', name: 'created_at', orderable: true},
-              {data: 'page', name: 'page'},
-              {data: 'reference', name: 'reference'},
-              {data: 'ip_location', name: 'ip_location'},
-              {data: 'browser', name: 'browser'},
-              {data: 'device', name: 'device'},
-              {data: 'os', name: 'os'},
-              {data: 'times', name: 'times'},
-            { data: 'status', name: 'status' },
-          ],
-          responsive: true,
-          /*    order: [
-                  [sort_col, 'desc']
-              ]*/
-      });
-
-            });
-      </script>
-
-  </div>
-  {{stats_visitor()}}
   @push('styles')
 
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.4.1/css/rowReorder.dataTables.min.css">

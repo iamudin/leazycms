@@ -25,9 +25,7 @@ class NotFoundHandler extends ExceptionHandler
             if (config('modules.installed')=="0") {
                 exit('Please running cms:install');
             }
-            if(!Route::is('stream')){
-                (new \Leazycms\Web\Http\Controllers\VisitorController)->visitor_counter('404');
-            }
+         
          $uri = $request->getRequestUri();
         $host = $request->getHost();
         $appUrl = config('app.url');
@@ -71,9 +69,11 @@ class NotFoundHandler extends ExceptionHandler
         if ($redirectUrl && rtrim(urldecode($redirectUrl),'/') !== urldecode($request->fullUrl())) {
             return redirect($redirectUrl, 301);
         }
+            if (!Route::is('stream')) {
+                tracking_visitor('404');
+            }
             forbidden($request);
 
-         
             if (get_option('site_maintenance')  && get_option('site_maintenance') == 'Y') {
                 return undermaintenance();
             }

@@ -35,7 +35,64 @@ class PanelController extends Controller implements HasMiddleware
     {
         return view('cms::backend.files.index');
     }
+    public function visitor_counter($request)
+    {
+        $domain = $request->get('domain');
 
+        // Ambil daftar domain unik
+        $domains = Visitor::select('domain')
+            ->distinct()
+            ->orderBy('domain')
+            ->pluck('domain');
+
+        // Statistik utama
+        $stats = Visitor::query()
+            ->when($domain, fn($q) => $q->where('domain', $domain))
+            ->leftJoin('visitor_logs', 'visitors.id', '=', 'visitor_logs.visitor_id')
+            ->selectRaw('
+                visitors.domain,
+                COUNT(DISTINCT visitors.ip) as unique_visitors,
+                COUNT(visitor_logs.id) as total_pageviews,
+                SUM(CASE WHEN visitor_logs.status_code = 404 THEN 1 ELSE 0 END) as total_404
+            ')
+            ->groupBy('visitors.domain')
+            ->first();
+
+        // Data tren harian (7 hari terakhir)
+        $chartData = DB::table('visitor_logs as l')
+            ->join('visitors as v', 'v.id', '=', 'l.visitor_id')
+            ->when($domain, fn($q) => $q->where('v.domain', $domain))
+            ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->where('l.created_at', '>=', now()->subDays(7))
+            ->get();
+
+        // Distribusi perangkat
+        $deviceData = Visitor::query()
+            ->when($domain, fn($q) => $q->where('domain', $domain))
+            ->selectRaw('device, COUNT(*) as total')
+            ->groupBy('device')
+            ->orderByDesc('total')
+            ->get();
+
+        // Distribusi negara
+        $countryData = Visitor::query()
+            ->when($domain, fn($q) => $q->where('domain', $domain))
+            ->selectRaw('country, COUNT(*) as total')
+            ->groupBy('country')
+            ->orderByDesc('total')
+            ->get();
+
+        return [
+            'domains' => $domains,
+            'domain' => $domain,
+            'stats' => $stats,
+            'chartData' => $chartData,
+            'deviceData' => $deviceData,
+            'countryData' => $countryData,
+        ];
+    }
     function menu_target(Request $request)
     {
         $search = $request->q ? strip_tags($request->q) : null;
@@ -115,26 +172,17 @@ class PanelController extends Controller implements HasMiddleware
         }
 
         $weekago = json_decode(json_encode(collect($da)->sort()), true);
-
-        // Melakukan query untuk menghitung pengunjung berdasarkan tanggal
-        $visitorCounts = Visitor::whereIn(DB::raw('DATE(created_at)'), $da)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy(DB::raw('DATE(created_at)'))
-            ->pluck('total', 'date')
-            ->toArray();
-
-        // Pastikan bahwa array $visitorCounts berisi semua tanggal yang diinginkan
-        $visitorCounts = array_replace(array_fill_keys($da, 0), $visitorCounts);
+       
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
-        return view('cms::backend.dashboard', [
+        $visitor = $this->visitor_counter($request);
+        return view('cms::backend.dashboard', array_merge([
             'latest' => $lastpublish,
             'weekago' => $weekago,
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
-            'visitor' => $visitorCounts
-        ]);
+            
+        ],$visitor));
     }
     function generate_key(){
 
