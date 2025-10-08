@@ -1745,11 +1745,11 @@ if (!function_exists('get_client_ip')) {
 }
 
 if (!function_exists('get_ip_info')) {
-    function get_ip_info()
+    function get_ip_info($ip)
     {
         if (!is_local()){
-            $data = \Stevebauman\Location\Facades\Location::get(get_client_ip());
-            return $data ? json_encode(['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName]) : json_encode(array());
+            $data = \Stevebauman\Location\Facades\Location::get($ip);
+            return $data ? ['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName] : [];
         } else {
             return NULL;
         }
@@ -1795,7 +1795,7 @@ if (!function_exists('tracking_visitor')) {
             $data = config('modules.data');
             $ip = get_client_ip();
             $userAgent = substr(request()->userAgent(), 0, 255);
-            $location = json_decode(json_encode(get_ip_info()));
+            $location = json_decode(json_encode(get_ip_info($ip)));
             $page = request()->path();
             $referer = request()->headers->get('referer');
             $sessionId = session()->id();
