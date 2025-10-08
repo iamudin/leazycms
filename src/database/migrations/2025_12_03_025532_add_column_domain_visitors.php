@@ -48,9 +48,7 @@ return new class extends Migration
             if (Schema::hasColumn('visitors', 'times')) {
                 $table->dropColumn('times');
             }
-              if (Schema::hasColumn('visitors', 'times')) {
-                $table->dropColumn('times');
-            }
+           
             if (Schema::hasColumn('visitors', 'page')) {
                 $table->dropColumn('page');
             }
