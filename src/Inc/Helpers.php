@@ -1751,7 +1751,7 @@ if (!function_exists('get_ip_info')) {
             $data = \Stevebauman\Location\Facades\Location::get($ip);
             return $data ? ['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName] : [];
         } else {
-            return NULL;
+            return [];
         }
     }
 }
@@ -1788,7 +1788,7 @@ if (!function_exists('tracking_visitor')) {
         if (
             config('modules.installed')
             && strpos(request()->headers->get('referer') ?? 'no', admin_path()) == false
-            && !is_local()
+            && is_local()
             && !Route::is('formaster')
         ) {
             $agent = ['os' => os(), 'device' => device(), 'browser' => browser()];
@@ -1854,6 +1854,7 @@ if (!function_exists('tracking_visitor')) {
             if (!$log) {
                 $log = VisitorLog::create([
                     'visitor_id' => $visitor->id,
+                    'domain' => request()->getHost(),
                     'page' => $page,
                     'reference' => $referer,
                     'status_code' => $status,

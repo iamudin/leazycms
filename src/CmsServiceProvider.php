@@ -2,6 +2,7 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
+use Leazycms\Web\Http\Controllers\VisitorStatsController;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
 use Leazycms\Web\Middleware\Panel;
@@ -47,6 +48,7 @@ class CmsServiceProvider extends ServiceProvider
              Route::middleware(['web'])->domain(parse_url($wr['path'], PHP_URL_HOST))->match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], get_path_domain($wr['path']), [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public']);  
         }
     }
+        Route::get('stats.png',[VisitorStatsController::class,'headerImage']);
     }
     protected function registerResources()
     {

@@ -732,7 +732,7 @@ class PanelController extends Controller implements HasMiddleware
             }
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
-            \Leazycms\Web\Models\Option::where('name','template')->update([
+            Option::where('name','template')->update([
                     'value'=>$mainFolderName
                 ]);
             return to_route('appearance');

@@ -11,6 +11,7 @@ class VisitorLog extends Model
         'page',
         'reference',
         'post_id',
+        'domain',
         'status_code',
         'tried',
     ];
