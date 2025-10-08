@@ -7,13 +7,13 @@ return new class extends Migration {
 public function up(): void
 {
         Schema::table('visitors', function (Blueprint $table) {
-            $table->string('domain')->nullable()->default(null)->index('idx_domain');
-            $table->string('country')->nullable()->default(null)->index('idx_country');
-            $table->string('city')->nullable()->default(null)->index('idx_city');
-            $table->string('region')->nullable()->default(null)->index('idx_region');
-            $table->string('country_code')->nullable()->default(null)->index('idx_country_code');
-            $table->timestamp('last_activity')->nullable()->useCurrent()->useCurrentOnUpdate();
-            $table->string('user_agent', 255)->nullable()->index();
+            $table->string('domain')->nullable()->change();
+            $table->string('country')->nullable()->change();
+            $table->string('city')->nullable()->change();
+            $table->string('region')->nullable()->change();
+            $table->string('country_code')->nullable()->change();
+            $table->timestamp('last_activity')->nullable()->change();
+            $table->string('user_agent', 255)->nullable()->change();
         });
   }
  public function down(): void
