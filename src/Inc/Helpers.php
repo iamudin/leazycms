@@ -1788,7 +1788,7 @@ if (!function_exists('tracking_visitor')) {
         if (
             config('modules.installed')
             && strpos(request()->headers->get('referer') ?? 'no', admin_path()) == false
-            && is_local()
+            && !is_local()
             && !Route::is('formaster')
         ) {
             $agent = ['os' => os(), 'device' => device(), 'browser' => browser()];
