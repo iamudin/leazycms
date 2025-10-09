@@ -45,20 +45,6 @@ public function visitor_counter($request)
         ->distinct()
         ->orderBy('domain')
         ->pluck('domain');
-
-    // Statistik utama
-    $stats = Visitor::query()
-        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
-        ->leftJoin('visitor_logs', 'visitors.id', '=', 'visitor_logs.visitor_id')
-        ->selectRaw('
-            visitors.domain,
-            COUNT(DISTINCT visitors.ip) as unique_visitors,
-            COUNT(visitor_logs.id) as total_pageviews,
-            SUM(CASE WHEN visitor_logs.status_code = 404 THEN 1 ELSE 0 END) as total_404
-        ')
-        ->groupBy('visitors.domain')
-        ->first();
-
     $now = now();
     $today = $now->copy()->startOfDay();
     $yesterdayStart = $now->copy()->subDay()->startOfDay();
