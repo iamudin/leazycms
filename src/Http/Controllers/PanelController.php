@@ -4,17 +4,18 @@ namespace Leazycms\Web\Http\Controllers;
 
 use ZipArchive;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
 use Leazycms\FLC\Models\Comment;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
+use Leazycms\Web\Models\VisitorLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -72,35 +73,29 @@ public function visitor_counter($request)
         ->count();
 
     // Query ke visitor_logs harus menggunakan domain dari tabel itu sendiri
-    $uniquePagesToday = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->where('created_at', '>=', $today)
-        ->distinct('page')
-        ->count('page');
+      $uniqVisitor = Visitor::when($domain, fn($q) => $q->where('domain', $domain))
+            ->whereBetween('created_at', [$today, now()])
+            ->count();
 
-    $pageViewToday = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->where('created_at', '>=', $today)
-        ->sum('tried');
-
-    $pageViewYesterday = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->whereBetween('created_at', [$yesterdayStart, $yesterdayEnd])
-        ->sum('tried');
-
-    $pageViewWeek = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->where('created_at', '>=', $weekStart)
-        ->sum('tried');
-
-    $pageViewMonth = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->where('created_at', '>=', $monthStart)
-        ->sum('tried');
-
+   $stats = VisitorLog::when($domain, fn($q) => $q->where('domain', $domain))
+            ->where('status_code',200)
+            ->selectRaw("
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewToday,
+        COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS pageViewYesterday,
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewMonth,
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewWeek
+    ", [
+                $today,
+                $yesterdayStart,
+                $yesterdayEnd,
+                $monthStart,
+                $weekStart
+            ])
+            ->first();
     // Trend harian
     $chartData = DB::table('visitor_logs as l')
         ->when($domain, fn($q) => $q->where('l.domain', $domain)) // ✅ prefixed
+        ->where('l.status_code',200)
         ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
         ->groupBy('date')
         ->orderBy('date', 'asc')
@@ -144,18 +139,17 @@ public function visitor_counter($request)
     return [
         'domains'          => $domains,
         'domain'           => $domain,
-        'stats'            => $stats,
         'chartData'        => $chartData,
         'deviceData'       => $deviceData,
         'countryData'      => $countryData,
         'topPages'         => $topPages,
         'top404'           => $top404,
         'onlineVisitors'   => $onlineVisitors,
-        'uniquePagesToday' => $uniquePagesToday,
-        'pageViewToday'    => $pageViewToday,
-        'pageViewYesterday'=> $pageViewYesterday,
-        'pageViewWeek'     => $pageViewWeek,
-        'pageViewMonth'    => $pageViewMonth,
+        'uniqueVisitors'   => $uniqVisitor,
+        'pageViewToday'    => $stats->pageViewToday,
+        'pageViewYesterday'=> $stats->pageViewYesterday,
+        'pageViewWeek'     => $stats->pageViewWeek,
+        'pageViewMonth'    => $stats->pageViewMonth,
     ];
 }
 

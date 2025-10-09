@@ -44,8 +44,8 @@
         </div>
         <div class="col-md-2 mb-3">
             <div class="card stat-card text-center p-3">
-                <h5>Page Unik Hari Ini</h5>
-                <h3>{{ number_format($uniquePagesToday) }}</h3>
+                <h5>Pengunjung Unik</h5>
+                <h3>{{ number_format($uniqueVisitors) }}</h3>
             </div>
         </div>
         <div class="col-md-2 mb-3">
