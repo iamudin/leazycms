@@ -1,107 +1,208 @@
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>📊 Statistik Pengunjung</h3>
+    <style>
+        body {
+            background-color: #f5f6fa;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .stat-card h5 {
+            font-size: 15px;
+            color: #666;
+        }
+        .stat-card h3 {
+            font-weight: 700;
+        }
+        .table td, .table th {
+            vertical-align: middle;
+        }
+    </style>
+<div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="font-weight-bold">📈 Statistik Pengunjung</h3>
+
         <form method="GET" class="form-inline">
-            <label class="mr-2">Filter Domain:</label>
+            <label class="mr-2">Domain:</label>
             <select name="domain" class="form-control" onchange="this.form.submit()">
-                <option value="">Semua</option>
+                <option value="">Semua Domain</option>
                 @foreach($domains as $d)
-                    <option value="{{ $d }}" {{ $domain == $d ? 'selected' : '' }}>{{ $d }}</option>
+                    <option value="{{ $d }}" {{ $domain == $d ? 'selected' : '' }}>
+                        {{ $d }}
+                    </option>
                 @endforeach
             </select>
         </form>
     </div>
 
-    <div class="row text-center">
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="text-muted">Pengunjung Unik</h5>
-                    <h3>{{ number_format($stats->unique_visitors ?? 0) }}</h3>
-                </div>
+    {{-- =============== STATISTIC CARDS =============== --}}
+    <div class="row">
+        <div class="col-md-2 mb-3">
+            <div class="card stat-card text-center p-3">
+                <h5>Online</h5>
+                <h3 class="text-success">{{ number_format($onlineVisitors) }}</h3>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="text-muted">Total Page Views</h5>
-                    <h3>{{ number_format($stats->total_pageviews ?? 0) }}</h3>
-                </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stat-card text-center p-3">
+                <h5>Page Unik Hari Ini</h5>
+                <h3>{{ number_format($uniquePagesToday) }}</h3>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="text-muted">Error 404</h5>
-                    <h3 class="text-danger">{{ number_format($stats->total_404 ?? 0) }}</h3>
-                </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stat-card text-center p-3">
+                <h5>View Hari Ini</h5>
+                <h3>{{ number_format($pageViewToday) }}</h3>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stat-card text-center p-3">
+                <h5>Kemarin</h5>
+                <h3>{{ number_format($pageViewYesterday) }}</h3>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stat-card text-center p-3">
+                <h5>Minggu Ini</h5>
+                <h3>{{ number_format($pageViewWeek) }}</h3>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stat-card text-center p-3">
+                <h5>Bulan Ini</h5>
+                <h3>{{ number_format($pageViewMonth) }}</h3>
             </div>
         </div>
     </div>
 
-    <div class="card mt-4">
-        <div class="card-header bg-primary text-white">
-            <strong>Tren Kunjungan 7 Hari Terakhir</strong>
-        </div>
+    {{-- =============== CHART =============== --}}
+    <div class="card my-4">
         <div class="card-body">
-            <canvas id="visitorChart" height="100"></canvas>
+            <h5 class="mb-3 font-weight-bold">📊 Tren 7 Hari Terakhir</h5>
+            <canvas id="chartView"></canvas>
         </div>
     </div>
 
-    <div class="row mt-4">
+    {{-- =============== TOP TABLES =============== --}}
+    <div class="row">
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-info text-white">📱 Perangkat</div>
+            <div class="card mb-4">
                 <div class="card-body">
-                    <ul class="list-group">
-                        @foreach($deviceData as $d)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ $d->device ?: 'Tidak Diketahui' }}
-                                <span class="badge badge-primary badge-pill">{{ $d->total }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
+                    <h5 class="font-weight-bold mb-3">🔥 Top 10 Page View (200)</h5>
+                    <table class="table table-sm table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Halaman</th>
+                                <th class="text-right">Total View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($topPages as $row)
+                                <tr>
+                                    <td>{{ $row->page }}</td>
+                                    <td class="text-right">{{ number_format($row->total_view) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-success text-white">🌍 Negara</div>
+            <div class="card mb-4">
                 <div class="card-body">
-                    <ul class="list-group">
-                        @foreach($countryData as $c)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ $c->country ?: 'Tidak Diketahui' }}
-                                <span class="badge badge-success badge-pill">{{ $c->total }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
+                    <h5 class="font-weight-bold mb-3">⚠️ Top 10 Error 404</h5>
+                    <table class="table table-sm table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Halaman</th>
+                                <th class="text-right">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($top404 as $row)
+                                <tr>
+                                    <td>{{ $row->page }}</td>
+                                    <td class="text-right">{{ number_format($row->total_notfound) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- =============== DEVICE & COUNTRY =============== --}}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="font-weight-bold mb-3">💻 Distribusi Perangkat</h5>
+                    <table class="table table-sm table-striped">
+                        <thead class="thead-light">
+                            <tr><th>Perangkat</th><th class="text-right">Jumlah</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse($deviceData as $row)
+                                <tr><td>{{ $row->device ?? 'Tidak Diketahui' }}</td><td class="text-right">{{ $row->total }}</td></tr>
+                            @empty
+                                <tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="font-weight-bold mb-3">🌍 Distribusi Negara</h5>
+                    <table class="table table-sm table-striped">
+                        <thead class="thead-light">
+                            <tr><th>Negara</th><th class="text-right">Jumlah</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse($countryData as $row)
+                                <tr><td>{{ $row->country ?? 'Tidak Diketahui' }}</td><td class="text-right">{{ $row->total }}</td></tr>
+                            @empty
+                                <tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{{-- =============== SCRIPT CHART =============== --}}
 <script>
-    const ctx = document.getElementById('visitorChart');
-    new Chart(ctx, {
+    const chartCtx = document.getElementById('chartView').getContext('2d');
+    const chartData = {
+        labels: @json($chartData->pluck('date')),
+        datasets: [{
+            label: 'Page View',
+            data: @json($chartData->pluck('total')),
+            backgroundColor: 'rgba(54, 162, 235, 0.3)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+        }]
+    };
+    new Chart(chartCtx, {
         type: 'line',
-        data: {
-            labels: {!! json_encode($chartData->pluck('date')) !!},
-            datasets: [{
-                label: 'Kunjungan Harian',
-                data: {!! json_encode($chartData->pluck('total')) !!},
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0,123,255,0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3
-            }]
-        },
+        data: chartData,
         options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
         }
     });
 </script>
+{{-- Chart.js --}}

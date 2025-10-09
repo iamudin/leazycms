@@ -35,64 +35,132 @@ class PanelController extends Controller implements HasMiddleware
     {
         return view('cms::backend.files.index');
     }
-    public function visitor_counter($request)
-    {
-        $domain = $request->get('domain');
+public function visitor_counter($request)
+{
+    $domain = $request->get('domain');
 
-        // Ambil daftar domain unik
-        $domains = Visitor::select('domain')
-            ->distinct()
-            ->orderBy('domain')
-            ->pluck('domain');
+    // Ambil daftar domain unik dari tabel visitors
+    $domains = Visitor::select('domain')
+        ->distinct()
+        ->orderBy('domain')
+        ->pluck('domain');
 
-        // Statistik utama
-        $stats = Visitor::query()
-            ->when($domain, fn($q) => $q->where('domain', $domain))
-            ->leftJoin('visitor_logs', 'visitors.id', '=', 'visitor_logs.visitor_id')
-            ->selectRaw('
-                visitors.domain,
-                COUNT(DISTINCT visitors.ip) as unique_visitors,
-                COUNT(visitor_logs.id) as total_pageviews,
-                SUM(CASE WHEN visitor_logs.status_code = 404 THEN 1 ELSE 0 END) as total_404
-            ')
-            ->groupBy('visitors.domain')
-            ->first();
+    // Statistik utama
+    $stats = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->leftJoin('visitor_logs', 'visitors.id', '=', 'visitor_logs.visitor_id')
+        ->selectRaw('
+            visitors.domain,
+            COUNT(DISTINCT visitors.ip) as unique_visitors,
+            COUNT(visitor_logs.id) as total_pageviews,
+            SUM(CASE WHEN visitor_logs.status_code = 404 THEN 1 ELSE 0 END) as total_404
+        ')
+        ->groupBy('visitors.domain')
+        ->first();
 
-        // Data tren harian (7 hari terakhir)
-        $chartData = DB::table('visitor_logs as l')
-            ->join('visitors as v', 'v.id', '=', 'l.visitor_id')
-            ->when($domain, fn($q) => $q->where('v.domain', $domain))
-            ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->where('l.created_at', '>=', now()->subDays(7))
-            ->get();
+    $now = now();
+    $today = $now->copy()->startOfDay();
+    $yesterdayStart = $now->copy()->subDay()->startOfDay();
+    $yesterdayEnd = $now->copy()->subDay()->endOfDay();
+    $weekStart = $now->copy()->startOfWeek();
+    $monthStart = $now->copy()->startOfMonth();
 
-        // Distribusi perangkat
-        $deviceData = Visitor::query()
-            ->when($domain, fn($q) => $q->where('domain', $domain))
-            ->selectRaw('device, COUNT(*) as total')
-            ->groupBy('device')
-            ->orderByDesc('total')
-            ->get();
+    // Pengunjung online
+    $onlineVisitors = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->where('last_activity', '>=', now()->subMinutes(5))
+        ->count();
 
-        // Distribusi negara
-        $countryData = Visitor::query()
-            ->when($domain, fn($q) => $q->where('domain', $domain))
-            ->selectRaw('country, COUNT(*) as total')
-            ->groupBy('country')
-            ->orderByDesc('total')
-            ->get();
+    // Query ke visitor_logs harus menggunakan domain dari tabel itu sendiri
+    $uniquePagesToday = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('created_at', '>=', $today)
+        ->distinct('page')
+        ->count('page');
 
-        return [
-            'domains' => $domains,
-            'domain' => $domain,
-            'stats' => $stats,
-            'chartData' => $chartData,
-            'deviceData' => $deviceData,
-            'countryData' => $countryData,
-        ];
-    }
+    $pageViewToday = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('created_at', '>=', $today)
+        ->sum('tried');
+
+    $pageViewYesterday = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->whereBetween('created_at', [$yesterdayStart, $yesterdayEnd])
+        ->sum('tried');
+
+    $pageViewWeek = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('created_at', '>=', $weekStart)
+        ->sum('tried');
+
+    $pageViewMonth = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('created_at', '>=', $monthStart)
+        ->sum('tried');
+
+    // Trend harian
+    $chartData = DB::table('visitor_logs as l')
+        ->when($domain, fn($q) => $q->where('l.domain', $domain)) // ✅ prefixed
+        ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
+        ->groupBy('date')
+        ->orderBy('date', 'asc')
+        ->where('l.created_at', '>=', now()->subDays(7))
+        ->get();
+
+    $deviceData = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->selectRaw('device, COUNT(*) as total')
+        ->groupBy('device')
+        ->orderByDesc('total')
+        ->get();
+
+    $countryData = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->selectRaw('country, COUNT(*) as total')
+        ->groupBy('country')
+        ->orderByDesc('total')
+        ->get();
+
+    // Top 10 pages (200)
+    $topPages = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('status_code', 200)
+        ->selectRaw('page, SUM(tried) as total_view')
+        ->groupBy('page')
+        ->orderByDesc('total_view')
+        ->limit(10)
+        ->get();
+
+    // Top 10 error 404
+    $top404 = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('status_code', 404)
+        ->selectRaw('page, COUNT(*) as total_notfound')
+        ->groupBy('page')
+        ->orderByDesc('total_notfound')
+        ->limit(10)
+        ->get();
+
+    return [
+        'domains'          => $domains,
+        'domain'           => $domain,
+        'stats'            => $stats,
+        'chartData'        => $chartData,
+        'deviceData'       => $deviceData,
+        'countryData'      => $countryData,
+        'topPages'         => $topPages,
+        'top404'           => $top404,
+        'onlineVisitors'   => $onlineVisitors,
+        'uniquePagesToday' => $uniquePagesToday,
+        'pageViewToday'    => $pageViewToday,
+        'pageViewYesterday'=> $pageViewYesterday,
+        'pageViewWeek'     => $pageViewWeek,
+        'pageViewMonth'    => $pageViewMonth,
+    ];
+}
+
+
+
     function menu_target(Request $request)
     {
         $search = $request->q ? strip_tags($request->q) : null;
