@@ -101,7 +101,7 @@ public function visitor_counter($request)
         ->groupBy('country')
         ->orderByDesc('total')
         ->get();
-
+$topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.visitor_id', '=', 'visitors.id') ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) ->where('visitor_logs.status_code', 200) ->whereNotNull('visitor_logs.reference') ->where('visitor_logs.reference', '!=', '') ->selectRaw(' visitor_logs.reference, COUNT(DISTINCT visitors.id) as unique_visitors, SUM(visitor_logs.tried) as total_view ') ->groupBy('visitor_logs.reference') ->orderByDesc('total_view') ->limit(10) ->get();
     // Top 10 pages (200)
     $topPages = DB::table('visitor_logs')
         ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
@@ -129,6 +129,7 @@ public function visitor_counter($request)
         'deviceData'       => $deviceData,
         'countryData'      => $countryData,
         'topPages'         => $topPages,
+        'topReferers'         => $topReferers,
         'top404'           => $top404,
         'onlineVisitors'   => $onlineVisitors,
         'uniqueVisitors'   => $uniqVisitor,

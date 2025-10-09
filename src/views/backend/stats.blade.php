@@ -157,6 +157,44 @@
                     </table>
                 </div>
             </div>
+
+               <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="font-weight-bold mb-3"><i class="fa fa-link"></i> Sumber Trafik</h5>
+                    <table class="table table-bordered table-striped table-sm mb-0">
+    <thead class="thead-light">
+        <tr>
+            <th style="width: 5%">#</th>
+            <th>Referer</th>
+            <th class="text-center">Unique Visitors</th>
+            <th class="text-center">Total Views</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse ($topReferers as $index => $ref)
+            <tr>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>
+                    @php
+                        $display = strlen($ref->reference) > 60 ? substr($ref->reference, 0, 60) . '...' : $ref->reference;
+                    @endphp
+                    <a href="{{ $ref->reference }}" target="_blank" title="{{ $ref->reference }}">
+                        {{ $display }}
+                    </a>
+                </td>
+                <td class="text-center">{{ number_format($ref->unique_visitors) }}</td>
+                <td class="text-center">{{ number_format($ref->total_view) }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="4" class="text-center text-muted">Tidak ada data referer</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+
+        </div>
+        </div>
         </div>
 
         <div class="col-md-6">
