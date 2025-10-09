@@ -94,6 +94,19 @@ public function visitor_counter($request)
         ->groupBy('device')
         ->orderByDesc('total')
         ->get();
+$browserData = Visitor::query()
+    ->when($domain, fn($q) => $q->where('visitors.domain', $domain))
+    ->selectRaw('browser, COUNT(*) as total')
+    ->groupBy('browser')
+    ->orderByDesc('total')
+    ->get();
+
+$osData = Visitor::query()
+    ->when($domain, fn($q) => $q->where('visitors.domain', $domain))
+    ->selectRaw('os, COUNT(*) as total')
+    ->groupBy('os')
+    ->orderByDesc('total')
+    ->get();
 
     $countryData = Visitor::query()
         ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
@@ -125,9 +138,11 @@ $topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.vi
     return [
         'domains'          => $domains,
         'domain'           => $domain,
-        'chartData'        => $chartData,
+        'chartData'        => $chartData, 
         'deviceData'       => $deviceData,
         'countryData'      => $countryData,
+        'browserData'      => $browserData,
+        'osData'      => $osData,
         'topPages'         => $topPages,
         'topReferers'         => $topReferers,
         'top404'           => $top404,

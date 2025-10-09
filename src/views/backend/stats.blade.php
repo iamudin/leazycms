@@ -195,6 +195,44 @@
 
         </div>
         </div>
+
+       
+        <div class="card mb-3">
+            <div class="card-header bg-light font-weight-bold">Top Browser</div>
+            <div class="card-body ">
+                <table class="table table-sm table-striped mb-0">
+                    <tbody>
+                        @forelse ($browserData as $b)
+                            <tr>
+                                <td>{{ $b->browser ?: 'Unknown' }}</td>
+                                <td class="text-right">{{ number_format($b->total) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+       
+    </div>
+
+        <div class="card mb-3">
+            <div class="card-header bg-light font-weight-bold">Top OS</div>
+            <div class="card-body ">
+                <table class="table table-sm table-striped mb-0">
+                    <tbody>
+                        @forelse ($osData as $o)
+                            <tr>
+                                <td>{{ $o->os ?: 'Unknown' }}</td>
+                                <td class="text-right">{{ number_format($o->total) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+    </div>
         </div>
 
         <div class="col-md-6">
