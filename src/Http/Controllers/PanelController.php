@@ -4,17 +4,18 @@ namespace Leazycms\Web\Http\Controllers;
 
 use ZipArchive;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
 use Leazycms\FLC\Models\Comment;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
+use Leazycms\Web\Models\VisitorLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -35,64 +36,127 @@ class PanelController extends Controller implements HasMiddleware
     {
         return view('cms::backend.files.index');
     }
-    public function visitor_counter($request)
-    {
-        $domain = $request->get('domain');
+public function visitor_counter($request)
+{
+    $domain = $request->get('domain');
 
-        // Ambil daftar domain unik
-        $domains = Visitor::select('domain')
-            ->distinct()
-            ->orderBy('domain')
-            ->pluck('domain');
+    // Ambil daftar domain unik dari tabel visitors
+    $domains = Visitor::select('domain')
+        ->distinct()
+        ->orderBy('domain')
+        ->pluck('domain');
+    $now = now();
+    $today = $now->copy()->startOfDay();
+    $yesterdayStart = $now->copy()->subDay()->startOfDay();
+    $yesterdayEnd = $now->copy()->subDay()->endOfDay();
+    $weekStart = $now->copy()->startOfWeek();
+    $monthStart = $now->copy()->startOfMonth();
 
-        // Statistik utama
-        $stats = Visitor::query()
-            ->when($domain, fn($q) => $q->where('domain', $domain))
-            ->leftJoin('visitor_logs', 'visitors.id', '=', 'visitor_logs.visitor_id')
-            ->selectRaw('
-                visitors.domain,
-                COUNT(DISTINCT visitors.ip) as unique_visitors,
-                COUNT(visitor_logs.id) as total_pageviews,
-                SUM(CASE WHEN visitor_logs.status_code = 404 THEN 1 ELSE 0 END) as total_404
-            ')
-            ->groupBy('visitors.domain')
+    // Pengunjung online
+    $onlineVisitors = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->where('last_activity', '>=', now()->subMinutes(5))
+        ->count();
+
+    // Query ke visitor_logs harus menggunakan domain dari tabel itu sendiri
+      $uniqVisitor = Visitor::when($domain, fn($q) => $q->where('domain', $domain))
+            ->whereBetween('created_at', [$today, now()])
+            ->count();
+
+   $stats = VisitorLog::when($domain, fn($q) => $q->where('domain', $domain))
+            ->where('status_code',200)
+            ->selectRaw("
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewToday,
+        COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS pageViewYesterday,
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewMonth,
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewWeek
+    ", [
+                $today,
+                $yesterdayStart,
+                $yesterdayEnd,
+                $monthStart,
+                $weekStart
+            ])
             ->first();
+    // Trend harian
+    $chartData = DB::table('visitor_logs as l')
+        ->when($domain, fn($q) => $q->where('l.domain', $domain)) // ✅ prefixed
+        ->where('l.status_code',200)
+        ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
+        ->groupBy('date')
+        ->orderBy('date', 'asc')
+        ->where('l.created_at', '>=', now()->subDays(7))
+        ->get();
 
-        // Data tren harian (7 hari terakhir)
-        $chartData = DB::table('visitor_logs as l')
-            ->join('visitors as v', 'v.id', '=', 'l.visitor_id')
-            ->when($domain, fn($q) => $q->where('v.domain', $domain))
-            ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->where('l.created_at', '>=', now()->subDays(7))
-            ->get();
+    $deviceData = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->selectRaw('device, COUNT(*) as total')
+        ->groupBy('device')
+        ->orderByDesc('total')
+        ->get();
+$browserData = Visitor::query()
+    ->when($domain, fn($q) => $q->where('visitors.domain', $domain))
+    ->selectRaw('browser, COUNT(*) as total')
+    ->groupBy('browser')
+    ->orderByDesc('total')
+    ->get();
 
-        // Distribusi perangkat
-        $deviceData = Visitor::query()
-            ->when($domain, fn($q) => $q->where('domain', $domain))
-            ->selectRaw('device, COUNT(*) as total')
-            ->groupBy('device')
-            ->orderByDesc('total')
-            ->get();
+$osData = Visitor::query()
+    ->when($domain, fn($q) => $q->where('visitors.domain', $domain))
+    ->selectRaw('os, COUNT(*) as total')
+    ->groupBy('os')
+    ->orderByDesc('total')
+    ->get();
 
-        // Distribusi negara
-        $countryData = Visitor::query()
-            ->when($domain, fn($q) => $q->where('domain', $domain))
-            ->selectRaw('country, COUNT(*) as total')
-            ->groupBy('country')
-            ->orderByDesc('total')
-            ->get();
+    $countryData = Visitor::query()
+        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
+        ->selectRaw('country, COUNT(*) as total')
+        ->groupBy('country')
+        ->orderByDesc('total')
+        ->get();
+$topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.visitor_id', '=', 'visitors.id') ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) ->where('visitor_logs.status_code', 200) ->whereNotNull('visitor_logs.reference') ->where('visitor_logs.reference', '!=', '') ->selectRaw(' visitor_logs.reference, COUNT(DISTINCT visitors.id) as unique_visitors, SUM(visitor_logs.tried) as total_view ') ->groupBy('visitor_logs.reference') ->orderByDesc('total_view') ->limit(10) ->get();
+    // Top 10 pages (200)
+    $topPages = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('status_code', 200)
+        ->selectRaw('page, SUM(tried) as total_view')
+        ->groupBy('page')
+        ->orderByDesc('total_view')
+        ->limit(10)
+        ->get();
 
-        return [
-            'domains' => $domains,
-            'domain' => $domain,
-            'stats' => $stats,
-            'chartData' => $chartData,
-            'deviceData' => $deviceData,
-            'countryData' => $countryData,
-        ];
-    }
+    // Top 10 error 404
+    $top404 = DB::table('visitor_logs')
+        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
+        ->where('status_code', 404)
+        ->selectRaw('page, COUNT(*) as total_notfound')
+        ->groupBy('page')
+        ->orderByDesc('total_notfound')
+        ->limit(10)
+        ->get();
+
+    return [
+        'domains'          => $domains,
+        'domain'           => $domain,
+        'chartData'        => $chartData, 
+        'deviceData'       => $deviceData,
+        'countryData'      => $countryData,
+        'browserData'      => $browserData,
+        'osData'      => $osData,
+        'topPages'         => $topPages,
+        'topReferers'         => $topReferers,
+        'top404'           => $top404,
+        'onlineVisitors'   => $onlineVisitors,
+        'uniqueVisitors'   => $uniqVisitor,
+        'pageViewToday'    => $stats->pageViewToday,
+        'pageViewYesterday'=> $stats->pageViewYesterday,
+        'pageViewWeek'     => $stats->pageViewWeek,
+        'pageViewMonth'    => $stats->pageViewMonth,
+    ];
+}
+
+
+
     function menu_target(Request $request)
     {
         $search = $request->q ? strip_tags($request->q) : null;
