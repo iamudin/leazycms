@@ -63,6 +63,7 @@ class WebController extends Controller
             'index' => $modul->web->auto_query ? $post->index($modul->name, get_option('post_perpage')) : [],
             'module' => $modul,
         );
+        
      return view('cms::layouts.master', $data);
     }
     public function tags($slug)
