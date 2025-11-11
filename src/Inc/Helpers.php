@@ -55,7 +55,13 @@ if (!function_exists('get_domain_routes')) {
         })->values()->all();
     }
 }
+if (!function_exists('add_view_stats')) {
+    function add_view_stats($view)
+    {
+        config(['modules.view_stats'=>$view]);
 
+    }
+}
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {
