@@ -1873,6 +1873,7 @@ if (!function_exists('tracking_visitor')) {
                 ]);
 
                 if ($status != '404' && $data) {
+                    $data->timestamps = false;
                     $data->increment('visited');
                 }
             } else {
