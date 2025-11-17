@@ -37,6 +37,8 @@ foreach (get_module() as $value) {
             Route::match(['get','post'],$value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');
         }
 
+        Route::post('/post/status', [PostController::class, 'updateStatus'])->name('post.status');
+
     });
     if ($value->form->category) {
 

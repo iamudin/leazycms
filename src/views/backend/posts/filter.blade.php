@@ -14,9 +14,18 @@
     <div class="col-12">
         <small>Status Pos</small>
         <select id="status" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
-            <option value="">Pilih</option>
-            @foreach(['publish','disematkan','draft','sampah'] as $row)
-            <option value="{{ $row }}">{{ str($row)->headline() }}</option>
+            <option value="">--pilih status--</option>
+            @foreach(['publish', 'disematkan', 'draft', 'sampah'] as $row)
+            @php 
+            $query = query()->onType(get_post_type());
+    $count = match ($row) {
+        'publish' => $query->published()->count(),
+        'disematkan' => $query->wherePinned(1)->count(),
+        'draft' => $query->whereStatus('draft')->count(),
+        'sampah' => $query->onlyTrashed()->count()
+    };
+            @endphp
+            <option value="{{ $row }}">{{ str($row)->headline() }} ({{ $count }})</option>
             @endforeach
         </select>
     </div>
@@ -24,7 +33,7 @@
     <div class="col-12">
         <small>Category</small>
         <select id="category_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
-            <option value="">Pilih</option>
+            <option value="">--pilih kategori--</option>
             @foreach(query()->index_category(get_post_type()) as $row)
             <option value="{{ $row->id }}">{{ $row->name }} ({{ $row->posts_count }})</option>
             @endforeach
@@ -47,12 +56,13 @@
         <small>{{ $parent[0] }}</small>
         <select id="parent_id"  data-live-search="true"  class="selectpicker form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
             @php 
-            $parentdata = query()->with('parent.parent.parent')->onType($parent[1])->published()->select('title','id','parent_id','category_id');
+            $parentdata = query()->with('parent.parent.parent')->onType($parent[1])->published()->select('title', 'id', 'parent_id', 'category_id');
             @endphp
             @if(isset($parent[2]))
             @php 
-            $parentdata = $parentdata->whereHas('category',function($q) use($parent){
-                $q->whereSlug($parent[2]); })->get()
+            $parentdata = $parentdata->whereHas('category', function ($q) use ($parent) {
+            $q->whereSlug($parent[2]);
+        })->get()
             @endphp
             @else 
             @php 
@@ -61,7 +71,7 @@
             @endif
             <option value="">Pilih</option>
             @foreach($parentdata as $row)
-            <option value="{{ $row->id }}">{{ $row->title }} {{ $row->parent? ' - '.$row->parent->title.($row->parent->parent? ' - '.$row->parent->parent->title:'') : ''}}</option>
+            <option value="{{ $row->id }}">{{ $row->title }} {{ $row->parent ? ' - ' . $row->parent->title . ($row->parent->parent ? ' - ' . $row->parent->parent->title : '') : ''}}</option>
             @endforeach
         </select>
     </div>

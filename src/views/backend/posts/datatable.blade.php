@@ -1,5 +1,10 @@
 <script>
+   
+
+
     window.addEventListener('DOMContentLoaded', function() {
+     
+
      var sort_col = $('.datatable').find("th:contains('Dibuat')")[0].cellIndex;
         var table = $('.datatable').DataTable({
 
@@ -98,6 +103,12 @@
                         searchable: false
                     },
                 @endif
+                 {
+                    data: 'status',
+                    name: 'status',
+                    orderable: false,
+                    searchable: false
+                },
                 {
                     data: 'action',
                     name: 'action',
@@ -109,6 +120,36 @@
             order: [
                 [sort_col, 'desc']
             ],
+        });
+        table.on('draw', function () {
+
+            // re-init toggle
+            $('input[data-toggle="toggle"]').bootstrapToggle();
+
+            // event ketika toggle di-klik
+            $('.toggle-status').change(function () {
+
+                let id = $(this).data('id');
+                let status = $(this).prop('checked') ? 'publish' : 'draft';
+
+                $.ajax({
+                    url: "{{ route('post.status') }}",
+                    type: "POST",
+                    data: {
+                        id: id,
+                        status: status,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (res) {
+                        console.log("Status updated");
+                    },
+                    error: function (err) {
+                        console.log(err);
+                        alert("Gagal update status!");
+                    }
+                });
+
+            });
         });
 
 

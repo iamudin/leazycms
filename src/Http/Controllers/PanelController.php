@@ -471,7 +471,7 @@ $topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.vi
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
-            foreach (array_merge($data['security'], [['Site Maintenance', '']]) as $row) {
+            foreach ($data['security'] as $row) {
                 $key = _us($row[0]);
                 $value = $request->$key ?? null;
 
@@ -567,24 +567,27 @@ $topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.vi
             }
             foreach ($data['shortcut'] as $row) {
                 $key = $row[1];
-                $value = $request->$key;
-                if ($value && in_array($value, ['Y', 'N'])) {
-                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+                $value = $request->$key ? 'Y' : 'N';
+                $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+            }
+ if ($request->site_maintenance){
+                $option->updateOrCreate(['name' => 'site_maintenance'], ['value' => 'Y', 'autoload' => 1]);
+ }else{
+                $option->updateOrCreate(['name' => 'site_maintenance'], ['value' => 'N', 'autoload' => 1]);
+
+            }
+            if ($request->app_env) {
+                if ($existsenv = get_option('app_env')) {
+                    if ($existsenv != 'production') {
+                        $option->updateOrCreate(['name' => 'app_env'], ['value' => 'production', 'autoload' => 1]);
+                        rewrite_env(['APP_ENV' => 'production']);
+                    } 
                 }
+            }else{
+                        $option->updateOrCreate(['name' => 'app_env'], ['value' => 'local', 'autoload' => 1]);
+                        rewrite_env(['APP_ENV' => 'local']);
             }
 
-            if ($request->app_env && in_array($request->app_env, ['production', 'local'])) {
-                $app_env = $request->app_env;
-                if ($existsenv = get_option('app_env')) {
-                    if ($existsenv != $app_env) {
-                        $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
-                        rewrite_env(['APP_ENV' => $app_env]);
-                    }
-                } else {
-                    $option->updateOrCreate(['name' => 'app_env'], ['value' => $app_env, 'autoload' => 1]);
-                    rewrite_env(['APP_ENV' => $app_env]);
-                }
-            }
             if (!app()->routesAreCached()) {
                 if ($request->admin_path) {
                 if (get_option('admin_path') != $request->admin_path) {

@@ -316,38 +316,39 @@ public function recache($type){
                 }
                 if ($search = $req->search) {
                     $instance->where('type', get_post_type()) // Batasi hanya pada type 'berita'
-                    ->where(function($query) use ($search) {
-                        $q = $query->orWhere('title', 'like', '%' . $search . '%')
-                              ->orWhere('data_field', 'like', '%' . $search . '%')
-                              ->orWhere('content', 'like', '%' . $search . '%')
-                              ->orWhere('description', 'like', '%' . $search . '%')
-                              ->orWhere('keyword', 'like', '%' . $search . '%')
-                              ->orWhere('media_description', 'like', '%' . $search . '%');
-                            if(current_module()->form->post_parent){
-                               $q->orWhereHas('parent',function($q)use($search){
-                                    $q->select('id')->where('title','like','%'.$search.'%')->orWhereHas('parent',function($q)use($search){
-                                        $q->select('id')->where('title','like','%'.$search.'%');
-                                      })->orWhereHas('parent',function($q)use($search){
-                                        $q->select('id')->where('title','like','%'.$search.'%')->orWhereHas('parent',function($q)use($search){
-                                            $q->select('id')->where('title','like','%'.$search.'%');
-                                          });;
-                                      });
-                                  });
+                        ->where(function ($query) use ($search) {
+                            $q = $query->orWhere('title', 'like', '%' . $search . '%')
+                                ->orWhere('data_field', 'like', '%' . $search . '%')
+                                ->orWhere('content', 'like', '%' . $search . '%')
+                                ->orWhere('description', 'like', '%' . $search . '%')
+                                ->orWhere('keyword', 'like', '%' . $search . '%')
+                                ->orWhere('media_description', 'like', '%' . $search . '%');
+                            if (current_module()->form->post_parent) {
+                                $q->orWhereHas('parent', function ($q) use ($search) {
+                                    $q->select('id')->where('title', 'like', '%' . $search . '%')->orWhereHas('parent', function ($q) use ($search) {
+                                        $q->select('id')->where('title', 'like', '%' . $search . '%');
+                                    })->orWhereHas('parent', function ($q) use ($search) {
+                                        $q->select('id')->where('title', 'like', '%' . $search . '%')->orWhereHas('parent', function ($q) use ($search) {
+                                            $q->select('id')->where('title', 'like', '%' . $search . '%');
+                                        });
+                                        ;
+                                    });
+                                });
                             }
-                    });
+                        });
                 }
                 if ($status = $req->status) {
                     $conditions = [
-                        'publish' => function($query) {
+                        'publish' => function ($query) {
                             $query->where('status', 'publish');
                         },
-                        'draft' => function($query) {
+                        'draft' => function ($query) {
                             $query->where('status', 'draft');
                         },
-                        'sampah' => function($query) {
+                        'sampah' => function ($query) {
                             $query->onlyTrashed();
                         },
-                        'disematkan' => function($query) {
+                        'disematkan' => function ($query) {
                             $query->wherePinned('Y');
                         },
                     ];
@@ -362,7 +363,7 @@ public function recache($type){
                     if ($req->from_date) {
                         // Jika hanya from_date yang ada
                         if (!$req->to_date) {
-                            $instance->whereDate('created_at','>=',$req->from_date);
+                            $instance->whereDate('created_at', '>=', $req->from_date);
                         } else {
                             // Jika ada from_date dan to_date
                             $from_timestamp = strtotime($req->from_date);
@@ -391,97 +392,119 @@ public function recache($type){
                     }
                 }
             })
-            ->addColumn('title', function ($row) use($current_module) {
+            ->addColumn('title', function ($row) use ($current_module) {
 
-                $category = $current_module->form->category ? ( !empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
+                $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
                 $tags = '';
-                foreach($row->tags ? $row->tags->pluck('name') : [] as $item){
-                    $tags .= ' <b>#'.$item.'</b>';
+                foreach ($row->tags ? $row->tags->pluck('name') : [] as $item) {
+                    $tags .= ' <b>#' . $item . '</b>';
                 }
 
-                $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('".$row->id."')\" class='fa fa-comments-o pointer text-primary'></i> ".$row->comments_count  : '';
-                $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: '.$row->redirect_to.'</small>' : null;
-                $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status=='publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url.'/') . '" target="_blank">' . $row->title . '</a> '.$redirect.' '.($row->custom_page==1? '<sup class="badge badge-dark"><small>Custom Page</small></sup>':''): $row->title ) : '<i class="text-muted">__Tanpa '.$current_module->datatable->data_title.'__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+                $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
+                $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
+                $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url . '/') . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
-                $draft = ($row->status != 'publish') ? "<i class='badge badge-warning'>Draft</i> " : "";
 
-                $pin =  $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;':'';
-                $shortcut =  $current_module->web->detail && $row->shortcut && $row->status=='publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\''.url($row->shortcut).'\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> '.$row->shortcut_counter.'</a>':'';
+                $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
+                $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
                 $b = '<b class="text-primary">' . $tit . '</b><br>';
-                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  '.$category.' '.$label.' ' . $tags . ' '. $shortcut.' ' . $draft . '</small>';
+                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
                 return $b;
             })
             ->addColumn('created_at', function ($row) {
-                return '<small class="badge text-muted">' . date('d-m-Y H:i:s', strtotime($row->created_at)) . '</small>';
+                return '<small class="badge badge-pill py-1" style="border:1px solid green;">' . date('d M Y H:i', strtotime($row->created_at)) . '</small>';
             })
             ->addColumn('visited', function ($row) {
-                return '<center><small class="badge text-muted"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
+                return '<center><small class="badge badge-pill badge-dark py-1" style="border:1px solid lime;"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
             })
             ->addColumn('updated_at', function ($row) {
-                return ($row->updated_at) ? '<small class="badge text-muted">' . date('d-m-Y H:i:s', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
+                return ($row->updated_at) ? '<small class="badge badge-pill py-1" style="border:1px solid orange;">' . date('d M Y H:i', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
             })
             ->addColumn('thumbnail', function ($row) {
                 return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
             })
-            ->addColumn('data_field', function ($row) use($current_module){
-                $custom = _us( $current_module->datatable->custom_column);
-                return ($custom && !empty($row->data_field) && isset($row->data_field[$custom])) ? '<span class="text-muted">' .$row->data_field[$custom] . '</span>' : '<span class="text-muted">__</span>';
+            ->addColumn('data_field', function ($row) use ($current_module) {
+                $custom = _us($current_module->datatable->custom_column);
+                return ($custom && !empty($row->data_field) && isset($row->data_field[$custom])) ? '<span class="text-muted">' . $row->data_field[$custom] . '</span>' : '<span class="text-muted">__</span>';
             })
 
-            ->addColumn('parents', function ($row) use($current_module){
-                if ($current_module->form->post_parent){
+            ->addColumn('parents', function ($row) use ($current_module) {
+                if ($current_module->form->post_parent) {
                     $parent = null;
-                 if($row->parent){
-                    $parent .= $row->parent->title;
-                     if($row->parent->parent){
-                    $parent .= ' - '.$row->parent->parent->title;
-                     if($row->parent->parent->parent){
-                    $parent .= ' - '.$row->parent->parent->parent->title;
-                 }
-                 }
-                 }
-                 return $parent ?? '_';
+                    if ($row->parent) {
+                        $parent .= $row->parent->title;
+                        if ($row->parent->parent) {
+                            $parent .= ' - ' . $row->parent->parent->title;
+                            if ($row->parent->parent->parent) {
+                                $parent .= ' - ' . $row->parent->parent->parent->title;
+                            }
+                        }
+                    }
+                    return $parent ?? '_';
                 }
 
             })
 
 
-            ->addColumn('action', function ($row) use($current_module) {
+            ->addColumn('action', function ($row) use ($current_module) {
 
                 $btn = '<div style="text-align:right"><div class="btn-group ">';
 
-                $btn .= !$row->trashed() && $current_module->web->detail && $row->status=='publish' ? '<a target="_blank" href="' .url($row->url.'/').'"  class="btn btn-info btn-sm fa fa-globe"></a>':'';
-                if(empty($row->deleted_at)){
-                $btn .= Route::has($row->type.'.edit') ?'<a href="' . route(get_post_type().'.edit', $row->id).'"  class="btn btn-warning btn-sm fa '.($row->type=='media' ? 'fa-eye' : 'fa-edit').'"></a>':'';
-                }else{
-                    $btn .= '<a href="' . route(get_post_type().'.restore', $row->id).'"  class="btn btn-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
+                $btn .= !$row->trashed() && $current_module->web->detail && $row->status == 'publish' ? '<a title="Libat di web" target="_blank" href="' . url($row->url . '/') . '"  class="btn btn-outline-info btn-sm fa fa-eye"></a>' : '';
+                if (empty($row->deleted_at)) {
+                    $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-outline-warning btn-sm fa fa-edit"></a>' : '';
+                } else {
+                    $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
                 }
                 $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
-                $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '<button title="'.$titledelete.'" onclick="deleteAlert(\''.route($row->type.'.destroyer',$row->id).'\')" class="btn btn-danger btn-sm fa fa-trash-o"></button>' ) :'';
+                $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<button title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-outline-danger btn-sm fa fa-trash-o"></button>') : '';
                 $btn .= '</div></div>';
                 return $btn;
             })
-            ->addColumn('checkbox', function($row){
-               return Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '': '
+            ->addColumn('checkbox', function ($row) {
+                return Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '
                  <div class="animated-checkbox">
                         <label>
-                            <input type="checkbox" name="id[]" value="'.$row->id.'" class="dt-checkbox">
+                            <input type="checkbox" name="id[]" value="' . $row->id . '" class="dt-checkbox">
                             <span class="label-text"></span>
                         </label>
                 </div>
 
-               ' ) :'';
+               ') : '';
 
             })
-            ->rawColumns(['checkbox','created_at','category', 'updated_at', 'visited', 'action', 'title', 'data_field', 'parents', 'thumbnail'])
+            ->addColumn('status', function ($row) {
+                return '<input title="Ubah status data publik atau draft"
+                type="checkbox" 
+                class="toggle-status"
+                data-id="' . $row->id . '"
+                data-on="Publish" 
+                data-off="Draft" 
+                data-toggle="toggle" 
+                data-onstyle="outline-success" 
+                data-offstyle="outline-danger" 
+                data-size="sm"
+                ' . ($row->status == 'publish' ? 'checked' : '') . '
+            >';
+             })
+            ->rawColumns(['status','checkbox','created_at','category', 'updated_at', 'visited', 'action', 'title', 'data_field', 'parents', 'thumbnail'])
             ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')
             ->orderColumn('created_at', '-created_at $1')
-            ->only(['checkbox','visited', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
+            ->only(['status','checkbox','visited', 'action', 'category','title', 'created_at', 'updated_at', 'data_field', 'parents', 'thumbnail'])
             ->toJson();
     }
-function bulkaction(Request $request){
+    public function updateStatus(Request $request)
+    {
+        $post = Post::findOrFail($request->id);
+
+        $post->status = $request->status;
+        $post->save();
+    $this->recache($post->type);
+        return response()->json(['success' => true]);
+    }
+    function bulkaction(Request $request){
     $ids = $request->id;
 
     if (!empty($ids)) {
