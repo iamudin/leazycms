@@ -156,23 +156,37 @@ class Panel
     }
     protected function isFileSafe($file): bool
     {
-        if (!$file->isValid()){
-           return false;
-
+        if (!$file->isValid()) {
+            return false;
         }
 
         $path = $file->getRealPath();
 
+        // Skip scanning untuk file video/audio (mp4/mp3)
+        $mime = $file->getMimeType();
+        $skipScan = [
+            'video/mp4',
+            'audio/mpeg',
+            'audio/mp3',
+        ];
+
+        if (in_array($mime, $skipScan)) {
+            return true; // Aman, tidak perlu scan konten
+        }
+
+        // Skip file besar (lebih dari 5MB)
         if (filesize($path) > 5 * 1024 * 1024) {
             return true;
         }
 
         $content = file_get_contents($path);
-        if (preg_match('/<\?(php|=)/i', $content)){
-           return false;
+
+        // Deteksi tag PHP
+        if (preg_match('/<\?(php|=)/i', $content)) {
+            return false;
         }
 
-        // Cek fungsi berbahaya
+        // Cek fungsi berbahaya hanya untuk file teks
         $danger = [
             'eval',
             ' exec',
@@ -190,16 +204,15 @@ class Panel
             'curl_exec',
             'create_function',
             'file_get_contents',
-
         ];
-        
+
         foreach ($danger as $func) {
-            if (stripos($content, $func) !== false){
-             return false;
-              
+            if (stripos($content, $func) !== false) {
+                return false;
             }
         }
 
         return true;
     }
+
 }

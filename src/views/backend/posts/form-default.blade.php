@@ -2,6 +2,8 @@
 @section('content')
         <form class="editorForm" action="{{ route(get_post_type() . '.update', $post->id) }}" method="POST"
             enctype="multipart/form-data">
+            @csrf
+            @method('put')
             <div class="row">
                 <div class="col-lg-12">
                     <h3 style="font-weight:normal">
@@ -305,7 +307,7 @@
         @endif
         @push('scripts')
                 <script>
-                      $('.editorForm').on('submit', function (e) {
+                      $('.editorFormd').on('submit', function (e) {
                             e.preventDefault();
                             $('.text-save').html('Menyimpan...');
                             $('.btn-primary').attr('disabled', 'disabled');
