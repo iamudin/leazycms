@@ -152,7 +152,7 @@
     }
                         ?>
                         <h6>{{ $pp[0] }}</h6>
-                        <select @if (isset($pp[3]) && $pp[3] == 'required') required @endif  data-live-search="true"  class="selectpicker form-control form-control-sm"
+                        <select @if (isset($pp[3]) && $pp[3] == 'required') required @endif  data-live-search="true"  class="selectpicker form-control"
                             name="parent_id">
                             <option value="">--pilih--</option>
 

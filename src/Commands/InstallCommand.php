@@ -36,7 +36,7 @@ class InstallCommand extends Command
             }
 
             // Periksa koneksi database
-            $result = $this->checkConnection($dbHost, $dbUser, $dbPass, $dbName);
+            $result = $this->checkConnection($dbHost, $dbUser, $dbPass, $dbName,$dbPort);
             if ($result == 'no_table_exists') {
                 $this->info("Database kosong, siap digunakan.");
             } elseif (is_array($result)) {
@@ -107,9 +107,10 @@ class InstallCommand extends Command
         $password = str(str()->random(8))->lower();
         $data = array('username' => $username, 'password' => bcrypt($password), 'host' => $domain, 'email' => 'email@'.$domain,'status' => 'active', 'slug' => 'admin-super', 'name' => 'Admin Web', 'url' => 'author/admin-web', 'photo' => null, 'level' => 'admin');
         $id = User::UpdateOrcreate(['username' => $username], $data);
+        $title = 'Header';
         $id->posts()->updateOrcreate(
             [
-                'title' => $title = 'Header',
+                'title' => $title,
                 'slug' => $slug = str()->slug($title),
                 'status' => 'publish',
                 'type' => 'menu',
@@ -159,7 +160,7 @@ class InstallCommand extends Command
         }
         return ['username' => $username, 'password' => $password];
     }
-    public function checkConnection($host, $username, $password, $db)
+    public function checkConnection($host, $username, $password, $db,$port)
     {
         $database = $db;
         $password = $password ?? '';
@@ -168,6 +169,7 @@ class InstallCommand extends Command
             'database.connections.custom' => [
                 'driver' => 'mysql',
                 'host' => $host,
+                'port' => $port,
                 'database' => $database,
                 'username' => $username,
                 'password' => $password,
