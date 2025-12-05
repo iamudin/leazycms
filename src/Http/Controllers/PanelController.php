@@ -37,10 +37,10 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.files.index');
     }
 
-    function visitor_counter($request)
+    function visitor_counter($currentDomain)
     {
-        $currentDomain = $request->domain ?? config('app.url');
-        // ---------------------------
+      
+      // ---------------------------
         // 1. USER ONLINE (NO N+1)
         // ---------------------------
         $onlineUsers = Visitor::select(
@@ -198,7 +198,7 @@ class PanelController extends Controller implements HasMiddleware
     function index(Request $request)
     {
         $visitor = [
-            'currentDomain' => $request->domain ?? config('app.url'),
+            'currentDomain' => $request->domain ?? parse_url(config('app.url'), PHP_URL_HOST),
             'domains' => Visitor::select('domain')->distinct()->pluck('domain')
         ];
         if($request->view_visitor){
