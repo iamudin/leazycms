@@ -203,7 +203,7 @@ class PanelController extends Controller implements HasMiddleware
             'domains' => Visitor::select('domain')->distinct()->pluck('domain')
         ];
         if($request->view_visitor){
-            return $this->visitor_counter($visitor['currentDomain']);
+            return $this->visitor_counter($request->domain);
         }
         $user = $request->user();
         $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();

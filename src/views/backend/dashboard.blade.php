@@ -77,11 +77,7 @@
                 </div>
 
                 <div class="visitor">
-                  <div class="text-center p-3">
-                    <div class="spinner-border text-primary" role="status" style="width: 5rem; height: 5rem;">
-                      <span class="sr-only">Loading...</span>
-                    </div>
-                  </div>
+             
                 </div>
 
 
@@ -90,8 +86,13 @@
   @push('scripts')
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        loadVisitor("domain={{ urlencode($currentDomain) }}");
 
-        const url = "{{ route('panel.dashboard') }}?view_visitor=true"; // ganti dengan URL milikmu
+      });
+
+      function loadVisitor(domain=null){
+
+        const url = "{{ route('panel.dashboard') }}?view_visitor=true&"+domain; // ganti dengan URL milikmu
         document.querySelectorAll('.visitor').forEach(el => {
           el.innerHTML = `
             <div class="text-center p-2">
@@ -109,8 +110,7 @@
             });
           })
           .catch(err => console.error("Load visitor error:", err));
-
-      });
+      }
     </script>
 
   @endpush
