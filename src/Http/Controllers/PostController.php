@@ -475,10 +475,10 @@ public function recache($type){
 
             })
             ->addColumn('status', function ($row) {
-                return '<input title="Ubah status data publik atau draft"
+                return '<input '.(strlen($row->title) < 5 ? 'disabled ': 'data-id="' . $row->id . '"') .' 
                 type="checkbox" 
                 class="toggle-status"
-                data-id="' . $row->id . '"
+                
                 data-on="Publish" 
                 data-off="Draft" 
                 data-toggle="toggle" 

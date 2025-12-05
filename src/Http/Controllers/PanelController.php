@@ -36,125 +36,94 @@ class PanelController extends Controller implements HasMiddleware
     {
         return view('cms::backend.files.index');
     }
-public function visitor_counter($request)
-{
-    $domain = $request->get('domain');
 
-    // Ambil daftar domain unik dari tabel visitors
-    $domains = Visitor::select('domain')
-        ->distinct()
-        ->orderBy('domain')
-        ->pluck('domain');
-    $now = now();
-    $today = $now->copy()->startOfDay();
-    $yesterdayStart = $now->copy()->subDay()->startOfDay();
-    $yesterdayEnd = $now->copy()->subDay()->endOfDay();
-    $weekStart = $now->copy()->startOfWeek();
-    $monthStart = $now->copy()->startOfMonth();
+    function visitor_counter($request)
+    {
+        $currentDomain = $request->domain ?? config('app.url');
+        // ---------------------------
+        // 1. USER ONLINE (NO N+1)
+        // ---------------------------
+        $onlineUsers = Visitor::select(
+            'id',
+            'ip',
+            'browser',
+            'city',
+            'country',
+            'last_activity',
+            'session',
+            'user_agent'
+        )
+            ->where('domain', $currentDomain)
+            ->where('last_activity', '>=', Carbon::now()->subMinutes(5))
+            ->orderBy('last_activity', 'desc')
+            ->get();
 
-    // Pengunjung online
-    $onlineVisitors = Visitor::query()
-        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
-        ->where('last_activity', '>=', now()->subMinutes(5))
-        ->count();
+        // ---------------------------
+        // 2. PAGE VIEWS (NO N+1 / simple count)
+        // ---------------------------
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
 
-    // Query ke visitor_logs harus menggunakan domain dari tabel itu sendiri
-      $uniqVisitor = Visitor::when($domain, fn($q) => $q->where('domain', $domain))
-            ->whereBetween('created_at', [$today, now()])
+        $pv_today = VisitorLog::whereDate('created_at', $today)
+            ->where('domain', $currentDomain)
             ->count();
 
-   $stats = VisitorLog::when($domain, fn($q) => $q->where('domain', $domain))
-            ->where('status_code',200)
-            ->selectRaw("
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewToday,
-        COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS pageViewYesterday,
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewMonth,
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS pageViewWeek
-    ", [
-                $today,
-                $yesterdayStart,
-                $yesterdayEnd,
-                $monthStart,
-                $weekStart
-            ])
-            ->first();
-    // Trend harian
-    $chartData = DB::table('visitor_logs as l')
-        ->when($domain, fn($q) => $q->where('l.domain', $domain)) // ✅ prefixed
-        ->where('l.status_code',200)
-        ->selectRaw('DATE(l.created_at) as date, COUNT(l.id) as total')
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->where('l.created_at', '>=', now()->subDays(7))
-        ->get();
+        $pv_yesterday = VisitorLog::whereDate('created_at', $yesterday)
+            ->where('domain', $currentDomain)
+            ->count();
 
-    $deviceData = Visitor::query()
-        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
-        ->selectRaw('device, COUNT(*) as total')
-        ->groupBy('device')
-        ->orderByDesc('total')
-        ->get();
-$browserData = Visitor::query()
-    ->when($domain, fn($q) => $q->where('visitors.domain', $domain))
-    ->selectRaw('browser, COUNT(*) as total')
-    ->groupBy('browser')
-    ->orderByDesc('total')
-    ->get();
+        $pv_week = VisitorLog::whereBetween('created_at', [
+            Carbon::now()->startOfWeek(),
+            Carbon::now()->endOfWeek(),
+        ])
+            ->where('domain', $currentDomain)
+            ->count();
 
-$osData = Visitor::query()
-    ->when($domain, fn($q) => $q->where('visitors.domain', $domain))
-    ->selectRaw('os, COUNT(*) as total')
-    ->groupBy('os')
-    ->orderByDesc('total')
-    ->get();
+        $pv_month = VisitorLog::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->where('domain', $currentDomain)
+            ->count();
 
-    $countryData = Visitor::query()
-        ->when($domain, fn($q) => $q->where('visitors.domain', $domain)) // ✅ prefixed
-        ->selectRaw('country, COUNT(*) as total')
-        ->groupBy('country')
-        ->orderByDesc('total')
-        ->get();
-$topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.visitor_id', '=', 'visitors.id') ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) ->where('visitor_logs.status_code', 200) ->whereNotNull('visitor_logs.reference') ->where('visitor_logs.reference', '!=', '') ->selectRaw(' visitor_logs.reference, COUNT(DISTINCT visitors.id) as unique_visitors, SUM(visitor_logs.tried) as total_view ') ->groupBy('visitor_logs.reference') ->orderByDesc('total_view') ->limit(10) ->get();
-    // Top 10 pages (200)
-    $topPages = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->where('status_code', 200)
-        ->selectRaw('page, SUM(tried) as total_view')
-        ->groupBy('page')
-        ->orderByDesc('total_view')
-        ->limit(10)
-        ->get();
+        // ---------------------------
+        // 3. 404 LOGS (EAGER LOADED → NO N+1)
+        // ---------------------------
+        $logs_404 = VisitorLog::with([
+            'visitor:id,ip,browser,city,country'
+        ])
+            ->select('id', 'visitor_id', 'page', 'reference', 'status_code', 'created_at')
+            ->where('domain', $currentDomain)
+            ->where('status_code', 404)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
 
-    // Top 10 error 404
-    $top404 = DB::table('visitor_logs')
-        ->when($domain, fn($q) => $q->where('visitor_logs.domain', $domain)) // ✅ prefixed
-        ->where('status_code', 404)
-        ->selectRaw('page, COUNT(*) as total_notfound')
-        ->groupBy('page')
-        ->orderByDesc('total_notfound')
-        ->limit(10)
-        ->get();
+        // ---------------------------
+        // 4. TOP 10 PAGE TODAY (NO N+1)
+        // ---------------------------
+        $top_pages = VisitorLog::selectRaw('page, COUNT(*) as total')
+            ->where('status_code', 200)
+            ->where('domain', $currentDomain)
+            ->whereDate('created_at', Carbon::today())
+            ->groupBy('page')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
 
-    return [
-        'domains'          => $domains,
-        'domain'           => $domain,
-        'chartData'        => $chartData, 
-        'deviceData'       => $deviceData,
-        'countryData'      => $countryData,
-        'browserData'      => $browserData,
-        'osData'      => $osData,
-        'topPages'         => $topPages,
-        'topReferers'         => $topReferers,
-        'top404'           => $top404,
-        'onlineVisitors'   => $onlineVisitors,
-        'uniqueVisitors'   => $uniqVisitor,
-        'pageViewToday'    => $stats->pageViewToday,
-        'pageViewYesterday'=> $stats->pageViewYesterday,
-        'pageViewWeek'     => $stats->pageViewWeek,
-        'pageViewMonth'    => $stats->pageViewMonth,
-    ];
-}
 
+
+        // RETURN KE BLADE
+        $data=  [
+            'onlineUsers'=> $onlineUsers,
+            'pv_today'=>  $pv_today,
+            'pv_yesterday'=>  $pv_yesterday,
+            'pv_week'=>  $pv_week,
+            'pv_month'=>  $pv_month,
+            'logs_404'=>  $logs_404,
+            'top_pages'=>   $top_pages,
+        ];
+    return view('cms::backend.stats', $data)->render();
+
+    }
 
 
     function menu_target(Request $request)
@@ -228,6 +197,13 @@ $topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.vi
     }
     function index(Request $request)
     {
+        $visitor = [
+            'currentDomain' => $request->domain ?? config('app.url'),
+            'domains' => Visitor::select('domain')->distinct()->pluck('domain')
+        ];
+        if($request->view_visitor){
+            return $this->visitor_counter($visitor['currentDomain']);
+        }
         $user = $request->user();
         $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
         $da = array();
@@ -239,12 +215,17 @@ $topReferers = DB::table('visitor_logs') ->leftJoin('visitors', 'visitor_logs.vi
        
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
-        $visitor = $this->visitor_counter($request);
+
+        
+
+        // LIST DOMAIN
+        
         return view('cms::backend.dashboard', array_merge([
             'latest' => $lastpublish,
             'weekago' => $weekago,
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
+            
             
         ],$visitor));
     }

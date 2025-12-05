@@ -2,20 +2,12 @@
 <script src="{{asset('backend/js/Chart.min.js')}}"></script>
 <script>
 var chartData = {
-    labels: [
-@foreach($weekago as $r)
-{{date('d',strtotime($r))}},
-@endforeach
-    ],
+    labels: @json($chartData->pluck('date')),
     datasets: [
         {
             fillColor: "#79D1CF",
             strokeColor: "#79D1CF",
-            data: [
-              @foreach($weekago as $r)
-            {{$visitor[$r]}},
-            @endforeach
-          ]
+            data: @json($chartData->pluck('total'))
         }
     ]
 };
