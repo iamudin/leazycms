@@ -54,6 +54,7 @@ class PanelController extends Controller implements HasMiddleware
             'user_agent'
         )
             ->where('domain', $currentDomain)
+            ->with('lastLog')
             ->where('last_activity', '>=', Carbon::now()->subMinutes(5))
             ->orderBy('last_activity', 'desc')
             ->get();

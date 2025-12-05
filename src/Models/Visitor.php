@@ -27,6 +27,11 @@ class Visitor extends Model
     protected $casts = [
         'last_activity' => 'datetime',
     ];
+    public function lastLog()
+    {
+        return $this->hasOne(VisitorLog::class, 'visitor_id')
+            ->latest('created_at');
+    }
 
     public function logs()
     {
