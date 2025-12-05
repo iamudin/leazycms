@@ -25,7 +25,7 @@
                             <tbody>
                                 @forelse($onlineUsers as $v)
                                     <tr>
-                                        <td>{{ $v->lastLog->page }}</td>
+                                        <td>{{ $v->lastLog->page ?? '-' }}</td>
                                         <td>{{ $v->ip }}</td>
                                         <td>{{ $v->browser }}</td>
                                         <td>{{ $v->city }}, {{ $v->country }}</td>
