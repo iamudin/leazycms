@@ -131,7 +131,8 @@ class Panel
             }
         }
         $response = $next($request);
-        if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
+        if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
+
             $content = $response->getContent();
             if(strpos($request->fullUrl(),'edit')===false){
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) {

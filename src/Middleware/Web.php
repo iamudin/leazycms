@@ -22,7 +22,7 @@ class Web
         if (get_option('site_maintenance') == 'Y' && !Auth::check() && !Route::is('formaster')) {
             return undermaintenance();
         }
-        if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
+        if (str($response->headers->get('Content-Type'))->lower()== 'text/html; charset=utf-8') {
             $content = $response->getContent();
             
             if (strpos($content, '<head>') !== false && !is_custom_web_route_matched()) {

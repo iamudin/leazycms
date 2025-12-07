@@ -185,7 +185,8 @@ class RateLimit
         }
         forbidden($request, config('modules.current.detail_visited'));
         $response =  $next($request);
-        if ($response->headers->get('Content-Type') == 'text/html; charset=UTF-8') {
+        if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
+
             $content = $response->getContent();
             
             $response->setContent($content);
