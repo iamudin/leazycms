@@ -62,7 +62,7 @@ class Web
             if (file_exists(public_path('template/' . template() . '/scripts.js'))) {
                 $footer .= '<script src="' . url('template/' . template() . '/scripts.js') . '"></script>';
             }
-            if (get_option('default_jquery') && get_option('default_jquery') == 'N') {
+            if (get_option('default_jquery') && get_option('default_jquery') == 'Y') {
                 $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
             }
 
@@ -107,7 +107,7 @@ class Web
     {
         $response->headers->set('Cache-Control', 'public, max-age=2592000');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
-        if (get_option('frame_embed') == 'Y' && !Auth::check()) {
+        if (get_option('frame_embed') == 'N' && !Auth::check()) {
             $response->headers->set('X-Frame-Options', 'DENY');
         }
         $response->headers->set('X-XSS-Protection', '1; mode=block');

@@ -108,8 +108,8 @@
                 >
             </li>
         @endif
-       @if($option = array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template_asset', ARRAY_FILTER_USE_BOTH))
-        @foreach($option as $k => $row)
+       @if(is_main_domain())
+        @foreach(array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template', ARRAY_FILTER_USE_BOTH) as $k => $row)
         <li>
             <a
                 class="app-menu__item {{ Request::is(admin_path() . '/option/' . str($k)->slug()) ? 'active' : '' }}"
@@ -119,7 +119,7 @@
             >
         </li>
         @endforeach
-        @endif
+    @endif
           @if(Auth::user()->level == 'admin')
               @if($custom = config('modules.custom_menu'))
                 <li

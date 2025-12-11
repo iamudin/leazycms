@@ -329,8 +329,8 @@ class PanelController extends Controller implements HasMiddleware
     {
 
         $data = config('modules.config.option.'._us($slug));
-        if (empty($data)) {
-            return to_route('panel.dashboard');
+        if (empty($data) || $data && $slug=='template' || !is_main_domain()) {
+            return abort('404');
         }
 
         if ($request->isMethod('post')) {
@@ -378,6 +378,8 @@ class PanelController extends Controller implements HasMiddleware
             ['Youtube', 'text'],
             ['Instagram', 'text'],
             ['Twitter', 'text'],
+            ['Jam Kerja', 'text'],
+            ['Hari Kerja', 'text'],
             ['Icon', 'file'],
         ];
         $data['site_attribute'] = array(
@@ -687,7 +689,7 @@ class PanelController extends Controller implements HasMiddleware
                 return $this->template_uploader($file);
             }
             if ($request->template_setting) {
-                $ar_ta = config('modules.config.option.template_asset') ?? null;
+                $ar_ta = config('modules.config.option.template') ?? null;
                    foreach ($ar_ta as $field) {
                     $key = _us($field[0]);
                     if ($request->$key) {

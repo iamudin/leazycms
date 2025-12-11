@@ -1,4 +1,4 @@
-@if(get_option('preload')  && get_option('preload')=='N')
+@if(get_option('preload')  && get_option('preload')=='Y')
 <style>
   #loading-spin {
     position: fixed;

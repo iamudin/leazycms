@@ -7,7 +7,7 @@
 
 
                 <div class="btn-group  pull-right">
-                  @if(config('modules.config.option.template_asset'))
+                  @if(config('modules.config.option.template'))
                     <button class="btn btn-primary btn-sm" onclick="$('.submit_form').click()"> <i class="fa fa-save" ></i> Simpan</button>
 
                   @endif
@@ -93,7 +93,7 @@
 
         <div class="col-lg-10">
             @php
-  $template_asset = config('modules.config.option.template_asset') ?? null;
+  $template_asset = config('modules.config.option.template') ?? null;
             @endphp
 
             @if($template_asset && is_array($template_asset))
@@ -109,7 +109,7 @@
                           <select name="{{_us($field[0])}}" class="form-control form-control-sm"  @if (isset($field[2])) required @endif >
                               <option value="">--pilih--</option>
                               @foreach($field[1] as $row)
-                              <option value="{{ $row }}" {{ get_option(_us($field[0])) && get_option(_us($field[0])) == $row ? 'selected' : null }}>{{str($row)->upper() }}</option>
+                              <option value="{{ $row }}" {{ get_option(_us($field[0])) && get_option(_us($field[0])) == $row ? 'selected' : null }}>{{$row }}</option>
                               @endforeach
                           </select>
                         @elseif ($field[1] == 'file')

@@ -898,7 +898,7 @@ return [
     'config' => [
         'web_type' => null,
         'option' => array(),
-        'template_asset' => array(),
+        'template' => array(),
         'template_info' => array(),
     ],
     'option' => array(),

@@ -2,8 +2,8 @@
 <meta name="author" content="Abu Umar's House">
 <meta name="copyright" content="© 2025 - Build by LeazyCMS">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
-<meta name="keywords" content="{{ $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
+<meta name="description" content="{{ strlen($description) > 0 ? $description : 'The Builded Website by LeazyCMS - Laravel'}}">
+<meta name="keywords" content="{{ strlen($keywords) > 0 ? $keywords : 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
 <title>{{$title}}</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +18,7 @@
 <meta property="og:image" content="{{$thumbnail ?? noimage()}}">
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:url" content="{{$url ?? url('/')}}">
-<meta property="twitter:title" content="{{ $description ?? 'The Website By Laravel'}}" >
+<meta property="twitter:title" content="{{ $title ?? 'The Website By Laravel'}}" >
 <meta property="twitter:description" content="{{ $description ?? 'The Website By Laravel'}}">
 <meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
 <meta property="og:locale" content="id">
