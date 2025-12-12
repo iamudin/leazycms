@@ -1131,7 +1131,7 @@ if (!function_exists('blade_path')) {
         if (View::exists($blades)) {
             return $blades;
         } else {
-            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y' && auth()->check()) || !app()->environment('production')) {
+            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y' && auth()->check())) {
                 $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
