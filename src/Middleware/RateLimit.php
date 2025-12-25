@@ -74,7 +74,6 @@ class RateLimit
             return redirect('https://' . $host . $uri);
         }
     }
-
     if($request->segment(1)=='log-viewer'){
         abort_if($request->header('referer') != route('panel.logs'),404);
     }
