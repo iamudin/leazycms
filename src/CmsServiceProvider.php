@@ -96,14 +96,12 @@ class CmsServiceProvider extends ServiceProvider
         $this->log_viewr();
     }
   function log_viewr(){
-    if(Route::has('panel.logs')){
         LogViewer::auth(function ($request) {
             return $request->user()
                 && in_array($request->user()->level, [
                     'admin',
                 ]);
         });
-    }
   
   }
     public function register()
