@@ -1950,7 +1950,7 @@ if (!function_exists('device')) {
 if (!function_exists('is_local')) {
     function is_local()
     {
-        return request()->ip() == '127.0.0.1' || request()->ip() == '::1' ? true : false;
+        return request()->ip() == '127.0.0.1' || request()->ip() == '::1' || app()->environment('local') ? true : false;
     }
 }
 if (!function_exists('getDirectoryContents')) {

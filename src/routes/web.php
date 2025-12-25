@@ -55,7 +55,7 @@ Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
         [admin_path(), 'search', 'tags','log-viewer', 'author', 'sitemap.xml', 'favicon.ico'],
         $modules->pluck('name')->toArray()
     )) . ')[a-zA-Z0-9-_]+')
-    ->middleware(['public','web']);
+    ->middleware(['public']);
 
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public']);
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
