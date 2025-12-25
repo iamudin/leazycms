@@ -66,6 +66,7 @@ Route::controller(EmailController::class)->group(function () {
 });
 Route::controller(PanelController::class)->group(function () {
     Route::get('dashboard', 'index')->name('panel.dashboard');
+    Route::get('logs', 'logs')->name('panel.logs');
     Route::match(['post','get'],'apikey', 'apikey')->name('apikey');
     Route::post('dashboard', 'visitor')->name('visitor.data');
     Route::get('admin_path/{path}', 'admin_path')->name('admin_path_changer');

@@ -263,6 +263,14 @@
                     <span class="app-menu__label">Pengguna</span></a
                 >
             </li>
+            <li title="Logs">
+                <a
+                    class="app-menu__item {{ active_item(['logs']) }}"
+                    href="{{ route('panel.logs') }}"
+                    ><i class="app-menu__icon fa fa-history text-danger"></i>
+                    <span class="app-menu__label">Logs</span></a
+                >
+            </li>
                       <li title="API Key">
                 <a
                     class="app-menu__item {{ active_item(['apikey']) }}"

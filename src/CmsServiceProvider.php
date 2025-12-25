@@ -2,7 +2,6 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
-use Leazycms\Web\Http\Controllers\VisitorStatsController;
 use Leazycms\Web\Middleware\Web;
 use Illuminate\Support\Facades\DB;
 use Leazycms\Web\Middleware\Panel;
@@ -16,11 +15,13 @@ use Illuminate\Support\Facades\Schema;
 use Leazycms\Web\Middleware\RateLimit;
 use Illuminate\Support\ServiceProvider;
 use Leazycms\Web\Commands\ResetPassword;
+use Opcodes\LogViewer\Facades\LogViewer;
 use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Commands\RouteListBlock;
 use Leazycms\Web\Exceptions\NotFoundHandler;
 use Leazycms\Web\Commands\ThemeUpdateCommand;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Leazycms\Web\Http\Controllers\VisitorStatsController;
 
 class CmsServiceProvider extends ServiceProvider
 {
@@ -92,8 +93,19 @@ class CmsServiceProvider extends ServiceProvider
         $this->commands([
             InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class,AssetLink::class
         ]);
+        $this->log_viewr();
+    }
+  function log_viewr(){
+    if(Route::has('panel.logs')){
+        LogViewer::auth(function ($request) {
+            return $request->user()
+                && in_array($request->user()->level, [
+                    'admin',
+                ]);
+        });
     }
   
+  }
     public function register()
     {
 

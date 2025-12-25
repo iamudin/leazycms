@@ -4,6 +4,7 @@ namespace Leazycms\Web\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RateLimit
 {
@@ -22,6 +23,8 @@ class RateLimit
                 }
             }
         }
+       
+
         $uri = $request->getRequestUri();
         $host = $request->getHost();
         $appUrl = config('app.url');
@@ -70,6 +73,10 @@ class RateLimit
              if (!$isLocal && !$isHttps && app()->environment('production')) {
             return redirect('https://' . $host . $uri);
         }
+    }
+
+    if($request->segment(1)=='log-viewer'){
+        abort_if($request->header('referer') != route('panel.logs'),404);
     }
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {

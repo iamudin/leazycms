@@ -36,7 +36,10 @@ class PanelController extends Controller implements HasMiddleware
     {
         return view('cms::backend.files.index');
     }
-
+    function logs()
+    {
+        return view('cms::backend.logs.index');
+    }
     function visitor_counter($currentDomain)
     {
       
