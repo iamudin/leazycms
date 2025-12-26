@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Leazycms\Web\Commands\AssetLink;
 use Leazycms\Web\Commands\UpdateCMS;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
@@ -78,13 +79,13 @@ class CmsServiceProvider extends ServiceProvider
         ], 'cms');
     }
   
-    public function boot()
+    public function boot(Kernel $kernel)
     {
 
         
         Schema::defaultStringLength(191);
         load_default_module();
-        $this->registerMiddleware();
+        $kernel->appendMiddlewareToGroup('web', RateLimit::class);
         $this->registerResources();
         $this->registerMigrations();
         $this->defineAssetPublishing();
@@ -115,11 +116,7 @@ class CmsServiceProvider extends ServiceProvider
             $this->app->usePublicPath(base_path() . '/' . config('modules.public_path'));
         }
     }
-    protected function registerMiddleware()
-    {
-        $router = $this->app['router'];
-        $router->pushMiddlewareToGroup('web', RateLimit::class);
-    }
+ 
     protected function cmsHandler()
     {
         Carbon::setLocale('ID');
