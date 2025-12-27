@@ -1,6 +1,7 @@
 @extends('cms::backend.layout.app', ['title' => 'Pengaturan'])
 @section('content')
         <form class="" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
+            @method('PUT')
             @csrf
             <div class="row">
                 <div class="col-lg-12">

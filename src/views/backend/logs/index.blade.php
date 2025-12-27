@@ -1,4 +1,4 @@
-@extends('cms::backend.layout.app', ['title' => 'File Manager'])
+@extends('cms::backend.layout.app', ['title' => 'Logs'])
 @section('content')
     <div class="row">
         <div class="col-lg-12 mb-3">
@@ -10,8 +10,7 @@
             </div>
         </div>
         <div class="col-lg-12">
-         <iframe src="{{ url('log-viewer') }}" style="width:100%;height:80vh;border-radius: 10px" frameborder="0"></iframe>
+         <iframe src="{{ url('log-viewer').'?time='.time() }}" style="width:100%;height:80vh;border-radius: 10px" frameborder="0"></iframe>
         </div>
     </div>
-@include('cms::backend.layout.js')
 @endsection

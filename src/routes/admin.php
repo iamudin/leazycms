@@ -73,7 +73,7 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'appearance', 'appearance')->name('appearance');
     Route::match(['get', 'post'], 'cache', 'cache')->name('cache-manager');
     Route::match(['get', 'post'], 'appearance/editor', 'editorTemplate')->name('appearance.editor');
-    Route::match(['get', 'post'], 'setting', 'setting')->name('setting');
+    Route::match(['get', 'put'], 'setting', 'setting')->name('setting');
     Route::match(['get', 'post'], 'option/{slug}', 'option')->name('option');
     Route::match(['get', 'post'], 'backup', 'backup_restore')->name('backup');
     Route::match(['get', 'post'], 'menu-target', 'menu_target')->name('menu-target');

@@ -94,9 +94,10 @@ class CmsServiceProvider extends ServiceProvider
         $this->commands([
             InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class,AssetLink::class
         ]);
-        $this->log_viewr();
+        $this->log_viewer();
     }
-  function log_viewr(){
+  function log_viewer(){
+    //  config(['logging.default' => 'daily']);
         LogViewer::auth(function ($request) {
             return $request->user()
                 && in_array($request->user()->level, [

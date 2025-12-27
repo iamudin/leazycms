@@ -1,10 +1,9 @@
 <?php
-
 namespace Leazycms\Web\Middleware;
-
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class RateLimit
 {
@@ -186,6 +185,8 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
+        $this->logging_request($request);
+        $this->dangerous_request($request);
         if ($o = config('modules.current.detail_visited') && !in_array($request->segment(1),['secure','media'])) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
@@ -198,5 +199,177 @@ class RateLimit
             $response->setContent($content);
         }
         return $response;
+    }
+    function dangerous_request($request){
+        foreach ($request->allFiles() as $file) {
+            // Handle multiple file input (array of files)
+            if (is_array($file)) {
+                foreach ($file as $subfile) {
+                    if (!$this->isFileSafe($subfile)) {
+                        abort('403', 'Malicious file detected.');
+                    }
+                }
+            } else {
+                if (!$this->isFileSafe($file)) {
+             
+                   abort('403', 'Malicious file detected.');
+                }
+            }
+        }
+        $dangerousFunctions = [
+            'eval',
+            ' system',
+            ' exec',
+            'passthru',
+            'shell_exec',
+            'proc_open',
+            'popen',
+            'assert',
+            'base64_decode',
+            'file_put_contents',
+            'fopen',
+            'curl_exec',
+            'create_function',
+            'file_get_contents',
+            'unlink',
+            'mkdir',
+            'curl_exec',
+            'create_function'
+        ];
+       
+        // Dapatkan semua konten dari request
+        $content = implode(",", $request->all());
+   
+        foreach ($dangerousFunctions as $function) {
+            if (stripos($content, $function) !== false) {
+                Log::channel('daily')->critical('Potentially dangerous code detected in request.', [
+                    'info' => 'Dangerous function detected: ' . $function,
+                    'ip' => get_client_ip(),
+                    'url' => $request->fullUrl(),
+                    'payload' => $request->except(['_token', 'password', 'password_confirmation']),
+                ]);
+                abort('403', 'Request contains potentially dangerous code');
+            }
+        }
+    }
+    function logging_request(Request $request): void
+    {
+        // 🚫 Skip Datatable POST
+        if (
+            $request->isMethod('POST') &&
+            $request->has(['draw', 'columns'])
+        ) {
+            return;
+        }
+
+        $method = $request->method();
+
+        // Mapping action + log level
+        $map = [
+            'POST' => ['CREATE ACTION', 'info'],
+            'PUT' => ['UPDATE ACTION', 'warning'],
+            'PATCH' => ['UPDATE ACTION', 'warning'],
+            'DELETE' => ['DELETE ACTION', 'warning'], // danger
+        ];
+
+        if (!isset($map[$method])) {
+            return;
+        }
+
+        [$message, $level] = $map[$method];
+
+        $user = Auth::user();
+
+        // Payload dibatasi & disaring
+        $payload = $request->except([
+            '_token',
+            'password',
+            'password_confirmation',
+        ]);
+
+        Log::channel('daily')->{$level}($message, [
+            'method' => $method,
+            'url' => $request->path(), // lebih ringan dari fullUrl
+            'ip' => get_client_ip(),
+
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+            ] : null,
+
+            'payload' => $payload,
+        ]);
+    }
+    protected function isFileSafe($file): bool
+    {
+        if (!$file->isValid()) {
+            return false;
+        }
+
+        $path = $file->getRealPath();
+
+        // Skip scanning untuk file video/audio (mp4/mp3)
+        $mime = $file->getMimeType();
+        $skipScan = [
+            'video/mp4',
+            'audio/mpeg',
+            'audio/mp3',
+        ];
+
+        if (in_array($mime, $skipScan)) {
+            return true; // Aman, tidak perlu scan konten
+        }
+
+        // Skip file besar (lebih dari 5MB)
+        if (filesize($path) > 5 * 1024 * 1024) {
+            return true;
+        }
+
+        $content = file_get_contents($path);
+
+        // Deteksi tag PHP
+        if (preg_match('/<\?(php|=)/i', $content)) {
+            Log::channel('daily')->critical('Malicious file detected in upload ' . $file->getClientOriginalName(), [
+                'info' => 'PHP tag detected',
+                'ip' => get_client_ip(),
+                'url' => request()->fullUrl(),
+            ]);
+            return false;
+        }
+
+        // Cek fungsi berbahaya hanya untuk file teks
+        $danger = [
+            'eval',
+            ' exec',
+            ' system',
+            'passthru',
+            'shell_exec',
+            'proc_open',
+            'popen',
+            'assert',
+            'base64_decode',
+            'file_put_contents',
+            'fopen',
+            'unlink',
+            'mkdir',
+            'curl_exec',
+            'create_function',
+            'file_get_contents',
+        ];
+
+        foreach ($danger as $func) {
+            if (stripos($content, $func) !== false) {
+                Log::channel('daily')->critical('Malicious file detected in upload ' . $file->getClientOriginalName(), [
+                    'info' => 'Dangerous function detected: ' . $func,
+                    'ip' => get_client_ip(),
+                    'url' => request()->fullUrl(),
+                ]);
+                return false;
+            }
+        }
+
+        return true;
     }
 }

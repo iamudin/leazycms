@@ -11,6 +11,7 @@ use Leazycms\Web\Models\Option;
 use Leazycms\FLC\Models\Comment;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Leazycms\Web\Models\VisitorLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
@@ -38,6 +39,12 @@ class PanelController extends Controller implements HasMiddleware
     }
     function logs()
     {
+        if(!is_dir(public_path('vendor/log-viewer'))){
+            Artisan::call('vendor:publish', [
+                '--tag' => 'log-viewer-assets',
+                '--force' => true,
+            ]);
+        }
         return view('cms::backend.logs.index');
     }
     function visitor_counter($currentDomain)
@@ -432,7 +439,7 @@ class PanelController extends Controller implements HasMiddleware
         );
 
         $data['home'] = array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php')));
-        if ($request->isMethod('POST')) {
+        if ($request->isMethod('PUT')) {
 
             if ($hp = $request->home_page) {
                 if (in_array($hp, array_merge(['default'], $data['home']))) {
