@@ -7,7 +7,7 @@ return new class extends Migration {
 public function up(): void
 {
         Schema::table('visitor_logs', function (Blueprint $table) {
-            $table->string('reference',1000)->change();
+            $table->string('reference',1000)->nullable();
             $table->string('page',1000)->change();
         
         });
