@@ -201,6 +201,12 @@ class RateLimit
         return $response;
     }
     function dangerous_request($request){
+        if (
+            $request->isMethod('POST') &&
+            $request->has(['draw', 'columns'])
+        ) {
+            return;
+        }
         foreach ($request->allFiles() as $file) {
             // Handle multiple file input (array of files)
             if (is_array($file)) {
