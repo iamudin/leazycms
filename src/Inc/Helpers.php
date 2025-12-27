@@ -1864,8 +1864,8 @@ if (!function_exists('tracking_visitor')) {
                 $log = VisitorLog::create([
                     'visitor_id' => $visitor->id,
                     'domain' => request()->getHost(),
-                    'page' => $page,
-                    'reference' => $referer,
+                    'page' => substr($page, 0, 255),
+                    'reference' => substr($referer, 0, 255),
                     'status_code' => $status,
                     'post_id' => $data?->id ?? null,
                     'tried' => 1,
