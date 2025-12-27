@@ -301,7 +301,6 @@ class RateLimit
             'user' => $user ? [
                 'id' => $user->id,
                 'name' => $user->name,
-                'username' => $user->username,
                 'email' => $user->email,
             ] : null,
 
