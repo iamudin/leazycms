@@ -1456,7 +1456,7 @@ if (!function_exists('init_meta_header')) {
         } else {
             $page = request()->page ? ' Halaman ' . request()->page : '';
 
-            if (get_post_type() && !request()->is('search/*') && !request()->is('/')) {
+            if (get_post_type() && request()->segment(1) != 'search' && !request()->is('/')) {
 
                 if (request()->segment(2) == 'archive' || request()->segment(2) == 'category' || request()->segment(1) == 'tags' || (get_module(get_post_type())->form?->post_parent)) {
                     $pn = $get_page_name . $page;
