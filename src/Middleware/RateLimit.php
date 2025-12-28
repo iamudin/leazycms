@@ -252,6 +252,7 @@ class RateLimit
                     'info' => 'Dangerous function detected: ' . $function,
                     'ip' => get_client_ip(),
                     'url' => $request->fullUrl(),
+                    'referer' => $request->headers->get('referer'),
                     'payload' => $request->except(['_token', 'password', 'password_confirmation']),
                 ]);
                 abort('403', 'Request contains potentially dangerous code');
@@ -340,6 +341,7 @@ class RateLimit
                 'info' => 'PHP tag detected',
                 'ip' => get_client_ip(),
                 'url' => request()->fullUrl(),
+                'referer' => request()->headers->get('referer'),
             ]);
             return false;
         }
@@ -370,6 +372,7 @@ class RateLimit
                     'info' => 'Dangerous function detected: ' . $func,
                     'ip' => get_client_ip(),
                     'url' => request()->fullUrl(),
+                    'referer' => request()->headers->get('referer'),
                 ]);
                 return false;
             }
