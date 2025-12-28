@@ -1458,13 +1458,7 @@ if (!function_exists('init_meta_header')) {
 
             if (get_post_type() && !request()->is('search/*') && !request()->is('/')) {
 
-                if (request()->segment(2) == 'archive') {
-                    $pn = $get_page_name . $page;
-                } elseif (request()->segment(2) == 'category') {
-                    $pn = $get_page_name . $page;
-                } elseif (request()->is('tags/*')) {
-                    $pn = $get_page_name . $page;
-                } elseif (get_module(get_post_type())->form->post_parent) {
+                if (request()->segment(2) == 'archive' || request()->segment(2) == 'category' || request()->segment(1) == 'tags' || (get_module(get_post_type())->form?->post_parent)) {
                     $pn = $get_page_name . $page;
                 } else {
                     $pn = $get_page_name . $page;
