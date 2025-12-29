@@ -2,13 +2,14 @@
 
 namespace Leazycms\Web\Http\Controllers\Auth;
 
-use Leazycms\Web\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use Leazycms\Web\Models\User;
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -119,10 +120,12 @@ class LoginController extends Controller
                     if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Auth::logout();
                     } else {
+                        Log::channel('dayli')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/' . admin_path());
                     }
                 } else {
                     if(config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())){
+                        Log::channel('dayli')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/login');
                     }else{
                         Auth::logout();
@@ -133,11 +136,13 @@ class LoginController extends Controller
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+            Log::channel('dayli')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
             return back()->with('error', 'Akun telah diblokir!');
         }
 
         $limiter->hit($limiterKey);
         $request->session()->regenerateToken();
+        Log::channel('dayli')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip().' '.$request->headers->get('User-Agent'));
         return back()->with('error', 'Akun tidak ditemukan!');
     }
 
