@@ -13,8 +13,10 @@ class AssetLink extends Command
     {
         $slug   = $this->argument('slug');
         $target = resource_path("views/template/$slug/assets");
-        $link   = public_path("template/$slug");
-
+        $link   = public_path("template/$slug/assets");
+         if (!File::exists($link)) {
+            File::makeDirectory( public_path("template/$slug"));
+        }
         if (!File::exists($target)) {
             return $this->error("Folder assets tidak ditemukan: $target");
         }

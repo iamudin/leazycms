@@ -7,10 +7,11 @@
 
 
                 <div class="btn-group  pull-right">
-                  @if(config('modules.config.option.template'))
-                    <button class="btn btn-primary btn-sm" onclick="$('.submit_form').click()"> <i class="fa fa-save" ></i> Simpan</button>
+                         @if(Cache::has('enablededitortemplate') || is_local())
+              <a href="{{ route('appearance.editor') }}" class="btn btn-warning btn-sm btn-md "> <i class="fa fa-code"></i>
+                Edit Template</a>
 
-                  @endif
+          @endif
                     <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
                 </div>
 
@@ -66,33 +67,7 @@
                 </div>
                 @endforeach
               </div>
-              <h6>Info Template</h6>
-
-              <ul class="list-group mb-3">
-                {{template_info()}}
-                    <div class="mb-5 text-right">
-        <form  class="list-group-item py-0 px-1 m-0" action="{{ url()->full() }}" method="post" enctype="multipart/form-data">
-          @csrf
-          <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
-            accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
-            <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm w-100 my-1"> <i class="fa fa-upload"></i>
-              Upload Template</button>
-            <a type="button" onclick="location.href='{{ asset('sample/sample.zip')}}'" class="btn btn-info btn-sm w-100 my-1"> <i
-                class="fa fa-brush"></i> Sample Template</a>
-                      @if(Cache::has('enablededitortemplate') || is_local())
-              <a href="{{ route('appearance.editor') }}" class="btn btn-outline-primary btn-sm btn-md w-100 my-1"> <i class="fa fa-code"></i>
-                Edit Template</a>
-
-          @endif
-        </form>
-
-      </div>
-          </ul>
-
-        </div>
-
-        <div class="col-lg-10">
-            @php
+                        @php
   $template_asset = config('modules.config.option.template') ?? null;
             @endphp
 
@@ -103,7 +78,7 @@
                           <input type="hidden" name="template_setting" value="true">
                           <div class="row">
                      @foreach ($template_asset as $field)
-                      <div class="col-lg-3">
+                      <div class="col-lg-12">
                         @if(is_array($field[1]))
                           <small>{{ str($field[0])->headline() }}</small><br>
                           <select name="{{_us($field[0])}}" class="form-control form-control-sm"  @if (isset($field[2])) required @endif >
@@ -124,7 +99,11 @@
                                       <input @if (isset($field[3])) required @endif type="file" accept="{{ $field[2] ?? null }}"
                                           class="compress-image form-control-sm form-control-file mb-2" name="{{ _us($field[0]) }}">
                                   @endif
+                          @elseif($field[1]=='color')
+                     <small>{{ str($field[0])->headline() }}</small><br>
+                      <input type="color" name="{{_us($field[0])}}" class="form-control form-control-sm" value="{{ get_option(_us($field[0])) }}">
                           @elseif($field[1] == 'textarea')
+
                               <small>{{ str($field[0])->headline() }}</small><br>
 
                               <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">
@@ -142,14 +121,40 @@
                             </div>
                     @endforeach
                                   </div>
-                                  <button type="submit" class="submit_form" style="display: none"></button>
+                                  <button type="submit" class="submit_form btn w-100 mt-2 btn-sm btn-outline-primary"> <i class="fa fa-save" ></i> Simpan</button>
               </form>
+                   
+               
             @endif
-        <iframe  src="{{ url('/') }}?reload={{ time() }}" frameborder="0" class="w-100 preview" style="height: 80vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
+              <h6>Info Template</h6>
+
+              <ul class="list-group mb-3">
+                {{template_info()}}
+                    <div class="mb-5 text-right">
+        <form  class="list-group-item py-0 px-1 m-0" action="{{ url()->full() }}" method="post" enctype="multipart/form-data">
+          @csrf
+          <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
+            accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
+            <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm w-100 my-1"> <i class="fa fa-upload"></i>
+              Upload Template</button>
+            <a type="button" onclick="location.href='{{ asset('sample/sample.zip')}}'" class="btn btn-info btn-sm w-100 my-1"> <i
+                class="fa fa-brush"></i> Sample Template</a>
+               
+        </form>
+
+      </div>
+          </ul>
+
+        </div>
+
+        <div class="col-lg-10">
+  
+        <iframe  src="{{ url('/') }}?reload={{ time() }}" frameborder="0" class="w-100 preview" style="height: 85vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
 
 
         </div>
 
         </div>
         @include('cms::backend.layout.js')
+    
 @endsection
