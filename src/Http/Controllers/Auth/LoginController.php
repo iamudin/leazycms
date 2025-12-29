@@ -120,12 +120,12 @@ class LoginController extends Controller
                     if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Auth::logout();
                     } else {
-                        Log::channel('dayli')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+                        Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/' . admin_path());
                     }
                 } else {
                     if(config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())){
-                        Log::channel('dayli')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+                        Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/login');
                     }else{
                         Auth::logout();
@@ -136,13 +136,13 @@ class LoginController extends Controller
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            Log::channel('dayli')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+            Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
             return back()->with('error', 'Akun telah diblokir!');
         }
 
         $limiter->hit($limiterKey);
         $request->session()->regenerateToken();
-        Log::channel('dayli')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip().' '.$request->headers->get('User-Agent'));
+        Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip().' '.$request->headers->get('User-Agent'));
         return back()->with('error', 'Akun tidak ditemukan!');
     }
 
