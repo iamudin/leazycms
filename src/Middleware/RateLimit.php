@@ -9,20 +9,19 @@ class RateLimit
 {
 
 
-    public function handle(Request $request, Closure $next)
-    {
-        if (config('modules.installed')=="0") {
+    public function handle(Request $request, Closure $next) {
+        if (config('modules.installed') == "0") {
             exit('Please running cms:install');
         }
-        if(config('app.sub_app_enabled') && collect(config('modules.extension_module'))->count()){
-            foreach(collect(config('modules.extension_module'))->pluck('path')->toArray() as $module){
-                if($request->getHost()==parse_url(config('app.url'), PHP_URL_HOST)){
-                    config([$module.'.route'=>'panel.'.$module.'.']);
-                    config([$module.'.path_url'=>$module]);
+        if (config('app.sub_app_enabled') && collect(config('modules.extension_module'))->count()) {
+            foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
+                if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
+                    config([$module . '.route' => 'panel.' . $module . '.']);
+                    config([$module . '.path_url' => $module]);
                 }
             }
         }
-       
+
 
         $uri = $request->getRequestUri();
         $host = $request->getHost();
@@ -59,23 +58,22 @@ class RateLimit
             if (!in_array($host, $allowedHosts, true)) {
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
-        }
-        elseif ($host !== $appUrlHost) {
+        } elseif ($host !== $appUrlHost) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
 
         if ($redirectUrl && urldecode($scheme . '://' . $appUrlHost . preg_replace('#/+#', '/', $request->getRequestUri())) !== urldecode($scheme . '://' . $appUrlHost . $uri)) {
-          return redirect(preg_replace('#/+#', '/', $redirectUrl), 301);
+            return redirect(preg_replace('#/+#', '/', $redirectUrl), 301);
         }
 
-    if(!is_main_domain()){
-             if (!$isLocal && !$isHttps && app()->environment('production')) {
-            return redirect('https://' . $host . $uri);
+        if (!is_main_domain()) {
+            if (!$isLocal && !$isHttps && app()->environment('production')) {
+                return redirect('https://' . $host . $uri);
+            }
         }
-    }
-    if($request->segment(1)=='log-viewer'){
-        abort_if($request->header('referer') != route('panel.logs'),404);
-    }
+        if ($request->segment(1) == 'log-viewer') {
+            abort_if($request->header('referer') != route('panel.logs'), 404);
+        }
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
             $attr['post_type'] = $modul->name;
@@ -187,20 +185,20 @@ class RateLimit
         }
         $this->logging_request($request);
         $this->dangerous_request($request);
-        if ($o = config('modules.current.detail_visited') && !in_array($request->segment(1),['secure','media'])) {
+        if ($o = config('modules.current.detail_visited') && !in_array($request->segment(1), ['secure', 'media'])) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request, config('modules.current.detail_visited'));
-        $response =  $next($request);
+        $response = $next($request);
         if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
 
             $content = $response->getContent();
-            
+
             $response->setContent($content);
         }
         return $response;
     }
-    function dangerous_request($request){
+    function dangerous_request($request) {
         if (
             $request->isMethod('POST') &&
             $request->has(['draw', 'columns'])
@@ -217,8 +215,8 @@ class RateLimit
                 }
             } else {
                 if (!$this->isFileSafe($file)) {
-             
-                   abort('403', 'Malicious file detected.');
+
+                    abort('403', 'Malicious file detected.');
                 }
             }
         }
@@ -242,12 +240,14 @@ class RateLimit
             'curl_exec',
             'create_function'
         ];
-       
+
         // Dapatkan semua konten dari request
-        $content = implode(",", $request->all());
-   
+        $payload = collect($request->all())
+            ->reject(fn($v) => $v instanceof \Illuminate\Http\UploadedFile)
+            ->toArray();
+        $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
         foreach ($dangerousFunctions as $function) {
-            if (stripos($content, $function) !== false) {
+            if (stripos(str($content)->lower(), $function) !== false) {
                 Log::channel('daily')->critical('Potentially dangerous code detected in request.', [
                     'info' => 'Dangerous function detected: ' . $function,
                     'ip' => get_client_ip(),
@@ -259,8 +259,7 @@ class RateLimit
             }
         }
     }
-    function logging_request(Request $request): void
-    {
+    function logging_request(Request $request): void {
         // 🚫 Skip Datatable POST
         if (
             $request->isMethod('POST') &&
@@ -308,8 +307,7 @@ class RateLimit
             'payload' => $payload,
         ]);
     }
-    protected function isFileSafe($file): bool
-    {
+    protected function isFileSafe($file): bool {
         if (!$file->isValid()) {
             return false;
         }
