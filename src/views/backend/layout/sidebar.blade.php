@@ -203,7 +203,7 @@
                 class="text-muted"
                 style="padding: 12px 10px; font-size: small; background: #000"
             >
-                <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; ADMINISTRATOR
+                <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; Administrator
             </li>
             @if(config('modules.app_master'))
               <li title="Monitor Situs">
@@ -211,7 +211,7 @@
                     class="app-menu__item {{ active_item(['site-monitor']) }}"
                     href="{{ route('app.master.index') }}"
                     ><i class="app-menu__icon fa fa-desktop text-danger"></i>
-                    <span class="app-menu__label">Monitor Situs</span></a
+                    <span class="app-menu__label">Monitor Web</span></a
                 >
             </li>
             @endif
@@ -223,44 +223,54 @@
                     <span class="app-menu__label">Webmail</span></a
                 >
             </li> --}}
-            <li class="treeview {{ active_item(['setting', 'appearance', 'cache']) ? 'is-expanded' : '' }}">
+            <li class="treeview {{ active_item(['setting', 'appearance', 'cache','profile']) ? 'is-expanded' : '' }}">
                 <a
                     class="app-menu__item"
                     href="#"
                     data-toggle="treeview"
                     ><i class="app-menu__icon fa fa-gear text-danger"></i
-                    ><span class="app-menu__label">Pengaturan</span
+                    ><span class="app-menu__label">Setting</span
                     ><i class="treeview-indicator fa fa-chevron-right"></i
                 >
                 </a>
 
                 <ul class="treeview-menu">
+                       <li>
+                        <a
+                            class="treeview-item {{active_item('profile') }}"
+                            href="{{ \Illuminate\Support\Facades\Route::has('profile') ? route('profile') : '#' }}"
+                            ><i class="icon fa fa-building text-primary"></i> Profile </a>
+                    </li>
+                    
                     <li>
                         <a
                             class="treeview-item {{active_item('appearance') }}"
                             href="{{ route('appearance') }}"
-                            ><i class="icon fa fa-brush text-primary"></i> Tampilan</a>
+                            ><i class="icon fa fa-brush text-primary"></i> Template</a>
                     </li>
                     <li>
                         <a
                             class="treeview-item {{active_item('setting') }}"
                             href="{{ route('setting') }}"
                             ><i class="icon fa fa-globe text-success"></i> Website</a
-                        >      
+                        > 
+                    </li>     
                             <li>
                         <a
                             class="treeview-item {{active_item(val: 'cache') }}"
                             href="{{ route('cache-manager') }}"
                             ><i class="icon fa fa-flash text-warning"></i> Cache</a
-                        >    
+                        >  
+                            </li>  
                 </ul>   
             </li>
+        
                   <li title="Pengguna">
                 <a
                     class="app-menu__item {{ active_item(['user', 'role']) }}"
                     href="{{ route('user') }}"
                     ><i class="app-menu__icon fa fa-users text-danger"></i>
-                    <span class="app-menu__label">Pengguna</span></a
+                    <span class="app-menu__label">User</span></a
                 >
             </li>
             <li title="Logs">
@@ -280,7 +290,6 @@
                 >
             </li>
         @endif
-@if(Auth::user()->isAdmin())
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -295,6 +304,5 @@
                 <i class="fa fa-book"></i> Docs</a
             >
         </li>
-    @endif
     </ul>
 </aside>

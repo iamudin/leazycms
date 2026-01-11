@@ -349,21 +349,21 @@ class Post extends Model
         }
         return $q->get();
     }
-    function index_by_category($type, $slug, $limit = false)
+    function index_by_category($type, $slug, $paginate = false)
     {
         $modul = get_module($type);
         if ($modul && $modul->cache) {
             $cek = $this->categories($type) ? collect($this->categories($type))->where('slug', $slug)->first() : null;
-            return $cek && collect($cek->posts)->count() > 0 ? ($limit ? collect($cek->posts)->take($limit)->sortByDesc('created_at') : collect($cek->posts))->sortByDesc('created_at') : collect([]);
+            return $cek && collect($cek->posts)->count() > 0 ? ($paginate ? collect($cek->posts)->take($paginate)->sortByDesc('created_at') : collect($cek->posts))->sortByDesc('created_at') : collect([]);
         } else {
-            return $limit ? $this->selectedColumn()->with('user')
+            return $paginate ? $this->selectedColumn()->with('user')
             ->whereHas('category', function ($q) use ($slug,$type) {
                 $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
-            })->onType($type)->published()->latest('created_at')->take($limit)->get() :
+            })->onType($type)->published()->latest('created_at')->paginate($paginate) :
             $this->selectedColumn()->with('user')->WhereHas('category', function ($q) use ($slug,$type) {
                     $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
                 })->onType($type)->published()->latest('created_at')
-                ->paginate(get_option('post_perpage'));
+                ->get();
         }
     }
 

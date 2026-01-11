@@ -7,7 +7,7 @@
 <div class="pull-right">
     @if(Route::has('user.create'))
     <a href="{{route('user.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
-    <a href="{{route('role')}}" class="btn btn-dark btn-sm"> <i class="fa fa-key" aria-hidden></i> Hak Akses</a>
+    <a href="{{route('role')}}" class="btn btn-dark btn-sm"> <i class="fa fa-key" aria-hidden></i> Role</a>
     @endif
 </div>
 </div>

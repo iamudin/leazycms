@@ -1,9 +1,9 @@
-@extends('cms::backend.layout.app', ['title' => 'Tampilan'])
+@extends('cms::backend.layout.app', ['title' => 'Template'])
 @section('content')
 
         <div class="row">
         <div class="col-lg-12 mb-3">
-          <h3 style="font-weight:normal;float: left;"> <i class="fa fa-paint-brush"></i> Tampilan </h3>
+          <h3 style="font-weight:normal;float: left;"> <i class="fa fa-brush"></i> Template </h3>
 
 
                 <div class="btn-group  pull-right">
@@ -71,12 +71,23 @@
   $template_asset = config('modules.config.option.template') ?? null;
             @endphp
 
-            @if($template_asset && is_array($template_asset))
+           
                       <h6> <i class="fa fa-gear"></i> Template Setting</h6>
                       <form action="{{ URL::current() }}" class="template-setting mb-4" method="post" enctype="multipart/form-data">
                           @csrf
                           <input type="hidden" name="template_setting" value="true">
                           <div class="row">
+                      <div class="col-lg-12">
+                              <small>Konten Halaman Utama</small>
+                                <select class="form-control form-control-sm" name="home_page">
+                                    <option value="default">Default</option>
+                                    @foreach ($home as $r)
+                                        <option value="{{ $r }}"
+                                            {{ $r == get_option('home_page') ? 'selected' : '' }}>{{ str(str_replace('.blade.php', '', $r))->upper() }}</option>
+                                    @endforeach
+                                </select>
+                      </div>
+                             @if($template_asset && is_array($template_asset))
                      @foreach ($template_asset as $field)
                       <div class="col-lg-12">
                         @if(is_array($field[1]))
@@ -120,12 +131,13 @@
                           @endif
                             </div>
                     @endforeach
+            @endif
+
                                   </div>
                                   <button type="submit" class="submit_form btn w-100 mt-2 btn-sm btn-outline-primary"> <i class="fa fa-save" ></i> Simpan</button>
               </form>
                    
                
-            @endif
               <h6>Info Template</h6>
 
               <ul class="list-group mb-3">

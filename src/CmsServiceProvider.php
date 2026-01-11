@@ -122,6 +122,9 @@ class CmsServiceProvider extends ServiceProvider
     {
         Carbon::setLocale('ID');
         config(['app.timezone' => config('modules.timezone')]);
+        if(config('log-viewer.route_path')){
+        config(['log-viewer.timezone' => config('modules.timezone')]);
+        }
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
         if (

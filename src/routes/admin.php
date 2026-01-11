@@ -77,6 +77,7 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'option/{slug}', 'option')->name('option');
     Route::match(['get', 'post'], 'backup', 'backup_restore')->name('backup');
     Route::match(['get', 'post'], 'menu-target', 'menu_target')->name('menu-target');
+    Route::match(['get', 'put'], 'profile', 'profile')->name('profile');
 });
 Route::controller(UserController::class)->group(function () {
     Route::get('role', 'roleIndex')->name('role');
