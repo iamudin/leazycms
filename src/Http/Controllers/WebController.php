@@ -185,16 +185,23 @@ class WebController extends Controller
             return to_route('home');
         }
         $query = str_replace('-', ' ', str($slug)->slug());
-        $type = collect(get_module())->where('public', true)->where('web.detail', true)->pluck('name')->toArray();
-        $index = Post::select((new Post)->selected)->wherein('type', $type)
-            ->where('title', 'like', '%' . $query . '%')
-            ->orwhere('keyword', 'like', '%' . $query . '%')
-            ->orwhere('description', 'like', '%' . $query . '%')
-            ->orwhere('content', 'like', '%' . $query . '%')
+        $type = collect(get_module())
+            ->where('public', true)
+        ->where('web.detail', true)
+            ->where('web.index', true)
+        ->pluck('name')->toArray();
+        $index = Post::select((new Post)->selected)
+            ->whereIn('type', $type)
+            ->where('type', '!=', 'page')
             ->published()
-            ->where('type','!=','page')
-            ->latest('created_at')
+            ->where(function ($q) use ($query) {
+                $q->where('title', 'like', "%{$query}%")
+                    ->orWhere('keyword', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%");
+            })
+            ->latest()
             ->paginate(get_option('post_perpage'));
+
         $data = array(
             'keyword' => ucwords($query),
             'index' => $index
