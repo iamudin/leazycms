@@ -1,10 +1,5 @@
 <script>
-   
-
-
     window.addEventListener('DOMContentLoaded', function() {
-     
-
      var sort_col = $('.datatable').find("th:contains('Dibuat')")[0].cellIndex;
         var table = $('.datatable').DataTable({
 
@@ -75,13 +70,25 @@
                         searchable: true
                     },
                 @endif
-                @if (current_module()->datatable->custom_column)
+                
+                @if ($custom = current_module()->datatable->custom_column)
+                @if(is_array($custom))
+                @foreach($custom as $row)
                     {
-                        data: 'data_field',
-                        name: 'data_field',
+                        data: '{{ _us($row) }}',
+                        name: '{{ _us($row) }}',
                         orderable: false,
-                        searchable: true
+                        searchable: false
                     },
+                @endforeach
+                @else
+                   {
+                        data: '{{ $custom }}',
+                        name: '{{ $custom }}'',
+                        orderable: false,
+                        searchable: false
+                    },
+                @endif
                 @endif {
                     data: 'created_at',
                     name: 'created_at',

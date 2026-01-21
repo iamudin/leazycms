@@ -97,7 +97,13 @@
                 <th style="vertical-align: middle" >{{$parent[0]}}</th>
                 @endif
                 @if($custom = current_module()->datatable->custom_column)
+                @if(is_array($custom))
+                @foreach ($custom as $row)
+                <th style="vertical-align: middle">{{$row}}</th>
+                @endforeach
+                @else
                 <th style="vertical-align: middle">{{$custom}}</th>
+                @endif
                 @endif
                 <th style="width:60px;vertical-align: middle">Dibuat</th>
 
