@@ -60,7 +60,7 @@ class WebController extends Controller
         $modul = current_module();
         config(['modules.page_name' =>  $modul->title]);
         $data = array(
-            'index' => $modul->web->auto_query ? $post->index($modul->name, get_option('post_perpage')) : [],
+            'index' => $modul->web->auto_query ? $post->index($modul->name, isset($modul->web->post_perpage) ? $modul->web->post_perpage : get_option('post_perpage')) : [],
             'module' => $modul,
         );
         
@@ -160,16 +160,17 @@ class WebController extends Controller
     public function category($slug = null)
     {
         $modul = get_module(get_post_type());
-        $category = Category::where('slug', 'like', $slug . '%')->whereType($modul->name)->whereStatus('publish')->select('name', 'slug', 'url','icon')->first();
+        
+        $category = Category::where('slug', 'like', $slug . '%')->whereType($modul->name)->whereStatus('publish')->select('name', 'slug', 'url','icon')->whereHas('posts')->first();
         abort_if(!$category, '404');
-        if ($category->slug != $slug)
+        if ($category->slug != $slug){
             return redirect($category->url);
-
+        }
         config(['modules.page_name' => $modul->title . ' di kategori ' . $category->name]);
         $category->timestamps = false;
         $category->increment('visited');
         $data = array(
-            'index' => (new Post)->index_by_category($modul->name, $slug),
+            'index' => (new Post)->index_by_category($modul->name, $slug, isset($modul->web?->post_perpage) ? $modul->web->post_perpage : get_option('post_perpage')),
             'category' => $category,
             'module' => $modul
         );
@@ -184,16 +185,23 @@ class WebController extends Controller
             return to_route('home');
         }
         $query = str_replace('-', ' ', str($slug)->slug());
-        $type = collect(get_module())->where('public', true)->where('web.detail', true)->pluck('name')->toArray();
-        $index = Post::select((new Post)->selected)->wherein('type', $type)
-            ->where('title', 'like', '%' . $query . '%')
-            ->orwhere('keyword', 'like', '%' . $query . '%')
-            ->orwhere('description', 'like', '%' . $query . '%')
-            ->orwhere('content', 'like', '%' . $query . '%')
+        $type = collect(get_module())
+            ->where('public', true)
+        ->where('web.detail', true)
+            ->where('web.index', true)
+        ->pluck('name')->toArray();
+        $index = Post::select((new Post)->selected)
+            ->whereIn('type', $type)
+            ->where('type', '!=', 'page')
             ->published()
-            ->where('type','!=','page')
-            ->latest('created_at')
-            ->paginate(20);
+            ->where(function ($q) use ($query) {
+                $q->where('title', 'like', "%{$query}%")
+                    ->orWhere('keyword', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%");
+            })
+            ->latest()
+            ->paginate(get_option('post_perpage'));
+
         $data = array(
             'keyword' => ucwords($query),
             'index' => $index
@@ -225,11 +233,12 @@ class WebController extends Controller
     public function archive(Request $request, Post $post, $year = null, $month = null, $date = null)
     {
         $type = get_post_type();
+        $module = get_module($type);
         abort_if($year > date('Y'), 404);
 
         if ($year && !$month && !$date) {
                 $periode = $year;
-                $data = $post->onType($type)->published()->whereYear('created_at', $year)->paginate(get_option('post_perpage'));
+                $data = $post->onType($type)->published()->whereYear('created_at', $year)->paginate(isset($module->web?->post_perpage) ? $module->web->post_perpage : get_option('post_perpage'));
         } elseif ($year && $month && !$date) {
 
                 $periode = blnindo($month) . ' ' . $year;
@@ -237,7 +246,7 @@ class WebController extends Controller
                     ->published()
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
-                    ->paginate(get_option('post_perpage'));
+                    ->paginate(isset($module->web?->post_perpage) ? $module->web->post_perpage : get_option('post_perpage'));
           
         } elseif ($year && $month && $date) {
 
@@ -246,12 +255,12 @@ class WebController extends Controller
                 $data = $post->onType($type)
                 ->published()
                     ->whereDate('created_at', $year . '-' . $month . '-' . $date)
-                    ->paginate(get_option('post_perpage'));
+                    ->paginate(isset($module->web?->post_perpage) ? $module->web->post_perpage : get_option('post_perpage'));
         
         } 
 
         $data = array(
-            'title' => 'Arsip ' . get_module($type)->title . ' ' . $periode,
+            'title' => 'Arsip ' . $module->title. ' ' . $periode,
             'icon' => 'fa-archive',
             'index' => $data
         );

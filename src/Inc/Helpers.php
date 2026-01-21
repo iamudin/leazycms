@@ -191,6 +191,18 @@ if (!function_exists('get_path_domain')) {
     }
 }
 
+if(!function_exists('realtime_clock')){
+    function realtime_clock($elementId=null)
+    {
+        return view()->make('cms::backend.layout.realtime_clock', ['tag'=>$elementId]);
+    }
+}
+if (!function_exists('realtime_timer')) {
+    function realtime_timer($dateTime, $elementId = null)
+    {
+        return view()->make('cms::backend.layout.realtime_timer', ['event_time' => $dateTime, 'tag' => $elementId]);
+    }
+}
 if (!function_exists('is_main_domain')) {
     function is_main_domain()
     {

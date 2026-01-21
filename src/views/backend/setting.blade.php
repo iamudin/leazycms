@@ -1,11 +1,11 @@
-@extends('cms::backend.layout.app', ['title' => 'Pengaturan'])
+@extends('cms::backend.layout.app', ['title' => 'Website'])
 @section('content')
         <form class="" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
             @method('PUT')
             @csrf
             <div class="row">
                 <div class="col-lg-12">
-                    <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-gears"></i> Pengaturan <div class="btn-group pull-right">
+                    <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-globe"></i> Website <div class="btn-group pull-right">
                          @if(!app()->configurationIsCached())
                          <button
                             name="save_setting" value="true" class="btn btn-primary btn-sm"> <i
@@ -16,51 +16,19 @@
                     @include('cms::backend.layout.error')
                     @if(!app()->configurationIsCached())
                         <ul class="nav nav-tabs">
-                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#home"> <i
-                                        class="fa fa-home"></i> {{ $web_type ?? 'Organisasi' }}</a>
-                            </li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#profile"> <i class="fa fa-globe"></i>
-                                    Situs Web</a></li>
+                          
+                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#profile"> <i class="fa fa-search"></i>
+                                    S E O</a></li>
                             <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#keamanan"> <i class="fa fa-gears"></i>
                                     Lainnya</a></li>
                                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pwa"> <i class="fa fa-mobile-alt"></i>
                                         PWA</a></li>
                         </ul>
                         <div class="tab-content pt-2" id="myTabContent">
-                            <div class="tab-pane fade active show" id="home">
+                        
+                            <div class="tab-pane fade  active show" id="profile">
 
-                                @foreach ($option ?? [] as $r)
-                                    <small for="" class="text-muted">{{ $r[0] }}</small>
-                                    @if ($r[1] == 'file')
-                                        @if (get_option(_us($r[0])) && media_exists(get_option(_us($r[0]))))
-                                            <br><a href="{{ url(get_option(_us($r[0]))) }}"
-                                                class="btn btn-outline-info btn-sm">Lihat {{ $r[0] }}
-                                                (.{{ str(get_ext(get_option(_us($r[0]))))->upper() }})</a> <a
-                                                href="javascript:void(0)" onclick="media_destroy('{{ get_option(_us($r[0])) }}')"
-                                                class="text-danger btn-sm"> <i class="fa fa-trash"></i> </a>
-                                            <br>
-                                        @else
-                                            <input accept="{{ allow_mime() }}" {{ isset($r[2]) ? 'required' : '' }}
-                                                name="{{ _us($r[0]) }}" type="file" class="compress-image form-control-sm form-control-file">
-                                        @endif
-                                    @else
-                                        <input {{ isset($r[2]) ? 'required' : '' }} type="text"
-                                            class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}"
-                                            name="{{ _us($r[0]) }}" value="{{ get_option(_us($r[0])) }}">
-                                    @endif
-                                @endforeach
-
-                            </div>
-                            <div class="tab-pane fade" id="profile">
-
-                                <small>Konten Halaman Utama</small>
-                                <select class="form-control form-control-sm" name="home_page">
-                                    <option value="default">Default</option>
-                                    @foreach ($home as $r)
-                                        <option value="{{ $r }}"
-                                            {{ $r == get_option('home_page') ? 'selected' : '' }}>{{ str(str_replace('.blade.php', '', $r))->upper() }}</option>
-                                    @endforeach
-                                </select>
+                            
                                 @foreach ($site_attribute as $r)
                                     @if ($r[2] == 'file')
                                         @if($r[1] == 'favicon')
@@ -97,6 +65,13 @@
 
                             </div>
                             <div class="tab-pane fade" id="keamanan">
+                                <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-clock"></i> Zona Waktu</h6>
+                                <select name="timezone" class="form-control form-control-sm">
+    <option value="Asia/Jakarta" {{ config('app.timezone') == 'Asia/Jakarta' ? 'selected' : '' }}>Asia/Jakarta (WIB)</option>
+    <option value="Asia/Makassar"  {{ config('app.timezone') == 'Asia/Makassar' ? 'selected' : '' }}>Asia/Makassar (WITA)</option>
+    <option value="Asia/Jayapura" {{ config('app.timezone') == 'Asia/Jayapura' ? 'selected' : '' }}>Asia/Jayapura (WIT)</option>
+</select>
+<br>
                                 <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-lock"></i> Keamanan</h6>
                                 @foreach ($security as $r)
                                     <small for="" class="text-muted">{{ $r[0] }}</small><br>
@@ -171,11 +146,16 @@
                 </div>
             </div>
         </form>
-
-        @push('scripts')
+        @push('styles')
+        <style>
+        .list-group .list-group-item:hover {
+            background-color: #ffe1e1;
+        }
+        </style>
         <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
         @endpush
         @push('scripts')
+        
             <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
     @include('cms::backend.layout.js')
         @endpush

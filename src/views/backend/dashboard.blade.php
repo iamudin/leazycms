@@ -3,7 +3,7 @@
         <div class="row">
         <div class="col-lg-12 mb-1">
 
-            <h3 style="font-weight:normal;"> <i class="fa fa-dashboard"></i> Dashboard </h3>
+            <h3 style="font-weight:normal;"> <i class="fa fa-dashboard"></i> Dashboard</h3>
 
         </div>
             <div class="col-lg-12">

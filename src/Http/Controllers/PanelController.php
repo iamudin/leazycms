@@ -45,6 +45,7 @@ class PanelController extends Controller implements HasMiddleware
                 '--force' => true,
             ]);
         }
+        
         return view('cms::backend.logs.index');
     }
     function visitor_counter($currentDomain)
@@ -368,30 +369,53 @@ class PanelController extends Controller implements HasMiddleware
         }
         return view('cms::backend.option',compact('data','slug'));
     }
+
+    function profile(Request $request, Option $option){
+        $data = [
+            'logo_organisasi',
+            'nama_organisasi',
+            'keterangan_organisasi',
+            'alamat',
+            'telepon',
+            'email',
+            'latitude',
+            'longitude',
+            'youtube',
+            'facebook',
+            'instagram',
+            'twitter',
+            'facebook',
+            'whatsapp'
+    ];
+        if ($request->isMethod('put')) {
+            foreach ($data as $row) {
+                $key = $row;
+
+                if ($row== 'logo_organisasi') {
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                    if ($request->hasFile($key)) {
+                        $fid->update([
+                            'value' => $fid->addFile([
+                                'file' => $request->file($key),
+                                'purpose' => $key,
+                                'mime_type' => ['image/png', 'image/jpeg'],
+                            ])
+                        ]);
+                    }
+                } else {
+                    $value = $request->$key;
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+                }
+            }
+            return back()->with('success', 'Profile berhasil diupdate!');
+        }
+        return view('cms::backend.profile');
+    }
     public function setting(Request $request, Option $option)
     {
 
         admin_only();
-        $data['web_type'] = config('modules.config.web_type');
-        $data['option'] =  [
-            ['Nama', 'text'],
-            ['Deskripsi', 'text'],
-            ['Alamat', 'text'],
-            ['Telepon', 'text'],
-            ['Whatsapp', 'text'],
-            ['Fax', 'text'],
-            ['Email', 'text'],
-            ['Latitude', 'text'],
-            ['Longitude', 'text'],
-            ['Link Maps', 'text'],
-            ['Facebook', 'text'],
-            ['Youtube', 'text'],
-            ['Instagram', 'text'],
-            ['Twitter', 'text'],
-            ['Jam Kerja', 'text'],
-            ['Hari Kerja', 'text'],
-            ['Icon', 'file'],
-        ];
+      
         $data['site_attribute'] = array(
             ['Alamat Situs Web', 'site_url', 'text'],
             ['Nama Situs Web', 'site_title', 'text'],
@@ -425,6 +449,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Frame Embed', 'frame_embed'],
             ['Preloader Effect', 'preload'],
             ['Default JQuery Min', 'default_jquery'],
+            ['Jump To Top Button', 'top_button'],
         );
         $data['security'] = array(
 
@@ -438,33 +463,18 @@ class PanelController extends Controller implements HasMiddleware
             ['Roles', 'operator,editor,publisher']
         );
 
-        $data['home'] = array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php')));
+      
         if ($request->isMethod('PUT')) {
 
+            if($request->timezone){
+                rewrite_env(['APP_TIMEZONE'=> $request->timezone]);
+            }
             if ($hp = $request->home_page) {
                 if (in_array($hp, array_merge(['default'], $data['home']))) {
                     $fid = $option->updateOrCreate(['name' => 'home_page'], ['value' => $hp, 'autoload' => 1]);
                 }
             }
-            foreach ($data['option'] as $row) {
-                $key = _us($row[0]);
-
-                if ($row[1] == 'file') {
-                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
-                    if ($request->hasFile($key)) {
-                        $fid->update([
-                            'value' => $fid->addFile([
-                                'file' => $request->file($key),
-                                'purpose' => $key,
-                                'mime_type' => ['image/png', 'image/jpeg'],
-                            ])
-                        ]);
-                    }
-                } else {
-                    $value = $request->$key;
-                    $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
-                }
-            }
+            
             foreach ($data['security'] as $row) {
                 $key = _us($row[0]);
                 $value = $request->$key ?? null;
@@ -720,9 +730,13 @@ class PanelController extends Controller implements HasMiddleware
 
                     }
             }
+            if($request->home_page){
+                $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
+            }
                 return back()->send()->with('success', 'Berhasil diupdate');
             }
         }
+        view()->share('home', array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php'))));
         return view('cms::backend.appearance');
     }
     public function template_uploader($file)
