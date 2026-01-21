@@ -83,8 +83,8 @@
                 @endforeach
                 @else
                    {
-                        data: '{{ $custom }}',
-                        name: '{{ $custom }}'',
+                        data: '{{ _us($custom )}}',
+                        name: '{{ _us($custom )}}',
                         orderable: false,
                         searchable: false
                     },
