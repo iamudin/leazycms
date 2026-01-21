@@ -127,7 +127,7 @@ class Post extends Model
     }
     public function getYearAttribute()
     {
-        return $this->updated_at->format('Y');
+        return $this->created_at->format('Y');
     }
     public function getLinkAttribute()
     {
@@ -135,7 +135,7 @@ class Post extends Model
     }
     public function getMonthAttribute()
     {
-        return $this->updated_at->format('F');;
+        return $this->created_at->format('F');;
     }
     public function getFieldAttribute()
     {

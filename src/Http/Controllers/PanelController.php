@@ -698,7 +698,7 @@ class PanelController extends Controller implements HasMiddleware
                 ]);
                 return $this->template_uploader($file);
             }
-            if ($request->template_setting) {
+            if ($request->template_setting && config('modules.config.option.template')) {
                 $ar_ta = config('modules.config.option.template') ?? null;
                    foreach ($ar_ta as $field) {
                     $key = _us($field[0]);
