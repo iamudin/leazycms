@@ -1,11 +1,12 @@
 <script>
 window.addEventListener('DOMContentLoaded', function () {
+@if((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
 
     // ambil index kolom "Dibuat"
     var sort_col = $('.datatable')
         .find("th:contains('Dibuat')")[0]
         ?.cellIndex ?? 0;
-
+@endif
     var table = $('.datatable').DataTable({
 
         responsive: {
@@ -70,10 +71,11 @@ window.addEventListener('DOMContentLoaded', function () {
                     { data: '{{ _us($custom) }}', orderable: false, searchable: false },
                 @endif
             @endif
+@if((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
 
             { data: 'created_at', orderable: true, searchable: false },
             { data: 'updated_at', orderable: true, searchable: false },
-
+@endif
             @if (current_module()->web->detail)
             { data: 'visited', orderable: true, searchable: false },
             @endif
@@ -81,8 +83,9 @@ window.addEventListener('DOMContentLoaded', function () {
             { data: 'status', orderable: false, searchable: false },
             { data: 'action', orderable: false, searchable: false },
         ],
-
+@if((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
         order: [[ sort_col, 'desc' ]],
+@endif
     });
 
     // ================================

@@ -19,6 +19,7 @@
               </div>
 
               <div class="col-lg-12">
+             
                 <div class="row">
                   @php
   $publish = request()->user()->isAdmin() ? query()->onType(get_post_type())->published()->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->published()->count();
@@ -105,9 +106,12 @@
                 <th style="vertical-align: middle">{{$custom}}</th>
                 @endif
                 @endif
+@if((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
+
                 <th style="width:60px;vertical-align: middle">Dibuat</th>
 
                 <th style="width:60px;vertical-align: middle">Diubah</th>
+                @endif
                 @if(current_module()->web->detail)
                 <th  style="width:30px;vertical-align: middle">Hits</th>
                 @endif

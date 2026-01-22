@@ -303,6 +303,12 @@ class PostController extends Controller implements HasMiddleware
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');
         }
+        if(isset($current_module->datatable?->timestamps)){
+            if(!$current_module->datatable?->timestamps){
+            $data->orderBy('created_at', 'DESC');
+
+            }
+        }
 
      $customColumns = $current_module->datatable->custom_column;
 
