@@ -19,10 +19,10 @@
             @php 
             $query = query()->onType(get_post_type());
     $count = match ($row) {
-        'publish' => $query->published()->count(),
+        'publish' => $publish,
         'disematkan' => $query->wherePinned(1)->count(),
-        'draft' => $query->whereStatus('draft')->count(),
-        'sampah' => $query->onlyTrashed()->count()
+        'draft' => $draft,
+        'sampah' => $trash
     };
             @endphp
             <option value="{{ $row }}">{{ str($row)->headline() }} ({{ $count }})</option>

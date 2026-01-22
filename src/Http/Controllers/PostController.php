@@ -297,28 +297,28 @@ class PostController extends Controller implements HasMiddleware
         }
     }
 
-      public function datatable(Request $req) {
+    public function datatable(Request $req) {
         $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected, ['data_loop']))->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');
         }
-        if(isset($current_module->datatable?->timestamps)){
-            if(!$current_module->datatable?->timestamps){
-            $data->orderBy('created_at', 'DESC');
+        if (isset($current_module->datatable?->timestamps)) {
+            if (!$current_module->datatable?->timestamps) {
+                $data->orderBy('created_at', 'DESC');
 
             }
         }
 
-     $customColumns = $current_module->datatable->custom_column;
+        $customColumns = $current_module->datatable->custom_column;
 
-if ($customColumns && !is_array($customColumns)) {
-    $customColumns = [_us($customColumns)];
-} elseif (is_array($customColumns)) {
-    $customColumns = array_map('_us', $customColumns);
-} else {
-    $customColumns = [];
-}
+        if ($customColumns && !is_array($customColumns)) {
+            $customColumns = [_us($customColumns)];
+        } elseif (is_array($customColumns)) {
+            $customColumns = array_map('_us', $customColumns);
+        } else {
+            $customColumns = [];
+        }
         $dt = DataTables::of($data)
             ->addIndexColumn()
             ->filter(function ($instance) use ($req) {
@@ -411,146 +411,146 @@ if ($customColumns && !is_array($customColumns)) {
                     }
                 }
             });
-          $dt->addColumn('title', function ($row) use ($current_module) {
+        $dt->addColumn('title', function ($row) use ($current_module) {
 
-                $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
-                $tags = '';
-                foreach ($row->tags ? $row->tags->pluck('name') : [] as $item) {
-                    $tags .= ' <b>#' . $item . '</b>';
+            $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
+            $tags = '';
+            foreach ($row->tags ? $row->tags->pluck('name') : [] as $item) {
+                $tags .= ' <b>#' . $item . '</b>';
+            }
+
+            $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
+            $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
+            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url . '/') . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+
+
+            $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
+            $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
+
+            $b = '<b class="text-primary">' . $tit . '</b><br>';
+            $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
+            return $b;
+        });
+
+
+        $dt->addColumn('created_at', function ($row) {
+            return '<small class="badge badge-pill py-1" style="border:1px solid green;">' . date('d M Y H:i', strtotime($row->created_at)) . '</small>';
+        });
+        $dt->addColumn('visited', function ($row) {
+            return '<center><small class="badge badge-pill badge-dark py-1" style="border:1px solid lime;"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
+        });
+        $dt->addColumn('updated_at', function ($row) {
+            return ($row->updated_at) ? '<small class="badge badge-pill py-1" style="border:1px solid orange;">' . date('d M Y H:i', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
+        });
+        $dt->addColumn('thumbnail', function ($row) {
+            return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
+        });
+        foreach ($customColumns as $field) {
+            $dt->addColumn($field, function ($row) use ($field) {
+
+                if (empty($row->data_field) || empty($row->data_field[$field])) {
+                    return '<span>-</span>';
                 }
 
-                $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
-                $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
-                $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url . '/') . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+                $value = $row->data_field[$field];
 
+                if (is_string($value)) {
 
-                $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
-                $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
+                    // 🔗 0️⃣ Jika /media/ + ada nama file & ekstensi
+                    if (str_starts_with($value, '/media/')) {
 
-                $b = '<b class="text-primary">' . $tit . '</b><br>';
-                $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
-                return $b;
-            });
+                        $filename = basename($value);
 
+                        // Pastikan ada nama file + ekstensi (misal: file.jpg)
+                        if (
+                            $filename &&
+                            str_contains($filename, '.') &&
+                            preg_match('/^[^\/]+\.[a-zA-Z0-9]+$/', $filename)
+                        ) {
 
-            $dt->addColumn('created_at', function ($row) {
-                return '<small class="badge badge-pill py-1" style="border:1px solid green;">' . date('d M Y H:i', strtotime($row->created_at)) . '</small>';
-            });
-            $dt->addColumn('visited', function ($row) {
-                return '<center><small class="badge badge-pill badge-dark py-1" style="border:1px solid lime;"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
-            });
-            $dt->addColumn('updated_at', function ($row) {
-                return ($row->updated_at) ? '<small class="badge badge-pill py-1" style="border:1px solid orange;">' . date('d M Y H:i', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
-            });
-            $dt->addColumn('thumbnail', function ($row) {
-                return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
-            });
-foreach ($customColumns as $field) {
-    $dt->addColumn($field, function ($row) use ($field) {
-
-        if (empty($row->data_field) || empty($row->data_field[$field])) {
-            return '<span>-</span>';
-        }
-
-        $value = $row->data_field[$field];
-
-        if (is_string($value)) {
-
-            // 🔗 0️⃣ Jika /media/ + ada nama file & ekstensi
-            if (str_starts_with($value, '/media/')) {
-
-                $filename = basename($value);
-
-                // Pastikan ada nama file + ekstensi (misal: file.jpg)
-                if (
-                    $filename &&
-                    str_contains($filename, '.') &&
-                    preg_match('/^[^\/]+\.[a-zA-Z0-9]+$/', $filename)
-                ) {
-
-                    // Cek media exists
-                    if ( media_exists($value)) {
-                        return '<a href="' . e($value) . '" 
+                            // Cek media exists
+                            if (media_exists($value)) {
+                                return '<a href="' . e($value) . '" 
                                     target="_blank" 
                                     class="badge badge-pill py-1" style="border:1px solid green;">
                                     <i class="fa fa-eye"></i> Lihat
                                 </a>';
-                    }
-                }
-
-                // Tidak valid / tidak ada file
-                return '<span>-</span>';
-            }
-
-            // 1️⃣ ISO 8601: Y-m-dTH:i
-            $dtValue = \DateTime::createFromFormat('Y-m-d\TH:i', $value);
-            if ($dtValue !== false) {
-                return '<small class="badge badge-pill py-1" style="border:1px solid green;">'
-                    . $dtValue->format('d F Y H:i')
-                    . '</small>';
-            }
-
-            // 2️⃣ Y-m-d H:i:s
-            $dtValue = \DateTime::createFromFormat('Y-m-d H:i:s', $value);
-            if ($dtValue !== false) {
-                return '<small class="badge badge-pill py-1" style="border:1px solid green;">'
-                    . $dtValue->format('d F Y H:i')
-                    . '</small>';
-            }
-
-            // 3️⃣ Y-m-d
-            $dtValue = \DateTime::createFromFormat('Y-m-d', $value);
-            if ($dtValue !== false) {
-                return '<small class="badge badge-pill py-1" style="border:1px solid green;">'
-                    . $dtValue->format('d F Y')
-                    . '</small>';
-            }
-        }
-
-        // Default
-        return '<span>' . e($value) . '</span>';
-    });
-}
-
-
-
-
-
-            $dt->addColumn('parents', function ($row) use ($current_module) {
-                if ($current_module->form->post_parent) {
-                    $parent = null;
-                    if ($row->parent) {
-                        $parent .= $row->parent->title;
-                        if ($row->parent->parent) {
-                            $parent .= ' - ' . $row->parent->parent->title;
-                            if ($row->parent->parent->parent) {
-                                $parent .= ' - ' . $row->parent->parent->parent->title;
                             }
                         }
+
+                        // Tidak valid / tidak ada file
+                        return '<span>-</span>';
                     }
-                    return $parent ?? '_';
+
+                    // 1️⃣ ISO 8601: Y-m-dTH:i
+                    $dtValue = \DateTime::createFromFormat('Y-m-d\TH:i', $value);
+                    if ($dtValue !== false) {
+                        return '<small class="badge badge-pill py-1" style="border:1px solid green;">'
+                            . $dtValue->format('d F Y H:i')
+                            . '</small>';
+                    }
+
+                    // 2️⃣ Y-m-d H:i:s
+                    $dtValue = \DateTime::createFromFormat('Y-m-d H:i:s', $value);
+                    if ($dtValue !== false) {
+                        return '<small class="badge badge-pill py-1" style="border:1px solid green;">'
+                            . $dtValue->format('d F Y H:i')
+                            . '</small>';
+                    }
+
+                    // 3️⃣ Y-m-d
+                    $dtValue = \DateTime::createFromFormat('Y-m-d', $value);
+                    if ($dtValue !== false) {
+                        return '<small class="badge badge-pill py-1" style="border:1px solid green;">'
+                            . $dtValue->format('d F Y')
+                            . '</small>';
+                    }
                 }
 
+                // Default
+                return '<span>' . e($value) . '</span>';
             });
+        }
 
 
-            $dt->addColumn('action', function ($row) use ($current_module) {
 
-                $btn = '<div style="text-align:right"><div class="btn-group ">';
 
-                $btn .= !$row->trashed() && $current_module->web->detail && $row->status == 'publish' ? '<a title="Libat di web" target="_blank" href="' . url($row->url . '/') . '"  class="btn btn-outline-info btn-sm fa fa-eye"></a>' : '';
-                if (empty($row->deleted_at)) {
-                    $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-outline-warning btn-sm fa fa-edit"></a>' : '';
-                } else {
-                    $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
+
+        $dt->addColumn('parents', function ($row) use ($current_module) {
+            if ($current_module->form->post_parent) {
+                $parent = null;
+                if ($row->parent) {
+                    $parent .= $row->parent->title;
+                    if ($row->parent->parent) {
+                        $parent .= ' - ' . $row->parent->parent->title;
+                        if ($row->parent->parent->parent) {
+                            $parent .= ' - ' . $row->parent->parent->parent->title;
+                        }
+                    }
                 }
-                $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
-                $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<button title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-outline-danger btn-sm fa fa-trash-o"></button>') : '';
-                $btn .= '</div></div>';
-                return $btn;
-            });
-            $dt->addColumn('checkbox', function ($row) {
-                return Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '
+                return $parent ?? '_';
+            }
+
+        });
+
+
+        $dt->addColumn('action', function ($row) use ($current_module) {
+
+            $btn = '<div style="text-align:right"><div class="btn-group ">';
+
+            $btn .= !$row->trashed() && $current_module->web->detail && $row->status == 'publish' ? '<a title="Libat di web" target="_blank" href="' . url($row->url . '/') . '"  class="btn btn-outline-info btn-sm fa fa-eye"></a>' : '';
+            if (empty($row->deleted_at)) {
+                $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-outline-warning btn-sm fa fa-edit"></a>' : '';
+            } else {
+                $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
+            }
+            $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
+            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<button title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-outline-danger btn-sm fa fa-trash-o"></button>') : '';
+            $btn .= '</div></div>';
+            return $btn;
+        });
+        $dt->addColumn('checkbox', function ($row) {
+            return Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '
                  <div class="animated-checkbox">
                         <label>
                             <input type="checkbox" name="id[]" value="' . $row->id . '" class="dt-checkbox">
@@ -560,9 +560,9 @@ foreach ($customColumns as $field) {
 
                ') : '';
 
-            });
-            $dt->addColumn('status', function ($row) {
-                return '<input ' . (strlen($row->title) < 5 ? 'disabled ' : 'data-id="' . $row->id . '"') . ' 
+        });
+        $dt->addColumn('status', function ($row) {
+            return '<input ' . (strlen($row->title) < 5 ? 'disabled ' : 'data-id="' . $row->id . '"') . ' 
                 type="checkbox" 
                 class="toggle-status"
                 
@@ -574,25 +574,25 @@ foreach ($customColumns as $field) {
                 data-size="sm"
                 ' . ($row->status == 'publish' ? 'checked' : '') . '
             >';
-            });
-           $rawColumns = array_merge(
-    ['status','checkbox','created_at','updated_at','visited','action','title','parents','thumbnail'],
-    $customColumns
-);
+        });
+        $rawColumns = array_merge(
+            ['status', 'checkbox', 'created_at', 'updated_at', 'visited', 'action', 'title', 'parents', 'thumbnail'],
+            $customColumns
+        );
 
-$dt->rawColumns($rawColumns);
-            $dt->orderColumn('visited', '-visited $1');
-            $dt->orderColumn('updated_at', '-updated_at $1');
-            $dt->orderColumn('created_at', '-created_at $1');
-           $dt->only(array_merge(
-    ['status','checkbox','visited','action','title','created_at','updated_at','parents','thumbnail'],
-    $customColumns
-));
-           return $dt
-    ->orderColumn('visited', '-visited $1')
-    ->orderColumn('updated_at', '-updated_at $1')
-    ->orderColumn('created_at', '-created_at $1')
-    ->toJson();
+        $dt->rawColumns($rawColumns);
+        $dt->orderColumn('visited', '-visited $1');
+        $dt->orderColumn('updated_at', '-updated_at $1');
+        $dt->orderColumn('created_at', '-created_at $1');
+        $dt->only(array_merge(
+            ['status', 'checkbox', 'visited', 'action', 'title', 'created_at', 'updated_at', 'parents', 'thumbnail'],
+            $customColumns
+        ));
+        return $dt
+            ->orderColumn('visited', '-visited $1')
+            ->orderColumn('updated_at', '-updated_at $1')
+            ->orderColumn('created_at', '-created_at $1')
+            ->toJson();
     }
 
     public function updateStatus(Request $request) {
