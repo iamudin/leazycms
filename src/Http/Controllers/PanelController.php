@@ -708,8 +708,10 @@ class PanelController extends Controller implements HasMiddleware
                 ]);
                 return $this->template_uploader($file);
             }
-            if ($request->template_setting) {
+            if ($request->template_setting ) {
                 $ar_ta = config('modules.config.option.template') ?? null;
+                if($ar_ta){
+
                    foreach ($ar_ta as $field) {
                     $key = _us($field[0]);
                     if ($request->$key) {
@@ -730,6 +732,8 @@ class PanelController extends Controller implements HasMiddleware
 
                     }
             }
+                }
+
             if($request->home_page){
                 $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
             }

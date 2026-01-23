@@ -16,7 +16,7 @@ Route::get('files', [PanelController::class, 'files'])->name('files');
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {
-            Route::get($value->name, 'index')->name($value->name);
+           Route::get($value->name, 'index')->name($value->name);
             Route::post($value->name, 'datatable')->name($value->name . '.datatable');
         }
         if (in_array('create', $value->route)) {
