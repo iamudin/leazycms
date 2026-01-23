@@ -146,7 +146,7 @@ outline: none;
            @if(get_option('site_description')) <h6 class="text-white"><i>{{ $data['description'] ?? 'Web description'  }}</i></h6>@endif
             <br>
 
-            @if(get_option('site_maintenance')=='Y')
+            @if(get_option('site_maintenance') == 'Y')
             <p class="badge badge-danger">Mode Perbaikan Aktif</p>
             @endif
           </center>
@@ -159,12 +159,32 @@ outline: none;
 
           <div class="form-group  pb-0 mb-2">
             <label class="control-label " style="color:#f5f5f5"><i class="fa fa-at"></i> Nama Pengguna</label>
-                <input id="username" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Nama Pengguna" type="text" class="form-control form-control-lg " name="username" required autocomplete="username" autofocus>
+                <input id="username" placeholder="Isi Nama Pengguna" type="text" class="form-control form-control-lg " name="username" required autocomplete="username"
+                onkeyup="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')"
+pattern="[a-z0-9]+" autofocus>
           </div>
-          <div class="form-group">
-            <label class="control-label" style="color:#f5f5f5"> <i class="fa fa-key"></i> Kata Sandi</label>
-                <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Kata Sandi" type="password" class="form-control form-control-lg " name="password" required autocomplete="current-password" autofocus>
-          </div>
+      <div class="form-group position-relative">
+        <label class="control-label" style="color:#f5f5f5">
+          <i class="fa fa-key"></i> Kata Sandi
+        </label>
+      
+        <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Kata Sandi"
+          type="password" class="form-control form-control-lg pr-5" name="password" required autocomplete="current-password"
+          autofocus>
+      
+        <!-- Icon show / hide -->
+        <span onclick="togglePassword()" style="
+                  position:absolute;
+                  right:15px;
+                  top:70%;
+                  transform:translateY(-50%);
+                  cursor:pointer;
+                  color:#999;
+              ">
+          <i id="eyeIcon" class="fa fa-eye fa-2x"></i>
+        </span>
+      </div>
+
 
           <div class="form-group">
             <img src="{{ $captcha }}" alt="" style="border-radius: 5px 0 0 5px;height: 40px;width:45%;"> <input class="no-focus-border" type="text" name="captcha" placeholder="Enter Code" required  maxlength="6" style="font-weight: bold; border:none;float:right;height: 40px;border-radius:0 5px 5px 0;height: 40px;width:55%;">
@@ -188,6 +208,21 @@ outline: none;
     <!-- The javascript plugin to display page loading on top-->
     <script src="{{url('backend/js/plugins/pace.min.js')}}"></script>
     <script type="text/javascript">
+function togglePassword() {
+    const password = document.getElementById("password");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    if (password.type === "password") {
+        password.type = "text";
+        eyeIcon.classList.remove("fa-eye");
+        eyeIcon.classList.add("fa-eye-slash");
+    } else {
+        password.type = "password";
+        eyeIcon.classList.remove("fa-eye-slash");
+        eyeIcon.classList.add("fa-eye");
+    }
+}
+
       // Login Page Flipbox control
       $('.login-content [data-toggle="flip"]').click(function() {
       	$('.login-box').toggleClass('flipped');

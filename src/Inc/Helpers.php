@@ -118,6 +118,12 @@ if (!function_exists('add_route')) {
         return null;
     }
 }
+if (!function_exists('add_logo')) {
+    function add_logo($image,$brand_name,$brand_tagline,$url=null,$class=null)
+    {
+        return view()->make('cms::backend.layout.logo', ['image'=>$image,'brand_name'=>$brand_name,'brand_tagline'=>$brand_tagline,'url'=>$url,'class'=>$class]);
+    }
+}
 if (!function_exists('is_custom_web_route_matched')) {
     function is_custom_web_route_matched(): bool
     {
