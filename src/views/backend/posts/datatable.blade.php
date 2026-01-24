@@ -61,7 +61,9 @@ window.addEventListener('DOMContentLoaded', function () {
             @if (current_module()->form->post_parent)
             { data: 'parents', orderable: false, searchable: true },
             @endif
-
+            @if($child_count=current_module()->datatable?->child_count??null)
+               { data: 'childs_count', orderable: false, searchable: true },
+            @endif
             @if ($custom = current_module()->datatable->custom_column)
                 @if(is_array($custom))
                     @foreach($custom as $row)

@@ -319,6 +319,8 @@ class PostController extends Controller implements HasMiddleware
         } else {
             $customColumns = [];
         }
+
+      
         $dt = DataTables::of($data)
             ->addIndexColumn()
             ->filter(function ($instance) use ($req) {
@@ -411,6 +413,8 @@ class PostController extends Controller implements HasMiddleware
                     }
                 }
             });
+          
+       
         $dt->addColumn('title', function ($row) use ($current_module) {
 
             $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
@@ -512,10 +516,6 @@ class PostController extends Controller implements HasMiddleware
             });
         }
 
-
-
-
-
         $dt->addColumn('parents', function ($row) use ($current_module) {
             if ($current_module->form->post_parent) {
                 $parent = null;
@@ -532,8 +532,6 @@ class PostController extends Controller implements HasMiddleware
             }
 
         });
-
-
         $dt->addColumn('action', function ($row) use ($current_module) {
 
             $btn = '<div style="text-align:right"><div class="btn-group ">';
@@ -575,8 +573,13 @@ class PostController extends Controller implements HasMiddleware
                 ' . ($row->status == 'publish' ? 'checked' : '') . '
             >';
         });
+      
+            $dt->addColumn('childs_count', function ($row) use ($current_module) {
+                return '<b>'.$row->childs_count.'</b>';
+            });
+         
         $rawColumns = array_merge(
-            ['status', 'checkbox', 'created_at', 'updated_at', 'visited', 'action', 'title', 'parents', 'thumbnail'],
+            ['childs_count','status', 'checkbox', 'created_at', 'updated_at', 'visited', 'action', 'title', 'parents', 'thumbnail'],
             $customColumns
         );
 
@@ -585,7 +588,7 @@ class PostController extends Controller implements HasMiddleware
         $dt->orderColumn('updated_at', '-updated_at $1');
         $dt->orderColumn('created_at', '-created_at $1');
         $dt->only(array_merge(
-            ['status', 'checkbox', 'visited', 'action', 'title', 'created_at', 'updated_at', 'parents', 'thumbnail'],
+            ['childs_count','status', 'checkbox', 'visited', 'action', 'title', 'created_at', 'updated_at', 'parents', 'thumbnail'],
             $customColumns
         ));
         return $dt

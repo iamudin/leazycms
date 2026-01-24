@@ -12,7 +12,7 @@
                 @if(Route::has(get_post_type() . '.create'))
                 <a href="{{route(get_post_type() . '.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
                 @endif
-
+                
                 <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i class="fas fa-filter"></i> Filter</button>
               </div>
               </div>
@@ -20,7 +20,7 @@
 
               <div class="col-lg-12">
              
-                <div class="row">
+                <div class="row"> 
                   @php
   $publish = request()->user()->isAdmin() ? query()->onType(get_post_type())->published()->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->published()->count();
   $draft = request()->user()->isAdmin() ? query()->onType(get_post_type())->whereStatus('draft')->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->whereStatus('draft')->count();
@@ -97,10 +97,13 @@
                 @if($parent = current_module()->form->post_parent)
                 <th style="vertical-align: middle" >{{$parent[0]}}</th>
                 @endif
+                @if($child_count=current_module()->datatable?->child_count??null)
+                <th style="vertical-align: middle;width:30px" > {{ $child_count }}</th>
+                @endif
                 @if($custom = current_module()->datatable->custom_column)
                 @if(is_array($custom))
                 @foreach ($custom as $row)
-                <th style="vertical-align: middle">{{$row}}</th>
+                <th style="vertical-align: middle" >{{$row}}</th>
                 @endforeach
                 @else
                 <th style="vertical-align: middle">{{$custom}}</th>
