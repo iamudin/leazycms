@@ -298,7 +298,7 @@ class PostController extends Controller implements HasMiddleware
     }
 
     public function datatable(Request $req) {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected, ['data_loop']))->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type()) : Post::select((new Post)->selected)->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected, ['data_loop']))->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type())->whereIn('status',['publish','draft']) : Post::select((new Post)->selected)->with('user', 'category', 'tags')->with('parent.parent.parent')->whereIn('status',['publish','draft'])->withCount('childs', 'comments')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');
