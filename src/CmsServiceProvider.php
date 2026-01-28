@@ -47,7 +47,7 @@ class CmsServiceProvider extends ServiceProvider
         });
         if($webroute){
         foreach($webroute as $wr){
-             Route::middleware(['web'])->domain(parse_url($wr['path'], PHP_URL_HOST))->match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], get_path_domain($wr['path']), [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public']);  
+             Route::middleware(['web'])->domain(parse_url($wr['path'], PHP_URL_HOST))->match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], get_path_domain($wr['path']), [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(array_merge(['public'],isset($wr['middleware']) ? [$wr['middleware']]: []));  
         }
     }
         Route::get('stats.png',[VisitorStatsController::class,'headerImage']);
