@@ -1595,7 +1595,7 @@ if (!function_exists('_loop')) {
 if (!function_exists('_us')) {
     function _us($val)
     {
-        return strtolower(preg_replace('/[^a-zA-Z]/', '_', $val));
+        return str_replace('-','_',str($val)->slug());
     }
 }
 if (!function_exists('time_to_path')) {
