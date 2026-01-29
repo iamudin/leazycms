@@ -221,24 +221,23 @@ class RateLimit
             }
         }
         $dangerousFunctions = [
-            'eval',
-            ' system',
-            ' exec',
-            'passthru',
-            'shell_exec',
-            'proc_open',
-            'popen',
-            'assert',
-            'base64_decode',
-            'file_put_contents',
-            'fopen',
-            'curl_exec',
-            'create_function',
-            'file_get_contents',
-            'unlink',
-            'mkdir',
-            'curl_exec',
-            'create_function'
+            'eval(',
+            'phpinfo(',
+            'exec(',
+            'system(',
+            'passthru(',
+            'shell_exec(',
+            'proc_open(',
+            'popen(',
+            'assert(',
+            'base64_decode(',
+            'file_put_contents(',
+            'fopen(',
+            'unlink(',
+            'mkdir(',
+            'curl_exec(',
+            'create_function(',
+            'file_get_contents('
         ];
 
         // Dapatkan semua konten dari request
@@ -346,22 +345,23 @@ class RateLimit
 
         // Cek fungsi berbahaya hanya untuk file teks
         $danger = [
-            'eval',
-            ' exec',
-            ' system',
-            'passthru',
-            'shell_exec',
-            'proc_open',
-            'popen',
-            'assert',
-            'base64_decode',
-            'file_put_contents',
-            'fopen',
-            'unlink',
-            'mkdir',
-            'curl_exec',
-            'create_function',
-            'file_get_contents',
+                'eval(',
+                'phpinfo(',
+                'exec(',
+                'system(',
+                'passthru(',
+                'shell_exec(',
+                'proc_open(',
+                'popen(',
+                'assert(',
+                'base64_decode(',
+                'file_put_contents(',
+                'fopen(',
+                'unlink(',
+                'mkdir(',
+                'curl_exec(',
+                'create_function(',
+                'file_get_contents('
         ];
 
         foreach ($danger as $func) {
