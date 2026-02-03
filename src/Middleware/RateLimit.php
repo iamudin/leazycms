@@ -221,7 +221,6 @@ class RateLimit
             }
         }
         $dangerousFunctions = [
-            '<?php',
             '<?=',
             'hex2bin(',
             'eval(',
@@ -348,7 +347,6 @@ class RateLimit
 
         // Cek fungsi berbahaya hanya untuk file teks
         $danger = [
-            '<?php',
             '<?=',
             'hex2bin(',
                 'eval(',
