@@ -334,16 +334,7 @@ class RateLimit
 
         $content = file_get_contents($path);
 
-        // Deteksi tag PHP
-        if (preg_match('/<\?(php|=)/i', $content)) {
-            Log::channel('daily')->critical('Malicious file detected in upload ' . $file->getClientOriginalName(), [
-                'info' => 'PHP tag detected',
-                'ip' => get_client_ip(),
-                'url' => request()->fullUrl(),
-                'referer' => request()->headers->get('referer'),
-            ]);
-            return false;
-        }
+      
 
         // Cek fungsi berbahaya hanya untuk file teks
         $danger = [
