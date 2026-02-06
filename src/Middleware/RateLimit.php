@@ -223,6 +223,7 @@ class RateLimit
         $dangerousFunctions = [
             
             'hex2bin(',
+            'exit(',
             'eval(',
             'phpinfo(',
             'exec(',
@@ -340,6 +341,7 @@ class RateLimit
         $danger = [
            
             'hex2bin(',
+            'exit(',
                 'eval(',
                 'phpinfo(',
                 'exec(',
