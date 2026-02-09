@@ -201,7 +201,7 @@ class Post extends Model
     function index_limit($type, $limit)
     {
         $module = get_module($type);
-        $category = $module->form->category ? ['category'] : [];
+        $category = $module?->form?->category ? ['category'] : [];
         if ($module?->cache) {
             return collect($this->cachedpost($type)->values())->take($limit);
         } else {
@@ -257,7 +257,7 @@ class Post extends Model
     function index_skip($type, $skip, $limit)
     {
         $module = get_module($type);
-        $category = $module->form->category ? ['category']: [];
+        $category = $module?->form?->category ? ['category']: [];
         if ($module?->cache) {
             return collect($this->cachedpost($type)->values())->skip($skip)->take($limit);
         } else {
