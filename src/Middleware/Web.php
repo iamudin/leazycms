@@ -105,16 +105,16 @@ class Web
 
     function securityHeaders($response, $request)
     {
-        // if(get_option('cache_media') && get_option('cache_media')=='Y'){
-        // $response->headers->set('Cache-Control', 'public, max-age=2592000');
-        // }
-          if ($request->isMethod('GET') && !$request->expectsJson()) {
-        $response->headers->set(
-            'Cache-Control',
-            'no-cache, no-store, must-revalidate'
-        );
-    }
-
+        if(get_option('cache_route') && get_option('cache_route')=='Y' && $request->isMethod('GET') && !$request->expectsJson()){
+            $response->setPublic();
+            $response->setMaxAge(86400);
+            $response->setSharedMaxAge(86400);
+        }else{
+            $response->headers->set(
+                'Cache-Control',
+                'no-cache, no-store, must-revalidate'
+            );
+        }
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         if (get_option('frame_embed') == 'N' && !Auth::check()) {
             $response->headers->set('X-Frame-Options', 'DENY');
