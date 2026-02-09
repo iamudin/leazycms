@@ -28,24 +28,49 @@ class CmsServiceProvider extends ServiceProvider
 {
     protected function registerRoutes()
     {
-         Route::prefix(admin_path())
-        ->middleware(['web', 'admin'])
-        ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST):null)
-        ->group(function () {
-            $this->loadRoutesFrom(__DIR__.'/routes/admin.php');
-        });
+        $webroute = get_domain_routes();
+        Route::prefix(admin_path())
+            ->middleware(['web', 'admin'])
+            ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST) : null)
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
+            });
         Route::middleware(['web'])
-        ->group(function () {
-            $this->loadRoutesFrom(__DIR__.'/routes/auth.php');
-        });
-        
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__ . '/routes/auth.php');
+            });
+
         Route::middleware(['web'])
-        ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST):null)
-        ->group(function () {
-            $this->loadRoutesFrom(__DIR__.'/routes/web.php');
-        });
-  
-        Route::get('stats.png',[VisitorStatsController::class,'headerImage']);
+            ->domain(config('app.sub_app_enabled') || $webroute ? parse_url(config('app.url'), PHP_URL_HOST) : null)
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
+            });
+        if ($webroute) {
+            $grouped = collect($webroute)->groupBy(function ($wr) {
+                return parse_url($wr['path'], PHP_URL_HOST);
+            });
+
+            foreach ($grouped as $host => $routes) {
+
+                Route::domain($host)
+                    ->middleware(['web', 'public'])
+                    ->group(function () use ($routes) {
+
+                        foreach ($routes as $wr) {
+
+                            $uri = parse_url($wr['path'], PHP_URL_PATH) ?? '/';
+
+                            Route::match(
+                                is_array($wr['method']) ? $wr['method'] : [$wr['method']],
+                                ltrim($uri, '/'),
+                                [$wr['controller'], $wr['function']]
+                            )->name($wr['name']);
+
+                        }
+                    });
+            }
+        }
+        Route::get('stats.png', [VisitorStatsController::class, 'headerImage']);
     }
     protected function registerResources()
     {

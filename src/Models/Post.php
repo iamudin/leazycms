@@ -200,10 +200,13 @@ class Post extends Model
 
     function index_limit($type, $limit)
     {
-        if (get_module($type)?->cache) {
+        $module = get_module($type);
+        $category = $module->form->category ? ['category'] : [];
+        if ($module?->cache) {
             return collect($this->cachedpost($type)->values())->take($limit);
         } else {
             return $this->selectedColumn()
+            ->with(array_merge(['user'], $category))
             ->onType($type)
             ->published()
             ->latest('created_at')
@@ -229,8 +232,9 @@ class Post extends Model
     function index_sort_by_category($type,$sortby='sort',$sort='ASC')
     {
             return Category::withWhereHas('posts',function($q) use($sortby,$sort){
-                $q->published()->orderBy($sortby,$sort);
+                $q->with('user')->published()->orderBy($sortby,$sort);
             })
+            
             ->onType($type)
             ->published()
             ->orderBy('sort','ASC')
@@ -252,10 +256,13 @@ class Post extends Model
     }
     function index_skip($type, $skip, $limit)
     {
-        if (get_module($type)?->cache) {
+        $module = get_module($type);
+        $category = $module->form->category ? ['category']: [];
+        if ($module?->cache) {
             return collect($this->cachedpost($type)->values())->skip($skip)->take($limit);
         } else {
             return $this->selectedColumn()
+            ->with(array_merge(['user'],$category))
             ->onType($type)
             ->published()
             ->latest('created_at')
@@ -268,14 +275,14 @@ class Post extends Model
     {
         if($type){
         return Tag::whereStatus('publish')->whereHas('posts',function($q)use($type){
-            $q->published()->onType($type);
+            $q->with('user')->published()->onType($type);
         })->withCount(['posts as posts_count' => function ($query) use ($type) {
             $query->published()->onType($type);
         }])->get();
 
         }
         return Tag::whereStatus('publish')->whereHas('posts',function($q){
-            $q->published();
+            $q->with('user')->published();
         })->get();
     }
     function index_sort($type,$order='asc',$limit=false)
@@ -284,7 +291,7 @@ class Post extends Model
             return $order=='asc'? collect($this->cachedpost($type)->values())->sortBy($order) : collect($this->cachedpost($type)->values())->sortByDesc($order);
         } else {
             $order = $order!='asc' ? 'desc':'asc';
-            return $limit ? $this->selectedColumn()->onType($type)->published()->orderBy('sort',$order)->take($limit)->get() :  $this->selectedColumn()->onType($type)->published()->orderBy('sort',$order)->get();
+            return $limit ? $this->selectedColumn()->with('user')->onType($type)->published()->orderBy('sort',$order)->take($limit)->get() :  $this->selectedColumn()->with('user')->onType($type)->published()->orderBy('sort',$order)->get();
         }
     }
     function index_sort_by_parent($type,$order='asc')
@@ -313,7 +320,8 @@ class Post extends Model
     {
         $type= is_array($type) ? $type : [$type];
         return $this->selectedColumn()
-        ->whereIn('type',$type)
+        ->with('user')
+        ->onType($type)
         ->published()
         ->orderBy('visited', 'desc')->take($limit)->get();
     }
@@ -376,7 +384,7 @@ class Post extends Model
             if($except){
                 $query = $query->whereNotIn('id', [$except]);
             }
-            return $query->latest('created_at')->take(5)->get();
+            return $query->with('user')->latest('created_at')->take(5)->get();
         }
     }
 
@@ -386,6 +394,7 @@ class Post extends Model
             return $this->cachedpost($type)->where('parent_id', $id);
         } else {
             $q = $this->select($this->selected)
+            ->with('user')
             ->onType($type)
             ->published()
             ->where('parent_id', $id)
@@ -399,15 +408,14 @@ class Post extends Model
     }
     function detail_by_title($type, $title)
     {
-        return $this->whereTitle($title)->onType($type)->published()->first();
+        return $this->with('user')->whereTitle($title)->onType($type)->published()->first();
     }
     function detail($type, $name = false)
     {
+        if (get_module($type)?->form?->category) {
+            $with[] = 'category';
+        }
         if ($name) {
-            if (get_module($type)?->form?->category) {
-                $with[] = 'category';
-            }
-
                 return $this->where('type', $type)
                 ->published()
                 ->likeSlug($name)
@@ -418,7 +426,7 @@ class Post extends Model
             if (get_module($type)?->cache) {
                 return collect($this->cachedpost($type))->first();
             } else {
-                return $this->onType($type)->published()->first();
+                return $this->with(array_merge($with ?? [], ['user']))->onType($type)->published()->first();
             }
         }
     }
