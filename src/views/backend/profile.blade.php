@@ -58,7 +58,7 @@
                     <div class="form-group">
                         <small>Singkatan</small>
                         <input type="text" class="form-control form-control-sm" name="singkatan_organisasi"
-                            value="{{ old('singkatan', get_option('singkatan')) }}"
+                            value="{{ old('singkatan', get_option('singkatan_organisasi')) }}"
                             placeholder="Masukkan singkatan organisasi">
                     </div>
       <div class="form-group">
