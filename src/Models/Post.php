@@ -240,11 +240,17 @@ class Post extends Model
             ->orderBy('sort','ASC')
             ->get();
     }
-    function index_category($type)
+    function index_category($type,$justIndex=false)
     {
         if (get_module($type)?->cache) {
             return collect($this->categories($type)->values());
         } else {
+            if($justIndex){
+                return Category::onType($type)
+                    ->published()
+                    ->orderBy('sort', 'ASC')
+                    ->get();
+            }
             return Category::whereHas('posts',function($q){
                 $q->published();
             })->withCountPosts()

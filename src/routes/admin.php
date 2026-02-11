@@ -126,9 +126,9 @@ Route::controller(PollingController::class)->group(function () {
 if($custom = config('modules.custom_menu')){
     foreach($custom as $menu){
         if($menu['method']=='resource'){
-            Route::resource($menu['path'], $menu['controller']);
+            Route::resource($menu['path'], $menu['controller'])->middleware('auth');
         }else{
-            Route::match(is_array($menu['method']) ? $menu['method'] : [$menu['method']], $menu['path'], [$menu['controller'], $menu['function']])->name($menu['name']);
+            Route::match(is_array($menu['method']) ? $menu['method'] : [$menu['method']], $menu['path'], [$menu['controller'], $menu['function']])->name($menu['name'])->middleware('auth');
 
         }
     }

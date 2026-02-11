@@ -19,16 +19,19 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 class PostController extends Controller implements HasMiddleware
 {
 
-    public static function middleware(): array {
+    public static function middleware(): array
+    {
         return [
             new Middleware('auth')
         ];
     }
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $request->user()->hasRole(get_post_type(), __FUNCTION__);
         return view('cms::backend.posts.index');
     }
-    public function uploadImageSummernote(Request $request) {
+    public function uploadImageSummernote(Request $request)
+    {
         $post = Post::findOrFail($request->post);
         $result = $post->addFile([
             'file' => $request->file('file'),
@@ -38,7 +41,8 @@ class PostController extends Controller implements HasMiddleware
         ]);
         return response()->json(['status' => 'success', 'url' => $result]);
     }
-    public function restore(Request $request) {
+    public function restore(Request $request)
+    {
         if ($request->user()->isAdmin()) {
             $post = Post::withTrashed()->findOrFail($request->post);
             $post->update(['status' => 'draft']);
@@ -50,7 +54,8 @@ class PostController extends Controller implements HasMiddleware
         }
 
     }
-    public function create(Request $request) {
+    public function create(Request $request)
+    {
         $request->user()->hasRole(get_post_type(), __FUNCTION__);
         if ($blankexists = query()->onType(get_post_type())->whereStatus('draft')->whereUserId($request->user()->id)->where('title', null)->first()) {
             $newpost = $blankexists;
@@ -66,7 +71,8 @@ class PostController extends Controller implements HasMiddleware
         return to_route(get_post_type() . '.edit', $newpost->id);
     }
 
-    public function edit(Request $request, Post $post, $id) {
+    public function edit(Request $request, Post $post, $id)
+    {
         abort_if(!is_numeric($id), '403');
         $request->user()->hasRole(get_post_type(), 'update');
         $module = current_module();
@@ -86,7 +92,8 @@ class PostController extends Controller implements HasMiddleware
             'category' => $module->form->category ? Category::query()->whereType(get_post_type())->select('id', 'name')->orderBy('sort')->get() : null
         ]);
     }
-    public function destroy(Request $request) {
+    public function destroy(Request $request)
+    {
         $request->user()->hasRole(get_post_type(), 'delete');
         $post = Post::withTrashed()->find($request->post);
         if ($post->trashed() && $request->user()->isAdmin()) {
@@ -101,7 +108,8 @@ class PostController extends Controller implements HasMiddleware
         }
         $this->recache(get_post_type());
     }
-    public function show(Post $post, $id) {
+    public function show(Post $post, $id)
+    {
         abort_if(!is_numeric($id), '403');
 
         $data = $post->with('category', 'user', 'tags')->find($id);
@@ -110,7 +118,8 @@ class PostController extends Controller implements HasMiddleware
         }
         return $data;
     }
-    public function update(Request $request, Post $post) {
+    public function update(Request $request, Post $post)
+    {
         $request->user()->hasRole(get_post_type(), 'update');
 
         $module = current_module();
@@ -284,7 +293,8 @@ class PostController extends Controller implements HasMiddleware
         $this->recache(get_post_type());
         return back()->with('success', $module->title . ' Berhasil diperbarui');
     }
-    public function recache($type) {
+    public function recache($type)
+    {
 
         if (in_array($type, collect(config('modules.used'))->where('active', true)->where('public', true)->where('cache', true)->pluck('name')->toArray())) {
             regenerate_cache();
@@ -297,8 +307,9 @@ class PostController extends Controller implements HasMiddleware
         }
     }
 
-    public function datatable(Request $req) {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected, ['data_loop']))->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type())->whereIn('status',['publish','draft']) : Post::select((new Post)->selected)->with('user', 'category', 'tags')->with('parent.parent.parent')->whereIn('status',['publish','draft'])->withCount('childs', 'comments')->whereType(get_post_type())->whereBelongsTo($req->user());
+    public function datatable(Request $req)
+    {
+        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected, ['data_loop']))->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type())->whereIn('status', ['publish', 'draft']) : Post::select((new Post)->selected)->with('user', 'category', 'tags')->with('parent.parent.parent')->whereIn('status', ['publish', 'draft'])->withCount('childs', 'comments')->whereType(get_post_type())->whereBelongsTo($req->user());
         $current_module = current_module();
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');
@@ -312,6 +323,12 @@ class PostController extends Controller implements HasMiddleware
 
         $customColumns = $current_module->datatable->custom_column;
 
+        $custom_field = collect($current_module->form->custom_field)
+            ->filter(fn($field) => isset($field[1]) && is_array($field[1]))
+            ->pluck(0)
+            ->map(fn($label) => _us($label)) // konversi di sini
+            ->values()
+            ->all();
         if ($customColumns && !is_array($customColumns)) {
             $customColumns = [_us($customColumns)];
         } elseif (is_array($customColumns)) {
@@ -320,7 +337,7 @@ class PostController extends Controller implements HasMiddleware
             $customColumns = [];
         }
 
-      
+
         $dt = DataTables::of($data)
             ->addIndexColumn()
             ->filter(function ($instance) use ($req) {
@@ -413,8 +430,8 @@ class PostController extends Controller implements HasMiddleware
                     }
                 }
             });
-          
-       
+
+
         $dt->addColumn('title', function ($row) use ($current_module) {
 
             $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
@@ -450,7 +467,7 @@ class PostController extends Controller implements HasMiddleware
             return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
         });
         foreach ($customColumns as $field) {
-            $dt->addColumn($field, function ($row) use ($field) {
+            $dt->addColumn($field, function ($row) use ($field, $custom_field) {
 
                 if (empty($row->data_field) || empty($row->data_field[$field])) {
                     return '<span>-</span>';
@@ -474,18 +491,29 @@ class PostController extends Controller implements HasMiddleware
 
                             // Cek media exists
                             if (media_exists($value)) {
-                                return '<a href="' . e($value) . '" 
-                                    target="_blank" 
-                                    class="badge badge-pill py-1" style="border:1px solid green;">
-                                    <i class="fa fa-eye"></i> Lihat
-                                </a>';
+
+                                $ext = strtolower(pathinfo($value, PATHINFO_EXTENSION));
+
+                                return '<span 
+        data-media="' . e($value) . '" 
+        data-ext="' . e($ext) . '"
+        class="badge badge-pill py-1 btn-view-media text-primary" 
+        style="border:1px solid green; cursor:pointer;">
+        <i class="fa fa-eye "></i> Lihat
+    </span>';
                             }
                         }
 
                         // Tidak valid / tidak ada file
                         return '<span>-</span>';
                     }
-
+                    if (in_array($field, $custom_field)) {
+                        return '<span 
+                                    
+                                    class="badge badge-pill py-1" style="border:1px solid #000;">
+                                    ' . e($value) . '
+                                </span>';
+                    }
                     // 1️⃣ ISO 8601: Y-m-dTH:i
                     $dtValue = \DateTime::createFromFormat('Y-m-d\TH:i', $value);
                     if ($dtValue !== false) {
@@ -535,15 +563,14 @@ class PostController extends Controller implements HasMiddleware
         $dt->addColumn('action', function ($row) use ($current_module) {
 
             $btn = '<div style="text-align:right"><div class="btn-group ">';
-
-            $btn .= !$row->trashed() && $current_module->web->detail && $row->status == 'publish' ? '<a title="Libat di web" target="_blank" href="' . url($row->url . '/') . '"  class="btn btn-outline-info btn-sm fa fa-eye"></a>' : '';
+            $btn .= !$row->trashed() && $current_module->web->detail && $row->status == 'publish' ? '<a title="Libat di web" target="_blank" href="' . url($row->url . '/') . '"  class=" btn-outline-info btn-sm fa fa-eye"></a>' : '';
             if (empty($row->deleted_at)) {
-                $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-outline-warning btn-sm fa fa-edit"></a>' : '';
+                $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class=" btn-outline-warning btn-sm fa fa-edit"></a>' : '';
             } else {
-                $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
+                $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class=" btn-outline-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
             }
             $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
-            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<button title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-outline-danger btn-sm fa fa-trash-o"></button>') : '';
+            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="pointer btn-outline-danger btn-sm fa fa-trash-o"></span>') : '';
             $btn .= '</div></div>';
             return $btn;
         });
@@ -562,7 +589,7 @@ class PostController extends Controller implements HasMiddleware
         $dt->addColumn('status', function ($row) {
             return '<input ' . (strlen($row->title) < 5 ? 'disabled ' : 'data-id="' . $row->id . '"') . ' 
                 type="checkbox" 
-                class="toggle-status"
+                class="toggle-status btn btn-primary"
                 
                 data-on="Publish" 
                 data-off="Draft" 
@@ -573,13 +600,13 @@ class PostController extends Controller implements HasMiddleware
                 ' . ($row->status == 'publish' ? 'checked' : '') . '
             >';
         });
-      
-            $dt->addColumn('childs_count', function ($row) use ($current_module) {
-                return '<b>'.$row->childs_count.'</b>';
-            });
-         
+
+        $dt->addColumn('childs_count', function ($row) use ($current_module) {
+            return '<b>' . $row->childs_count . '</b>';
+        });
+
         $rawColumns = array_merge(
-            ['childs_count','status', 'checkbox', 'created_at', 'updated_at', 'visited', 'action', 'title', 'parents', 'thumbnail'],
+            ['childs_count', 'status', 'checkbox', 'created_at', 'updated_at', 'visited', 'action', 'title', 'parents', 'thumbnail'],
             $customColumns
         );
 
@@ -588,7 +615,7 @@ class PostController extends Controller implements HasMiddleware
         $dt->orderColumn('updated_at', '-updated_at $1');
         $dt->orderColumn('created_at', '-created_at $1');
         $dt->only(array_merge(
-            ['childs_count','status', 'checkbox', 'visited', 'action', 'title', 'created_at', 'updated_at', 'parents', 'thumbnail'],
+            ['childs_count', 'status', 'checkbox', 'visited', 'action', 'title', 'created_at', 'updated_at', 'parents', 'thumbnail'],
             $customColumns
         ));
         return $dt
@@ -598,7 +625,8 @@ class PostController extends Controller implements HasMiddleware
             ->toJson();
     }
 
-    public function updateStatus(Request $request) {
+    public function updateStatus(Request $request)
+    {
         $post = Post::findOrFail($request->id);
 
         $post->status = $request->status;
@@ -606,7 +634,8 @@ class PostController extends Controller implements HasMiddleware
         $this->recache($post->type);
         return response()->json(['success' => true]);
     }
-    function bulkaction(Request $request) {
+    function bulkaction(Request $request)
+    {
         $ids = $request->id;
 
         if (!empty($ids)) {

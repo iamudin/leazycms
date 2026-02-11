@@ -14,7 +14,7 @@
     <meta property="og:url" content="">
     <meta property="og:image" content="">
     <meta property="og:description" content="">
-    <title>{{ $title ? $title . ' - Admin Panel ' : 'Admin Panel ' }} </title>
+    <title>{{ isset($title) ? $title . ' - Admin Panel ' : 'Admin Panel ' }} </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="yes" name="apple-mobile-web-app-capable">

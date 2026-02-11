@@ -1,3 +1,63 @@
+<script>
+    $(document).on('click', '.btn-view-media', function () {
+
+        let file = $(this).data('media');
+        let ext = $(this).data('ext');
+        let url = file;
+
+        let imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        let pdfExt = ['pdf'];
+
+        let content = '';
+
+        if (imageExt.includes(ext)) {
+            content = `<img src="${url}" class="img-fluid">`;
+        } else if (pdfExt.includes(ext)) {
+            content = `<iframe src="${url}" width="100%" height="600px" style="border:none;"></iframe>`;
+        } else {
+            content = `
+            <div class="text-center p-4">
+                <p>File tidak dapat dilihat.</p>
+                <a href="${url}" class="btn btn-primary" download>
+                    Download File
+                </a>
+            </div>
+        `;
+        }
+
+        // Hapus modal lama jika ada
+        $('#dynamicMediaModal').remove();
+
+        // Buat modal baru via JS
+        let modalHtml = `
+    <div class="modal fade" id="dynamicMediaModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Lihat File</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body text-center">
+                    ${content}
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+
+        $('body').append(modalHtml);
+
+        let modal = $('#dynamicMediaModal');
+
+        modal.modal('show');
+
+        // Hapus dari DOM setelah ditutup
+        modal.on('hidden.bs.modal', function () {
+            modal.remove();
+        });
+
+    });
+</script>
 <script  src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 <script>
     const compressImage = async (file, { quality = 1.0, maxWidth = 1700 } = {}) => {
@@ -174,7 +234,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files','comments']))
+@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files', 'comments']))
 <script>
 function deleteAlert(url) {
     swal(

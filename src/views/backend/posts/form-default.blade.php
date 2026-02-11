@@ -109,9 +109,15 @@
                 </div>
                 <div class="col-lg-9">
                     <div class="form-group">
+                        @if(isset($module->form?->editable_title) && $module->form?->editable_title == true || !isset($module->form?->editable_title))
                         <input data-toggle="tooltip" title="Masukkan {{ $module->datatable->data_title }}" required
                             name="title" type="text" value="{{ !empty(old('title')) ? old('title') : ($post->title ?? null) }}"
                             placeholder="Masukkan {{ $module->datatable->data_title }}" class="form-control form-control-lg" >
+                            @else
+                                <input type="hidden" name="title" value="{{ $post->title ?? null }}">
+                                <label for="">{{ $module->datatable->data_title }}</label>
+                                <h3>{{ $post->title ?? null }}</h3>
+                            @endif
 
                     </div>
 

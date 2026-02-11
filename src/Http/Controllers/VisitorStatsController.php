@@ -126,7 +126,9 @@ class VisitorStatsController extends Controller
             $y += 55;
         }
 
-        return $img->response('png');
+        $response = $img->response('png');
+        $response->header('Cache-Control', 'public, max-age=300');
+        return $response;
     }
 
     private function getBrowser($agent)

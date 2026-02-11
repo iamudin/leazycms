@@ -4,6 +4,7 @@ namespace Leazycms\Web\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class Panel
 {
@@ -16,7 +17,7 @@ class Panel
      */
     public function handle(Request $request, Closure $next)
     {
-        if(strpos($request->fullUrl(),'notifreader') === false && in_array($request->user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray())){
+        if(strpos($request->fullUrl(),'notifreader') === false  && in_array($request->user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray())){
             return to_route($request->user()->level.'.dashboard');
         }
 
