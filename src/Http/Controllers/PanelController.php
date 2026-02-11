@@ -375,6 +375,7 @@ class PanelController extends Controller implements HasMiddleware
             'logo_organisasi',
             'nama_organisasi',
             'keterangan_organisasi',
+            'singkatan_organisasi',
             'kelurahan',
             'kecamatan',
             'kabupaten',
