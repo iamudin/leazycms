@@ -108,7 +108,7 @@ public function update(Request $request, Category $category){
 }
 public function destroy(Request $request,Category $category){
     if(!$request->user()->hasRole('category'.get_post_type(),'delete')){
-        $category->delete();
+        $category->forceDelete();
     }
 }
 }
