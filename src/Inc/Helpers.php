@@ -920,6 +920,14 @@ if (!function_exists('add_module')) {
         config(['modules.used' => $data]);
     }
 }
+if (!function_exists('no_cache_for_route')) {
+    function no_cache_for_route($array)
+    {
+        if(is_array($array)){
+            config(['modules.no_cache_for_route' => $array]);
+        }
+    }
+}
 
 
 if (!function_exists('_field')) {
@@ -1293,12 +1301,13 @@ if (!function_exists('get_thumbnail')) {
 if (!function_exists('set_header_seo')) {
     function set_header_seo($data)
     {
-        $desctitle = !\Illuminate\Support\Str::contains(get_module($data->type)->title, \Illuminate\Support\Str::of($data->title)->explode(' ')[0]) ? get_module($data->type)->title . ' ' . $data->title : $data->title;
+        $current_module = get_module($data->type);
+        $desctitle = !Str::contains($current_module->title, Str::of($data->title)->explode(' ')[0]) ? $current_module->title . ' ' . $data->title : $data->title;
         return array(
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
-            'thumbnail' => (function () use ($data) {
+            'thumbnail' => (function () use ($data,$current_module) {
                 libxml_use_internal_errors(true);
                 $dom = new \DOMDocument();
                 $dom->loadHTML('<?xml encoding="utf-8" ?>' . $data->content);
@@ -1315,7 +1324,7 @@ if (!function_exists('set_header_seo')) {
                     }
                 }
 
-                $hasThumbnailField = get_module($data->type)->form->thumbnail;
+                $hasThumbnailField = $current_module->form->thumbnail;
 
                 if ($hasThumbnailField) {
                     if ($data->media && media_exists($data->media)) {

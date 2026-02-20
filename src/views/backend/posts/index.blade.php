@@ -88,7 +88,9 @@
                         </label>
                     </div>
                     </th>
+                    @if(isset(current_module()->datatable?->index_column) && current_module()->datatable?->index_column == true)
                     <th style="width:10px;vertical-align: middle">#</th>
+                    @endif
                     @if(current_module()->form->thumbnail)
                     <th style="width:55px;vertical-align: middle" >Gambar</th>
                     @endif

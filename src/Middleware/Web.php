@@ -6,6 +6,8 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+
 class Web
 {
     /**
@@ -105,11 +107,19 @@ class Web
 
     function securityHeaders($response, $request)
     {
-        if(get_option('cache_route') && get_option('cache_route')=='Y' && $request->isMethod('GET') && !$request->expectsJson()){
+        $cacheEnabled = app()->routesAreCached();
+        $isCacheableRequest = $request->isMethod('GET') && !$request->expectsJson();
+
+        $noCacheRoutes = config('modules.no_cache_for_route', []);
+
+        $isExcludedRoute = collect($noCacheRoutes)
+            ->contains(fn($pattern) => $request->is($pattern));
+
+        if ($cacheEnabled && $isCacheableRequest && !$isExcludedRoute) {
             $response->setPublic();
             $response->setMaxAge(86400);
             $response->setSharedMaxAge(86400);
-        }else{
+        } else {
             $response->headers->set(
                 'Cache-Control',
                 'no-cache, no-store, must-revalidate'

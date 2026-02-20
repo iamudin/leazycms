@@ -22,7 +22,7 @@
 
 
 
-        <div class="col-lg-2">
+        <div class="col-lg-2" style="max-height: 85vh;overflow:auto">
             <h6>Modul</h6>
             <div class="accordion mb-3" id="accordionExample" >
                 @foreach(collect(get_module())->where('public', true)->where('web.detail', true) as $row)

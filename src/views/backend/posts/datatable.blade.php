@@ -50,7 +50,9 @@ window.addEventListener('DOMContentLoaded', function () {
 
         columns: [
             { data: 'checkbox', orderable: false, searchable: false, className: 'text-center' },
+            @if(isset(current_module()->datatable?->index_column) && current_module()->datatable?->index_column == true)
             { data: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center' },
+            @endif
 
             @if (current_module()->form->thumbnail)
             { data: 'thumbnail', orderable: false, searchable: false },

@@ -915,6 +915,7 @@ return [
     'env_key'=>env('ENV_KEY',null),
     'custom_menu' => array(),
     'custom_web_route'=>array(),
+    'no_cache_for_route'=>array(),
     'sidebar'=>array(),
     'view_stats'=>null,
 ];
