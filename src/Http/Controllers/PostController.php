@@ -507,6 +507,24 @@ class PostController extends Controller implements HasMiddleware
                         // Tidak valid / tidak ada file
                         return '<span>-</span>';
                     }
+                   
+
+                    if (
+                        filter_var($value, FILTER_VALIDATE_URL)
+                        || Str::startsWith($value, ['http://', 'https://', 'www.'])) {
+                        // pastikan ada skema supaya klik bisa jalan
+                        $url = Str::startsWith($value, ['http://', 'https://'])
+                            ? $value
+                            : 'https://' . $value;
+
+                        return '<span class="badge badge-pill py-1" style="border:1px solid #006347;">
+                <a title="' . e($url) . '" href="' . e($url) . '" target="_blank" rel="noopener noreferrer">
+                    <i>' . e(Str::limit($value,40)) . ' </i>
+                    <i class="fa fa-link ms-1"></i>
+                </a>
+            </span>';
+                    }
+
                     if (in_array($field, $custom_field)) {
                         return '<span 
                                     
