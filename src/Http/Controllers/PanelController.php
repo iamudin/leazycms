@@ -862,7 +862,14 @@ class PanelController extends Controller implements HasMiddleware
             if (!file_exists($path . $file)) {
                 File::put($path . $file, '/*You JS Here*/');
             }
-        } else {
+        } 
+        elseif(Str::endsWith($file, 'Controller.php')){
+            $path = app_path('Http/Controllers/');
+            if (!file_exists($path.'/' . $file)) {
+                Artisan::call('make:controller ' . Str::beforeLast($file, '.php'));
+            }
+        }
+        else {
         }
         if ($request->isMethod('post')) {
             switch ($request->type) {
@@ -889,6 +896,10 @@ class PanelController extends Controller implements HasMiddleware
                     $filename = $request->filename;
                     if (strpos($filename, 'modules.blade.php') !== false) {
                         return to_route('appearance')->with('danger', 'Action denied!');
+                    }
+                    if(Str::endsWith($filename, 'Controller.php')){
+                        $path = app_path('Http/Controllers');
+                        $filename = '/' . $filename;
                     }
                     if (file_exists($path . $filename)) {
                         unlink($path . $filename);
