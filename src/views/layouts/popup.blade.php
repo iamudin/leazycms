@@ -10,8 +10,8 @@
   visibility: hidden;
   transition: opacity 0.4s ease, visibility 0.4s ease;
   background: transparent;              /* no color overlay */
-  -webkit-backdrop-filter: blur(10px);  /* Safari */
-  backdrop-filter: blur(10px);          /* Chrome/Edge/Firefox (where supported) */
+  -webkit-backdrop-filter: blur(3px);  /* Safari */
+  backdrop-filter: blur(3px);          /* Chrome/Edge/Firefox (where supported) */
 }
 
 /* tetap pakai class show untuk menampilkan */
