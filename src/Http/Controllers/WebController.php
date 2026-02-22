@@ -1,15 +1,16 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
-use Illuminate\Http\Request;
-use Leazycms\Web\Models\Tag;
-use Leazycms\Web\Models\Post;
-use Leazycms\Web\Models\User;
-use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
-use Leazycms\Web\Models\PollingTopic;
-use Leazycms\Web\Models\PollingResponse;
+use Illuminate\Support\Str;
 use Leazycms\Web\Http\Controllers\VisitorController;
+use Leazycms\Web\Models\Category;
+use Leazycms\Web\Models\PollingResponse;
+use Leazycms\Web\Models\PollingTopic;
+use Leazycms\Web\Models\Post;
+use Leazycms\Web\Models\Tag;
+use Leazycms\Web\Models\User;
 
 class WebController extends Controller
 {
@@ -108,8 +109,11 @@ class WebController extends Controller
         }
 
     }
-    public function detail(Request $request, Post $post, $slug = null)
+    public function detail(Request $request, Post $post, $name = null)
     {
+        $slug = Str::of($name)
+            ->replaceMatches('/[^\p{L}\p{N}-]/u', '')
+            ->toString();
         $modul = get_module(get_post_type() ?? 'page');
         $detail = $post->detail(get_post_type() ?? 'page', $slug);
         abort_if(empty($detail), '404');
@@ -134,7 +138,7 @@ class WebController extends Controller
                 return response()->json(['error' => 'Captcha'], 200);
            }
         }
-        if ($detail->slug != $slug) {
+        if ($detail->slug != $name) {
             if($detail->shortcut == $slug){
                 $detail->increment('shortcut_counter');
             }
