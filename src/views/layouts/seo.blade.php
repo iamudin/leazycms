@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ strlen($description) > 0 ? $description : 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ strlen($keywords) > 0 ? $keywords : 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
-<title>{{$title}}</title>
+<title>{{$title}} {{ get_option('site_title') && get_option('show_site_title_after_page_name') && !request()->is('/') ? ' › ' . get_option('site_title') : null }}</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="index,follow">
@@ -12,20 +12,20 @@
 <meta name="rating" content="general">
 <meta property="og:site_name" content="{{ get_option('site_title') }}">
 <meta property="og:type" content="website">
-<meta property="og:url"  content="{{$url ?? url('/')}}">
+<meta property="og:url"  content="{{url()->current()}}">
 <meta property="og:title" content="{{$title ?? 'Official Website - LeazyCMS'}}">
 <meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}">
 <meta property="og:image" content="{{$thumbnail ?? noimage()}}">
 <meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="{{$url ?? url('/')}}">
+<meta property="twitter:url" content="{{url()->current()}}">
 <meta property="twitter:title" content="{{ $title ?? 'The Website By Laravel'}}" >
 <meta property="twitter:description" content="{{ $description ?? 'The Website By Laravel'}}">
 <meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
 <meta property="og:locale" content="id">
-<meta name="theme-color" content="#ffffff">
-<link rel="canonical" href="{{$url ?? url('/')}}" >
+<meta name="theme-color" content="{{ get_option('pwa_theme_color') ?? '#ffffff'}}">
+<link rel="canonical" href="{{url()->current()}}" >
 <meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
-<meta name="apple-mobile-web-app-status-bar-style" content="#ffffff">
+<meta name="apple-mobile-web-app-status-bar-style" content="{{ get_option('pwa_theme_color') ?? '#ffffff'}}">
 <meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
 <meta name="msapplication-TileColor" content="#0068df">
 @php $ic180 = get_option('pwa_icon_180'); @endphp

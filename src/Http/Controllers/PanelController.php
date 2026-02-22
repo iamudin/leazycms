@@ -491,6 +491,11 @@ class PanelController extends Controller implements HasMiddleware
                 $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
             }
 
+            if($request->show_site_title_after_page_name){
+                $option->updateOrCreate(['name' => 'show_site_title_after_page_name'], ['value' => true]);
+            }else{
+                $option->updateOrCreate(['name' => 'show_site_title_after_page_name'],  ['value' => false]);
+            }
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {

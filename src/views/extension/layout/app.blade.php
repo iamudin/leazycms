@@ -15,7 +15,7 @@
     <meta property="og:url" content="">
     <meta property="og:image" content="">
     <meta property="og:description" content="">
-    <title>{{$title ? $title.' - Admin Panel E-Surat '.get_option('site_title') : 'Admin Panel E-Surat '.get_option('site_title')}}</title>
+    <title>{{$title ? $title.' - Admin Panel '.get_option('site_title') : 'Admin Panel '.get_option('site_title')}}</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" name="viewport">

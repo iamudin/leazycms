@@ -1,10 +1,10 @@
-@extends('cms::backend.layout.app', ['title' => 'Profile'])
+@extends('cms::backend.layout.app', ['title' => 'Setting › Profile'])
 @section('content')
 
         <div class="row">
             <div class="col-lg-12">
                 <h3 style="font-weight:normal">
-                    <i class="fa fa-building" aria-hidden="true"></i> Profile
+                    <i class="fa fa-building" aria-hidden="true"></i> Setting › Profile
                     <div class="btn-group pull-right">
                            <button type="button" onclick="$('.btn-submit').click()" class="btn btn-primary btn-sm">
                     <i class="fa fa-save"></i> Simpan

@@ -1,4 +1,4 @@
-@extends('cms::backend.layout.app', ['title' => 'Cache'])
+@extends('cms::backend.layout.app', ['title' => 'Setting › Cache'])
 @section('content')
     @push('styles')
         <style>
@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <h3 style="font-weight:normal">
-                    <i class="fa fa-flash" aria-hidden="true"></i> Cache
+                    <i class="fa fa-flash" aria-hidden="true"></i> Setting › Cache
                     <div class="btn-group pull-right">
                         <button name="save_setting" value="true" class="btn btn-primary btn-sm"> <i class="fa fa-save"
                                 aria-hidden></i>

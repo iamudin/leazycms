@@ -108,7 +108,7 @@ class WebController extends Controller
         }
 
     }
-    public function detail(Request $request, Post $post, $slug = false)
+    public function detail(Request $request, Post $post, $slug = null)
     {
         $modul = get_module(get_post_type() ?? 'page');
         $detail = $post->detail(get_post_type() ?? 'page', $slug);

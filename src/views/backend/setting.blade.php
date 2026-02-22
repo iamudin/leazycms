@@ -1,11 +1,11 @@
-@extends('cms::backend.layout.app', ['title' => 'Website'])
+@extends('cms::backend.layout.app', ['title' => 'Setting › Website'])
 @section('content')
         <form class="" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
             @method('PUT')
             @csrf
             <div class="row">
                 <div class="col-lg-12">
-                    <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-globe"></i> Website <div class="btn-group pull-right">
+                    <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-globe"></i> Setting › Website <div class="btn-group pull-right">
                          @if(!app()->configurationIsCached())
                          <button
                             name="save_setting" value="true" class="btn btn-primary btn-sm"> <i
@@ -55,7 +55,8 @@
                                                                 @endif
                                                             @else
 
-                                                                <small for="" class="text-muted">{{ $r[0] }}</small>
+                                                                <small for="" class="text-muted">{{ $r[0] }} @if($r[1] == 'site_title') 
+                                                                    <br><input type="checkbox" name="show_site_title_after_page_name" value="true" {{ get_option('show_site_title_after_page_name') ? 'checked': '' }}> Tampilkan setelah Nama Halaman @endif</small>
                                                                 <input type="text"
                                                                     @if ($r[2] == 'number') oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" @endif
                                                                     class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}"
