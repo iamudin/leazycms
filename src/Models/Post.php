@@ -692,13 +692,14 @@ class Post extends Model
                             // shortcut bebas semua type
                             ->orWhere('shortcut', $name);
 
-                    })
+                    })->published()
                     ->first();
             }
 
            // Jika bukan page → hanya slug sesuai type
             return $query
                 ->onType($type)
+                ->published()
                 ->where('slug','like', $name.'%')
                 ->first();
         }

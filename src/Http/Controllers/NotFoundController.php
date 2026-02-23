@@ -15,10 +15,13 @@ class NotFoundController extends Controller
         if (config('modules.installed') == "0") {
             exit('Please running cms:install');
         }
-        if (get_option('site_maintenance') && get_option('site_maintenance') == 'Y') {
+        if (config('app.debug')) {
             if (is_main_domain()) {
                 if (!Auth::check()) {
-                    return undermaintenance();
+                    return response(
+                        undermaintenance(),
+                        503
+                    )->header('Content-Type', 'text/html')->send();
 
                 }
             } else {
@@ -84,8 +87,8 @@ class NotFoundController extends Controller
                 $showspin = true;
                 $view = 'cms::layouts.master';
             } else {
-                $showspin = false;
-                $view = 'cms::errors.404';
+                return response(preg_replace('/\s+/', ' ',error404Msg()), 404)
+                    ->header('Content-Type', 'text/html;charset=UTF-8');
 
             }
             $content = view($view)->render();

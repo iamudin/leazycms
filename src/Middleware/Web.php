@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class Web
 {
@@ -21,8 +20,11 @@ class Web
     {
 
         $response = $next($request);
-        if (get_option('site_maintenance') == 'Y' && !Auth::check() && !Route::is('formaster')) {
-            return undermaintenance();
+        if (config('app.debug') && !Auth::check() && !Route::is('formaster')) {
+            return response(
+                undermaintenance(),
+                503
+            )->header('Content-Type', 'text/html')->send();
         }
         if (str($response->headers->get('Content-Type'))->lower()== 'text/html; charset=utf-8') {
             $content = $response->getContent();

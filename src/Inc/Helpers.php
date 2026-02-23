@@ -63,6 +63,152 @@ if (!function_exists('add_view_stats')) {
 
     }
 }
+  function error500Msg($requestId){
+        return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Server Error</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            text-align:center;
+        }
+        .card {
+            background:#1e293b;
+            padding:40px;
+            border-radius:16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            max-width:500px;
+            width:90%;
+        }
+        h1 {
+            margin:0 0 10px;
+            font-size:28px;
+        }
+        p {
+            opacity:0.8;
+            margin-bottom:20px;
+        }
+        .request-id {
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:8px;
+            font-family: monospace;
+            font-size:14px;
+            color:#38bdf8;
+            word-break: break-all;
+        }
+        .footer {
+            margin-top:25px;
+            font-size:12px;
+            opacity:0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <h1>⚠ Server Error</h1>
+        <p>Something went wrong on our side.</p>
+        <div class='request-id'>
+            Request ID: {$requestId}
+        </div>
+        <div class='footer'>
+            Please contact administrator and provide this ID.
+        </div>
+    </div>
+</body>
+</html>";
+    }
+ function error404Msg($requestId = null)
+{
+    $requestBlock = $requestId
+        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        : "";
+
+    return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>404 - Page Not Found</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            text-align:center;
+        }
+        .card {
+            background:#1e293b;
+            padding:40px;
+            border-radius:16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            max-width:500px;
+            width:90%;
+        }
+        h1 {
+            margin:0 0 10px;
+            font-size:28px;
+            color:#f87171;
+        }
+        p {
+            opacity:0.8;
+            margin-bottom:20px;
+        }
+        .request-id {
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:8px;
+            font-family: monospace;
+            font-size:14px;
+            color:#facc15;
+            word-break: break-all;
+            margin-bottom:20px;
+        }
+        .btn {
+            display:inline-block;
+            padding:10px 18px;
+            background:#38bdf8;
+            color:#0f172a;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:600;
+        }
+        .btn:hover { opacity:0.9; }
+        .footer {
+            margin-top:25px;
+            font-size:12px;
+            opacity:0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <h1>404 - Page Not Found</h1>
+        <p>The page you are looking for does not exist or has been moved.</p>
+        {$requestBlock}
+        <a href='/' class='btn'>Back to Homepage</a>
+        <div class='footer'>
+            Please verify the URL or return to the homepage.
+        </div>
+    </div>
+</body>
+</html>";
+}
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {
@@ -1165,17 +1311,226 @@ if (!function_exists('blade_path')) {
         if (View::exists($blades)) {
             return $blades;
         } else {
-            if ((get_option('site_maintenance') && get_option('site_maintenance') == 'Y' && auth()->check())) {
+            if (config('app.debug') && auth()->check()) {
                 $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
             } else {
-                return undermaintenance();
+                return response(
+                     preg_replace('/\s+/', ' ',error503Msg()),
+                    503
+                )->header('Content-Type', 'text/html')->send();
             }
         }
     }
 }
+ function undermaintenance($requestId = null)
+{
+    $requestBlock = $requestId
+        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        : "";
 
+    return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Website Under Maintenance</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            text-align:center;
+        }
+        .card {
+            background:#111827;
+            padding:50px 40px;
+            border-radius:18px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+            max-width:520px;
+            width:90%;
+        }
+        h1 {
+            margin:0 0 15px;
+            font-size:30px;
+            color:#38bdf8;
+        }
+        p {
+            opacity:0.85;
+            margin-bottom:25px;
+            line-height:1.6;
+        }
+        .request-id {
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:8px;
+            font-family: monospace;
+            font-size:14px;
+            color:#facc15;
+            word-break: break-all;
+            margin-bottom:25px;
+        }
+        .btn {
+            display:inline-block;
+            padding:10px 20px;
+            background:#38bdf8;
+            color:#0f172a;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:600;
+        }
+        .btn:hover { opacity:0.9; }
+        .footer {
+            margin-top:30px;
+            font-size:12px;
+            opacity:0.6;
+        }
+        .dot-typing {
+            display:inline-block;
+            width:6px;
+            height:6px;
+            border-radius:50%;
+            background:#38bdf8;
+            animation: blink 1.4s infinite both;
+        }
+        .dot-typing:nth-child(2) { animation-delay: .2s; }
+        .dot-typing:nth-child(3) { animation-delay: .4s; }
+
+        @keyframes blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <h1>🚧 Website Under Maintenance</h1>
+        <p>
+            Our website is currently undergoing improvements.<br>
+            Please come back shortly.
+        </p>
+
+        <div>
+            <span class='dot-typing'></span>
+            <span class='dot-typing'></span>
+            <span class='dot-typing'></span>
+        </div>
+
+        <br><br>
+
+        {$requestBlock}
+
+        <a href='/' class='btn'>Refresh Page</a>
+
+        <div class='footer'>
+            Thank you for your patience.
+        </div>
+    </div>
+</body>
+</html>";
+}
+ function error503Msg($requestId = null)
+{
+    $requestBlock = $requestId
+        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        : "";
+
+    return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>503 - Service Unavailable</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            text-align:center;
+        }
+        .card {
+            background:#1e293b;
+            padding:40px;
+            border-radius:16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            max-width:500px;
+            width:90%;
+        }
+        h1 {
+            margin:0 0 10px;
+            font-size:28px;
+            color:#facc15;
+        }
+        p {
+            opacity:0.8;
+            margin-bottom:20px;
+        }
+        .request-id {
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:8px;
+            font-family: monospace;
+            font-size:14px;
+            color:#38bdf8;
+            word-break: break-all;
+            margin-bottom:20px;
+        }
+        .btn {
+            display:inline-block;
+            padding:10px 18px;
+            background:#38bdf8;
+            color:#0f172a;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:600;
+        }
+        .btn:hover { opacity:0.9; }
+        .footer {
+            margin-top:25px;
+            font-size:12px;
+            opacity:0.6;
+        }
+        .spinner {
+            margin:20px auto;
+            width:40px;
+            height:40px;
+            border:4px solid rgba(255,255,255,0.2);
+            border-top:4px solid #facc15;
+            border-radius:50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <h1>🛠 Under Maintenance</h1>
+        <p>This page is currently being improved. Please check back later.</p>
+        <div class='spinner'></div>
+        {$requestBlock}
+        <a href='/' class='btn'>Back to Homepage</a>
+        <div class='footer'>
+            We apologize for the inconvenience.
+        </div>
+    </div>
+</body>
+</html>";
+}
 if (!function_exists('template')) {
     function template()
     {
@@ -2164,39 +2519,7 @@ if (!function_exists('share_button')) {
 }
 
 
-if (!function_exists('undermaintenance')) {
-    function undermaintenance()
-    {
-        echo '<!doctype html>
-    <html>
-    <head>
-    <title>Site Maintenance</title>
-    <meta charset="utf-8"/>
-    <meta name="robots" content="noindex"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-      body { text-align: center; padding: 150px; }
-      h1 { font-size: 50px; }
-      body { font: 20px Helvetica, sans-serif; color: #333; }
-      article { display: block; text-align: left; width: 650px; margin: 0 auto; }
-      a { color: #dc8100; text-decoration: none; }
-      a:hover { color: #333; text-decoration: none; }
-    </style>
-    </head>
-    <body>
-    <article>
-        <h1>We&rsquo;ll be back soon!</h1>
-        <div>
-            <p>Mohon maaf untuk saat ini ' . url('/') . ' sedang dalam perbaikan. Silahkan akses dalam beberapa waktu kedepan!</p>
-            <p>Terima kasih,  ' . get_option('site_title') . '</p>
-        </div>
-    </article>
-    </body>
-    </html>
-    ';
-        exit;
-    }
-}
+
 if (!function_exists('webnotfound')) {
     function webnotfound()
     {
