@@ -73,7 +73,10 @@ class CmsServiceProvider extends ServiceProvider
 
                 return response( preg_replace('/\s+/', ' ',error500Msg($requestId)), 500)
                     ->header('Content-Type', 'text/html')
-                    ->header('X-Request-ID', $requestId);
+                    ->header('X-Request-ID', $requestId)
+                    ->header('Cache-Control', 'public, max-age=3600')
+                    ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT')
+                    ->send();;
             });
 
         });
@@ -171,7 +174,6 @@ protected function registerRoutes()
 
     }
   function log_viewer(){
-    //  config(['logging.default' => 'daily']);
         LogViewer::auth(function ($request) {
             return $request->user()
                 && in_array($request->user()->level, [
@@ -209,15 +211,6 @@ protected function registerRoutes()
                 if (!config('modules.option')) {
                     $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                     config(['modules.option' => $options]);
-                }
-
-                if (
-                    (get_option('site_maintenance') && get_option('site_maintenance') == 'Y')
-                    || (!$this->app->environment('production') && config('app.debug') == true)
-                ) {
-                    Config::set(['app.debug' => true]);
-                } else {
-                    Config::set(['app.debug' => false]);
                 }
             } catch (\Exception $e) {
                 return abort(500, $e->getMessage());
