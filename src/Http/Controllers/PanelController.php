@@ -586,8 +586,11 @@ class PanelController extends Controller implements HasMiddleware
             }
  if ($request->site_maintenance){
                 $option->updateOrCreate(['name' => 'site_maintenance'], ['value' => 'Y', 'autoload' => 1]);
- }else{
+                rewrite_env(['APP_DEBUG' => 'true']);
+
+            }else{
                 $option->updateOrCreate(['name' => 'site_maintenance'], ['value' => 'N', 'autoload' => 1]);
+                rewrite_env(['APP_DEBUG' => 'false']);
 
             }
             if ($request->app_env) {
