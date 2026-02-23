@@ -22,7 +22,8 @@ class Web
         $response = $next($request);
         if (config('app.debug') && !Auth::check() && !Route::is('formaster')) {
             return response(
-                undermaintenance(),
+        preg_replace('/\s+/', ' ',
+undermaintenance()),
                 503
             )->header('Content-Type', 'text/html')->send();
         }

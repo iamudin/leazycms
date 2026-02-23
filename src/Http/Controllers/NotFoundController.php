@@ -19,7 +19,7 @@ class NotFoundController extends Controller
             if (is_main_domain()) {
                 if (!Auth::check()) {
                     return response(
-                        undermaintenance(),
+                    preg_replace('/\s+/', ' ',undermaintenance()),
                         503
                     )->header('Content-Type', 'text/html')->send();
 
