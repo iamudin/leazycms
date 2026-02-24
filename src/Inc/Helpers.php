@@ -1531,6 +1531,107 @@ if (!function_exists('blade_path')) {
 </body>
 </html>";
 }
+function error403Msg($requestId = null)
+{
+    $requestBlock = $requestId
+        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        : "";
+
+    return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>403 - Forbidden</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            text-align:center;
+        }
+        .card {
+            background:#1e293b;
+            padding:40px;
+            border-radius:16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            max-width:500px;
+            width:90%;
+        }
+        h1 {
+            margin:0 0 10px;
+            font-size:28px;
+            color:#f97316;
+        }
+        p {
+            opacity:0.85;
+            margin-bottom:20px;
+        }
+        .request-id {
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:8px;
+            font-family: monospace;
+            font-size:14px;
+            color:#38bdf8;
+            word-break: break-all;
+            margin-bottom:20px;
+        }
+        .btn {
+            display:inline-block;
+            padding:10px 18px;
+            background:#38bdf8;
+            color:#0f172a;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:600;
+        }
+        .btn:hover { opacity:0.9; }
+        .footer {
+            margin-top:25px;
+            font-size:12px;
+            opacity:0.6;
+        }
+        .icon {
+            font-size:48px;
+            margin-bottom:15px;
+        }
+        .warning {
+            background:#7c2d12;
+            padding:10px;
+            border-radius:8px;
+            font-size:13px;
+            color:#fed7aa;
+            margin-bottom:15px;
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <div class='icon'>⛔</div>
+        <h1>403 - Access Forbidden</h1>
+        <p>You do not have permission to access this resource.</p>
+        
+        <div class='warning'>
+            Unauthorized or illegal access attempt may be logged and monitored.
+        </div>
+
+        {$requestBlock}
+
+        <a href='/' class='btn'>Back to Homepage</a>
+
+        <div class='footer'>
+            If you believe this is an error, please contact the administrator.
+        </div>
+    </div>
+</body>
+</html>";
+}
 if (!function_exists('template')) {
     function template()
     {

@@ -2,6 +2,7 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Config;
@@ -24,16 +25,32 @@ use Leazycms\Web\Middleware\Panel;
 use Leazycms\Web\Middleware\RateLimit;
 use Leazycms\Web\Middleware\Web;
 use Opcodes\LogViewer\Facades\LogViewer;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class CmsServiceProvider extends ServiceProvider
 {
 
+protected function handle403(){
+        $handler = $this->app->make(ExceptionHandler::class);
+
+        $handler->renderable(function (Throwable $e, $request) {
+
+            if (config('app.debug')) {
+                return null;
+            }
+
+            if ($e instanceof HttpExceptionInterface && $e->getStatusCode() === 403) {
+                return $this->render403($request, $e);
+            }
+
+            return null;
+        });
+}
     protected function handle500()
     {
         $this->app->afterResolving(ExceptionHandler::class, function ($handler) {
-
             $handler->renderable(function (Throwable $e, $request) {
 
                 if (config('app.debug')) {
@@ -170,8 +187,38 @@ protected function registerRoutes()
             InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class,AssetLink::class
         ]);
         $this->log_viewer();
+        $this->handle403();
         $this->handle500();
 
+    }
+    protected function render403($request, Throwable $e)
+    {
+        $requestId = (string) Str::uuid();
+
+        Log::warning('Forbidden Access Attempt', [
+            'request_id' => $requestId,
+            'message' => $e->getMessage(),
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
+            'ip' => $request->ip(),
+            'user_id' => optional(auth()->user())->id,
+        ]);
+
+        // Jika API / JSON
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Access forbidden.',
+                'request_id' => $requestId,
+            ], 403)->header('X-Request-ID', $requestId);
+        }
+
+        return response(
+            preg_replace('/\s+/', ' ', error403Msg($requestId)),
+            403
+        )
+            ->header('Content-Type', 'text/html')
+            ->header('X-Request-ID', $requestId);
     }
   function log_viewer(){
         LogViewer::auth(function ($request) {

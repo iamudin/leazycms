@@ -58,6 +58,7 @@ class WebController extends Controller
     }
     public function index(Post $post)
     {
+        abort(403);
         $modul = current_module();
         config(['modules.page_name' =>  $modul->title]);
         $data = array(
