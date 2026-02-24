@@ -174,7 +174,6 @@ protected function registerRoutes()
     public function boot(Kernel $kernel)
     {
 
-        $this->handle500();
         Schema::defaultStringLength(191);
         load_default_module();
         $kernel->appendMiddlewareToGroup('web', RateLimit::class);
