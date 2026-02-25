@@ -74,8 +74,13 @@ class PostController extends Controller implements HasMiddleware
     public function edit(Request $request, Post $post, $id)
     {
         abort_if(!is_numeric($id), '403');
-        $request->user()->hasRole(get_post_type(), 'update');
         $module = current_module();
+        if(Route::is($module->name.'.edit')){
+            $request->user()->hasRole(get_post_type(), 'update');
+        }elseif(Route::is($module->name.'.show')){
+ $request->user()->hasRole(get_post_type(), 'show');
+        }else{}
+        
 
         $data = $request->user()->isAdmin() ? $post->with('category', 'user', 'tags')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category', 'user', 'tags')->whereType(get_post_type())->find($id);
         if (!$data) {
@@ -581,7 +586,7 @@ class PostController extends Controller implements HasMiddleware
         $dt->addColumn('action', function ($row) use ($current_module) {
 
             $btn = '<div style="text-align:right"><div class="btn-group ">';
-            $btn .= !$row->trashed() && $current_module->web->detail && $row->status == 'publish' ? '<a title="Libat di web" target="_blank" href="' . url($row->url . '/') . '"  class=" btn-outline-info btn-sm fa fa-eye"></a>' : '';
+            $btn .= in_array('show',$current_module->route) ? '<a title="Lihat data" href="' . route($row->type.'.show', $row->id ) . '"  class=" btn-outline-primary btn-sm fa fa-eye"></a>' : '';
             if (empty($row->deleted_at)) {
                 $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class=" btn-outline-warning btn-sm fa fa-edit"></a>' : '';
             } else {

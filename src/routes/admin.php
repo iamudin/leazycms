@@ -29,7 +29,7 @@ foreach (get_module() as $value) {
             Route::put($value->name . '/{post}/edit', 'update')->name($value->name . '.update');
         }
         if (in_array('show', $value->route)) {
-            Route::get($value->name . '/{id}/show', 'show')->name($value->name . '.show');
+            Route::get($value->name . '/{id}/show', 'edit')->name($value->name . '.show');
         }
         if (in_array('delete', $value->route)) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');

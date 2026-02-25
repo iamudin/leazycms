@@ -821,7 +821,7 @@ return [
             'description' => 'Menu Untuk Mengelola Agenda',
             'parent' => false,
             'icon' => 'fa-list-ul',
-            'route' => ['index', 'create', 'show', 'update', 'delete'],
+            'route' => ['index', 'create', 'update', 'delete'],
             'datatable' => [
                 'custom_column' => false,
                 'data_title' => 'Nama Menu',
