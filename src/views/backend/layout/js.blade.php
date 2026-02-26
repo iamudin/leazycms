@@ -34,7 +34,7 @@ $(document).on('click', '.btn-view-media', function () {
 
     } else if (extensions.office.includes(ext)) {
 
-        viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+        viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent('{{ url('/') }}'+url)}`;
 
     }
 
