@@ -111,15 +111,13 @@ class ExtController extends Controller
             $sitemapIndexWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapIndexContent;
 
             // Simpan ke file sitemap.xml
-            File::put(public_path('sitemap.xml'), $sitemapIndexWithDeclaration);
-            return $sitemapIndexContent;
+            // File::put(public_path('sitemap.xml'), $sitemapIndexWithDeclaration);
+            return $sitemapIndexWithDeclaration;
         });
 
         // Kembalikan file sitemap.xml sebagai respons
-        return Response::file(public_path('sitemap.xml'), [
-            'Content-Type' => 'application/xml',
-            'Content-Disposition' => 'inline; filename="sitemap.xml"',
-        ]);
+        return response($sitemap)
+            ->header('Content-Type', 'application/xml');
     }
 
 }
