@@ -31,48 +31,47 @@ class NotFoundController extends Controller
             }
         }
 
-        $uri = $request->getRequestUri();
-        $host = $request->getHost();
-        $appUrl = config('app.url');
-        $appUrlHost = parse_url($appUrl, PHP_URL_HOST);
-        $isLocal = in_array($request->ip(), ['127.0.0.1', '::1']);
-        $redirectUrl = null;
+        // $uri = $request->getRequestUri();
+        // $host = $request->getHost();
+        // $appUrl = config('app.url');
+        // $appUrlHost = parse_url($appUrl, PHP_URL_HOST);
+        // $isLocal = in_array($request->ip(), ['127.0.0.1', '::1']);
+        // $redirectUrl = null;
 
-        // Deteksi apakah pakai Cloudflare
-        $cfVisitor = $request->server('HTTP_CF_VISITOR');
-        $isHttpsViaCf = $cfVisitor ? (json_decode($cfVisitor, true)['scheme'] ?? 'http') === 'https' : false;
+        // // Deteksi apakah pakai Cloudflare
+        // $cfVisitor = $request->server('HTTP_CF_VISITOR');
+        // $isHttpsViaCf = $cfVisitor ? (json_decode($cfVisitor, true)['scheme'] ?? 'http') === 'https' : false;
 
-        // Deteksi HTTPS native
-        $isHttpsNative = $request->server('HTTPS') === 'on' || $request->server('SERVER_PORT') == 443;
+        // // Deteksi HTTPS native
+        // $isHttpsNative = $request->server('HTTPS') === 'on' || $request->server('SERVER_PORT') == 443;
 
-        $isHttps = $isHttpsViaCf || $isHttpsNative;
-        $scheme = $isHttps ? 'https' : 'http';
+        // $isHttps = $isHttpsViaCf || $isHttpsNative;
+        // $scheme = $isHttps ? 'https' : 'http';
 
-        if (strpos($uri, 'index.php/') !== false) {
-            $cleanUri = str_replace('index.php/', '', $uri);
-            $redirectUrl = $scheme . '://' . $host . '/' . ltrim($cleanUri, '/');
-        }
+        // if (strpos($uri, 'index.php/') !== false) {
+        //     $cleanUri = str_replace('index.php/', '', $uri);
+        //     $redirectUrl = $scheme . '://' . $host . '/' . ltrim($cleanUri, '/');
+        // }
 
-        // 2. Redirect ke HTTPS jika bukan lokal dan belum HTTPS
-        elseif (!$isLocal && !$isHttps && app()->environment('production')) {
-            $redirectUrl = 'https://' . $host . $uri;
-        }
+        // // 2. Redirect ke HTTPS jika bukan lokal dan belum HTTPS
+        // elseif (!$isLocal && !$isHttps && app()->environment('production')) {
+        //     $redirectUrl = 'https://' . $host . $uri;
+        // }
 
-        // 3. Validasi domain jika sub_app_enabled diaktifkan
-        elseif (config('app.sub_app_enabled')) {
-            $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
-                return parse_url($url, PHP_URL_HOST);
-            })->toArray();
+        // // 3. Validasi domain jika sub_app_enabled diaktifkan
+        // elseif (config('app.sub_app_enabled')) {
+        //     $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
+        //         return parse_url($url, PHP_URL_HOST);
+        //     })->toArray();
 
-            if (!in_array($host, $allowedHosts, true)) {
-                $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
-            }
-        } elseif ($host !== $appUrlHost) {
-            $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
-        }
-        if ($redirectUrl && rtrim(urldecode($redirectUrl), '/') !== urldecode($request->fullUrl())) {
-            return redirect($redirectUrl, 301);
-        }
+        //     if (!in_array($host, $allowedHosts, true)) {
+        //         $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
+        //     }
+        // } 
+        
+        // if ($redirectUrl && rtrim(urldecode($redirectUrl), '/') !== urldecode($request->fullUrl())) {
+        //     // return redirect($redirectUrl, 301);
+        // }
         if (!Route::is('stream')) {
             tracking_visitor('404');
         }
