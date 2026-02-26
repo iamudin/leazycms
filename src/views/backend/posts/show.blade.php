@@ -38,7 +38,12 @@
                         <label>{{ $module->datatable->data_title }}</label>
                         <input type="text" class="form-control form-control-lg" value="{{ $post->title ?? '' }}" disabled>
                     </div>
-
+                    @if ($pp = $module->form->post_parent)
+                        <div class="form-group">
+                            <label for="">{{ $module->form->post_parent['0'] }}</label><br>
+                            <h6>{{ $post->parent?->title }} {{ $post->parent?->parent?->title ? ' - ' . $post->parent?->parent?->title : null }} {{ $post->parent?->parent?->parent ? ' - ' . $post->parent?->parent?->parent?->title : null }}</h6>
+                        </div>
+                    @endif
                     {{-- CONTENT --}}
                     @if ($module->form->editor)
                         <div class="form-group">
@@ -139,25 +144,26 @@
             </div>
         </form>
     @push('scripts')
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
+        @include('cms::backend.layout.js')
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
 
-                // Disable semua input
-                document.querySelectorAll('input, textarea, select').forEach(function (el) {
-                    el.setAttribute('disabled', true);
+                    // Disable semua input
+                    document.querySelectorAll('input, textarea, select').forEach(function (el) {
+                        el.setAttribute('disabled', true);
+                    });
+
+                    // Hilangkan file upload
+                    document.querySelectorAll('input[type="file"]').forEach(function (el) {
+                        el.remove();
+                    });
+
+                    // Hilangkan checkbox & radio agar tidak bisa klik
+                    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function (el) {
+                        el.setAttribute('disabled', true);
+                    });
+
                 });
-
-                // Hilangkan file upload
-                document.querySelectorAll('input[type="file"]').forEach(function (el) {
-                    el.remove();
-                });
-
-                // Hilangkan checkbox & radio agar tidak bisa klik
-                document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function (el) {
-                    el.setAttribute('disabled', true);
-                });
-
-            });
-        </script>
+            </script>
     @endpush
 @endsection

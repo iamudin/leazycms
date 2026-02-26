@@ -77,7 +77,7 @@
                       </select>
                       <button type="button" id="applyAction" class="btn btn-primary btn-sm" >Submit</button>
                     </div>
-                  <table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%;">
+                  <table class="display table table-hover table-bordered datatable table-striped" style="background:#ffffff;width:100%;">
                   <thead style="text-transform:uppercase;color:#444;font-size:small">
                     <tr>
                     <th style="width:10px;vertical-align: middle">

@@ -2,8 +2,11 @@
 @php $key = _us($r[0]) @endphp
 @if(isset($field[_us($r[0])]) && media_exists($post->field->$key))
     <input  type="hidden" name="{{_us($r[0])}}" value="{{ $field[_us($r[0])]}}">
-    <span class="btn btn-outline-info btn-sm btn-view-media" data-ext="{{ str(media_extension($post->field->$key))->lower() }}" data-media="{{$post->field->$key }} " style="margin-top:4px">Lihat {{$r[0]}} (.{{ str(get_ext($field[_us($r[0])]))->upper() }})</span> <a  title="Hapus dokumen untuk mengganti" data-toggle="tooltip"  class="fa fa-trash text-danger" style="cursor:pointer" onclick="media_destroy('{{ $field[_us($r[0])]}}')"></a>
+    <span class="btn btn-outline-info btn-sm btn-view-media" data-ext="{{ str(media_extension($post->field->$key))->lower() }}" data-media="{{$post->field->$key }} " style="margin-top:4px">Lihat {{$r[0]}} (.{{ str(get_ext($field[_us($r[0])]))->upper() }})</span> @if(!Route::is($post->type.'.show'))  <a  title="Hapus dokumen untuk mengganti" data-toggle="tooltip"  class="fa fa-trash text-danger" style="cursor:pointer" onclick="media_destroy('{{ $field[_us($r[0])]}}')"></a> @endif
 @else
+@if(Route::is($post->type.'.show'))
+<small class="text-danger">Tidak teresedia</small>
+@endif
 <input {{ isset($r[2]) ? 'required' : '' }} accept="{{ isset($r[3]) ? $r[3] : allow_mime() }}" type="file" class="compress-image form-control form-control-file" value="{{ $field[_us($r[0])] ?? null }}" name="{{_us($r[0])}}" placeholder="Entri {{$r[0]}}">
 @endif
 <br>
