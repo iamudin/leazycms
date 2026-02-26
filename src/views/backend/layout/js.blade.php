@@ -1,62 +1,120 @@
 <script>
-    $(document).on('click', '.btn-view-media', function () {
+$(document).on('click', '.btn-view-media', function () {
 
-        let file = $(this).data('media');
-        let ext = $(this).data('ext');
-        let url = file;
+    const file = $(this).data('media');
+    const ext  = ($(this).data('ext') || '').toLowerCase();
+    const url  = file;
 
-        let imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        let pdfExt = ['pdf'];
+    const extensions = {
+        image: ['jpg','jpeg','png','gif','webp'],
+        pdf: ['pdf'],
+        office: [
+            'docx','docm','dotm','dotx',
+            'xlsx','xlsb','xls','xlsm',
+            'pptx','ppsx','ppt','pps','pptm','potm','ppam','potx','ppsm'
+        ]
+    };
 
-        let content = '';
+    let content = '';
+    let viewerUrl = '';
 
-        if (imageExt.includes(ext)) {
-            content = `<img src="${url}" class="img-fluid">`;
-        } else if (pdfExt.includes(ext)) {
-            content = `<iframe src="${url}" width="100%" height="600px" style="border:none;"></iframe>`;
-        } else {
-            content = `
+    // =========================
+    // TYPE HANDLER
+    // =========================
+
+    if (extensions.image.includes(ext)) {
+
+        content = `
+            <img src="${url}" class="img-fluid rounded shadow-sm">
+        `;
+
+    } else if (extensions.pdf.includes(ext)) {
+
+        viewerUrl = url;
+
+    } else if (extensions.office.includes(ext)) {
+
+        viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+
+    }
+
+    // =========================
+    // IFRAME VIEWER HANDLER
+    // =========================
+
+    if (viewerUrl) {
+        content = `
+            <div class="position-relative" style="min-height:600px;">
+                <div id="mediaLoader" 
+                     class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-white">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+
+                <iframe 
+                    src="${viewerUrl}" 
+                    width="100%" 
+                    height="600px" 
+                    style="border:none; display:none;" 
+                    onload="document.getElementById('mediaLoader').remove(); this.style.display='block';"
+                    onerror="document.getElementById('mediaLoader').innerHTML='<p class=\\'text-danger\\'>Gagal memuat file.</p>';">
+                </iframe>
+            </div>
+        `;
+    }
+
+    // =========================
+    // FALLBACK
+    // =========================
+
+    if (!content) {
+        content = `
             <div class="text-center p-4">
-                <p>File tidak dapat dilihat.</p>
+                <p>File tidak dapat dipreview.</p>
                 <a href="${url}" class="btn btn-primary" download>
                     Download File
                 </a>
             </div>
         `;
-        }
+    }
 
-        // Hapus modal lama jika ada
-        $('#dynamicMediaModal').remove();
+    // =========================
+    // BUILD MODAL
+    // =========================
 
-        // Buat modal baru via JS
-        let modalHtml = `
-    <div class="modal fade" id="dynamicMediaModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Lihat File</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body text-center">
-                    ${content}
+    $('#dynamicMediaModal').remove();
+
+    const modalHtml = `
+        <div class="modal fade" id="dynamicMediaModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0">
+                    
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title">
+                            Preview File 
+                            <span class="badge badge-secondary text-uppercase">${ext || 'unknown'}</span>
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body text-center">
+                        ${content}
+                    </div>
+
                 </div>
             </div>
         </div>
-    </div>
     `;
 
-        $('body').append(modalHtml);
+    $('body').append(modalHtml);
 
-        let modal = $('#dynamicMediaModal');
+    const modal = $('#dynamicMediaModal');
+    modal.modal('show');
 
-        modal.modal('show');
-
-        // Hapus dari DOM setelah ditutup
-        modal.on('hidden.bs.modal', function () {
-            modal.remove();
-        });
-
+    modal.on('hidden.bs.modal', function () {
+        modal.remove();
     });
+
+});
 </script>
 <script  src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 <script>
