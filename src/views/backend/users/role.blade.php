@@ -17,7 +17,7 @@
     <div class="row">
 
         @foreach(collect(get_module())->whereNotIn('name', ['media', 'menu']) as $row)
-            <div class="col-lg-4 mb-4">
+            <div class="col-lg-6 mb-4">
                 <div class="card">
                     <h4 class="card-header bg-dark text-white"> <i class="fa {{ $row->icon }} }}"></i> {{ $row->title }}</h4>
                     <div class="card-body">
@@ -29,6 +29,7 @@
                             <th>Index</th>
                             <th>Create</th>
                             <th>Update</th>
+                            <th>Show</th>
                             <th>Delete</th><th>As Admin</th>
                         </tr>
                     </thead>
@@ -36,7 +37,7 @@
                     @foreach($roles as $r)
                     <tr>
                         <td>{{ str($r)->headline() }}</td>
-                        @foreach(['index', 'create', 'update', 'delete','admin'] as $r2)
+                        @foreach(['index', 'create', 'update', 'show','delete','admin'] as $r2)
                         <td align="center">
                         <input @if($role && collect($role)->where('level', $r)->where('module', $row->name)->where('action', $r2)->count()) checked='checked' @endif value="true" type="checkbox" name="{{ $r . '_' . $row->name . '_' . $r2 }}">
                     </td>
