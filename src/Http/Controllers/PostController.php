@@ -314,7 +314,39 @@ class PostController extends Controller implements HasMiddleware
 
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin() ? Post::select(array_merge((new Post)->selected, ['data_loop']))->with('user', 'category', 'tags')->with('parent.parent.parent')->withCount('childs', 'comments')->whereType(get_post_type())->whereIn('status', ['publish', 'draft']) : Post::select((new Post)->selected)->with('user', 'category', 'tags')->with('parent.parent.parent')->whereIn('status', ['publish', 'draft'])->withCount('childs', 'comments')->whereType(get_post_type())->whereBelongsTo($req->user());
+        $data = $req->user()->isAdmin()
+            ? Post::select((new Post)->selected)
+                ->with([
+                    
+                    'user:id,name',
+                    'category:id,name',
+                    'tags:id,name',
+                    'childs:id,parent_id,type' // 🔥 hanya ambil kolom kecil
+                ])
+                ->with([
+                    'parent:id,title,type,parent_id',
+                    'parent.parent:id,title,type,parent_id',
+                    'parent.parent.parent:id,title,type,parent_id',
+                ])
+                ->withCount('comments')
+                ->whereType(get_post_type())
+                ->whereIn('status', ['publish', 'draft'])
+            : Post::select((new Post)->selected)
+                ->with([
+                    'user:id,name',
+                    'category:id,name',
+                    'tags:id,name',
+                    'childs:id,parent_id,type'
+                ])
+                ->with([
+                    'parent:id,title,type,parent_id',
+                    'parent.parent:id,title,type,parent_id',
+                    'parent.parent.parent:id,title,type,parent_id',
+                ])
+                ->withCount('comments')
+                ->whereType(get_post_type())
+                ->whereIn('status', ['publish', 'draft'])
+                ->whereBelongsTo($req->user());
         $current_module = current_module();
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');
@@ -327,7 +359,7 @@ class PostController extends Controller implements HasMiddleware
         }
 
         $customColumns = $current_module->datatable->custom_column;
-
+        $childTypes = $current_module->datatable->child_count ?? [];
         $custom_field = collect($current_module->form->custom_field)
             ->filter(fn($field) => isset($field[1]) && is_array($field[1]))
             ->pluck(0)
@@ -568,20 +600,40 @@ class PostController extends Controller implements HasMiddleware
         }
 
         $dt->addColumn('parents', function ($row) use ($current_module) {
-            if ($current_module->form->post_parent) {
-                $parent = null;
-                if ($row->parent) {
-                    $parent .= $row->parent->title;
-                    if ($row->parent->parent) {
-                        $parent .= ' - ' . $row->parent->parent->title;
-                        if ($row->parent->parent->parent) {
-                            $parent .= ' - ' . $row->parent->parent->parent->title;
-                        }
-                    }
-                }
-                return $parent ?? '_';
+
+            if (!$current_module->form->post_parent) {
+                return '-';
             }
 
+            $parents = [];
+
+            if ($row->parent) {
+                $parents[] = $row->parent;
+
+                if ($row->parent->parent) {
+                    $parents[] = $row->parent->parent;
+
+                    if ($row->parent->parent->parent) {
+                        $parents[] = $row->parent->parent->parent;
+                    }
+                }
+            }
+
+            if (empty($parents)) {
+                return '-';
+            }
+
+            // Ambil parent terakhir (level tertinggi)
+            $lastParent = end($parents);
+
+            $titles = collect($parents)
+                ->reverse() // supaya urut dari atas ke bawah
+                ->pluck('title')
+                ->implode(' - ');
+
+            return '<a href="' . route($lastParent->type . '.show', $lastParent->id) . '">'
+                . $titles .
+                '</a>';
         });
         $dt->addColumn('action', function ($row) use ($current_module) {
 
@@ -624,23 +676,40 @@ class PostController extends Controller implements HasMiddleware
             >';
         });
 
-        $dt->addColumn('childs_count', function ($row) use ($current_module) {
-            return '<b>' . $row->childs_count . '</b>';
-        });
+        foreach ($childTypes as $type) {
 
+            $columnName = Str::snake($type) . '_count';
+
+            $dt->addColumn($columnName, function ($row) use ($type) {
+
+                return '<b>' .
+                    $row->childs->where('type', str($type)->lower())->count()
+                    . '</b>';
+
+            });
+
+            $customColumns[] = $columnName; // simpan untuk rawColumns
+        }
         $rawColumns = array_merge(
-            ['childs_count', 'status', 'checkbox', 'created_at', 'updated_at', 'visited', 'action', 'title', 'parents', 'thumbnail'],
-            $customColumns
+            [
+                'status',
+                'checkbox',
+                'created_at',
+                'updated_at',
+                'visited',
+                'action',
+                'title',
+                'parents',
+                'thumbnail'
+            ],
+            $customColumns // sudah bersih snake_case
         );
 
         $dt->rawColumns($rawColumns);
         $dt->orderColumn('visited', '-visited $1');
         $dt->orderColumn('updated_at', '-updated_at $1');
         $dt->orderColumn('created_at', '-created_at $1');
-        $dt->only(array_merge(
-            ['childs_count', 'status', 'checkbox', 'visited', 'action', 'title', 'created_at', 'updated_at', 'parents', 'thumbnail'],
-            $customColumns
-        ));
+        $dt->only( $rawColumns );
         return $dt
             ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')
