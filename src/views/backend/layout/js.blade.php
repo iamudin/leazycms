@@ -1,49 +1,57 @@
 <script>
-$(document).on('click', '.btn-view-media', function () {
+    $(document).on('click', '.btn-view-media', function () {
 
-    const file = $(this).data('media');
-    const ext  = ($(this).data('ext') || '').toLowerCase();
-    const url  = file;
+        const file = $(this).data('media');
+        const ext = ($(this).data('ext') || '').toLowerCase();
+        const baseUrl = "{{ url('/') }}";
 
-    const extensions = {
-        image: ['jpg','jpeg','png','gif','webp'],
-        pdf: ['pdf'],
-        office: [
-            'docx','docm','dotm','dotx',
-            'xlsx','xlsb','xls','xlsm',
-            'pptx','ppsx','ppt','pps','pptm','potm','ppam','potx','ppsm'
-        ]
-    };
+        // Absolute URL safety
+        const url = file.startsWith('http') ? file : baseUrl + file;
 
-    let content = '';
-    let viewerUrl = '';
+        // Extract filename
+        const fileName = url.split('/').pop();
 
-    // =========================
-    // TYPE HANDLER
-    // =========================
+        const extensions = {
+            image: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            pdf: ['pdf'],
+            office: [
+                'docx', 'docm', 'dotm', 'dotx',
+                'xlsx', 'xlsb', 'xls', 'xlsm',
+                'pptx', 'ppsx', 'ppt', 'pps', 'pptm', 'potm', 'ppam', 'potx', 'ppsm'
+            ]
+        };
 
-    if (extensions.image.includes(ext)) {
+        let content = '';
+        let viewerUrl = '';
+        let showDownloadBtn = false;
 
-        content = `
+        // =========================
+        // TYPE HANDLER
+        // =========================
+
+        if (extensions.image.includes(ext)) {
+
+            content = `
             <img src="${url}" class="img-fluid rounded shadow-sm">
         `;
 
-    } else if (extensions.pdf.includes(ext)) {
+        } else if (extensions.pdf.includes(ext)) {
 
-        viewerUrl = url;
+            viewerUrl = url;
+            showDownloadBtn = true;
 
-    } else if (extensions.office.includes(ext)) {
+        } else if (extensions.office.includes(ext)) {
 
-        viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent('{{ url('/') }}'+url)}`;
+            viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+            showDownloadBtn = true;
+        }
 
-    }
+        // =========================
+        // IFRAME VIEWER HANDLER
+        // =========================
 
-    // =========================
-    // IFRAME VIEWER HANDLER
-    // =========================
-
-    if (viewerUrl) {
-        content = `
+        if (viewerUrl) {
+            content = `
             <div class="position-relative" style="min-height:600px;">
                 <div id="mediaLoader" 
                      class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-white">
@@ -60,14 +68,14 @@ $(document).on('click', '.btn-view-media', function () {
                 </iframe>
             </div>
         `;
-    }
+        }
 
-    // =========================
-    // FALLBACK
-    // =========================
+        // =========================
+        // FALLBACK
+        // =========================
 
-    if (!content) {
-        content = `
+        if (!content) {
+            content = `
             <div class="text-center p-4">
                 <p>File tidak dapat dipreview.</p>
                 <a href="${url}" class="btn btn-primary" download>
@@ -75,25 +83,43 @@ $(document).on('click', '.btn-view-media', function () {
                 </a>
             </div>
         `;
-    }
+        }
 
-    // =========================
-    // BUILD MODAL
-    // =========================
+        // =========================
+        // DOWNLOAD BUTTON HEADER
+        // =========================
 
-    $('#dynamicMediaModal').remove();
+        const downloadButton = showDownloadBtn ? `
+        <a href="${url}" class="btn btn-sm btn-outline-primary mr-2" download>
+            <i class="fa fa-download"></i> Download
+        </a>
+    ` : '';
 
-    const modalHtml = `
+        // =========================
+        // BUILD MODAL
+        // =========================
+
+        $('#dynamicMediaModal').remove();
+
+        const modalHtml = `
         <div class="modal fade" id="dynamicMediaModal" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered">
                 <div class="modal-content shadow-lg border-0">
                     
-                    <div class="modal-header bg-light">
-                        <h5 class="modal-title">
-                            Preview File 
-                            <span class="badge badge-secondary text-uppercase">${ext || 'unknown'}</span>
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <div class="modal-header bg-light d-flex justify-content-between align-items-center">
+                        
+                        <div>
+                            <strong>${fileName}</strong>
+                            <span class="badge badge-secondary text-uppercase ml-2">
+                                ${ext || 'unknown'}
+                            </span>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            ${downloadButton}
+                            <button type="button" class="close ml-2" data-dismiss="modal">&times;</button>
+                        </div>
+
                     </div>
 
                     <div class="modal-body text-center">
@@ -105,16 +131,16 @@ $(document).on('click', '.btn-view-media', function () {
         </div>
     `;
 
-    $('body').append(modalHtml);
+        $('body').append(modalHtml);
 
-    const modal = $('#dynamicMediaModal');
-    modal.modal('show');
+        const modal = $('#dynamicMediaModal');
+        modal.modal('show');
 
-    modal.on('hidden.bs.modal', function () {
-        modal.remove();
+        modal.on('hidden.bs.modal', function () {
+            modal.remove();
+        });
+
     });
-
-});
 </script>
 <script  src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 <script>
