@@ -1,20 +1,21 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
 
-use Carbon\Carbon;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Leazycms\Web\Models\Tag;
-use Leazycms\Web\Models\Post;
-use Illuminate\Validation\Rule;
-use Leazycms\Web\Models\Category;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\View;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Leazycms\Web\Models\Category;
+use Leazycms\Web\Models\Post;
+use Leazycms\Web\Models\Tag;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Routing\Controllers\HasMiddleware;
 
 class PostController extends Controller implements HasMiddleware
 {
@@ -82,7 +83,7 @@ class PostController extends Controller implements HasMiddleware
         }else{}
         
 
-        $data = $request->user()->isAdmin() ? $post->with('category', 'user', 'tags')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category', 'user', 'tags')->whereType(get_post_type())->find($id);
+        $data = $request->user()->isAdmin() || !$request->user()->hasRole(get_post_type(), 'admin', true) ? $post->with('category', 'user', 'tags')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category', 'user', 'tags')->whereType(get_post_type())->find($id);
         if (!$data) {
             return redirect(admin_url(get_post_type()))->with('danger', get_module_info('title') . ' Tidak Ditemukan');
         }
@@ -128,6 +129,7 @@ class PostController extends Controller implements HasMiddleware
         $request->user()->hasRole(get_post_type(), 'update');
 
         $module = current_module();
+        $custom_field = [];
         if ($post->type == 'page' && in_array(str($request->title)->lower(), not_allow_adminpath())) {
             return back()->with('danger', 'Nama Halaman tidak di izinkan');
 
@@ -238,9 +240,9 @@ class PostController extends Controller implements HasMiddleware
             }
         }
         if ($module->form->custom_field || $module->form->post_parent) {
-            $data['data_field'] = $custom_field ?? null;
+            $data['data_field'] = $custom_field ?? [];
         }
-
+        $data['data_field'] = array_merge(['last_editor' => Auth::user()->name], $custom_field);
         if ($request->hasFile('media')) {
             $data['media'] = $post->addFile([
                 'file' => $request->file('media'),
@@ -314,7 +316,8 @@ class PostController extends Controller implements HasMiddleware
 
     public function datatable(Request $req)
     {
-        $data = $req->user()->isAdmin()
+        
+        $data = $req->user()->isAdmin() || !$req->user()->hasRole(get_post_type(), 'admin',true)
             ? Post::select((new Post)->selected)
                 ->with([
                     
@@ -486,19 +489,19 @@ class PostController extends Controller implements HasMiddleware
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
             $b = '<b class="text-primary">' . $tit . '</b><br>';
-            $b .= '<small class="text-muted"> ' . $pin . ' <i class="fa fa-user-o"></i> ' . $row->user->name . '  ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
+            $b .= '<small class="text-muted"> ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
             return $b;
         });
 
 
         $dt->addColumn('created_at', function ($row) {
-            return '<small class="badge badge-pill py-1" style="border:1px solid green;">' . date('d M Y H:i', strtotime($row->created_at)) . '</small>';
+            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->created_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . $row->user->name . '</small>';
         });
         $dt->addColumn('visited', function ($row) {
             return '<center><small class="badge badge-pill badge-dark py-1" style="border:1px solid lime;"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
         });
         $dt->addColumn('updated_at', function ($row) {
-            return ($row->updated_at) ? '<small class="badge badge-pill py-1" style="border:1px solid orange;">' . date('d M Y H:i', strtotime($row->updated_at)) . '</small>' : '<small class="badge text-muted">NULL</small>';
+            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->updated_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . ($row->field?->last_editor ?? '-') . '</small>';
         });
         $dt->addColumn('thumbnail', function ($row) {
             return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
