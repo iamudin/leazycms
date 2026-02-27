@@ -58,7 +58,7 @@
 
 
         <div class="col-lg-12 mb-3">
-          
+          <img src="{{ url('stats.png') }}" alt="">
 @include('cms::backend.visitorchart')
 
         </div>

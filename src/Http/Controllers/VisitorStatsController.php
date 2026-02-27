@@ -16,10 +16,10 @@ class VisitorStatsController extends Controller
         $now = Carbon::now();
 
         if (strpos(request()->headers->get('referer'), $host) === false) {
-            return to_route('home');
+            return redirect('/');
         }
 
-        $ip = request()->get_client_ip();
+        $ip = get_client_ip();
         $agent = request()->header('User-Agent');
 
         /* =========================
