@@ -1,5 +1,5 @@
 <!-- Navbar-->
-<header class="app-header" style="background:#222d32"><a href="/" class="app-header__logo"
+<header class="app-header" style="background:#222d32"><a href="{{ route('panel.dashboard') }}" class="app-header__logo"
         style="color:#fff;background:transparent">
         @if(is_main_domain())
         @if(get_option('logo')  && media_exists(get_option('logo'))) <img src="{{ get_option('logo')}}" height="30" alt="">  @else Admin<b>Panel</b> @endif
