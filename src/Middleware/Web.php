@@ -16,6 +16,7 @@ class Web
      * @param  \Closure  $next
      * @return mixed
      */
+
     public function handle(Request $request, Closure $next)
     {
 
@@ -28,9 +29,9 @@ undermaintenance()),
             )->header('Content-Type', 'text/html')
             ->header('Cache-Control', 'public, max-age=3600')
                 ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT')
-                ->send();;
+                ->send();
         }
-
+    
         $path = $request->path();
         if ($path !== strtolower($path)) {
             return redirect(strtolower($request->fullUrl()), 301);

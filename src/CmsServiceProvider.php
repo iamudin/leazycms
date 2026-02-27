@@ -191,7 +191,6 @@ protected function registerRoutes()
         $this->log_viewer();
         $this->handle403();
         $this->handle500();
-        $this->clean_table_online();
 
     }
     protected function render403($request, Throwable $e)
@@ -231,14 +230,6 @@ protected function registerRoutes()
                 ]);
         });
   
-  }
-  protected function clean_table_online(){
-        if (Cache::add('online_cleanup_lock', true, 60)) {
-
-            DB::table('online_users')
-                ->where('last_activity', '<', now()->subMinutes(5))
-                ->delete();
-        }
   }
     public function register()
     {

@@ -53,7 +53,7 @@ if (!Cache::has($pageKey)) {
 
         if (!Cache::has($onlineKey)) {
 
-            Cache::put($onlineKey, true, now()->addMinutes(1));
+            Cache::put($onlineKey, true, now()->addMinutes(2));
 
             DB::table('online_users')->updateOrInsert(
                 ['session_id' => $sessionId],
@@ -63,6 +63,13 @@ if (!Cache::has($pageKey)) {
                     'ip' => $request->ip()
                 ]
             );
+          
+        }
+        if (Cache::add('online_cleanup_lock', true, 60)) {
+
+            DB::table('online_users')
+                ->where('last_activity', '<', now()->subMinutes(5))
+                ->delete();
         }
         return $next($request);
     }
