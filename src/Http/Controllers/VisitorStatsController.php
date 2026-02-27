@@ -77,7 +77,7 @@ class VisitorStatsController extends Controller
            GENERATE IMAGE
         ==========================*/
 
-        $img = Image::canvas(800, 870, 'rgba(0, 0, 0, 0.65)');
+        $img = Image::canvas(800, 730, 'rgba(0, 0, 0, 0.65)');
         $fontPath = public_path('backend/fonts/captcha.ttf');
 
         $y = 70;
@@ -128,7 +128,7 @@ class VisitorStatsController extends Controller
         }
 
         $response = $img->response('png');
-        $response->header('Cache-Control', 'public, max-age=300');
+        $response->header('Cache-Control', 'public, max-age=30');
 
         return $response;
     }

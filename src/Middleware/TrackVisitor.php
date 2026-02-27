@@ -53,22 +53,27 @@ if (!Cache::has($pageKey)) {
 
         if (!Cache::has($onlineKey)) {
 
-            Cache::put($onlineKey, true, now()->addMinutes(2));
+            Cache::put($onlineKey, true, now()->addMinutes(1));
 
-            DB::table('online_users')->updateOrInsert(
-                ['session_id' => $sessionId],
+            DB::table('online_users')->upsert(
                 [
-                    'domain' => $domain,
-                    'last_activity' => now(),
-                    'ip' => $request->ip()
-                ]
+                    [
+                        'session_id' => $sessionId,
+                        'domain' => $domain,
+                        'last_activity' => now(),
+                        'ip' => $request->ip()
+                    ]
+                ],
+                ['session_id'], // unique key
+                ['last_activity', 'domain', 'ip']
             );
           
         }
-        if (Cache::add('online_cleanup_lock', true, 60)) {
+        if (Cache::add('online_cleanup_lock', true, 180)) {
 
             DB::table('online_users')
-                ->where('last_activity', '<', now()->subMinutes(5))
+                ->where('last_activity', '<', now()->subMinutes(3))
+                ->limit(50)
                 ->delete();
         }
         return $next($request);
