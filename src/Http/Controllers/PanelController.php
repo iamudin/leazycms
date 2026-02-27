@@ -209,37 +209,60 @@ class PanelController extends Controller implements HasMiddleware
     }
     function index(Request $request)
     {
-        $visitor = [
-            'currentDomain' => $request->domain ?? parse_url(config('app.url'), PHP_URL_HOST),
-            'domains' => Visitor::select('domain')->distinct()->pluck('domain')
-        ];
-        if($request->view_visitor){
-            return $this->visitor_counter($request->domain);
-        }
+      
         $user = $request->user();
         $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
-        $da = array();
-        for ($i = 0; $i <= 6; $i++) {
-            array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
-        }
+      
 
-        $weekago = json_decode(json_encode(collect($da)->sort()), true);
        
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
 
-        
+        $domains = DB::table('visitor_stats')
+            ->select('domain')
+            ->distinct()
+            ->orderBy('domain')
+            ->pluck('domain');
+
+        $domain = request()->get('domain', request()->getHost());
+        $today = DB::table('visitor_stats')
+            ->where('domain', $domain)
+            ->whereDate('date', today())
+            ->first();
+
+        $last30 = DB::table('visitor_stats')
+            ->where('domain', $domain)
+            ->whereBetween('date', [now()->subDays(29), now()])
+            ->orderBy('date')
+            ->get();
+
+        $online = DB::table('online_users')
+            ->where('domain', $domain)
+            ->where('last_activity', '>=', now()->subMinutes(5))
+            ->count();
+
+        $ranking = DB::table('online_users')
+            ->where('last_activity', '>=', now()->subMinutes(5))
+            ->select('domain', DB::raw('count(*) as total'))
+            ->groupBy('domain')
+            ->orderByDesc('total')
+            ->get();
 
         // LIST DOMAIN
         
-        return view('cms::backend.dashboard', array_merge([
+        return view('cms::backend.dashboard', [
             'latest' => $lastpublish,
-            'weekago' => $weekago,
+            
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
+            'today'=>$today,
+            'last30'=>$last30,
+            'online'=>$online,
+            'ranking'=>$ranking,
+            'domains'=>$domains,
+            'currentDomain'=>$domain
             
-            
-        ],$visitor));
+        ]);
     }
     function generate_key(){
 

@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use Leazycms\Web\Http\Controllers\ExtController;
 use Leazycms\Web\Http\Controllers\WebController;
 use Leazycms\Web\Http\Controllers\NotFoundController;
+use Leazycms\Web\Middleware\TrackVisitor;
 Route::fallback(function () {
     return app(NotFoundController::class)->error404();
 })->middleware('web');
@@ -12,7 +13,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
      {
             Route::controller(WebController::class)
                 ->prefix($modul->name)
-                ->middleware(['public'])
+                ->middleware(['public',TrackVisitor::class])
                 ->group(function () use ($modul) {
                     if($modul->web->index){
                         Route::match(['get', 'post'],'/', 'index');
@@ -35,16 +36,16 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
 
                 });
     }
-    Route::match(['get', 'post'], 'tags/{slug}', [WebController::class, 'tags'])->middleware(['public']);
-    Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->middleware(['public']);
-    Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->middleware(['public']);
+    Route::match(['get', 'post'], 'tags/{slug}', [WebController::class, 'tags'])->middleware(['public', TrackVisitor::class]);
+    Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->middleware(['public', TrackVisitor::class]);
+    Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->middleware(['public', TrackVisitor::class]);
     Route::match(['get', 'post'],'sitemap.xml', [ExtController::class, 'sitemap_xml'])->name('sitemap');
     Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
     Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
 
     if($webroute = get_non_domain_routes()){
         foreach($webroute as $wr){
-        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(array_merge(['public'],isset($wr['middleware']) ? [$wr['middleware']] : []));  
+        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public',TrackVisitor::class]);  
         }
     }
     if(config('modules.env_key')){
@@ -55,9 +56,9 @@ Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
         [admin_path(), 'search', 'tags','log-viewer', 'author', 'sitemap.xml', 'favicon.ico'],
         $modules->pluck('name')->toArray()
     )) . ')[a-zA-Z0-9-_]+')
-    ->middleware(['public']);
+    ->middleware(['public', TrackVisitor::class]);
 
-Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public']);
+Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public',TrackVisitor::class]);
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
 
 

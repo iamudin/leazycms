@@ -112,7 +112,6 @@ undermaintenance()),
             $response->setContent($content);
         }
         $this->securityHeaders($response, $request);
-        tracking_visitor();
         forbidden($request);
         return $response;
     }

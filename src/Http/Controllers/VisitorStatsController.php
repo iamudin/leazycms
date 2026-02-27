@@ -2,10 +2,8 @@
 namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
-use  Leazycms\Web\Models\Visitor;
-use Leazycms\Web\Models\VisitorLog;
+use Illuminate\Support\Facades\DB;
 use Intervention\Image\Facades\Image;
-use Request;
 
 class VisitorStatsController extends Controller
 {
@@ -15,67 +13,75 @@ class VisitorStatsController extends Controller
     public function headerImage()
     {
         $host = request()->getHost();
-        if (strpos(request()->headers->get('referer'),$host)===false){
-            return to_route('home');
-        }
-        $ip = get_client_ip();
-        $agent = request()->header('User-Agent');
-        $ipinfo = get_ip_info($ip);
         $now = Carbon::now();
 
-        // ======================
-        // ONLINE VISITOR
-        // ======================
-        $onlineVisitors = Visitor::where('domain', $host)
+        if (strpos(request()->headers->get('referer'), $host) === false) {
+            return to_route('home');
+        }
+
+        $ip = request()->get_client_ip();
+        $agent = request()->header('User-Agent');
+
+        /* =========================
+           ONLINE USER (table baru)
+        ==========================*/
+        $onlineVisitors = DB::table('online_users')
+            ->where('domain', $host)
             ->where('last_activity', '>=', $now->copy()->subMinutes(5))
             ->count();
 
-        // ======================
-        // RANGE WAKTU
-        // ======================
-        $todayStart = Carbon::today();
-        $yesterdayStart = Carbon::yesterday();
-        $yesterdayEnd = $todayStart;
-        $monthStart = $now->copy()->startOfMonth();
-        $weekStart = $now->copy()->startOfWeek();
+        /* =========================
+           RANGE WAKTU
+        ==========================*/
+        $today = $now->toDateString();
+        $yesterday = $now->copy()->subDay()->toDateString();
+        $monthStart = $now->copy()->startOfMonth()->toDateString();
+        $weekStart = $now->copy()->startOfWeek()->toDateString();
 
-        // ======================
-        // PAGE VIEW
-        // ======================
-        $pageViews = VisitorLog::where(['domain' => $host, 'status_code' => 200])
+        /* =========================
+           VISITOR STATS (table baru)
+        ==========================*/
+        $rangeStats = DB::table('visitor_stats')
+            ->where('domain', $host)
             ->selectRaw("
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS today,
-        COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS yesterday,
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS this_month,
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) AS this_week
+        SUM(CASE WHEN date >= ? THEN total ELSE 0 END) as this_month,
+        SUM(CASE WHEN date >= ? THEN total ELSE 0 END) as this_week
     ", [
-                $todayStart,
-                $yesterdayStart,
-                $yesterdayEnd,
                 $monthStart,
                 $weekStart
             ])
             ->first();
+        $todayStats = DB::table('visitor_stats')
+            ->where('domain', $host)
+            ->where('date', $today)
+            ->first();
 
-        $uniqueVisitorsToday = Visitor::where('domain', $host)
-            ->whereBetween('created_at', [$todayStart, now()])
-            ->count();
+        $yesterdayStats = DB::table('visitor_stats')
+            ->where('domain', $host)
+            ->where('date', $yesterday)
+            ->first();
 
-        // ======================
-        // INFO DEVICE (simplified)
-        // ======================
+        $thisMonth = $rangeStats->this_month ?? 0;
+        $thisWeek = $rangeStats->this_week ?? 0;
+
+        $uniqueVisitorsToday = $todayStats->unique ?? 0;
+
+        /* =========================
+           DEVICE INFO
+        ==========================*/
         $browser = $this->getBrowser($agent);
         $device = $this->getDevice($agent);
         $os = $this->getOS($agent);
 
-        // ======================
-        // GENERATE IMAGE
-        // ======================
-        $img = Image::canvas(800, 870,'rgba(0, 0, 0, 0.65)' ); // warna biru tua
+        /* =========================
+           GENERATE IMAGE
+        ==========================*/
 
-        $fontPath = public_path('backend/fonts/captcha.ttf'); // pastikan font ini ada
+        $img = Image::canvas(800, 870, 'rgba(0, 0, 0, 0.65)');
+        $fontPath = public_path('backend/fonts/captcha.ttf');
 
         $y = 70;
+
         $img->text('Statistik Pengunjung :', 30, $y, function ($font) use ($fontPath) {
             $font->file($fontPath);
             $font->size(40);
@@ -84,28 +90,23 @@ class VisitorStatsController extends Controller
         });
 
         $y += 60;
+
         $data = [
             'Sedang Online' => $onlineVisitors,
             'Unik Hari ini' => $uniqueVisitorsToday,
-            '.......................................' => null,
-            'Pageview' => '',
-            'Hari ini' => number_format($pageViews->today ?? 0),
-            'Kemarin' => number_format($pageViews->yesterday ?? 0),
-            'Minggu ini' => number_format($pageViews->this_week ?? 0),
-            'Bulan ini' => number_format($pageViews->this_month ?? 0),
-            '---------------------------------------'=>null,
+            '---------------------------------------' => null,
+            'Pageview Hari ini' => number_format($todayStats->total ?? 0),
+            'Kemarin' => number_format($yesterdayStats->total ?? 0),
+            'Minggu ini' => number_format($thisWeek),
+            'Bulan ini' => number_format($thisMonth),
+            '---------------------------------------' => null,
             'IP Address' => $ip,
-            'Location' => (isset($ipinfo['region'])? $ipinfo['region'].',' : null).''. (isset($ipinfo['country']) ? $ipinfo['country'] . ',' : null), 
             'Browser' => $browser,
             'Perangkat' => $device,
             'Sistem Operasi' => $os,
         ];
 
         foreach ($data as $label => $value) {
-            if ($label === '') {
-                $y += 25;
-                continue;
-            }
 
             $img->text($label, 30, $y, function ($font) use ($fontPath) {
                 $font->file($fontPath);
@@ -114,7 +115,7 @@ class VisitorStatsController extends Controller
                 $font->align('left');
             });
 
-            if ($value !== '') {
+            if (!is_null($value)) {
                 $img->text($value, 770, $y, function ($font) use ($fontPath) {
                     $font->file($fontPath);
                     $font->size(32);
@@ -128,6 +129,7 @@ class VisitorStatsController extends Controller
 
         $response = $img->response('png');
         $response->header('Cache-Control', 'public, max-age=300');
+
         return $response;
     }
 

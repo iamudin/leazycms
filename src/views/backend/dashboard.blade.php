@@ -58,60 +58,10 @@
 
 
         <div class="col-lg-12 mb-3">
-                <div class="row mb-4">
-                  <div class="col">
-                    <h3 class="font-weight-bold">Visitor Dashboard</h3>
-                    <small class="text-muted">Domain: {{ $currentDomain }}</small>
-                  </div>
-                  <div class="col text-right">
-                    <form method="GET">
-                      <select name="domain" class="form-control" onchange="this.form.submit()">
-                        @foreach($domains as $domain)
-                          <option value="{{ $domain }}" {{ $domain == $currentDomain ? 'selected' : '' }}>
-                            {{ $domain }}
-                          </option>
-                        @endforeach
-                      </select>
-                    </form>
-                  </div>
-                </div>
-
-                <div class="visitor">
-             
-                </div>
-
+          
+@include('cms::backend.visitorchart')
 
         </div>
       </div>
-  @push('scripts')
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        loadVisitor("domain={{ urlencode($currentDomain) }}");
 
-      });
-
-      function loadVisitor(domain=null){
-
-        const url = "{{ route('panel.dashboard') }}?view_visitor=true&"+domain; // ganti dengan URL milikmu
-        document.querySelectorAll('.visitor').forEach(el => {
-          el.innerHTML = `
-            <div class="text-center p-2">
-                <div class="spinner-border text-primary spinner-border-sm" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-            </div>
-        `;
-        });
-        fetch(url)
-          .then(response => response.text())
-          .then(data => {
-            document.querySelectorAll('.visitor').forEach(el => {
-              el.innerHTML = data;
-            });
-          })
-          .catch(err => console.error("Load visitor error:", err));
-      }
-    </script>
-
-  @endpush
 @endsection

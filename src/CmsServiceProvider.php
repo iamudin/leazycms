@@ -3,8 +3,10 @@
 namespace Leazycms\Web;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +25,7 @@ use Leazycms\Web\Exceptions\NotFoundHandler;
 use Leazycms\Web\Http\Controllers\VisitorStatsController;
 use Leazycms\Web\Middleware\Panel;
 use Leazycms\Web\Middleware\RateLimit;
+use Leazycms\Web\Middleware\TrackVisitor;
 use Leazycms\Web\Middleware\Web;
 use Opcodes\LogViewer\Facades\LogViewer;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -125,7 +128,7 @@ protected function registerRoutes()
             foreach ($grouped as $host => $routes) {
 
                 Route::domain($host)
-                    ->middleware(['web', 'public'])
+                    ->middleware(['web', 'public',TrackVisitor::class])
                     ->group(function () use ($routes) {
 
                         foreach ($routes as $wr) {
@@ -188,6 +191,7 @@ protected function registerRoutes()
         $this->log_viewer();
         $this->handle403();
         $this->handle500();
+        $this->clean_table_online();
 
     }
     protected function render403($request, Throwable $e)
@@ -227,6 +231,14 @@ protected function registerRoutes()
                 ]);
         });
   
+  }
+  protected function clean_table_online(){
+        if (Cache::add('online_cleanup_lock', true, 60)) {
+
+            DB::table('online_users')
+                ->where('last_activity', '<', now()->subMinutes(5))
+                ->delete();
+        }
   }
     public function register()
     {
