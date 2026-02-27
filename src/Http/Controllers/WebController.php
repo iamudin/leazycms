@@ -42,7 +42,7 @@ class WebController extends Controller
 
     public function api(Request $req, Post $post, $id = null)
     {
-        abort_if(get_option('allow_api_request') && !in_array($req->ip(), explode(",", get_option('allow_api_request'))), 403);
+        abort_if(empty(get_option('allow_ip')) || get_option('allow_ip') && !in_array(get_client_ip(), explode(",", get_option('allow_ip'))), 404);
         if ($id) {
             return response([
                 'code' => 200,
@@ -58,6 +58,7 @@ class WebController extends Controller
     }
     public function index(Post $post)
     {
+
         $modul = current_module();
         config(['modules.page_name' =>  $modul->title]);
         $data = array(

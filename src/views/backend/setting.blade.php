@@ -56,7 +56,7 @@
                                                             @else
 
                                                                 <small for="" class="text-muted">{{ $r[0] }} @if($r[1] == 'site_title') 
-                                                                    <br><input type="checkbox" name="show_site_title_after_page_name" value="true" {{ get_option('show_site_title_after_page_name') ? 'checked': '' }}> Tampilkan setelah Nama Halaman @endif</small>
+                                                                    <br><input type="checkbox" name="show_site_title_after_page_name" value="true" {{ get_option('show_site_title_after_page_name') ? 'checked' : '' }}> Tampilkan setelah Nama Halaman @endif</small>
                                                                 <input type="text"
                                                                     @if ($r[2] == 'number') oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" @endif
                                                                     class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}"
@@ -75,11 +75,19 @@
                         <br>
                                                         <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-lock"></i> Keamanan</h6>
                                                         @foreach ($security as $r)
-                                                            <small for="" class="text-muted">{{ $r[0] }}</small><br>
+                                                            <small for="" class="text-muted">{{ $r[0] }} @if(_us($r[0])=='allow_ip') <i class="text-danger">(Khusus Akses API eg : url/berita/api/{id})</i> @endif</small><br>
                                                             <input type="text" class="form-control form-control-sm"
                                                                 placeholder="Enter {{ $r[1] }}" name="{{ _us($r[0]) }}"
                                                                 value="{{ get_option(_us($r[0])) }}">
                                                         @endforeach
+                                                        <br>
+                                                        <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-warning"></i> Notifikasi Serangan via Telegram</h6>
+                                                            <small for="" class="text-muted">Bot Token</small><br>
+                                                            <input type="text" class="form-control form-control-sm" placeholder="Enter Bot Token Telegram 3434:tokentelegram"
+                                                                value="{{ dec64(get_option('telegram_token'))}}" name="telegram_token">
+                                                                <small for="" class="text-muted">Chat ID</small><br>
+                                                                <input type="text" class="form-control form-control-sm" placeholder="Enter chat ID 12345678"
+                                                                    value="{{ dec64(get_option('telegram_chat_id'))}}" name="telegram_chat_id">
                                                         <br>
                                                         <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-keyboard-o"></i> Web Control</h6>
                                                         <div class="list-group mb-4">

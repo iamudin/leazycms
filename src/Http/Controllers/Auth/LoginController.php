@@ -103,6 +103,7 @@ class LoginController extends Controller
 
         if ($request->captcha !== Session::get('captcha')) {
             $request->session()->regenerateToken();
+
             return back()->with('error', 'Captcha tidak valid!');
         }
 
@@ -111,12 +112,39 @@ class LoginController extends Controller
             $user = Auth::user();
 
             if ($user->status === 'active') {
+                dispatch(function () use ($request) {
+
+                    $ip = e($request->ip());
+                    $email = e($request->input('email'));
+                    $url = e($request->fullUrl());
+                    $userAgent = e($request->userAgent());
+                    $time = now()->format('Y-m-d H:i:s');
+
+                    $message = "
+<b>⚠️ LOGIN ATTEMPT</b>
+
+<b>📍 IP Address:</b> <code>{$ip}</code>
+<b>🕒 Waktu:</b> <code>{$time}</code>
+<b>📧 Username:</b> <code>{$email}</code>
+
+<b>🔗 URL:</b>
+<code>{$url}</code>
+
+<b>🖥 User Agent:</b>
+<code>{$userAgent}</code>
+
+<b>Status:</b> ⏳ Percobaan Login Berhasil
+";
+
+                    sendTelegramBotMessage($message);
+
+                })->afterResponse();
                 $user->update([
                     'last_login_at' => now(),
                     'last_login_ip' => $request->ip(),
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
-                if (is_main_domain()){
+                if (is_main_domain()) {
                     if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Auth::logout();
                     } else {
@@ -124,10 +152,10 @@ class LoginController extends Controller
                         return redirect()->intended('/' . admin_path());
                     }
                 } else {
-                    if(config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())){
+                    if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/login');
-                    }else{
+                    } else {
                         Auth::logout();
                     }
                 }
@@ -142,7 +170,34 @@ class LoginController extends Controller
 
         $limiter->hit($limiterKey);
         $request->session()->regenerateToken();
-        Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip().' '.$request->headers->get('User-Agent'));
+        Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+        dispatch(function () {
+
+            $ip = get_client_ip();
+            $email = e(request()->input('username'));
+            $url = e(request()->fullUrl());
+            $userAgent = e(request()->userAgent());
+            $time = now()->format('Y-m-d H:i:s');
+
+            $message = "
+<b>⚠️ LOGIN ATTEMPT</b>
+
+<b>📍 IP Address:</b> <code>{$ip}</code>
+<b>🕒 Waktu:</b> <code>{$time}</code>
+<b>📧 Username:</b> <code>{$email}</code>
+
+<b>🔗 URL:</b>
+<code>{$url}</code>
+
+<b>🖥 User Agent:</b>
+<code>{$userAgent}</code>
+
+<b>Status:</b> ⏳ Percobaan Login Tapi Gagal!
+";
+
+            sendTelegramBotMessage($message);
+
+        })->afterResponse();
         return back()->with('error', 'Akun tidak ditemukan!');
     }
 

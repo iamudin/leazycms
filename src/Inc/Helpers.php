@@ -557,9 +557,27 @@ if (!function_exists('isNotInSession')) {
 }
 
 
+ function sendTelegramBotMessage($message)
+{
+
+if(get_option('telegram_token') && get_option('telegram_chat_id')){
+
+     return Http::post(
+        "https://api.telegram.org/".dec64(get_option('telegram_token'))."/sendMessage",
+        [
+            'chat_id' => dec64(get_option('telegram_chat_id')),
+            'text' => $message,
+            'parse_mode'=>'HTML'
+        ]
+    );
+}
+
+}
+
 if (!function_exists('forbidden')) {
     function forbidden($request, $k = false)
     {
+
         $rawKeywords = get_option('forbidden_keyword') ?? '';
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
         $keywords = explode(',', $cleanedKeywords);
@@ -567,6 +585,32 @@ if (!function_exists('forbidden')) {
             if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
                 $redirect = get_option('forbidden_redirect');
                 if (!$k) {
+                    dispatch(function () {
+
+                        $ip = request()->ip();
+                        $url = request()->fullUrl();
+                        $method = request()->method();
+                        $userAgent = request()->userAgent();
+                        $time = now()->format('Y-m-d H:i:s');
+
+                        $message = "
+<b>🚨 SECURITY ALERT - TERDETEKSI SERANGAN</b>
+
+<b>📍 IP Address:</b> <code>{$ip}</code>
+<b>🕒 Waktu:</b> <code>{$time}</code>
+<b>🌐 Method:</b> <code>{$method}</code>
+<b>🔗 URL:</b>
+<code>{$url}</code>
+
+<b>🖥 User Agent:</b>
+<code>{$userAgent}</code>
+
+<b>Status:</b> ❌ Request Diblokir (403)
+";
+
+                        return sendTelegramBotMessage($message);
+
+                    })->afterResponse();
                     if (!empty($redirect) && str($redirect)->isUrl()) {
                         return Redirect::to($redirect)->send();
                     } else {
