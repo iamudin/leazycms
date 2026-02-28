@@ -627,7 +627,7 @@ class PostController extends Controller implements HasMiddleware
             }
 
             // Ambil parent terakhir (level tertinggi)
-            $lastParent = end($parents);
+            $lastParent = reset($parents);
 
             $titles = collect($parents)
                 ->pluck('title')
