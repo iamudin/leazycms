@@ -630,7 +630,6 @@ class PostController extends Controller implements HasMiddleware
             $lastParent = end($parents);
 
             $titles = collect($parents)
-                ->reverse() // supaya urut dari atas ke bawah
                 ->pluck('title')
                 ->implode(' - ');
 
