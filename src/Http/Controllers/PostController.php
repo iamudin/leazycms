@@ -155,10 +155,54 @@ class PostController extends Controller implements HasMiddleware
                 }
             }
         }
-        $uniq = $module->form->unique_title ? '|' . Rule::unique('posts')->where('type', $post->type)->whereNull('deleted_at')->ignore($post->id) : '';
+        $uniq = '';
 
-        $post_field = [
-            'title' => 'required|string|regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u|min:5|max:200' . $uniq,
+        if ($module->form->unique_title) {
+            $uniq = 'unique:posts,title,' . $post->id . ',id,type,' . $post->type . ',deleted_at,NULL';
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil module name
+        |--------------------------------------------------------------------------
+        */
+        $moduleNames = collect(get_module())
+            ->pluck('name')
+            ->toArray();
+
+        $optionKeywords = get_option('forbidden_keyword') ?? 'dangerous_keyword';
+
+        $optionKeywords = array_map(
+            fn($word) => trim($word),
+            explode(',', $optionKeywords)
+        );
+
+        $forbiddenWords = array_merge(
+            $moduleNames,
+            [admin_path()],
+            $optionKeywords
+        );
+
+    
+        $forbiddenWords = array_unique(array_filter($forbiddenWords));
+
+$post_field = [
+    'title' => [
+        'required',
+        'string',
+        'regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u',
+        'min:5',
+        'max:200',
+        function ($attribute, $value, $fail) use ($forbiddenWords) {
+
+            $valueLower = strtolower($value);
+
+            foreach ($forbiddenWords as $word) {
+                if (str_contains($valueLower, strtolower($word))) {
+                    $fail("Judul tidak boleh mengandung kata '{$word}'.");
+                }
+            }
+        },$uniq
+    ],
             'media' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif',
             'content' => [
                 'nullable',
