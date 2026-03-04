@@ -37,6 +37,7 @@ undermaintenance()),
             return redirect(strtolower($request->fullUrl()), 301);
         }
 
+
         if (str($response->headers->get('Content-Type'))->lower()== 'text/html; charset=utf-8') {
             $content = $response->getContent();
             

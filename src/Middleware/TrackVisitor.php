@@ -1,15 +1,17 @@
 <?php
 namespace Leazycms\Web\Middleware;
 use Closure;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 
 class TrackVisitor
 {
     public function handle($request, Closure $next)
     {
+        $response = $next($request);
         if (!$this->shouldTrack($request)) {
-            return $next($request);
+            return $response;
         }
 
 $domain = $request->getHost();
@@ -48,7 +50,12 @@ if (!Cache::has($pageKey)) {
             `unique` = `unique` + ?,
             updated_at = NOW()
     ", [$domain, $today, $isUniqueVisitor, $isUniqueVisitor]);
+            if ($post = config('modules.data')) {
+                $post->timestamps = false;
+                $post->increment('visited');
+            }
 }
+      
         $onlineKey = "online_{$domain}_{$sessionId}";
 
         if (!Cache::has($onlineKey)) {
@@ -76,11 +83,13 @@ if (!Cache::has($pageKey)) {
                 ->limit(50)
                 ->delete();
         }
-        return $next($request);
+        return $response;
     }
 
     private function shouldTrack($request)
     {
+        if (!config('modules.installed') || strpos(request()->headers->get('referer') ?? 'no', admin_path()) === true || is_local() || Route::is('formaster'))
+            return false;
         if (!$request->isMethod('get'))
             return false;
         $ua = strtolower($request->userAgent());
