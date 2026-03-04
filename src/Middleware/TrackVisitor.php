@@ -88,7 +88,8 @@ if (!Cache::has($pageKey)) {
 
     private function shouldTrack($request)
     {
-        if (!config('modules.installed') || strpos(request()->headers->get('referer') ?? 'no', admin_path()) === true || is_local() || Route::is('formaster'))
+   
+        if (!config('modules.installed') || strpos(request()->headers->get('referer'), admin_path()) !== false || is_local() || Route::is('formaster'))
             return false;
         if (!$request->isMethod('get'))
             return false;
