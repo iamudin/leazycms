@@ -34,48 +34,51 @@
                 'name',
                 $userprofile->get_modules->pluck('module')->toArray()
             ) as $row)
-                <li class="treeview {{ active_item($row->name) ? 'is-expanded' : '' }}">
-                    <a
-                        title="{{ $row->description }}"
-                        class="app-menu__item"
-                        href="#"
-                        data-toggle="treeview"
-                        ><i class="app-menu__icon text-danger fa {{ $row->icon }}"></i
-                        ><span class="app-menu__label">{{ $row->title }}</span
-                        ><i class="treeview-indicator fa fa-chevron-right"></i
-                    ></a>
-                    <ul class="treeview-menu">
-                        @if(in_array('create', $row->route))
-                        <li>
-                            <a
-                                class="treeview-item @if (request()->segment(4) == 'edit') active @endif"
-                                href="{{ Route::has($row->name . '.create') ? route($row->name . '.create') : '' }}"
-                                ><i class="icon fa fa-plus text-warning"></i> Tambah {{ $row->title
-                                }}</a
-                            >
-                        </li>
-                        @endif
-                        <li>
-                            <a
-                                class="treeview-item @if (active_item($row->name) && !request()->segment(3)) active @endif"
-                                href="{{ Route::has($row->name) ? route($row->name) : '' }}"
-                                ><i class="icon fa fa-table text-info"></i> Daftar {{ $row->title
-                                }}</a
-                            >
-                        </li>
-                            @if ($row->form->category)
-
-                                <li>
+                                <li class="treeview {{ active_item($row->name) ? 'is-expanded' : '' }}">
                                     <a
-                                        class="treeview-item @if (request()->segment(3) == 'category') active @endif"
-                                        href="{{ Route::has($row->name . '.category') ? route($row->name . '.category') : '' }}"
-                                        ><i class="icon fa fa-tags text-success"></i> Kategori</a
-                                    >
-                        </li>
-                            @endif
+                                        title="{{ $row->description }}"
+                                        class="app-menu__item"
+                                        href="#"
+                                        data-toggle="treeview"
+                                        ><i class="app-menu__icon text-danger fa {{ $row->icon }}"></i
+                                        ><span class="app-menu__label">{{ $row->title }}</span
+                                        ><i class="treeview-indicator fa fa-chevron-right"></i
+                                    ></a>
+                                    <ul class="treeview-menu">
+                                        @if(in_array('create', $row->route))
+                                            @if(auth()->user()->isAdmin() || !auth()->user()->hasRole($row->name, 'create', true))
+                                            <li>
+                                                <a
+                                                    class="treeview-item @if (request()->segment(4) == 'edit') active @endif"
+                                                    href="{{ Route::has($row->name . '.create') ? route($row->name . '.create') : '' }}"
+                                                    ><i class="icon fa fa-plus text-warning"></i> Tambah {{ $row->title
+                                                    }}</a
+                                                >
+                                            </li>
+                                            @endif
+                                        @endif
+                                        <li>
+                                            <a
+                                                class="treeview-item @if (active_item($row->name) && !request()->segment(3)) active @endif"
+                                                href="{{ Route::has($row->name) ? route($row->name) : '' }}"
+                                                ><i class="icon fa fa-table text-info"></i> Daftar {{ $row->title
+                                                }}</a
+                                            >
+                                        </li>
+                                            @if ($row->form->category)
+                                                      @if(auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . $row->name, 'index', true))
+                                                        <li>
+                                                            <a
+                                                                class="treeview-item @if (request()->segment(3) == 'category') active @endif"
+                                                                href="{{ Route::has($row->name . '.category') ? route($row->name . '.category') : '' }}"
+                                                                ><i class="icon fa fa-tags text-success"></i> Kategori</a
+                                                            >
+                                                </li>
+                                                    @endif
+                                            @endif
 
-                    </ul>
-                </li>
+                                    </ul>
+                                </li>
         @endforeach
         @if(Auth::user()->level == 'admin')
             <li>

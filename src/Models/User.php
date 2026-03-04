@@ -93,15 +93,17 @@ class User extends BaseUser
     }
     public function hasRole($module, $action,$noredirect=false)
     {
-        if (!$this->isAdmin() && !$this->roles->where('module', $module)->where('action', $action)->where('level', $this->level)->count()) {
+        if (!$this->isAdmin() && $this->roles->where('module', $module)->where('action', $action)->where('level', $this->level)->count()==0) {
             if ($action == 'delete') {
                 return true;
             }
             if($noredirect){
                 return true;
             }
-            return redirect(route('panel.dashboard'))->send()->with('danger', 'Akses terbatas');
+            return redirect(route('panel.dashboard'))->send()->with('danger', 'Akses terbatas')->send();
         }
+           
+        
     }
     public function get_modules()
     {
