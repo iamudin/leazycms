@@ -11,7 +11,7 @@ class RateLimit
 
     public function handle(Request $request, Closure $next) {
         if (config('modules.installed') == "0") {
-            exit('Please running cms:install');
+            return response()->view('cms::backend.pre-install');
         }
         if (config('app.sub_app_enabled') && collect(config('modules.extension_module'))->count()) {
             foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {

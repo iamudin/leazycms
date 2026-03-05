@@ -11,9 +11,6 @@ class NotFoundController extends Controller
     {
 
         $request = request();
-        if (config('modules.installed') == "0") {
-            exit('Please running cms:install');
-        }
         if (config('app.debug')) {
             if (is_main_domain()) {
                 if (!Auth::check()) {
