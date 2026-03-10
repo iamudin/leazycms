@@ -17,7 +17,10 @@ window.addEventListener('DOMContentLoaded', function () {
                 type: 'inline'
             }
         },
-
+   language: {
+            search: "",
+            searchPlaceholder: "Cari Data..."
+    },
         processing: true,
         serverSide: true,
         deferRender: true,

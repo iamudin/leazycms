@@ -2,11 +2,8 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +25,6 @@ use Leazycms\Web\Middleware\RateLimit;
 use Leazycms\Web\Middleware\TrackVisitor;
 use Leazycms\Web\Middleware\Web;
 use Opcodes\LogViewer\Facades\LogViewer;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 

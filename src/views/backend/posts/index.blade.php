@@ -30,7 +30,7 @@
 
 
                         @endphp
-                            <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">
+                            <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-12 col-md-6 col-lg-3">
                             <div class="widget-small primary coloured-icon"><i class="icon fa fa-globe fa-3x"></i>
                               <div class="info pl-3">
                               <p class="mt-2 text-muted">Dipublikasi</p>
@@ -39,7 +39,7 @@
                             </div>
                             </div>
 
-                            <div onclick="$('#status').val('draft').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">
+                            <div onclick="$('#status').val('draft').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-12 col-md-6 col-lg-3">
                             <div class="widget-small warning coloured-icon"><i class="icon fa fa-save fa-3x"></i>
                               <div class="info pl-3">
                               <p class="mt-2 text-muted">Draft</p>
@@ -49,7 +49,7 @@
                             </div>
                             @if(current_module()->form->category)
                               @if(auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . current_module()->name, 'index', true))
-                            <a href="{{ route(get_post_type() . '.category') }}" class="col-6 col-md-6 col-lg-3">
+                            <a href="{{ route(get_post_type() . '.category') }}" class="col-12 col-md-6 col-lg-3">
                             <div class="widget-small info coloured-icon"><i class="icon fa fa-tags fa-3x"></i>
                               <div class="info pl-3">
                               <p class="mt-2 text-muted">Kategori</p>
@@ -59,7 +59,7 @@
                           </a>
                             @endif
                             @endif
-                            <div onclick="$('#status').val('sampah').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-6 col-md-6 col-lg-3">
+                            <div onclick="$('#status').val('sampah').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-12 col-md-6 col-lg-3">
                             <div class="widget-small danger coloured-icon"><i class="icon fa fa-trash-alt fa-3x"></i>
                               <div class="info pl-3">
                               <p class="mt-2 text-muted">Sampah</p>
