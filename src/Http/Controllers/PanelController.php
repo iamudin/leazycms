@@ -218,48 +218,114 @@ class PanelController extends Controller implements HasMiddleware
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
 
-        $domains = DB::table('visitor_stats')
+        $domain = $request->get('domain');
+
+        $domains = DB::table('analytics_daily')
             ->select('domain')
             ->distinct()
-            ->orderBy('domain')
             ->pluck('domain');
 
-        $domain = request()->get('domain', request()->getHost());
-        $today = DB::table('visitor_stats')
-            ->where('domain', $domain)
-            ->whereDate('date', today())
-            ->first();
+        $rangeStart = now()->subDays(29)->toDateString();
+        $rangeEnd = now()->toDateString();
 
-        $last30 = DB::table('visitor_stats')
-            ->where('domain', $domain)
-            ->whereBetween('date', [now()->subDays(29), now()])
-            ->orderBy('date')
+        $visitorsQuery = DB::table('analytics_visitors')
+            ->where('last_seen_at', '>=', now()->subMinutes(5));
+
+        if ($domain) {
+            $visitorsQuery->where('domain', $domain);
+        }
+
+        $realtimeVisitors = $visitorsQuery->count();
+
+        $dailyQuery = DB::table('analytics_daily')
+            ->whereBetween('date', [$rangeStart, $rangeEnd]);
+
+        if ($domain) {
+            $dailyQuery->where('domain', $domain);
+        }
+
+        $uniqueToday = DB::table('analytics_daily')
+            ->when($domain, fn($q) => $q->where('domain', $domain))
+            ->where('date', today()->toDateString())
+            ->where('type', 'unique_total')
+            ->where('key', 'site')
+            ->value('count') ?? 0;
+
+        $topPages = (clone $dailyQuery)
+            ->select('key', DB::raw('SUM(count) as total'))
+            ->where('type', 'page_view')
+            ->groupBy('key')
+            ->orderByDesc('total')
+            ->limit(10)
             ->get();
 
-        $online = DB::table('online_users')
-            ->where('domain', $domain)
-            ->where('last_activity', '>=', now()->subMinutes(5))
-            ->count();
+        $topKeywords = (clone $dailyQuery)
+            ->select('key', DB::raw('SUM(count) as total'))
+            ->where('type', 'search')
+            ->groupBy('key')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
 
-        $ranking = DB::table('online_users')
-            ->where('last_activity', '>=', now()->subMinutes(5))
-            ->select('domain', DB::raw('count(*) as total'))
-            ->groupBy('domain')
+        $topReferrers = (clone $dailyQuery)
+            ->select('key', DB::raw('SUM(count) as total'))
+            ->where('type', 'referrer')
+            ->groupBy('key')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $devices = (clone $dailyQuery)
+            ->select('key', DB::raw('SUM(count) as total'))
+            ->where('type', 'device')
+            ->groupBy('key')
             ->orderByDesc('total')
             ->get();
 
+        $pageChart = (clone $dailyQuery)
+            ->select('date', DB::raw('SUM(count) as total'))
+            ->where('type', 'page_view')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+   
         // LIST DOMAIN
+        $deviceSummary = DB::table('analytics_daily')
+            ->select('key', DB::raw('SUM(count) as total'))
+            ->where('type', 'device')
+            ->when($domain, function ($q) use ($domain) {
+                $q->where('domain', $domain);
+            })
+            ->whereBetween('date', [$rangeStart, $rangeEnd])
+            ->groupBy('key')
+            ->orderByDesc('total')
+            ->get();
+        $realtimeList = DB::table('analytics_visitors')
+            ->select('current_page', 'device', 'last_seen_at')
+            ->when($domain, function ($q) use ($domain) {
+                $q->where('domain', $domain);
+            })
+            ->where('last_seen_at', '>=', now()->subMinutes(5))
+            ->orderByDesc('last_seen_at')
+            ->get();
         
         return view('cms::backend.dashboard', [
             'latest' => $lastpublish,
             
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
-            'today'=>$today,
-            'last30'=>$last30,
-            'online'=>$online,
-            'ranking'=>$ranking,
+            'domain' => $domain,
+            'realtimeList'=>$realtimeList,
+            'realtimeVisitors' => $realtimeVisitors,
+            'uniqueToday' => $uniqueToday,
+            'topPages' => $topPages,
+            'topKeywords' => $topKeywords,
+            'topReferrers' => $topReferrers,
+            'devices' => $devices,
+            'pageChart' => $pageChart,
             'domains'=>$domains,
+            'deviceSummary' => $deviceSummary,
             'currentDomain'=>$domain
             
         ]);

@@ -1,5 +1,7 @@
 <?php
+
 namespace Leazycms\Web\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -7,15 +9,15 @@ use Intervention\Image\Facades\Image;
 
 class VisitorStatsController extends Controller
 {
-// ... method index() milikmu tetap ada di sini
-
 
     public function headerImage()
     {
         $host = request()->getHost();
         $now = Carbon::now();
 
-        if (strpos(request()->headers->get('referer'), $host) === false) {
+        $referer = request()->headers->get('referer');
+
+        if (!$referer || strpos($referer, $host) === false) {
             return redirect('/');
         }
 
@@ -23,52 +25,66 @@ class VisitorStatsController extends Controller
         $agent = request()->header('User-Agent');
 
         /* =========================
-           ONLINE USER (table baru)
+           ONLINE USER
         ==========================*/
-        $onlineVisitors = DB::table('online_users')
+
+        $onlineVisitors = DB::table('analytics_visitors')
             ->where('domain', $host)
-            ->where('last_activity', '>=', $now->copy()->subMinutes(5))
+            ->where('last_seen_at', '>=', $now->copy()->subMinutes(5))
             ->count();
 
         /* =========================
-           RANGE WAKTU
+           RANGE
         ==========================*/
+
         $today = $now->toDateString();
         $yesterday = $now->copy()->subDay()->toDateString();
-        $monthStart = $now->copy()->startOfMonth()->toDateString();
         $weekStart = $now->copy()->startOfWeek()->toDateString();
+        $monthStart = $now->copy()->startOfMonth()->toDateString();
 
         /* =========================
-           VISITOR STATS (table baru)
+           PAGEVIEW
         ==========================*/
-        $rangeStats = DB::table('visitor_stats')
+
+        $todayViews = DB::table('analytics_daily')
             ->where('domain', $host)
-            ->selectRaw("
-        SUM(CASE WHEN date >= ? THEN total ELSE 0 END) as this_month,
-        SUM(CASE WHEN date >= ? THEN total ELSE 0 END) as this_week
-    ", [
-                $monthStart,
-                $weekStart
-            ])
-            ->first();
-        $todayStats = DB::table('visitor_stats')
-            ->where('domain', $host)
+            ->where('type', 'page_view')
             ->where('date', $today)
-            ->first();
+            ->sum('count');
 
-        $yesterdayStats = DB::table('visitor_stats')
+        $yesterdayViews = DB::table('analytics_daily')
             ->where('domain', $host)
+            ->where('type', 'page_view')
             ->where('date', $yesterday)
-            ->first();
+            ->sum('count');
 
-        $thisMonth = $rangeStats->this_month ?? 0;
-        $thisWeek = $rangeStats->this_week ?? 0;
+        $weekViews = DB::table('analytics_daily')
+            ->where('domain', $host)
+            ->where('type', 'page_view')
+            ->where('date', '>=', $weekStart)
+            ->sum('count');
 
-        $uniqueVisitorsToday = $todayStats->unique ?? 0;
+        $monthViews = DB::table('analytics_daily')
+            ->where('domain', $host)
+            ->where('type', 'page_view')
+            ->where('date', '>=', $monthStart)
+            ->sum('count');
+
+        /* =========================
+           UNIQUE VISITOR
+        ==========================*/
+
+        $uniqueVisitorsToday = DB::table('analytics_daily')
+            ->where('domain', $host)
+            ->where('type', 'unique_total')
+            ->where('key', 'site')
+            ->where('date', $today)
+            ->value('count') ?? 0;
 
         /* =========================
            DEVICE INFO
         ==========================*/
+
         $browser = $this->getBrowser($agent);
         $device = $this->getDevice($agent);
         $os = $this->getOS($agent);
@@ -77,7 +93,7 @@ class VisitorStatsController extends Controller
            GENERATE IMAGE
         ==========================*/
 
-        $img = Image::canvas(800, 730, 'rgba(0, 0, 0, 0.65)');
+        $img = Image::canvas(800, 730, 'rgba(0,0,0,0.65)');
         $fontPath = public_path('backend/fonts/captcha.ttf');
 
         $y = 70;
@@ -86,24 +102,28 @@ class VisitorStatsController extends Controller
             $font->file($fontPath);
             $font->size(40);
             $font->color('#ffffff');
-            $font->align('left');
         });
 
         $y += 60;
 
         $data = [
+
             'Sedang Online' => $onlineVisitors,
             'Unik Hari ini' => $uniqueVisitorsToday,
             '---------------------------------------' => null,
-            'Pageview Hari ini' => number_format($todayStats->total ?? 0),
-            'Kemarin' => number_format($yesterdayStats->total ?? 0),
-            'Minggu ini' => number_format($thisWeek),
-            'Bulan ini' => number_format($thisMonth),
+
+            'Pageview Hari ini' => number_format($todayViews),
+            'Kemarin' => number_format($yesterdayViews),
+            'Minggu ini' => number_format($weekViews),
+            'Bulan ini' => number_format($monthViews),
+
             '---------------------------------------' => null,
+
             'IP Address' => $ip,
             'Browser' => $browser,
             'Perangkat' => $device,
             'Sistem Operasi' => $os,
+
         ];
 
         foreach ($data as $label => $value) {
@@ -112,16 +132,17 @@ class VisitorStatsController extends Controller
                 $font->file($fontPath);
                 $font->size(32);
                 $font->color('#ffffff');
-                $font->align('left');
             });
 
             if (!is_null($value)) {
+
                 $img->text($value, 770, $y, function ($font) use ($fontPath) {
                     $font->file($fontPath);
                     $font->size(32);
                     $font->color('#ffdd00');
                     $font->align('right');
                 });
+
             }
 
             $y += 55;
@@ -133,6 +154,7 @@ class VisitorStatsController extends Controller
         return $response;
     }
 
+
     private function getBrowser($agent)
     {
         if (preg_match('/Firefox/i', $agent))
@@ -143,8 +165,6 @@ class VisitorStatsController extends Controller
             return 'Safari';
         if (preg_match('/Edge/i', $agent))
             return 'Edge';
-        if (preg_match('/MSIE/i', $agent))
-            return 'Internet Explorer';
         return 'Unknown';
     }
 
@@ -171,4 +191,5 @@ class VisitorStatsController extends Controller
             return 'iOS';
         return 'Unknown';
     }
+
 }
