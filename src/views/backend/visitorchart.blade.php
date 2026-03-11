@@ -181,7 +181,8 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>Page</th>
-                                <th>Device</th>
+                                <th>Device</th><th>IP</th>
+                                <th>Referer</th>
                                 <th>Last Activity</th>
                             </tr>
                         </thead>
@@ -193,13 +194,15 @@
                                 <tr>
                                     <td>{{$v->current_page}}</td>
                                     <td>{{$v->device}}</td>
+                                    <td>{{$v->ip}}</td>
+                                    <td>{{$v->referrer}}</td>
                                     <td>{{$v->last_seen_at}}</td>
                                 </tr>
 
                             @empty
 
                                 <tr>
-                                    <td colspan="3" class="text-center">No visitor online</td>
+                                    <td colspan="5" class="text-center">No visitor online</td>
                                 </tr>
 
                             @endforelse
