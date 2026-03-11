@@ -149,8 +149,6 @@ class VisitorStatsController extends Controller
         }
 
         $response = $img->response('png');
-        $response->header('Cache-Control', 'public, max-age=30');
-
         return $response;
     }
 
