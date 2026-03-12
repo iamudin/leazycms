@@ -43,6 +43,10 @@ class TrackVisitor
                 Cache::put($cacheKey, true, now()->addMinutes(3));
 
                 dispatch(function () use ($data) {
+                      if ($post = config('modules.data')) {
+                $post->timestamps = false;
+                $post->increment('visited');
+            }
                     app(AnalyticsService::class)->track($data);
                 })->afterResponse();
 
