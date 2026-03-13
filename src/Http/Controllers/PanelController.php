@@ -544,6 +544,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Preloader Effect', 'preload'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
+            ['Accesibility Widget','accessibility_widget']
         );
         $data['security'] = array(
 

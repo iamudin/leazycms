@@ -6,23 +6,44 @@
 </button>
 
 <style>
+.go-up-btn {
+  position: fixed;
+  padding:7px;
+  bottom: 80px;
+  right: 15px;
+  z-index: 999;
+
+  width: 52px;
+  height: 52px;
+
+  background: #ffffff;
+  color: #555;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  font-size: 18px;
+
+  cursor: pointer;
+
+  display: none;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+
+  transition: all 0.25s ease;
+}
+@if(empty(get_option('whatsapp')))
   .go-up-btn {
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    z-index: 999;
-    color: white;
-    border: none;
-    outline: none;
-    width: 55px;
-    height: 55px;
-    border-radius: 50%;
-    font-size: 22px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    display: none; /* awalnya disembunyikan */
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    bottom: 15px !important;
   }
+@endif
+/* hover effect */
+
+.go-up-btn:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  color:#111;
+}
 
   .go-up-btn.show {
     display: block;

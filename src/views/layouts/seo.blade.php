@@ -105,50 +105,73 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   @endif
 @if(get_option('whatsapp') && is_main_domain())
 <style>
-.wa-float {
+
+.wa-float{
   position: fixed;
   bottom: 15px;
-  left: 15px;
+  right: 15px;
+
   width: 55px;
   height: 55px;
-  background-color: #25d366;
-  color: white;
-  border-radius: 50%;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 1000;
-  transition: width 0.3s ease, border-radius 0.3s ease;
-  overflow: hidden;
-  white-space: nowrap;
-  padding-left: 10px;
+
+  background:#25d366;
+  color:white;
+
+  border-radius:50%;
+  box-shadow:2px 2px 10px rgba(0,0,0,0.25);
+
+  display:flex;
+  align-items:center;
+
+  cursor:pointer;
+  z-index:1000;
+
+  transition:all .35s ease;
+
+  overflow:hidden;
 }
 
-.wa-float i {
-  flex-shrink: 0;
-  padding:0 10px 0 0;
+/* icon whatsapp */
+
+.wa-float i{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  transition:all .35s ease;
 }
 
-.wa-label {
-  font-size: 14px;
-  opacity: 0;
-  display: none;
-  transition: opacity 0.3s ease;
+/* text */
+
+.wa-label{
+  margin-left:55px;
+  font-size:14px;
+  opacity:0;
+  transition:opacity .3s ease;
+  white-space:nowrap;
 }
 
-.wa-float:hover {
-  width: 130px;
-  border-radius: 30px;
+/* hover */
+
+.wa-float:hover{
+  width:130px;
+  border-radius:30px;
 }
 
-.wa-float:hover .wa-label {
-  opacity: 1;
+/* geser icon saat hover */
+
+.wa-float:hover i{
+  left:20px;
+  transform:none;
+}
+
+/* tampilkan label */
+
+.wa-float:hover .wa-label{
+  opacity:1;
 }
 
 </style>
-@endif
+  @endif
 <style>
   
     img.share-button:hover{
