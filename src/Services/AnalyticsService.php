@@ -25,12 +25,12 @@ class AnalyticsService
         $page = '/' . ltrim($data['path'], '/');
 
         $device = DeviceDetector::detect($data['user_agent']);
-
+        $user_agent = str($data['user_agent'])->limit(191);
         $referrer = $this->extractReferrerHost($data['referer']);
 
         $visitorKey = $this->resolveVisitorKey($data);
 
-        DB::transaction(function () use ($ip,$domain, $data, $now, $date, $page, $device, $referrer, $visitorKey) {
+        DB::transaction(function () use ($ip,$domain, $data, $now, $date, $page, $device, $referrer, $visitorKey,$user_agent) {
 
             $isNewDailyVisitor = $this->upsertVisitor(
                 ip:$ip,
@@ -39,6 +39,7 @@ class AnalyticsService
                 sessionId: $data['session_id'],
                 currentPage: $page,
                 device: $device,
+                user_agent: $user_agent,
                 referrer: $referrer,
                 now: $now,
                 today: $date
@@ -121,6 +122,7 @@ class AnalyticsService
         ?string $sessionId,
         ?string $currentPage,
         ?string $device,
+        ?string $user_agent,
         ?string $referrer,
         Carbon $now,
         string $today
@@ -140,6 +142,7 @@ class AnalyticsService
                 'session_id' => $sessionId,
                 'current_page' => $currentPage,
                 'device' => $device,
+                'user_agent'=>$user_agent,
                 'referrer' => $referrer,
                 'first_seen_at' => $now,
                 'last_seen_at' => $now,

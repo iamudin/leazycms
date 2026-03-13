@@ -302,7 +302,7 @@ class PanelController extends Controller implements HasMiddleware
             ->orderByDesc('total')
             ->get();
         $realtimeList = DB::table('analytics_visitors')
-            ->select('current_page', 'device','referrer','ip', 'last_seen_at')
+            ->select('current_page', 'device','referrer','ip', 'last_seen_at','user_agent')
             ->when($domain, function ($q) use ($domain) {
                 $q->where('domain', $domain);
             })

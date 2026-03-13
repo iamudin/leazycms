@@ -182,7 +182,7 @@
                             <tr>
                                 <th>Page</th>
                                 <th>Device</th><th>IP</th>
-                                <th>Referer</th>
+                                <th>Referer</th><th>UA</th>
                                 <th>Last Activity</th>
                             </tr>
                         </thead>
@@ -195,7 +195,7 @@
                                     <td>{{$v->current_page}}</td>
                                     <td>{{$v->device}}</td>
                                     <td>{{$v->ip}}</td>
-                                    <td>{{$v->referrer}}</td>
+                                    <td>{{$v->referrer}}</td><td>{{$v->user_agent}}</td>
                                     <td>{{$v->last_seen_at}}</td>
                                 </tr>
 
