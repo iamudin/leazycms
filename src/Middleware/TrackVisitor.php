@@ -15,44 +15,45 @@ class TrackVisitor
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
+        if (!is_local()) {
+            try {
 
-        try {
+                $data = [
+                    'domain' => $request->getHost(),
+                    'path' => $request->path(),
+                    'ip' => get_client_ip(),
+                    'session_id' => $request->session()->getId(),
+                    'user_agent' => $request->userAgent(),
+                    'referer' => $request->headers->get('referer'),
+                    'is_post' => $request->isMethod('post'),
+                    'is_ajax' => $request->ajax(),
+                ];
 
-            $data = [
-                'domain' => $request->getHost(),
-                'path' => $request->path(),
-                'ip' => get_client_ip(),
-                'session_id' => $request->session()->getId(),
-                'user_agent' => $request->userAgent(),
-                'referer' => $request->headers->get('referer'),
-                'is_post' => $request->isMethod('post'),
-                'is_ajax' => $request->ajax(),
-            ];
+                $hash = md5(
+                    $data['domain'] .
+                    $data['path'] .
+                    $data['ip'] .
+                    $data['user_agent']
+                );
 
-            $hash = md5(
-        $data['domain'] .
-                $data['path'] .
-                $data['ip'] .
-                $data['user_agent']
-            );
+                $cacheKey = "analytics_lock_" . $hash;
 
-            $cacheKey = "analytics_lock_" . $hash;
+                if (!Cache::has($cacheKey)) {
 
-            if (!Cache::has($cacheKey)) {
+                    Cache::put($cacheKey, true, now()->addMinutes(3));
 
-                Cache::put($cacheKey, true, now()->addMinutes(3));
+                    dispatch(function () use ($data) {
+                        if ($post = config('modules.data')) {
+                            $post->timestamps = false;
+                            $post->increment('visited');
+                        }
+                        app(AnalyticsService::class)->track($data);
+                    })->afterResponse();
 
-                dispatch(function () use ($data) {
-                      if ($post = config('modules.data')) {
-                $post->timestamps = false;
-                $post->increment('visited');
+                }
+
+            } catch (\Throwable $e) {
             }
-                    app(AnalyticsService::class)->track($data);
-                })->afterResponse();
-
-            }
-
-        } catch (\Throwable $e) {
         }
 
         return $response;
@@ -113,7 +114,7 @@ class TrackVisitor
 //                 $post->increment('visited');
 //             }
 // }
-      
+
 //         $onlineKey = "online_{$domain}_{$sessionId}";
 
 //         if (!Cache::has($onlineKey)) {
@@ -132,7 +133,7 @@ class TrackVisitor
 //                 ['session_id'], // unique key
 //                 ['last_activity', 'domain', 'ip']
 //             );
-          
+
 //         }
 //         if (Cache::add('online_cleanup_lock', true, 180)) {
 
@@ -146,7 +147,7 @@ class TrackVisitor
 
 //     private function shouldTrack($request)
 //     {
-   
+
 //         if (!config('modules.installed') || strpos(request()->headers->get('referer'), admin_path()) !== false || is_local() || Route::is('formaster'))
 //             return false;
 //         if (!$request->isMethod('get'))
