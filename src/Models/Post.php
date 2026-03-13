@@ -686,13 +686,16 @@ class Post extends Model
                         // slug tetap dikunci ke type page
                         $q->where(function ($sub) use ($type, $name) {
                             $sub->onType($type)
-                                ->where('slug','like', $name.'%');
-                        })
+                                ->where('slug', 'like', $name . '%');
+                        });
 
-                            // shortcut bebas semua type
-                            ->orWhere('shortcut', $name);
+                        // hanya cek shortcut jika 6 digit angka
+                        if (strlen($name) === 6) {
+                            $q->orWhere('shortcut', $name);
+                        }
 
-                    })->published()
+                    })
+                    ->published()
                     ->first();
             }
 

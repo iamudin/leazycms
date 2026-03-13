@@ -33,7 +33,7 @@ undermaintenance()),
         }
     
         $path = $request->path();
-        if ($path !== strtolower($path)) {
+        if ($path !== strtolower($path) && !Route::is('tag.posts')) {
             return redirect(strtolower($request->fullUrl()), 301);
         }
 

@@ -2,6 +2,7 @@
 namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Leazycms\Web\Http\Controllers\VisitorController;
@@ -70,8 +71,12 @@ class WebController extends Controller
     }
     public function tags($slug)
     {
-        $tag = Tag::select('name', 'visited', 'id','slug')->whereSlug($slug)->first();
+        $tag = Tag::select('name', 'visited', 'id','slug','url')->whereSlug(str($slug)->lower())->first();
         abort_if(empty($tag), 404);
+
+        if($tag->name != $slug){
+            return redirect($tag->url);
+        }
         config(['modules.page_name' =>$tag->name]);
 
         $tag->timestamps = false;
@@ -85,8 +90,8 @@ class WebController extends Controller
             'index' => $post,
             'tag' => $tag
         );
-        if(View::exists('template.'.template().'.tags.'.str($tag->slug)->lower())){
-            return view('template.'.template().'.tags.'. str($tag->slug)->lower(), $data);
+        if(View::exists('template.'.template().'.tags.'.$tag->slug)){
+            return view('template.'.template().'.tags.'. $tag->slug, $data);
         }
         return view('cms::layouts.master', $data);
     }

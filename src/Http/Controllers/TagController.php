@@ -58,7 +58,7 @@ class TagController extends Controller implements HasMiddleware
         $name = preg_replace('/[^a-zA-Z0-9]/', '', $request->name);
         $data['url'] = 'tags/'.$name;
         $data['name'] = $name;
-        $data['slug'] = $name;
+        $data['slug'] = str($name)->lower();
         Tag::create($data);
         return to_route('tag')->with('success','Tag diperbaharui');
     }
@@ -71,7 +71,7 @@ class TagController extends Controller implements HasMiddleware
         $name = preg_replace('/[^a-zA-Z0-9]/', '', $request->name);
         $data['url'] = 'tags/'.$name;
         $data['name'] = $name;
-        $data['slug'] = $name;
+        $data['slug'] = str($name)->lower();
         $tag->update($data);
         return to_route('tag')->with('success','Tag diperbaharui');
     }
