@@ -11,7 +11,6 @@ use Leazycms\Web\Models\Option;
 use Leazycms\FLC\Models\Comment;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Leazycms\Web\Models\VisitorLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;

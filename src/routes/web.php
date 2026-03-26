@@ -4,6 +4,7 @@ use Leazycms\Web\Http\Controllers\ExtController;
 use Leazycms\Web\Http\Controllers\WebController;
 use Leazycms\Web\Http\Controllers\NotFoundController;
 use Leazycms\Web\Middleware\TrackVisitor;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 Route::fallback(function () {
     return app(NotFoundController::class)->error404();
 })->middleware('web');
@@ -38,7 +39,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
     }
     Route::match(['get', 'post'], 'tags/{slug}', [WebController::class, 'tags'])->name('tag.posts')->middleware(['public', TrackVisitor::class]);
     Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->name('author.posts')->middleware(['public', TrackVisitor::class]);
-    Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->name('search.posts')->middleware(['public', TrackVisitor::class]);
+    Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->name('search.posts')->middleware(['public', TrackVisitor::class])->withoutMiddleware([VerifyCsrfToken::class]);
     Route::match(['get', 'post'],'sitemap.xml', [ExtController::class, 'sitemap_xml'])->name('sitemap');
     Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
     Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');

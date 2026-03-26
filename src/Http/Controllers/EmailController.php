@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
-use Leazycms\Web\Models\Notification;
 
 class EMailController extends Controller implements HasMiddleware
 {

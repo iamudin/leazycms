@@ -3,7 +3,6 @@ namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Route;
 
 class NotFoundController extends Controller
 {

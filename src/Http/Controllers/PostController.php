@@ -2,7 +2,6 @@
 namespace Leazycms\Web\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -11,7 +10,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Leazycms\Web\Models\Category;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Tag;

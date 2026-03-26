@@ -2,10 +2,8 @@
 namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
-use Leazycms\Web\Http\Controllers\VisitorController;
 use Leazycms\Web\Models\Category;
 use Leazycms\Web\Models\PollingResponse;
 use Leazycms\Web\Models\PollingTopic;

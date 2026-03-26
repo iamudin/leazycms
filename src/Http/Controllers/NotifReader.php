@@ -1,6 +1,5 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;

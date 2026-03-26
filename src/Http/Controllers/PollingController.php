@@ -2,9 +2,7 @@
 
 namespace Leazycms\Web\Http\Controllers;
 
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Leazycms\Web\Models\Tag;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
