@@ -675,7 +675,7 @@ $post_field = [
                 ->pluck('title')
                 ->implode(' - ');
 
-            return '<a href="' . route($lastParent->type . '.show', $lastParent->id) . '">'
+            return '<a href="' . admin_url($lastParent->type . '/'. $lastParent->id.'/show').'">'
                 . $titles .
                 '</a>';
         });

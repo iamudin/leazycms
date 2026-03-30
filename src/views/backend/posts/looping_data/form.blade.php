@@ -47,12 +47,13 @@
           </td>
 
           @endforeach
-          <td class="text-center" >  <i @if(isset($f[$y])) onclick="alert('Hapus file terlebih dahulu')" @else onclick="if(confirm('Hapus Data Baris?')){$('#data-{{$y}}').remove()}" @endif class="fa fa-trash pointer text-danger" style="display:inline" aria-hidden></i>  </td>
+          <td class="text-center" >  @if(!Route::is($post->type.'.show')) <i @if(isset($f[$y])) onclick="alert('Hapus file terlebih dahulu')" @else onclick="if(confirm('Hapus Data Baris?')){$('#data-{{$y}}').remove()}" @endif class="fa fa-trash pointer text-danger" style="display:inline" aria-hidden></i> @endif </td>
           </tr>
           @endforeach
 
           @endif
        </tbody>
+       @if(!Route::is($post->type.'.show'))
        <tfoot style="background:#f7f7f7">
        
           <tr  class="addcol">
@@ -77,5 +78,6 @@
              <td></td>
           </tr>
        </tfoot>
+       @endif
     </table>
  </div>

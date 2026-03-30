@@ -2,8 +2,9 @@
 <input title="Format: {{allowed_ext()}}" data-toggle="tooltip"   type="file" style="width:74px;" accept={{allow_mime() }} class="form-control-sm compress-image" name="{{_us($r[0])}}[]"/>
 </span>
 <input type="hidden" class="oldfile-{{_us($r[0])}}-{{$y}}"  name="{{_us($r[0])}}[]" value="{{$l?->$k ?? 'nofile'}}">
-@if(!empty($l?->$k) &&  media_exists($l?->$k))
-<a target="_blank" href="{{asset($l?->$k)}}" class="file-{{_us($r[0])}}-{{$y}} btn btn-sm btn-outline-info"> {{strtoupper(get_ext($l?->$k))}} </a>
-<a class="fa fa-trash pointer text-danger edit-{{_us($r[0])}}-{{$y}}" style="display: none" onclick="media_destroy('{{$l?->$k}}')" aria-hidden></a>
-
+@if(!empty($l?->$k) && media_exists($l?->$k))
+    <a target="_blank"  class="file-{{_us($r[0])}}-{{$y}} btn btn-sm btn-outline-info btn-view-media" data-ext="{{ str(media_extension($l?->$k))->lower() }}" data-media="{{$l?->$k}} "> {{strtoupper(get_ext($l?->$k))}} </a>
+    @if(!Route::is($post->type . '.show'))
+    <a class="fa fa-trash pointer text-danger edit-{{_us($r[0])}}-{{$y}}" style="display: none" onclick="media_destroy('{{$l?->$k}}')" aria-hidden></a>
+    @endif
 @endif
