@@ -128,10 +128,7 @@ class PostController extends Controller implements HasMiddleware
 
         $module = current_module();
         $custom_field = [];
-        if ($post->type == 'page' && in_array(str($request->title)->lower(), not_allow_adminpath())) {
-            return back()->with('danger', 'Nama Halaman tidak di izinkan');
-
-        }
+      
         if ($module->form->custom_field) {
 
             foreach (collect($module->form->custom_field)->whereNotIn([1], ['break']) as $row) {
@@ -163,9 +160,7 @@ class PostController extends Controller implements HasMiddleware
         | Ambil module name
         |--------------------------------------------------------------------------
         */
-        $moduleNames = collect(get_module())
-            ->pluck('name')
-            ->toArray();
+       
 
         $optionKeywords = get_option('forbidden_keyword') ?? 'dangerous_keyword';
 
@@ -175,8 +170,7 @@ class PostController extends Controller implements HasMiddleware
         );
 
         $forbiddenWords = array_merge(
-            $moduleNames,
-            [admin_path()],
+            not_allow_adminpath(),
             $optionKeywords
         );
 
@@ -192,14 +186,21 @@ $post_field = [
         'max:200',
         function ($attribute, $value, $fail) use ($forbiddenWords) {
 
-            $valueLower = strtolower($value);
+            // cek jumlah kata
+            if (str_word_count($value) === 1) {
 
-            foreach ($forbiddenWords as $word) {
-                if (str_contains($valueLower, strtolower($word))) {
-                    $fail("Judul tidak boleh mengandung kata '{$word}'.");
+                $valueLower = strtolower($value);
+
+                foreach ($forbiddenWords as $word) {
+                    if (str_contains($valueLower, strtolower($word))) {
+                        $fail("Judul tidak boleh mengandung kata '{$word}'.");
+                    }
                 }
+
             }
-        },$uniq
+
+        },
+        $uniq
     ],
             'media' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif',
             'content' => [
