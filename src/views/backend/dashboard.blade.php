@@ -9,7 +9,7 @@
             <div class="col-lg-12">
 
           <div class="row">
-            @foreach($type as $row)
+            @foreach(collect($type ?? []) as $row)
                   <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{Route::has($row->name) ? route($row->name) : ''}}'">
                     <div class="widget-small danger coloured-icon"><i class="icon fa {{$row->icon}} fa-3x"></i>
                       <div class="info pl-3">
@@ -45,7 +45,7 @@
                 <td><code>{{ $row->created_at->diffForHumans() }}</code></td>
                 <td>{{ str($row->type)->headline() }}</td>
                 <td><span class="text-primary">{{$row->title }}</span></td>
-                <td>{{ $row->user->name }}</td>
+                <td>{{ $row->user?->name }}</td>
                 <td>{!! $row->status == 'draft' ? '<badge class="badge badge-warning">Draft</badge>' : '<badge class="badge badge-success">Publish</badge>' !!}</td>
             </tr>
             @endforeach
