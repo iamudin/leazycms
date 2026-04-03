@@ -538,7 +538,7 @@ $post_field = [
 
 
         $dt->addColumn('created_at', function ($row) {
-            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->created_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . $row->user->name . '</small>';
+            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->created_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . $row->user?->name . '</small>';
         });
         $dt->addColumn('visited', function ($row) {
             return '<center><small class="badge badge-pill badge-dark py-1" style="border:1px solid lime;"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
@@ -721,7 +721,7 @@ $post_field = [
             >';
         });
 
-        foreach ($childTypes as $type) {
+        foreach (collect($childTypes ?? []) as $type) {
 
             $columnName = Str::snake($type) . '_count';
 

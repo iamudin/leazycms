@@ -99,13 +99,10 @@
                       <th style="width:55px;vertical-align: middle" >Gambar</th>
                       @endif
                       <th style="vertical-align: middle">{{current_module()->datatable->data_title}}</th>
-
                       @if($parent = current_module()->form->post_parent)
-                      <th style="vertical-align: middle" >{{$parent[0]}}</th>
+                      <th style="vertical-align: middle" >{{$parent[0] }}</th>
                       @endif
-                  @if($child_count = current_module()->datatable?->child_count ?? null)
-
-
+                  @if($child_count = collect(current_module()->datatable->child_count ?? []))
                     @foreach($child_count as $type)
                       <th style="vertical-align: middle;width:80px">
                         {{ \Illuminate\Support\Str::headline(str_replace('-', ' ', $type)) }}
