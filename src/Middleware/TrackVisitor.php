@@ -3,6 +3,7 @@ namespace Leazycms\Web\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Leazycms\Web\Services\AnalyticsService;
 
 class TrackVisitor
@@ -11,11 +12,11 @@ class TrackVisitor
         protected AnalyticsService $analytics
     ) {
     }
-
+//ok
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
-        if (!is_local()) {
+        if (is_local()) {
             try {
 
                 $data = [
@@ -47,6 +48,9 @@ class TrackVisitor
                             $post->timestamps = false;
                             $post->increment('visited');
                         }
+                        if (mt_rand(1, 100) === 1) {
+                        $this->cleanupVisitors();
+                        }
                         app(AnalyticsService::class)->track($data);
                     })->afterResponse();
 
@@ -58,105 +62,10 @@ class TrackVisitor
 
         return $response;
     }
+    protected function cleanupVisitors(): void
+{
+    DB::table('analytics_visitors')
+        ->where('last_seen_at', '<', now()->subMinutes(5))
+        ->delete();
 }
-// use Closure;
-// use Illuminate\Support\Facades\Cache;
-// use Illuminate\Support\Facades\DB;
-// use Illuminate\Support\Facades\Route;
-
-// class TrackVisitor
-// {
-//     public function handle($request, Closure $next)
-//     {
-//         $response = $next($request);
-//         if (!$this->shouldTrack($request)) {
-//             return $response;
-//         }
-
-// $domain = $request->getHost();
-// $today = now()->toDateString();
-// $sessionId = session()->getId();
-// $path = trim($request->path(), '/');
-
-// // ===============================
-// // PAGE TTL KEY (5 menit)
-// // ===============================
-// $pageKey = "page_{$domain}_{$path}_{$sessionId}";
-
-// // Kalau halaman ini belum dihitung dalam 5 menit
-// if (!Cache::has($pageKey)) {
-
-//     Cache::put($pageKey, true, now()->addMinutes(5));
-
-//     // ===============================
-//     // UNIQUE PER DOMAIN (per hari)
-//     // ===============================
-//     $visitorKey = "visitor_{$domain}_{$today}_{$sessionId}";
-//     $isUniqueVisitor = Cache::has($visitorKey) ? 0 : 1;
-
-//     if ($isUniqueVisitor) {
-//         Cache::put($visitorKey, true, now()->endOfDay());
-//     }
-
-//     // ===============================
-//     // INSERT / UPDATE (1 QUERY)
-//     // ===============================
-//     DB::statement("
-//         INSERT INTO visitor_stats (`domain`,`date`,`total`,`unique`,`created_at`,`updated_at`)
-//         VALUES (?, ?, 1, ?, NOW(), NOW())
-//         ON DUPLICATE KEY UPDATE
-//             total = total + 1,
-//             `unique` = `unique` + ?,
-//             updated_at = NOW()
-//     ", [$domain, $today, $isUniqueVisitor, $isUniqueVisitor]);
-//             if ($post = config('modules.data')) {
-//                 $post->timestamps = false;
-//                 $post->increment('visited');
-//             }
-// }
-
-//         $onlineKey = "online_{$domain}_{$sessionId}";
-
-//         if (!Cache::has($onlineKey)) {
-
-//             Cache::put($onlineKey, true, now()->addMinutes(1));
-
-//             DB::table('online_users')->upsert(
-//                 [
-//                     [
-//                         'session_id' => $sessionId,
-//                         'domain' => $domain,
-//                         'last_activity' => now(),
-//                         'ip' => $request->ip()
-//                     ]
-//                 ],
-//                 ['session_id'], // unique key
-//                 ['last_activity', 'domain', 'ip']
-//             );
-
-//         }
-//         if (Cache::add('online_cleanup_lock', true, 180)) {
-
-//             DB::table('online_users')
-//                 ->where('last_activity', '<', now()->subMinutes(3))
-//                 ->limit(50)
-//                 ->delete();
-//         }
-//         return $response;
-//     }
-
-//     private function shouldTrack($request)
-//     {
-
-//         if (!config('modules.installed') || strpos(request()->headers->get('referer'), admin_path()) !== false || is_local() || Route::is('formaster'))
-//             return false;
-//         if (!$request->isMethod('get'))
-//             return false;
-//         $ua = strtolower($request->userAgent());
-//         if (str_contains($ua, 'bot') || str_contains($ua, 'crawler')) {
-//             return false;
-//         }
-
-//         return true;
-//     }
-// }
+}
