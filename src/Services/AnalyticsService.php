@@ -22,10 +22,10 @@ class AnalyticsService
         $ip = $data['ip'];
         $date = $now->toDateString();
 
-        $page = '/' . ltrim($data['path'], '/');
+        $page = str('/' . ltrim($data['path'], '/'))->limit(150);
 
         $device = DeviceDetector::detect($data['user_agent']);
-        $user_agent = str($data['user_agent'])->limit(191);
+        $user_agent = str($data['user_agent'])->limit(150);
         $referrer = $this->extractReferrerHost($data['referer']);
 
         $visitorKey = $this->resolveVisitorKey($data);

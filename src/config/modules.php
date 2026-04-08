@@ -10,8 +10,9 @@ return [
             'icon' => 'fa-hourglass',
             'route' => ['index', 'create', 'show', 'update', 'delete'],
             'datatable' => [
-                'custom_column' => false,
+                'custom_column' => ['Tanggal Berangkat'],
                 'data_title' => 'Nama Hitung Mundur',
+                'child_count'=> ['jadwal','cinta'],
             ],
             'form' => [
                 'unique_title' => false,
@@ -21,10 +22,13 @@ return [
                 'category' => false,
                 'tag' => false,
                 'looping_name' => 'Arsip',
-                'looping_data' => false,
-                'custom_field' => array(
-                    ['Tanggal', 'date', 'required'],
-                )
+                'looping_data' => [
+                    ['Nama Waktu', 'text', 'required'],
+                    ['Jenis Waktu', 'text', 'required'],
+                ],
+                'custom_field' => [
+                    ['Tanggal Berangkat', 'date', 'required'],
+                ]
             ],
             'web' => [
                 'api' => false,
@@ -36,7 +40,6 @@ return [
                 'sortable' => false,
             ],
             'public' => true,
-            'cache' => true,
             'active' => true,
         ],
         'pengumuman' => [
@@ -74,7 +77,6 @@ return [
                 'sortable' => false,
             ],
             'public' => true,
-            'cache' => false,
             'active' => true,
         ],
         'galeri' => [
