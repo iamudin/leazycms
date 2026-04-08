@@ -50,11 +50,17 @@ class NotFoundController extends Controller
                 );
             }
 
-            if (is_main_domain() && $showspin && strpos($content, '</head>') !== false && strpos($content, 'spinner-spin') === false) {
-                $content = str_replace(
-                    '</head>',
-                    '</head>' . preload(),
-                    $content
+      
+
+            if (is_main_domain() && $showspin &&
+                strpos($content, '<body') !== false &&
+                strpos($content, 'circular-spinner') === false
+            ) {
+                $content = preg_replace(
+                    '/<body\b[^>]*>/i',
+                    '$0' . preload(),
+                    $content,
+                    1
                 );
             }
 

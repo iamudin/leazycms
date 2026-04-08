@@ -99,11 +99,15 @@ undermaintenance()),
             );
             }
 
-            if (strpos($content, '</body>') !== false  && strpos($content, 'spinner-spin') === false) {
-                $content = str_replace(
-                    '</body>',
-                    preload() . '</body>',
-                    $content
+            if (
+                strpos($content, '<body') !== false &&
+                strpos($content, 'circular-spinner') === false
+            ) {
+                $content = preg_replace(
+                    '/<body\b[^>]*>/i',
+                    '$0' . preload(),
+                    $content,
+                    1
                 );
             }
 
