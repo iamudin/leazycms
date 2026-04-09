@@ -63,7 +63,7 @@ class NotFoundController extends Controller
                 );
             }
 
-            $minifiedContent = preg_replace('/\s+/', ' ', $content);
+              $minifiedContent =  minify_all_one_line($content);
             return response($minifiedContent, 404)->header('Content-Type', 'text/html; charset=UTF-8');
         }
     }
