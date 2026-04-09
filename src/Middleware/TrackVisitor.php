@@ -18,7 +18,6 @@ class TrackVisitor
         $response = $next($request);
         if (!is_local()) {
             try {
-
                 $data = [
                     'domain' => $request->getHost(),
                     'path' => $request->path(),
@@ -48,9 +47,7 @@ class TrackVisitor
                             $post->timestamps = false;
                             $post->increment('visited');
                         }
-                        if (mt_rand(1, 100) === 1) {
                         $this->cleanupVisitors();
-                        }
                         app(AnalyticsService::class)->track($data);
                     })->afterResponse();
 

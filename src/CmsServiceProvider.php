@@ -242,7 +242,7 @@ protected function registerRoutes()
     protected function cmsHandler()
     {
         Carbon::setLocale('ID');
-        config(['app.timezone' => config('modules.timezone')]);
+        date_default_timezone_set(config('modules.timezone'));
         if(config('log-viewer.route_path')){
         config(['log-viewer.timezone' => config('modules.timezone')]);
         }
