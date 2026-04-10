@@ -362,10 +362,11 @@ if (!function_exists('is_main_domain')) {
     }
 }
 if (!function_exists('main_domain')) {
-    function main_domain()
+    function main_domain($uri = '')
     {
-        return parse_url(config('app.url'), PHP_URL_HOST);
+        return rtrim(config('app.url'), '/') . '/' . ltrim($uri, '/');
     }
+  
 }
 if (!function_exists('polling_form')) {
     function polling_form($keyword)

@@ -55,7 +55,7 @@
   <div id="page-preloader">
     <div class="circular-spinner" id="circular-spinner">
       <div class="spinner-circle" id="spinner-circle"></div>
-      <img src="{{ get_option('icon') }}" alt="Logo" class="spinner-logo">
+      <img src="{{ main_domain(get_option('icon')) }}" alt="Logo" class="spinner-logo">
     </div>
   </div>
 
