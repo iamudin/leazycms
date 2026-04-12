@@ -87,12 +87,11 @@ protected function handle403(){
                     ], 500)->header('X-Request-ID', $requestId);
                 }
 
-                return response( preg_replace('/\s+/', ' ',error500Msg($requestId)), 500)
+                return response(preg_replace('/\s+/', ' ', error500Msg($requestId)), 500)
                     ->header('Content-Type', 'text/html')
                     ->header('X-Request-ID', $requestId)
                     ->header('Cache-Control', 'public, max-age=3600')
-                    ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT')
-                    ->send();;
+                    ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
             });
 
         });
