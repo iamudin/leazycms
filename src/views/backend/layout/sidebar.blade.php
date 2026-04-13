@@ -17,7 +17,6 @@
     </div>
 
     <ul class="app-menu">
-
         @if(!in_array(Auth::user()->level, collect(config('modules.extension_module'))->pluck('path')->toArray()))
         <li>
             <a
@@ -28,8 +27,14 @@
             >
         </li>
         @endif
+           <li
+            class="text-muted"
+            style="padding: 12px 10px; font-size: small; background: #000"
+        >
+            <i class="fa fa-globe" aria-hidden="true"></i> &nbsp; PUBLIKASI
+        </li>
         @foreach ($userprofile->isAdmin() ?
-            collect(get_module())->sortBy('position') :
+            collect(get_module())->sortBy('position'):
             collect(get_module())->sortBy('position')->whereIn(
                 'name',
                 $userprofile->get_modules->pluck('module')->toArray()
@@ -81,6 +86,12 @@
                                 </li>
         @endforeach
         @if(Auth::user()->level == 'admin')
+             <li
+            class="text-muted"
+            style="padding: 12px 10px; font-size: small; background: #000"
+        >
+            <i class="fa fa-archive" aria-hidden="true"></i> &nbsp; KELOLA
+        </li>
             <li>
                 <a
                     class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
@@ -115,6 +126,7 @@
             </li>
         @endif
        @if(is_main_domain())
+      
         @foreach(array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template', ARRAY_FILTER_USE_BOTH) as $k => $row)
         <li>
             <a
@@ -141,7 +153,7 @@
                 @endforeach
             @endif
         @endif
-        @if(config('app.sub_app_enabled'))
+        @if(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y')
         @if ($ext = config('modules.extension_module'))
 
         @if(Auth::user()->level == 'admin')
@@ -149,12 +161,13 @@
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
         >
-            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; SUB APP
+            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; APLIKASI
         </li>
         @endif
         @foreach (json_decode(json_encode($ext)) as $row)
         @if(Auth::user()->level != 'admin' && Auth::user()->level == $row->path || Auth::user()->level == 'admin')
         @if(auth()->user()->isAdmin())
+          
         <li class="treeview {{ Str::contains($row->path . '/' . request()->segment(3), collect($row->module)->pluck('path')->toArray()) ? 'is-expanded' : null }}">
             <a
                 title="{{ $row->description }}"
@@ -166,17 +179,17 @@
                 ><i class="treeview-indicator fa fa-chevron-right"></i
             ></a>
             <ul class="treeview-menu">
-
+                
                 @foreach (collect($row->module)->where('only_admin', true) as $module)
                 <li>
-                    <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}" href="{{ route(config($row->path . '.route') . $module->route) }}"
+                    <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}" href="{{ Route::has(config($row->path . '.route'). $module->route) ? route(config($row->path . '.route') . $module->route) : '#' }}"
                         ><i class="icon fa {{ $module->icon }}"></i> {{ $module->name
                         }}</a
                     >
                 </li>
                 @endforeach
                     <li>
-                    <a class="treeview-item " title="{{ $row->url }}" onclick="return confirm('Buka alamat aplikasi {{ $row->url }}')" href="{{ $row->url }}/login" target="_blank"
+                    <a class="treeview-item " title="{{ $row->url }}" onclick="return confirm('Buka alamat aplikasi {{ $row->url }}')" href="{{ $row->url }}" target="_blank"
                         ><i class="icon fa fa-globe"></i> Buka Aplikasi</a
                     >
                 </li>

@@ -921,4 +921,5 @@ return [
     'custom_controllers'=>array(),
     'sidebar'=>array(),
     'view_stats'=>null,
+    'sub_app_enabled'=>env('SUB_APP_ENABLED', false),
 ];

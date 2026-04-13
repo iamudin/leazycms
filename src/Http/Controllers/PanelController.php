@@ -543,7 +543,8 @@ class PanelController extends Controller implements HasMiddleware
             ['Preloader Effect', 'preload'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
-            ['Accesibility Widget','accessibility_widget']
+            ['Accesibility Widget','accessibility_widget'],
+            ['Sub App Enabled','sub_app_enabled'],
         );
         $data['security'] = array(
 
@@ -699,12 +700,12 @@ class PanelController extends Controller implements HasMiddleware
 
             if (!app()->routesAreCached()) {
                 if ($request->admin_path) {
-                if (get_option('admin_path') != $request->admin_path) {
+                if (dec64(get_option('admin_path')) != $request->admin_path) {
                     $val = trim(str($request->admin_path)->slug());
                     if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
                         return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
                     }
-                    $option->updateOrCreate(['name' => 'admin_path'], ['value' => $val, 'autoload' => 1]);
+                    $option->updateOrCreate(['name' => 'admin_path'], ['value' => enc64($val), 'autoload' => 1]);
                     return redirect()->to($request->admin_path . '/setting')->send()->with('success', 'Berhasil Diperbarui');
                 }else{
                     return back()->send()->with('success', 'Berhasil Diperbarui');

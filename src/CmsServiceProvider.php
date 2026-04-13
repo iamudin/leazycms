@@ -101,7 +101,7 @@ protected function registerRoutes()
         $webroute = get_domain_routes();
         Route::prefix(admin_path())
             ->middleware(['web', 'admin'])
-            ->domain(config('app.sub_app_enabled') ? parse_url(config('app.url'), PHP_URL_HOST) : null)
+            ->domain(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' ? parse_url(config('app.url'), PHP_URL_HOST) : null)
             ->group(function () {
                 $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
             });
@@ -111,7 +111,7 @@ protected function registerRoutes()
             });
 
         Route::middleware(['web'])
-            ->domain(config('app.sub_app_enabled') || $webroute ? parse_url(config('app.url'), PHP_URL_HOST) : null)
+            ->domain(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' || $webroute ? parse_url(config('app.url'), PHP_URL_HOST) : null)
             ->group(function () {
                 $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
             });

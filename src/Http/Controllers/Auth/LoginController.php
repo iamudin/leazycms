@@ -41,7 +41,7 @@ class LoginController extends Controller
 
 
         if (Auth::check()) {
-            if (!$request->user()->isAdmin() && config('app.sub_app_enabled') && !is_main_domain()) {
+            if (!$request->user()->isAdmin() && get_option('sub_app_enabled')  && get_option('sub_app_enabled') == 'Y' && !is_main_domain()) {
                 return to_route($request->user()->level . '.dashboard');
             }
 
@@ -54,8 +54,9 @@ class LoginController extends Controller
 
             return to_route('panel.dashboard');
         } else {
-            if (!is_main_domain() && $request->segment(1) == admin_path()) {
-                return redirect('login');
+            if (!is_main_domain() && admin_path() != 'login' && admin_path() == $request->segment(1)) {
+               return response(preg_replace('/\s+/', ' ',error404Msg()), 404)
+                    ->header('Content-Type', 'text/html;charset=UTF-8');
             }
         }
 
@@ -70,7 +71,7 @@ class LoginController extends Controller
         $data['description'] = get_option('site_description');
         $data['loginsubmit'] = url(admin_path());
         $data['logo'] = get_option('logo');
-        if (config('app.sub_app_enabled')) {
+        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y') {
             if (!is_main_domain()) {
                 $getApp = collect(config('modules.extension_module'))->where('url', '=', 'http://' . $request->getHost())->first();
                 $data['title'] = $getApp['title'];
@@ -145,14 +146,14 @@ class LoginController extends Controller
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
                 if (is_main_domain()) {
-                    if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
+                    if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Auth::logout();
                     } else {
                         Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/' . admin_path());
                     }
                 } else {
-                    if (config('app.sub_app_enabled') && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
+                    if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                         Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
                         return redirect()->intended('/login');
                     } else {

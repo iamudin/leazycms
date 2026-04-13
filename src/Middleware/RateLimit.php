@@ -13,7 +13,7 @@ class RateLimit
         if (config('modules.installed') == "0") {
             return response()->view('cms::backend.pre-install');
         }
-        if (config('app.sub_app_enabled') && collect(config('modules.extension_module'))->count()) {
+        if (get_option('sub_app_enabled') &&get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
             foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
                 if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
                     config([$module . '.route' => 'panel.' . $module . '.']);
@@ -50,7 +50,7 @@ class RateLimit
             $redirectUrl = 'https://' . $host . $uri;
         }
         // 3. Validasi domain jika sub_app_enabled diaktifkan
-        elseif (config('app.sub_app_enabled')) {
+        elseif (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y') {
             $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
                 return parse_url($url, PHP_URL_HOST);
             })->toArray();
@@ -79,7 +79,7 @@ class RateLimit
             $attr['post_type'] = $modul->name;
 
             if ($modul->web->index && $request->is($modul->name)) {
-                $attr['detail_visited'] = false;
+                $attr['detail_visited'] = false;    
                 $attr['view_type'] = 'index';
                 $attr['view_path'] = $modul->name . '.index';
                 config([
