@@ -131,7 +131,7 @@ class InstallCommand extends Command
             ['name' => 'post_perpage', 'value' => 10, 'autoload' => 1],
             ['name' => 'site_title', 'value' => 'Your Website Official', 'autoload' => 1],
             ['name' => 'template', 'value' => 'default', 'autoload' => 1],
-            ['name' => 'admin_path', 'value' => 'login', 'autoload' => 1],
+            ['name' => 'admin_path', 'value' => enc64('login'), 'autoload' => 1],
             ['name' => 'logo', 'value' => 'noimage.webp', 'autoload' => 1],
             ['name' => 'favicon', 'value' => 'noimage.webp', 'autoload' => 1],
             ['name' => 'site_url', 'value' => request()->getHttpHost(), 'autoload' => 1],
@@ -149,7 +149,6 @@ class InstallCommand extends Command
             ['name' => 'comment_status', 'value' => 0, 'autoload' => 1],
             ['name' => 'home_page', 'value' => 'default', 'autoload' => 1],
             ['name' => 'preview', 'value' => 'noimage.webp', 'autoload' => 1],
-            ['name' => 'icon', 'value' => 'noimage.webp', 'autoload' => 1],
         );
 
 
