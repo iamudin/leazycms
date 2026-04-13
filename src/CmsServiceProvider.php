@@ -164,7 +164,6 @@ protected function registerRoutes()
     {
         $this->publishes([
             __DIR__ . '/public' => public_path('/'),
-            __DIR__ . '/views/errors' => resource_path('views/errors'),
             __DIR__ . '/views/template' => resource_path('views/template')
         ], 'cms');
     }
