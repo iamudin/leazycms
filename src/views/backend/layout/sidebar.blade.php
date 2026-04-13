@@ -163,6 +163,7 @@
         >
             <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; APLIKASI
         </li>
+        
         @endif
         @foreach (json_decode(json_encode($ext)) as $row)
         @if(Auth::user()->level != 'admin' && Auth::user()->level == $row->path || Auth::user()->level == 'admin')
@@ -210,8 +211,9 @@
         @endif
         @endforeach
         @endif
-        @endif
 
+        @endif
+     
         @if (Auth::user()->isAdmin())
             <li
                 class="text-muted"

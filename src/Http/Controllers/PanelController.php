@@ -720,6 +720,16 @@ class PanelController extends Controller implements HasMiddleware
         }
         return view('cms::backend.setting', $data);
     }
+
+    function appconfig(Request $request)
+    {
+        admin_only();
+        if ($request->isMethod('post')) {
+            // Handle app config updates
+        }
+        return view('cms::backend.appconfig');
+    }
+
     function admin_path(Request $request,$path){
         $pathnew = base64_decode($path);
         if ($pathnew && $pathnew != admin_path()) {

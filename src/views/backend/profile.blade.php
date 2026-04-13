@@ -6,9 +6,12 @@
                 <h3 style="font-weight:normal">
                     <i class="fa fa-building" aria-hidden="true"></i> Setting › Profile
                     <div class="btn-group pull-right">
+            @if(!app()->configurationIsCached())
+
                            <button type="button" onclick="$('.btn-submit').click()" class="btn btn-primary btn-sm">
                     <i class="fa fa-save"></i> Simpan
                 </button>
+                @endif
                         <a href="{{ route('panel.dashboard') }}" class="btn btn-danger btn-sm">
                             <i class="fa fa-undo" aria-hidden="true"></i> Kembali
                         </a>
@@ -20,6 +23,12 @@
         <div class="row mt-4">
 
          <div class="col-lg-12">
+            @if(app()->configurationIsCached())
+                 <div class="alert alert-danger">
+                            <i class="fa fa-info"></i> Pengaturan Profile tidak dapat diubah karena cache config aktif, silahkan nonaktifkan <a href="{{route('cache-manager')}}" class="">disini.</a>
+                        </div>
+            @else 
+
         <form method="POST" action="{{ route('profile') }}" class="form-profile" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -228,6 +237,7 @@
 
 
         </form>
+        @endif
     </div>
 
         </div>
