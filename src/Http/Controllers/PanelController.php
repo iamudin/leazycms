@@ -9,16 +9,13 @@ use Illuminate\Http\Request;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
 use Leazycms\FLC\Models\Comment;
-use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\DB;
-use Leazycms\Web\Models\VisitorLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Spatie\Backup\BackupDestination\BackupDestinationFactory;
@@ -47,95 +44,7 @@ class PanelController extends Controller implements HasMiddleware
         
         return view('cms::backend.logs.index');
     }
-    function visitor_counter($currentDomain)
-    {
-      
-      // ---------------------------
-        // 1. USER ONLINE (NO N+1)
-        // ---------------------------
-        $onlineUsers = Visitor::select(
-            'id',
-            'ip',
-            'browser',
-            'city',
-            'country',
-            'last_activity',
-            'session',
-            'user_agent'
-        )
-            ->where('domain', $currentDomain)
-            ->with('lastLog')
-            ->where('last_activity', '>=', Carbon::now()->subMinutes(5))
-            ->orderBy('last_activity', 'desc')
-            ->get();
-
-        // ---------------------------
-        // 2. PAGE VIEWS (NO N+1 / simple count)
-        // ---------------------------
-        $today = Carbon::today();
-        $yesterday = Carbon::yesterday();
-
-        $pv_today = VisitorLog::whereDate('created_at', $today)
-            ->where('domain', $currentDomain)
-            ->count();
-
-        $pv_yesterday = VisitorLog::whereDate('created_at', $yesterday)
-            ->where('domain', $currentDomain)
-            ->count();
-
-        $pv_week = VisitorLog::whereBetween('created_at', [
-            Carbon::now()->startOfWeek(),
-            Carbon::now()->endOfWeek(),
-        ])
-            ->where('domain', $currentDomain)
-            ->count();
-
-        $pv_month = VisitorLog::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
-            ->where('domain', $currentDomain)
-            ->count();
-
-        // ---------------------------
-        // 3. 404 LOGS (EAGER LOADED → NO N+1)
-        // ---------------------------
-        $logs_404 = VisitorLog::with([
-            'visitor:id,ip,browser,city,country'
-        ])
-            ->select('id', 'visitor_id', 'page', 'reference', 'status_code', 'created_at')
-            ->where('domain', $currentDomain)
-            ->where('status_code', 404)
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-
-        // ---------------------------
-        // 4. TOP 10 PAGE TODAY (NO N+1)
-        // ---------------------------
-        $top_pages = VisitorLog::selectRaw('page, COUNT(*) as total')
-            ->where('status_code', 200)
-            ->where('domain', $currentDomain)
-            ->whereDate('created_at', Carbon::today())
-            ->groupBy('page')
-            ->orderByDesc('total')
-            ->limit(10)
-            ->get();
-
-
-
-        // RETURN KE BLADE
-        $data=  [
-            'onlineUsers'=> $onlineUsers,
-            'pv_today'=>  $pv_today,
-            'pv_yesterday'=>  $pv_yesterday,
-            'pv_week'=>  $pv_week,
-            'pv_month'=>  $pv_month,
-            'logs_404'=>  $logs_404,
-            'top_pages'=>   $top_pages,
-        ];
-    return view('cms::backend.stats', $data)->render();
-
-    }
-
+ 
 
     function menu_target(Request $request)
     {
@@ -163,7 +72,7 @@ class PanelController extends Controller implements HasMiddleware
 
         if($request->isMethod('post')){
         $data = Comment::with('user')->latest();
-         return Datatables::of($data)
+         return \Yajra\DataTables\Facades\DataTables::of($data)
             ->addIndexColumn()
             ->filter(
                 function ($instance) use ($request) {
@@ -376,53 +285,6 @@ class PanelController extends Controller implements HasMiddleware
             return to_route('apikey')->with('success', 'APP_KEY berhasil digenerate ulang!');
         }
         return view('cms::backend.apikey', ['key'=>config('modules.env_key') ? md5(enc64(config('modules.env_key'))) : null]);
-    }
-    public function visitor(Request $request)
-    {
-        $da = array();
-        for ($i = 0; $i <= 6; $i++) {
-            array_push($da, date("Y-m-d", strtotime("-" . $i . " days")));
-        }
-
-        $data = Visitor::whereIn(DB::raw('DATE(created_at)'), $da)->latest('created_at');
-        return Datatables::of($data)
-            ->addIndexColumn()
-            ->filter(
-                function ($instance) use ($request) {
-
-                    if ($time = $request->timevisit) {
-                        $instance->whereDate('created_at', $time);
-                    }
-                    if ($search = $request->search) {
-                        $instance->where('page','like', '%'.$search.'%')->orWhere('reference','like', '%'.$search.'%');
-                    }
-                }
-            )
-            ->addColumn('created_at', function ($row) {
-                return '<code>' . Carbon::parse($row->created_at)->diffForHumans() . '</code>';
-            })
-            ->addColumn('ip_location', function ($row) {
-                $city = json_decode($row->ip_location)->city ?? null;
-                $country = json_decode($row->ip_location)->country ?? null;
-                $region = json_decode($row->ip_location)->region ?? null;
-                $code = json_decode($row->ip_location)->countryCode ?? null;
-                $ipinfo = $row->ip_location ? $region . ', ' . $city . '<br><img style="display:inline" height="10" src="' . url('backend/images/flags/' . str($code)->upper() . '.svg') . '"> ' . $country : 'N/A';
-                return '<span class="badge badge-info">' . $row->ip . '</span><br><small>' . $ipinfo . '</small>';
-            })
-            ->addColumn('reference', function ($row) {
-                return str($row->reference)->limit(70);
-            })
-            ->addColumn('times', function ($row) {
-                return $row->times;
-            })
-            ->addColumn('status', function ($row) {
-                return $row->status == '200' ? '<span class="badge badge-success">200</span>' : '<span class="badge badge-danger">404</span>';
-            })
-            ->addColumn('page', function ($row) {
-                return '<a href="' . $row->page . '">' . str($row->page)->limit(70) . '</a>';
-            })
-            ->rawColumns(['created_at', 'ip_location', 'reference', 'page','status'])
-            ->toJson();
     }
     public function option(Request $request, $slug=null)
     {
@@ -796,13 +658,13 @@ class PanelController extends Controller implements HasMiddleware
             if ($request->cache_route && $request->cache_route == 'N' && app()->routesAreCached()) {
                 Artisan::call('route:clear');
             }
-            if ($request->cache_media && $request->cache_media == 'Y' && !cache()->has('media')) {
+            if ($request->cache_media && $request->cache_media == 'Y' && !Cache::has('media')) {
                 media_caching();
                 recache_menu();
                 regenerate_cache();
                 recache_banner();
             }
-            if ($request->cache_media && $request->cache_media == 'N' && cache()->has('media')) {
+            if ($request->cache_media && $request->cache_media == 'N' && Cache::has('media')) {
                 Cache::forget('media');
             }
             return back()->send()->with('success', 'Berhasil di optimalkan');

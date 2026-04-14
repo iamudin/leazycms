@@ -4,7 +4,6 @@ namespace Leazycms\Web\Http\Controllers\Auth;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Leazycms\Web\Models\User;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -55,8 +54,7 @@ class LoginController extends Controller
             return to_route('panel.dashboard');
         } else {
             if (!is_main_domain() && admin_path() != 'login' && admin_path() == $request->segment(1)) {
-               return response(preg_replace('/\s+/', ' ',error404Msg()), 404)
-                    ->header('Content-Type', 'text/html;charset=UTF-8');
+               return redirect('login');
             }
         }
 
@@ -175,9 +173,9 @@ class LoginController extends Controller
         dispatch(function () {
 
             $ip = get_client_ip();
-            $email = e(request()->input('username'));
-            $url = e(request()->fullUrl());
-            $userAgent = e(request()->userAgent());
+            $email = e( (new Request)->input('username'));
+            $url = e((new Request)->fullUrl());
+            $userAgent = e((new Request)->userAgent());
             $time = now()->format('Y-m-d H:i:s');
 
             $message = "

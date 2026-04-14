@@ -366,8 +366,8 @@ class RateLimit
                 Log::channel('daily')->critical('Malicious file detected in upload ' . $file->getClientOriginalName(), [
                     'info' => 'Dangerous function detected: ' . $func,
                     'ip' => get_client_ip(),
-                    'url' => request()->fullUrl(),
-                    'referer' => request()->headers->get('referer'),
+                    'url' =>  (new Request)->fullUrl(),
+                    'referer' =>  (new Request)->headers->get('referer'),
                 ]);
                 return false;
             }
