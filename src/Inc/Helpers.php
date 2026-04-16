@@ -209,6 +209,130 @@ if (!function_exists('add_view_stats')) {
 </body>
 </html>";
 }
+function protectedContentView($slug, $requestId = null, $error = null)
+{
+    $requestBlock = $requestId
+        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        : "";
+
+    $errorBlock = $error
+        ? "<div class='error'>{$error}</div>"
+        : "";
+
+    return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Protected Content</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            width:100%;
+            margin:0;padding:0
+        }
+        .card {
+            background:#1e293b;
+            padding:40px 40px 40px 20px;
+            border-radius:16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            max-width:400px;
+            width:90%;
+            text-align:center;
+        }
+        h1 {
+            margin-bottom:10px;
+            font-size:24px;
+            color:#38bdf8;
+        }
+        p {
+            opacity:0.8;
+            margin-bottom:20px;
+        }
+
+        /* FORM INLINE */
+        .form-inline {
+            display:flex;
+            gap:10px;
+        }
+
+        .form-inline input {
+            flex:1;
+            padding:12px;
+            border-radius:8px;
+            border:none;
+            outline:none;
+            font-size:18px;
+            text-align:center;
+            letter-spacing:5px;
+        }
+
+        .form-inline .btn {
+            padding:0 16px;
+            border:none;
+            border-radius:8px;
+            background:#38bdf8;
+            color:#0f172a;
+            font-weight:600;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+
+        .form-inline .btn:hover {
+            opacity:0.9;
+        }
+
+        .error {
+            background:#7f1d1d;
+            padding:10px;
+            border-radius:8px;
+            margin-bottom:15px;
+            color:#fecaca;
+            width:100%;
+        }
+
+        .request-id {
+            background:#0f172a;
+            padding:8px;
+            border-radius:6px;
+            font-size:12px;
+            margin-bottom:15px;
+            color:#facc15;
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <h1>🔒 Protected Page</h1>
+        <p>Enter 4-digit secret code to continue</p>
+        {$requestBlock}
+        {$errorBlock}
+
+        <form method='POST' class='form-inline'>
+            <input 
+                type='password'
+                name='secret_key' 
+                maxlength='4' 
+                pattern='[0-9]{4}'
+                inputmode='numeric'
+                oninput='this.value = this.value.replace(/[^0-9]/g,\"\")'
+                autofocus 
+                placeholder='••••' 
+                required
+            >
+            <button class='btn'>Unlock</button>
+        </form>
+    </div>
+</body>
+</html>";
+}
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {

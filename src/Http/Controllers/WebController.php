@@ -1,6 +1,7 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -160,6 +161,49 @@ class WebController extends Controller
             'detail' => $detail,
             'history' => $detail->history
         );
+     
+        if (!empty($detail->password)) {
+                
+            $sessionKey = "post_access_{$detail->id}";
+        
+            // Kalau belum submit
+            if (!$request->isMethod('post')) {
+                if (session()->has($sessionKey)) {
+                    $expiredAt = session($sessionKey);
+                    if (Carbon::now()->lt($expiredAt)) {
+
+                    } else {
+                        
+                        session()->forget($sessionKey);
+                        return redirect()->to($request->url());
+                    }
+                }else{
+                    return response(protectedContentView($slug));
+                }
+            }else{
+
+    
+            // Validasi input
+            $request->validate([
+                'secret_key' => 'required|digits:4'
+            ]);
+    
+            // Cek password
+            if ($request->secret_key !== dec64($detail->password)) {
+                return response(protectedContentView(
+                    $slug,
+                    null,
+                    'Kode salah, coba lagi.'
+                ));
+            }
+    
+            session([
+                $sessionKey => Carbon::now()->addMinutes(1)
+            ]);
+            return redirect()->to($request->url());
+        }
+        }
+
         if(View::exists('template.'.template().'.'.$detail->type.'.'.$detail->slug)){
         return view('template.'.template().'.'.$detail->type.'.'.$detail->slug, $data);
         }

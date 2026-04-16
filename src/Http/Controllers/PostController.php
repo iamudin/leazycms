@@ -336,7 +336,7 @@ $post_field = [
                 $data['data_loop'] = $mnews;
             }
         }
-
+        $data['password'] = $request->password ? (!empty($post->password) ? $post->password : rtrim(enc64(rand(0000,9999)),'=')) : null;
         $post->update($data);
         Cache::forget($post->type);
         Cache::forget($post->id);
@@ -525,14 +525,15 @@ $post_field = [
 
             $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
             $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
-            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . url($row->url . '/') . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ?'<a title="Klik untuk melihat di tampilan web" href="' . url($row->url . '/') . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
 
             $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
+            $locked =  (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\''.dec64($row->password).'\')" title="Akses '.$current_module->title.' ini  dibatasi. Klik untuk menyalin kode akses"></i>': '');
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
             $b = '<b class="text-primary">' . $tit . '</b><br>';
-            $b .= '<small class="text-muted"> ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
+            $b .= '<small class="text-muted">'.$locked.' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
             return $b;
         });
 

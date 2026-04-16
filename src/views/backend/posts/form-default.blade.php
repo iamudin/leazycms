@@ -8,7 +8,7 @@
                         <i class="fa {{ $module->icon }}" aria-hidden="true"></i> {{ get_post_type('title_crud') }}
                         <div class="btn-group pull-right">
                             @if(View::exists('template.' . template() . '.' . $post->type . '.' . $post->slug))
-                            <a href="{{ route('appearance.editor') . '?edit=/' . $post->type . '/' . $post->slug . '.blade.php' }}" class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> Edit Halaman {!! help('Tombol ini akan muncul ketika ' . $module->title . ' ini memiliki custom page pada tampilan. Klik untuk mulai mengedit') !!}</a>
+                            <a href="{{ route('appearance.editor') . '?edit='.enc64('/' . $post->type . '/' . $post->slug . '.blade.php') }}" class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> Edit Halaman {!! help('Tombol ini akan muncul ketika ' . $module->title . ' ini memiliki custom page pada tampilan. Klik untuk mulai mengedit') !!}</a>
                             @endif
 
                             <button type="button" onclick="location.href='{{ route(get_post_type()) }}'" class="btn btn-danger btn-sm "
@@ -266,14 +266,28 @@
                     @endif
 
                     @if ($module->web->detail)
-
-                        <div @if (!$module->web->detail) ) style="margin-top:10px" @endif class="animated-checkbox">
+                    <div class="animated-checkbox">
+                        <label>
+                            <input type="checkbox" {{ $post && !empty($post->password) ? 'checked=checked' : '' }}
+                                name="password" value="Y"><span class="label-text"><small> Batasi Akses {{ $module->title }} ini
+                                    {!! help('Jika dicentang, Pengunjung wajib memasukkan kode PIN utk melihat. Klik icon merah disamping untuk menyalin kode rahasia') !!}  </small></span>
+                        </label>
+                        @if(!empty($post->password))<i class="fa fa-copy copy text-danger pointer" title="Klik untuk menyalin kode" data-copy="{{ dec64($post->password) }}"></i>@endif
+                    </div>
+                        <div class="animated-checkbox">
                             <label>
                                 <input type="checkbox" {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}
                                     name="allow_comment" value="Y"><span class="label-text"><small>Izinkan Komentar
-                                        {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}</small></span>
+                                        {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}
+                                   
+                                    </small>
+                                    
+                                    
+                                    </span>
                             </label>
                         </div>
+
+                        
                     @endif
                         <div class="animated-checkbox">
                             <label>
