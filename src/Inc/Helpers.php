@@ -316,7 +316,7 @@ function protectedContentView($slug, $requestId = null, $error = null)
         {$errorBlock}
 
         <form method='POST' class='form-inline'>
-        <input type='hidden' name='_token' value='".csfr_token()."'>
+        <input type='hidden' name='_token' value='".csrf_token()."'>
             <input 
                 type='password'
                 name='secret_key' 
