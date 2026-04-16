@@ -240,11 +240,11 @@ function protectedContentView($slug, $requestId = null, $error = null)
         }
         .card {
             background:#1e293b;
-            padding:40px 40px 40px 20px;
+            padding:60px 40px 60px 40px;
             border-radius:16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             max-width:400px;
-            width:90%;
+            width:80%;
             text-align:center;
         }
         h1 {
@@ -264,6 +264,7 @@ function protectedContentView($slug, $requestId = null, $error = null)
         }
 
         .form-inline input {
+            width:80%;
             flex:1;
             padding:12px;
             border-radius:8px;
@@ -275,6 +276,8 @@ function protectedContentView($slug, $requestId = null, $error = null)
         }
 
         .form-inline .btn {
+            max-width:50%;
+
             padding:0 16px;
             border:none;
             border-radius:8px;
