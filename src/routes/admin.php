@@ -13,6 +13,7 @@ Route::post('files/upload_image_summernote', [PostController::class, 'uploadImag
 Route::match(['get','post','delete'],'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
 Route::get('files', [PanelController::class, 'files'])->name('files');
+Route::post('print/posts', [PostController::class, 'printPosts'])->name('print.posts');
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {

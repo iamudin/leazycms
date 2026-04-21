@@ -10,10 +10,11 @@
         <div class="modal-body">
 
 
-<div class="row mb-3">
+    <form  class="row mb-3" action="{{ route('print.posts') }}" method="post">
+        @csrf
     <div class="col-12">
         <small>Status Pos</small>
-        <select id="status" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
+        <select id="status" name="status" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
             <option value="">--pilih status--</option>
             @foreach(['publish', 'disematkan', 'draft', 'sampah'] as $row)
             @php 
@@ -32,7 +33,7 @@
     @if(current_module()->form->category)
     <div class="col-12">
         <small>Category</small>
-        <select id="category_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
+        <select id="category_id" name="category_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
             <option value="">--pilih kategori--</option>
             @foreach(query()->index_category(get_post_type()) as $row)
             <option value="{{ $row->id }}">{{ $row->name }} ({{ $row->posts_count }})</option>
@@ -43,7 +44,7 @@
     @if(current_module()->form->tag)
     <div class="col-12">
         <small>Tags</small>
-        <select id="tag_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
+        <select id="tag_id" name="tag_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
             <option value="">Pilih</option>
             @foreach(query()->index_tags(get_post_type()) as $row)
             <option value="{{ $row->id }}">{{ $row->name }} ({{ $row->posts_count }})</option>
@@ -89,7 +90,7 @@
 
 <div class="col-12">
     <small>Penerbit</small>
-    <select id="user_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
+    <select id="user_id" name="user_id" class="form-control form-control-sm" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()">
         <option value="">Pilih</option>
         @foreach(query()->index_author(current_module()->name) as $row)
         <option value="{{ $row->id }}">{{ $row->name }} ({{ $row->posts_count }})</option>
@@ -102,17 +103,20 @@
 <div class="col-6">
 
     <small>Mulai</small>
-    <input type="date" id="from_date" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()" class="form-control form-control-sm">
+    <input type="date" name="from_date" id="from_date" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()" class="form-control form-control-sm">
 </div>
 <div class="col-6">
     <small>Sampai</small>
-    <input type="date" id="to_date" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()" class="form-control form-control-sm">
+    <input type="date" name="to_date" id="to_date" onchange="if(this.value) $('.datatable').DataTable().ajax.reload()" class="form-control form-control-sm">
 </div>
-</div>
+<input type="hidden" name="type" value="{{ get_post_type() }}">
+<button type="submit" class="submit-filter d-none"></button>
+</form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-warning" onclick="window.location.href='{{ url()->current() }}'">Reset</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn  btn-sm btn-primary" onclick="$('.submit-filter').click()" > <i class="fa fa-print"></i> Cetak</button>
+          <button type="button" class="btn  btn-sm btn-warning" onclick="window.location.href='{{ url()->current() }}'">Reset</button>
         </div>
       </div>
     </div>

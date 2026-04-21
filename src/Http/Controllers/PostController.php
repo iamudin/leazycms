@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use Leazycms\Web\Models\Category;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Tag;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
+
 use Yajra\DataTables\Facades\DataTables;
 
 class PostController extends Controller implements HasMiddleware
@@ -28,6 +30,37 @@ class PostController extends Controller implements HasMiddleware
     {
         $request->user()->hasRole(get_post_type(), __FUNCTION__);
         return view('cms::backend.posts.index');
+    }
+
+    public function printPosts(Request $request)
+    {
+       $module = get_module($request->type);
+        $query = Post::query()->whereType($request->type);
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+        if ($request->from_date && $request->to_date) {
+            $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
+        } 
+        if ($request->user_id) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->tag_id) {
+            $query->whereHas('tags', function ($q) use ($request) {
+                $q->where('tags.id', $request->tag_id);
+            });
+        }
+        $posts = $query->with('category', 'user', 'tags')->get();
+        $html = View::make('cms::backend.posts.print', [
+            'posts' => $posts,
+            'module' => $module
+        ])->render();
+
+        $pdf = PDF::loadHTML($html)->setOption('page-width', '330')->setPaper('a4', 'landscape');
+        return $pdf->stream('laporan-posts-' . date('Y-m-d-His') . '.pdf');
     }
     public function uploadImageSummernote(Request $request)
     {
