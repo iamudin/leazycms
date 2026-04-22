@@ -562,12 +562,13 @@ class PanelController extends Controller implements HasMiddleware
 
             if (!app()->routesAreCached()) {
                 if ($request->admin_path) {
-                if (dec64(get_option('admin_path')) != $request->admin_path) {
+                if (admin_path() != $request->admin_path) {
                     $val = trim(str($request->admin_path)->slug());
                     if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
                         return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
                     }
-                    $option->updateOrCreate(['name' => 'admin_path'], ['value' => enc64($val), 'autoload' => 1]);
+                    //$option->updateOrCreate(['name' => 'admin_path'], ['value' => enc64($val), 'autoload' => 1]);
+                        rewrite_env(['ADMIN_PATH'=>rtrim(enc64($request->admin_path),'=')]);
                     return redirect()->to($request->admin_path . '/setting')->send()->with('success', 'Berhasil Diperbarui');
                 }else{
                     return back()->send()->with('success', 'Berhasil Diperbarui');
@@ -800,10 +801,6 @@ class PanelController extends Controller implements HasMiddleware
 
     public function editorTemplate(Request $request)
     {
-
-        if(!is_local() && !Cache::has('enablededitortemplate')){
-            return to_route('appearance');
-        }
         admin_only();
         $defaultfile = enc64('/home.blade.php');
         $path = resource_path('views/template/' . template());

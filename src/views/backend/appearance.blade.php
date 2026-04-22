@@ -7,11 +7,8 @@
 
 
             <div class="btn-group  pull-right">
-                     @if(Cache::has('enablededitortemplate') || is_local())
           <a href="{{ route('appearance.editor') }}" class="btn btn-warning btn-sm btn-md "> <i class="fa fa-code"></i>
             Edit Template</a>
-
-      @endif
                 <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
             </div>
 

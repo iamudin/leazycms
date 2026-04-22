@@ -905,6 +905,7 @@ return [
     ],
     'option' => array(),
     'used' => array(),
+    'admin_path'=>env('ADMIN_PATH','WVdSdGFXND0'),
     'current' => null,
     'extension_module' => array(),
     'detail_visited' => false,

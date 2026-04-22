@@ -1220,7 +1220,7 @@ if (!function_exists('get_option')) {
 if (!function_exists('admin_path')) {
     function admin_path()
     {
-        return dec64(get_option('admin_path')) ?? 'login';
+        return dec64(config('modules.admin_path'));
         ;
     }
 }
@@ -1490,9 +1490,10 @@ if (!function_exists('blade_path')) {
                 return 'cms::layouts.warning';
             } else {
                 return response(
-                     preg_replace('/\s+/', ' ',error503Msg()),
+                    error503Msg(),
                     503
-                )->header('Content-Type', 'text/html')->send();
+                )->header('Content-Type', 'text/html');
+               
             }
         }
     }
@@ -1615,7 +1616,7 @@ if (!function_exists('blade_path')) {
         ? "<div class='request-id'>Request ID: {$requestId}</div>"
         : "";
 
-    return "<!DOCTYPE html>
+   exit(preg_replace("/\s+/", " ","<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
@@ -1702,7 +1703,7 @@ if (!function_exists('blade_path')) {
         </div>
     </div>
 </body>
-</html>";
+</html>"));
 }
 function error403Msg($requestId = null)
 {
@@ -2122,7 +2123,7 @@ if (!function_exists('init_meta_header')) {
 
             if (get_post_type() && request()->segment(1) != 'search' && !request()->is('/')) {
 
-                if (request()->segment(2) == 'archive' || request()->segment(2) == 'category' || request()->segment(1) == 'tags' || (get_module(get_post_type())->form?->post_parent)) {
+                if (request()->segment(2) == 'archive' || request()->segment(2) == 'category' || request()->segment(1) == 'tags' || (get_module(get_post_type())?->form?->post_parent)) {
                     $pn = $get_page_name . $page;
                 } else {
                     $pn = $get_page_name . $page;
