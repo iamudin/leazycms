@@ -48,6 +48,7 @@ class User extends BaseUser
     protected $casts = [
         'email_verified_at' => 'datetime',
         'user_data' => 'array',
+        'last_login_at'=>'datetime'
 
     ];
 

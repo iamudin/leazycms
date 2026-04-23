@@ -39,6 +39,14 @@
                 'name',
                 $userprofile->get_modules->pluck('module')->toArray()
             ) as $row)
+            @if($row->name=='menu')
+                   <li
+            class="text-muted"
+            style="padding: 12px 10px; font-size: small; background: #000"
+        >
+            <i class="fa fa-archive" aria-hidden="true"></i> &nbsp; KELOLA
+        </li>
+        @endif
                                 <li class="treeview {{ active_item($row->name) ? 'is-expanded' : '' }}">
                                     <a
                                         title="{{ $row->description }}"
@@ -86,12 +94,7 @@
                                 </li>
         @endforeach
         @if(Auth::user()->level == 'admin')
-             <li
-            class="text-muted"
-            style="padding: 12px 10px; font-size: small; background: #000"
-        >
-            <i class="fa fa-archive" aria-hidden="true"></i> &nbsp; KELOLA
-        </li>
+      
             <li>
                 <a
                     class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"

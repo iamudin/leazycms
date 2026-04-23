@@ -16,7 +16,7 @@
         @csrf
     <div class="row">
 
-        @foreach(collect(get_module())->whereNotIn('name', ['media', 'menu']) as $row)
+        @foreach(collect(get_module())->whereNotIn('name', ['media', 'menu','sites']) as $row)
             <div class="col-lg-6 mb-4">
                 <div class="card">
                     <h4 class="card-header bg-dark text-white"> <i class="fa {{ $row->icon }} }}"></i> {{ $row->title }}</h4>

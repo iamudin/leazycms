@@ -79,6 +79,9 @@ class UserController extends Controller implements HasMiddleware
             ->addColumn('name', function ($row) {
                 return '<span class="text-primary">' . $row->name . '</span><br><small class="text-muted">' . $row->email . '</small>';
             })
+               ->addColumn('last_login_data', function ($row) {
+                return '<small><code>Waktu :'. $row->last_login_at->diffForHumans() . '<br>IP : '.$row->last_login_ip.'</code></small>';
+            })
             ->addColumn('role', function ($row) {
                 $dom = get_domain_extension($row->level);
                 return str($row->level)->upper() .($dom ? '<br><span class="badge badge-warning">'.$dom.'/login</span>' : null);
@@ -94,7 +97,7 @@ class UserController extends Controller implements HasMiddleware
             ->addColumn('photo', function ($row) {
                 return '<img src="' . $row->photo_user . '" height="50" class="rounded">';
             })
-            ->rawColumns(['action', 'name', 'status', 'photo', 'role', 'username'])
+            ->rawColumns(['action', 'last_login_data','name', 'status', 'photo', 'role', 'username'])
             ->toJson();
     }
     public function create()
