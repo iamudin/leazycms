@@ -1,15 +1,12 @@
 <?php
 
 use Illuminate\Support\Str;
-use Jenssegers\Agent\Agent;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\URL;
-use Leazycms\Web\Models\VisitorLog;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 if (!function_exists('query')) {
@@ -18,6 +15,46 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+
+if (!function_exists('ignoreEnc')) {
+function ignoreEnc($io) {
+    $s = base64_decode(dec64(config('modules.labusiam')));
+    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($s));
+    $love = openssl_encrypt(
+        $io,
+        $s,
+        _ignoreThis(),
+        OPENSSL_RAW_DATA,
+        $iv
+    );
+    return base64_encode($iv . $love);
+}
+}
+
+if (!function_exists('ignoreDec')) {
+function ignoreDec($io) {
+    $s = base64_decode(dec64(config('modules.labusiam')));
+    $data = base64_decode($io);
+    $iv_length = openssl_cipher_iv_length($s);
+    $iv = substr($data, 0, $iv_length);
+    $love = substr($data, $iv_length);
+    
+    return openssl_decrypt(
+        $love,
+        $s,
+        _ignoreThis(),
+        OPENSSL_RAW_DATA,
+        $iv
+    );
+}
+}
+
+if (!function_exists('_ignoreThis')) {
+    function _ignoreThis(){
+        return base64_decode(dec64(config('modules.sampleignore')));
+    }
+}
+
   if (!function_exists('add_option')) {
     function add_option($key, $array)
     {
@@ -685,22 +722,24 @@ if (!function_exists('isNotInSession')) {
     }
 }
 
+if (!function_exists('sendTelegramBotMessage')) {
 
  function sendTelegramBotMessage($message)
 {
 
-if(get_option('telegram_token') && get_option('telegram_chat_id')){
+if(config('modules.telechatid')&& config('modules.teletoken')){
 
      return Http::post(
-        "https://api.telegram.org/".dec64(get_option('telegram_token'))."/sendMessage",
+        "https://api.telegram.org/".dec64(config('modules.teletoken'))."/sendMessage",
         [
-            'chat_id' => dec64(get_option('telegram_chat_id')),
+            'chat_id' => dec64(config('modules.telechatid')),
             'text' => $message,
             'parse_mode'=>'HTML'
         ]
     );
 }
 
+}
 }
 
 if (!function_exists('forbidden')) {

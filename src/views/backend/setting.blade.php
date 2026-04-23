@@ -107,10 +107,10 @@
                             <small for="" class="text-muted">Bot Token</small><br>
                             <input type="text" class="form-control form-control-sm"
                                 placeholder="Enter Bot Token Telegram 3434:tokentelegram"
-                                value="{{ dec64(get_option('telegram_token')) }}" name="telegram_token">
+                                value="{{ dec64(config('modules.teletoken')) }}" name="telegram_token">
                             <small for="" class="text-muted">Chat ID</small><br>
                             <input type="text" class="form-control form-control-sm"
-                                placeholder="Enter chat ID 12345678" value="{{ dec64(get_option('telegram_chat_id')) }}"
+                                placeholder="Enter chat ID 12345678" value="{{ dec64(config('modules.telechatid')) }}"
                                 name="telegram_chat_id">
                             <br>
                             <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-keyboard-o"></i>

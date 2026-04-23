@@ -122,7 +122,6 @@ class Web
             $response->setContent($content);
         }
         $this->securityHeaders($response, $request);
-        forbidden($request);
         return $response;
     }
 
