@@ -88,7 +88,7 @@ class InstallCommand extends Command
             Artisan::call('vendor:publish', ['--tag' => 'cms']);
 
             $this->info('Instalasi Berhasil! Berikut akun untuk mulai mengelola web anda: ');
-            $this->line('Url login : ' . $domain.'/login');
+            $this->line('Url login : ' . $domain.'/'.dec64(config('modules.admin_path')));
             $this->line('Username  : '.$auth['username']);
             $this->line('Password  : '.$auth['password']);
         } else {
