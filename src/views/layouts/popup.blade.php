@@ -140,8 +140,8 @@
 
       <!-- Navigasi kiri-kanan -->
       @if(count($banners)>1)
-      <span class="nav-btn prev-btn" id="prevBtn">&#10094;</span>
-      <span class="nav-btn next-btn" id="nextBtn">&#10095;</span>
+      <span class="nav-btn prev-btn" id="prevBtnPopup">&#10094;</span>
+      <span class="nav-btn next-btn" id="nextBtnPopup">&#10095;</span>
       @endif
     </div>
   </div>
@@ -173,8 +173,8 @@ bannerImage.addEventListener("touchend", function(e) {
 }, false);
 
     const bannerLink = document.getElementById('bannerLink');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
+    const prevBtnPopup = document.getElementById('prevBtnPopup');
+    const nextBtnPopup = document.getElementById('nextBtnPopup');
 
     const banners = @json($banners);
 
@@ -225,8 +225,8 @@ bannerImage.addEventListener("touchend", function(e) {
     }
 
     closeBtn.onclick = closeModal;
-    nextBtn.onclick = nextBanner;
-    prevBtn.onclick = prevBanner;
+    nextBtnPopup.onclick = nextBanner;
+    prevBtnPopup.onclick = prevBanner;
 
     modalPopup.onclick = function (e) {
       if (e.target === modalPopup) {
