@@ -33,8 +33,7 @@
   position: relative;
 }
 
-/* fallback bila browser tidak mendukung backdrop-filter:
-   tambahkan sedikit bayangan agar tetap terbaca */
+/* fallback bila browser tidak mendukung backdrop-filter:tambahkan sedikit bayangan agar tetap terbaca */
 @supports not (backdrop-filter: blur(1px)) {
   .modals {
     background-color: rgba(0,0,0,0.25);
@@ -148,20 +147,20 @@
   </div>
 
   <script>
-    const modal = document.getElementById('autoModal');
+    const modalPopup = document.getElementById('autoModal');
     const closeBtn = document.getElementById('closeBtn');
     const dontShowAgain = document.getElementById('dontShowAgain');
     const bannerTitle = document.getElementById('bannerTitle');
     const bannerImage = document.getElementById('bannerImage');
-    let startX = 0;
+    let startXPopup = 0;
 
 bannerImage.addEventListener("touchstart", function(e) {
-  startX = e.touches[0].clientX;
+  startXPopup = e.touches[0].clientX;
 }, false);
 
 bannerImage.addEventListener("touchend", function(e) {
   let endX = e.changedTouches[0].clientX;
-  let diffX = startX - endX;
+  let diffX = startXPopup - endX;
 
   if (Math.abs(diffX) > 50) {
     if (diffX > 0) {
@@ -201,7 +200,7 @@ bannerImage.addEventListener("touchend", function(e) {
         const expireTime = localStorage.getItem('dontShowModalUntil');
   if (!expireTime || Date.now() > parseInt(expireTime)) {
     setTimeout(() => {
-      modal.classList.add('show');
+      modalPopup.classList.add('show');
       showBanner(currentIndex);
     }, 300);
   }
@@ -212,7 +211,7 @@ bannerImage.addEventListener("touchend", function(e) {
     const oneHourLater = Date.now() + 10 * 60 * 1000;
     localStorage.setItem('dontShowModalUntil', oneHourLater);
   }
-  modal.classList.remove('show');
+  modalPopup.classList.remove('show');
 }
 
     function nextBanner() {
@@ -229,8 +228,8 @@ bannerImage.addEventListener("touchend", function(e) {
     nextBtn.onclick = nextBanner;
     prevBtn.onclick = prevBanner;
 
-    modal.onclick = function (e) {
-      if (e.target === modal) {
+    modalPopup.onclick = function (e) {
+      if (e.target === modalPopup) {
         closeModal();
       }
     };
