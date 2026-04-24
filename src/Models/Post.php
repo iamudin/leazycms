@@ -278,6 +278,7 @@ class Post extends Model
         })
             ->onType($type)
             ->published()
+            ->withCountPosts()
             ->orderBy('sort', 'ASC')
             ->get();
     }
@@ -292,13 +293,13 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
 
             if ($justIndex) {
-                return Category::onType($type)
+                return Category::select('name','url','slug','icon','description')->onType($type)
                     ->published()
                     ->orderBy('sort', 'ASC')
                     ->get();
             }
 
-            return Category::whereHas('posts', function ($q) {
+            return Category::select('name','url','slug','icon','description')->whereHas('posts', function ($q) {
                 $q->published();
             })
                 ->withCountPosts()
@@ -316,13 +317,13 @@ class Post extends Model
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $justIndex) {
 
                 if ($justIndex) {
-                    return Category::onType($type)
+                    return Category::select('name','url','slug','icon','description')->onType($type)
                         ->published()
                         ->orderBy('sort', 'ASC')
                         ->get();
                 }
 
-                return Category::whereHas('posts', function ($q) {
+                return Category::select('name','url','slug','icon','description')->whereHas('posts', function ($q) {
                     $q->published();
                 })
                     ->withCountPosts()

@@ -213,7 +213,7 @@ class WebController extends Controller
     {
         $modul = get_module(get_post_type());
         
-        $category = Category::where('slug', 'like', $slug . '%')->whereType($modul->name)->whereStatus('publish')->select('name', 'slug', 'url','icon')->whereHas('posts')->first();
+        $category = Category::where('slug', 'like', $slug . '%')->whereType($modul->name)->whereStatus('publish')->select('name', 'slug', 'url','icon','description')->whereHas('posts')->first();
         abort_if(!$category, '404');
         if ($category->slug != $slug){
             return redirect($category->url);

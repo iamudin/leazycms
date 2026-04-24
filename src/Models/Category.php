@@ -23,7 +23,7 @@ class Category extends Model
       }
     public function posts()
     {
-    return $this->hasMany(Post::class);
+    return $this->hasMany(Post::class)->selectedColumn();
     }
     function scopeWithCountPosts($query)
     {
@@ -38,6 +38,10 @@ class Category extends Model
     function getThumbnailAttribute()
     {
         return $this->icon && media_exists($this->icon) ? $this->icon : noimage();
+    }
+  public function getLinkAttribute()
+    {
+        return url($this->url);
     }
 
     function scopePublished($query)
