@@ -80,7 +80,7 @@ class UserController extends Controller implements HasMiddleware
                 return '<span class="text-primary">' . $row->name . '</span><br><small class="text-muted">' . $row->email . '</small>';
             })
                ->addColumn('last_login_data', function ($row) {
-                return '<small><code>Waktu :'. $row->last_login_at->diffForHumans() . '<br>IP : '.$row->last_login_ip.'</code></small>';
+                return '<small><code>Waktu :'. $row->last_login_at?->diffForHumans() . '<br>IP : '.$row?->last_login_ip.'</code></small>';
             })
             ->addColumn('role', function ($row) {
                 $dom = get_domain_extension($row->level);
