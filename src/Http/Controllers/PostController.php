@@ -286,7 +286,7 @@ $post_field = [
         }
 
         $data = $request->validate($post_field);
-        $allowed_tags = '<p><s><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td>';
+        $allowed_tags = '<p><s><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
         $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content']) : null;
 
         if (Post::onType($post->type)->whereNotIn('id', [$post->id])->whereSlug($slug)->count() > 0) {
