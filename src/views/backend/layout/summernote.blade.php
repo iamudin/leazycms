@@ -213,7 +213,8 @@ accept="{{ allow_mime() }}">
                     ['remove', ['removeMedia']],
                 ],
                 link: [
-                    ['link', ['linkDialogShow', 'unlink']]
+                    ['link', ['linkDialogShow', 'unlink']],
+                     ['custom', ['removeFile']]
                 ],
                 table: [
                     ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
@@ -256,6 +257,45 @@ accept="{{ allow_mime() }}">
 
         click: function () {
             $('#fileUploadInput').click();
+        }
+    }).render();
+},
+removeFile: function () {
+    var ui = $.summernote.ui;
+
+    return ui.button({
+        contents: '<i class="fa fa-trash"></i>',
+        tooltip: 'Hapus File',
+
+        click: function () {
+
+            let link = window.getSelection().anchorNode;
+
+            if (!link) return;
+
+            let $link = $(link).closest('a');
+
+            if (!$link.length) {
+                alert('Bukan link');
+                return;
+            }
+
+            let href = $link.attr('href');
+
+            let fileExt = href.split('.').pop().toLowerCase();
+            let allowed = @json(flc_ext());
+
+            if (!allowed.includes(fileExt)) {
+                alert('Hanya untuk hapus link file');
+                return;
+            }
+
+            $.post("{{ route('media.destroy') }}", {
+                media: href,
+                _token: "{{ csrf_token() }}"
+            });
+
+            $link.remove();
         }
     }).render();
 },
