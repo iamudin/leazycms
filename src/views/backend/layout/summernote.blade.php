@@ -362,12 +362,6 @@ $('#fileUploadInput').on('change', function () {
 
     let file = this.files[0];
     if (!file) return;
-
-    if (file.type.startsWith('image/')) {
-        alert('Gunakan upload gambar untuk file gambar.');
-        return;
-    }
-
     let data = new FormData();
     data.append("file", file);
     data.append("post", "{{ $post->id }}");
