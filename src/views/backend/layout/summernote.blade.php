@@ -1,35 +1,68 @@
+<style>
+    .note-editable img {
+        cursor: pointer;
+    }
 
-<div class="modal fade" id="embedModal" tabindex="-1" role="dialog" aria-labelledby="embedModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="embedModalLabel">Embed URL</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+    .note-editable img.selected-img {
+        outline: 2px solid #007bff;
+    }
+</style>
+<input type="file" id="replaceImageInput" accept="image/*" style="display:none;">
+<div class="modal fade" id="editImageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Edit Gambar</h5>
+            </div>
+
+            <div class="modal-body">
+                <input type="text" id="edit-image-url" class="form-control mb-2" placeholder="URL">
+                <input type="text" id="edit-image-alt" class="form-control mb-2" placeholder="ALT">
+                <input type="text" id="edit-image-caption" class="form-control" placeholder="Caption">
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-primary" type="button" id="btnSaveImageEdit">Simpan</button>
+            </div>
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="embed-url">URL</label>
-            <input type="text" class="form-control" id="embed-url" placeholder="Enter URL">
-          </div>
-          <div class="form-group">
-            <label for="embed-width">Width</label>
-            <input type="text" class="form-control" id="embed-width" placeholder="Sample : 100%, 100px or other">
-          </div>
-          <div class="form-group">
-            <label for="embed-height">Height</label>
-            <input type="text" class="form-control" id="embed-height" placeholder="Sample : 100%, 100px or other">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="embedModalSave">Save changes</button>
-        </div>
-      </div>
     </div>
-  </div>
-<div class="modal fade aiModal" id="aiModal" tabindex="-1" role="dialog" aria-labelledby="aiModalLabel" aria-hidden="true">
+</div>
+<div class="modal fade" id="embedModal" tabindex="-1" role="dialog" aria-labelledby="embedModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="embedModalLabel">Embed URL</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="embed-url">URL</label>
+                    <input type="text" class="form-control" id="embed-url" placeholder="Enter URL">
+                </div>
+                <div class="form-group">
+                    <label for="embed-width">Width</label>
+                    <input type="text" class="form-control" id="embed-width"
+                        placeholder="Sample : 100%, 100px or other">
+                </div>
+                <div class="form-group">
+                    <label for="embed-height">Height</label>
+                    <input type="text" class="form-control" id="embed-height"
+                        placeholder="Sample : 100%, 100px or other">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="embedModalSave">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade aiModal" id="aiModal" tabindex="-1" role="dialog" aria-labelledby="aiModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
 
@@ -41,12 +74,11 @@
             </div>
 
             <div class="modal-body">
-                <textarea id="aiPrompt" class="form-control" rows="4"
-                    placeholder="Masukkan perintah artikel..."></textarea>
+                <textarea id="aiPrompt" class="form-control" rows="4" placeholder="Masukkan perintah artikel..."></textarea>
             </div>
 
             <div class="modal-footer">
-    
+
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
                 <button type="button" id="btnGenerateAI" data-dismiss="modal" class="btn btn-primary">Generate</button>
             </div>
@@ -58,29 +90,38 @@
     <script src="https://js.puter.com/v2/"></script>
 @endpush
 <script type="text/javascript">
+        let currentImage = null;
+
     $(document).ready(function() {
-         let firstRequest = true;
+
+        $(document).on('mousedown', '.note-editable img', function() {
+            $('.note-editable img').removeClass('selected-img');
+            $(this).addClass('selected-img');
+            currentImage = $(this);
+        });
+        let firstRequest = true;
+
         function aiButton(context) {
             var ui = $.summernote.ui;
             return ui.button({
                 contents: '<i class="note-icon-magic"></i> AI Generate',
                 tooltip: 'Generate Artikel dengan AI',
-                click: function () {
-                     $('#btnGenerateAI').removeAttr('disabled');
+                click: function() {
+                    $('#btnGenerateAI').removeAttr('disabled');
                     $('#btnGenerateAI').text('Generate');
                     var myModal = new bootstrap.Modal(document.getElementById('aiModal'));
                     myModal.show();
                 }
             }).render();
         }
-        $('#btnGenerateAI').on('click', async function () {
+        $('#btnGenerateAI').on('click', async function() {
             let prompt = $('#aiPrompt').val().trim();
             if (!prompt) {
                 alert("Masukkan prompt terlebih dahulu!");
                 return;
-            }else{
-            $('#btnGenerateAI').attr('disabled', true);
-            $('#btnGenerateAI').text('Generating...');
+            } else {
+                $('#btnGenerateAI').attr('disabled', true);
+                $('#btnGenerateAI').text('Generating...');
             }
 
             let current = $('#editor').summernote('code');
@@ -91,7 +132,10 @@
             }
             firstRequest = false;
 
-            const resp = await puter.ai.chat(prompt, { model: 'gpt-4o-mini', stream: true });
+            const resp = await puter.ai.chat(prompt, {
+                model: 'gpt-4o-mini',
+                stream: true
+            });
 
             let carry = "";
             for await (const part of resp) {
@@ -115,46 +159,45 @@
                 current += processed;
                 $('#editor').summernote('code', current);
             }
-              $('#aiModal').hide();
+            $('#aiModal').hide();
             $('.modal-backdrop').hide();
         });
 
         $("#editor").summernote({
             placeholder: 'Tulis isi..',
-            height: 350,
+            height: 600,
             codeviewFilter: true,
             codeviewIframeFilter: true,
             callbacks: {
-      onChange: function(contents, $editable) {
-      let sanitized = contents
-        .replace(/<script[^>]*>.*?<\/script>/gi, '')
-        .replace(/<style[^>]*>.*?<\/style>/gi, '')
-        .replace(/javascript:/gi, '')
-        .replace(/on\w+="[^"]*"/gi, '')
-        .replace(/on\w+='[^']*'/gi, '');
+                onChange: function(contents, $editable) {
+                    let sanitized = contents
+                        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+                        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+                        .replace(/javascript:/gi, '')
+                        .replace(/on\w+="[^"]*"/gi, '')
+                        .replace(/on\w+='[^']*'/gi, '');
 
-      if (sanitized !== contents) {
-        $('#editor').summernote('code', sanitized);
-      }
-    },
+                    if (sanitized !== contents) {
+                        $('#editor').summernote('code', sanitized);
+                    }
+                },
                 onImageUpload: function(files) {
                     uploadImage(files[0]);
                 },
                 onMediaDelete: function(target) {
-                var img = $(target).is('img') ? $(target) : $(target).find('img');
+                    var img = $(target).is('img') ? $(target) : $(target).find('img');
 
-                if (img.length > 0) {
-                    var src = img.attr('src');
-                    if (src.startsWith('https')) {
-                        return;
-                    }else{
-                    deleteImage(src);
+                    if (img.length > 0) {
+                        var src = img.attr('src');
+                        if (src.startsWith('https')) {
+                            return;
+                        } else {
+                            deleteImage(src);
 
-                    }
-                    removeFigure(target);
-                } else {
-                }
-            },
+                        }
+                        removeFigure(target);
+                    } else {}
+                },
 
 
             },
@@ -164,16 +207,16 @@
                 image: [
                     ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
                     ['float', ['floatLeft', 'floatRight', 'floatNone']],
+                    ['custom', ['editImage', 'replaceImage']],
                     ['remove', ['removeMedia']],
-                    ['custom', ['imageAttributes']],
                 ],
                 link: [
-    ['link', ['linkDialogShow', 'unlink']]
-  ],
-  table: [
-    ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
-    ['delete', ['deleteRow', 'deleteCol', 'deleteTable']],
-  ]
+                    ['link', ['linkDialogShow', 'unlink']]
+                ],
+                table: [
+                    ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
+                    ['delete', ['deleteRow', 'deleteCol', 'deleteTable']],
+                ]
             },
             toolbar: [
                 ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
@@ -183,26 +226,71 @@
                 ['height', ['height']],
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['picture', 'link', 'video', 'hr','embedUrl']],
+                ['insert', ['picture', 'link', 'video', 'hr', 'embedUrl']],
                 ['table', ['table']],
-                ['view', ['fullscreen', 'help','codeview']],
+                ['view', ['fullscreen', 'help', 'codeview']],
                 ['custom', ['aiGenerate']],
-        ],
-      
-        buttons: {
-            aiGenerate: aiButton,
-            embedUrl: function() {
-                var ui = $.summernote.ui;
-                var button = ui.button({
-                    contents: '<i class="fa fa-globe"/></i> Embed URL',
-                    tooltip: 'Embed URL',
-                    click: function() {
-                        $('#embedModal').modal('show');
-                    }
-                });
-                return button.render();
-            }
-        },
+            ],
+
+            buttons: {
+                aiGenerate: aiButton,
+                embedUrl: function() {
+                    var ui = $.summernote.ui;
+                    var button = ui.button({
+                        contents: '<i class="fa fa-globe"/></i> Embed URL',
+                        tooltip: 'Embed URL',
+                        click: function() {
+                            $('#embedModal').modal('show');
+                        }
+                    });
+                    return button.render();
+                },
+                replaceImage: function() {
+                    var ui = $.summernote.ui;
+
+                    return ui.button({
+                        contents: '<i class="fa fa-image"></i>',
+                        tooltip: 'Ganti Gambar',
+
+                        click: function() {
+                            if (!currentImage || !currentImage.length) {
+                                alert('Klik gambar dulu');
+                                return;
+                            }
+
+                            $('#replaceImageInput').click();
+                        }
+                    }).render();
+                },
+                editImage: function() {
+                    var ui = $.summernote.ui;
+
+                    return ui.button({
+                        contents: '<i class="fa fa-edit"></i>',
+                        tooltip: 'Edit Image',
+
+                        click: function() {
+
+                            if (!currentImage || !currentImage.length) {
+                                alert('Klik gambar dulu');
+                                return;
+                            }
+
+                            let src = currentImage.attr('src') || '';
+                            let alt = currentImage.attr('alt') || '';
+                            let caption = currentImage.closest('figure').find(
+                                'figcaption').text().trim();
+
+                            $('#edit-image-url').val(src);
+                            $('#edit-image-alt').val(alt);
+                            $('#edit-image-caption').val(caption);
+
+                            new bootstrap.Modal(document.getElementById(
+                                'editImageModal')).show();
+                        }
+                    }).render();
+                }
+            },
             tableClassName: function() {
                 $(this).addClass('table table-bordered table-hover')
 
@@ -217,77 +305,145 @@
             },
         });
 
-        
-    });
+        $('#btnSaveImageEdit').on('click', function() {
 
-    
-        async function compressToWebP(file, quality = 0.3) {
-            const imageBitmap = await createImageBitmap(file);
-            const canvas = document.createElement('canvas');
-            canvas.width = imageBitmap.width;
-            canvas.height = imageBitmap.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(imageBitmap, 0, 0);
 
-            const blob = await new Promise(resolve =>
-                canvas.toBlob(resolve, 'image/webp', quality)
-            );
+            if (!currentImage || !currentImage.length) return;
 
-            const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
-            return new File([blob], newFileName, { type: 'image/webp' });
-        }
+            let url = $('#edit-image-url').val().trim();
+            let alt = $('#edit-image-alt').val().trim();
+            let caption = $('#edit-image-caption').val().trim();
 
-        async function uploadImage(file) {
+            if (url) currentImage.attr('src', url);
+            currentImage.attr('alt', alt);
+
+            let figure = currentImage.closest('figure');
+
+            if (figure.length) {
+
+                let cap = figure.children('figcaption');
+
+                if (cap.length) {
+                    cap.html(`<small>${caption}</small>`);
+                } else {
+                    figure.append(`<figcaption><small>${caption}</small></figcaption>`);
+                }
+            }
+
+            $('#editImageModal').hide();
+
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+        });
+
+        $('#replaceImageInput').on('change', function() {
+
+            let file = this.files[0];
             if (!file) return;
 
-            const allowedTypes = ['image/jpeg', 'image/png'];
-            if (!allowedTypes.includes(file.type)) {
-                alert('Pilih hanya format gambar: JPG atau PNG.');
-                return;
-            }
+            uploadImage(file, true);
 
-            try {
-                const compressedFile = await compressToWebP(file);
+            $(this).val('');
+        });
+    });
 
-                const data = new FormData();
-                data.append("file", compressedFile);
-                data.append("post", "{{ $post?->id }}");
-                data.append("_token", "{{ csrf_token() }}");
 
-                $.ajax({
-                    url: "{{ route('upload_image_summernote') }}",
-                    type: 'POST',
-                    data: data,
-                    contentType: false,
-                    processData: false,
-                    success: function (response) {
-                        const actualImageUrl = response.url;
-                        const figureHTML = `
-                        <figure style="text-align: center; margin: 10px 0;">
-                            <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
-                            <figcaption style="font-style: italic; color: #666;">
-                                <small>Ilustrasi Gambar Disini</small>
-                            </figcaption>
-                        </figure>`;
-                        $('#editor').summernote("pasteHTML", figureHTML);
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        console.error('Error uploading image: ', textStatus, errorThrown);
-                    }
-                });
-            } catch (err) {
-                console.error('Compress error:', err);
-                alert('Gagal mengompres gambar.');
-            }
+    async function compressToWebP(file, quality = 0.3) {
+        const imageBitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width = imageBitmap.width;
+        canvas.height = imageBitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imageBitmap, 0, 0);
+
+        const blob = await new Promise(resolve =>
+            canvas.toBlob(resolve, 'image/webp', quality)
+        );
+
+        const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+        return new File([blob], newFileName, {
+            type: 'image/webp'
+        });
+    }
+
+    async function uploadImage(file, isReplace = false) {
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Pilih hanya format gambar: JPG atau PNG.');
+            return;
         }
 
-    function removeFigure(target) {
-    var figure = $(target).closest('figure');
-    if (figure.length > 0) {
-        figure.remove();
-    } else {
-    }
+        try {
+            const compressedFile = await compressToWebP(file);
+
+            const data = new FormData();
+            data.append("file", compressedFile);
+            data.append("post", "{{ $post?->id }}");
+            data.append("_token", "{{ csrf_token() }}");
+
+            $.ajax({
+                url: "{{ route('upload_image_summernote') }}",
+                type: 'POST',
+                data: data,
+                contentType: false,
+                processData: false,
+
+                success: function(response) {
+
+                    const actualImageUrl = response.url;
+
+  if (isReplace && currentImage && currentImage.length) {
+
+    console.log('replace jalan');
+
+    let oldSrc = currentImage.attr('src');
+
+    $.post("{{ route('media.destroy') }}", {
+        media: oldSrc,
+        _token: "{{ csrf_token() }}"
+    });
+
+    let content = $('#editor').summernote('code');
+
+    content = content.replace(oldSrc, actualImageUrl);
+
+    $('#editor').summernote('code', content);
+
+    return;
 }
+
+
+                    const figureHTML = `
+                <figure style="text-align: center; margin: 10px 0;">
+                    <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
+                    <figcaption style="font-style: italic; color: #666;">
+                        <small>Ilustrasi Gambar Disini</small>
+                    </figcaption>
+                </figure>`;
+
+                    $('#editor').summernote("pasteHTML", figureHTML);
+                },
+
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error uploading image: ', textStatus, errorThrown);
+                }
+            });
+
+        } catch (err) {
+            console.error('Compress error:', err);
+            alert('Gagal mengompres gambar.');
+        }
+    }
+
+    function removeFigure(target) {
+        var figure = $(target).closest('figure');
+        if (figure.length > 0) {
+            figure.remove();
+        } else {}
+    }
+
     function deleteImage(src) {
         var data = new FormData();
         data.append("media", src);
@@ -321,4 +477,3 @@
 </script>
 
 <!-- Modal -->
-
