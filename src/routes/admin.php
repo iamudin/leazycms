@@ -10,6 +10,7 @@ use Leazycms\Web\Http\Controllers\AppMasterController;
 use Leazycms\Web\Http\Controllers\CategoryController;
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
+Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileSummernote'])->name('upload_file_summernote');
 Route::match(['get','post','delete'],'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
 Route::get('files', [PanelController::class, 'files'])->name('files');

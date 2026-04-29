@@ -62,6 +62,17 @@ class PostController extends Controller implements HasMiddleware
         $pdf = PDF::loadHTML($html)->setOption('page-width', '330')->setPaper('a4', 'landscape');
         return $pdf->stream('laporan-posts-' . date('Y-m-d-His') . '.pdf');
     }
+        public function uploadFileSummernote(Request $request)
+    {
+        $post = Post::findOrFail($request->post);
+        $result = $post->addFile([
+            'file' => $request->file('file'),
+            'purpose' => 'file from summernote',
+            'child_id' => Str::random(6),
+            'mime_type' => explode(",",allow_mime())
+        ]);
+        return response()->json(['status' => 'success', 'url' => $result,'name'=>str($request->file('file')->getClientOriginalName())->headline()]);
+    }
     public function uploadImageSummernote(Request $request)
     {
         $post = Post::findOrFail($request->post);
@@ -69,7 +80,7 @@ class PostController extends Controller implements HasMiddleware
             'file' => $request->file('file'),
             'purpose' => 'image from summernote',
             'child_id' => Str::random(6),
-            'mime_type' => ['image/jpeg', 'image/png']
+            'mime_type' => ['image/jpeg', 'image/png','image/gif','image/webp']
         ]);
         return response()->json(['status' => 'success', 'url' => $result]);
     }

@@ -8,6 +8,8 @@
     }
 </style>
 <input type="file" id="replaceImageInput" accept="image/*" style="display:none;">
+<input type="file" id="fileUploadInput" style="display:none;"
+accept="{{ allow_mime() }}">
 <div class="modal fade" id="editImageModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -226,7 +228,7 @@
                 ['height', ['height']],
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['picture', 'link', 'video', 'hr', 'embedUrl']],
+                ['insert', ['picture', 'link', 'video', 'hr', 'embedUrl', 'uploadFile']],
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help', 'codeview']],
                 ['custom', ['aiGenerate']],
@@ -245,6 +247,18 @@
                     });
                     return button.render();
                 },
+                uploadFile: function () {
+    var ui = $.summernote.ui;
+
+    return ui.button({
+        contents: '<i class="fa fa-upload"></i>',
+        tooltip: 'Upload File',
+
+        click: function () {
+            $('#fileUploadInput').click();
+        }
+    }).render();
+},
                 replaceImage: function() {
                     var ui = $.summernote.ui;
 
@@ -304,7 +318,51 @@
                     .css('padding', '5px');
             },
         });
+$('#fileUploadInput').on('change', function () {
 
+    let file = this.files[0];
+    if (!file) return;
+
+    if (file.type.startsWith('image/')) {
+        alert('Gunakan upload gambar untuk file gambar.');
+        return;
+    }
+
+    let data = new FormData();
+    data.append("file", file);
+    data.append("post", "{{ $post->id }}");
+    data.append("_token", "{{ csrf_token() }}");
+
+    $.ajax({
+        url: "{{ route('upload_file_summernote') }}", // 🔥 endpoint upload file
+        type: "POST",
+        data: data,
+        contentType: false,
+        processData: false,
+
+        success: function (res) {
+
+            let fileUrl = res.url;
+            if(fileUrl!==null){
+            let fileName = file.name;
+            let html = `
+                    📎 <a href="${fileUrl}" >${fileName}</a>
+            `;
+
+            $('#editor').summernote('pasteHTML', html);
+            }else{
+                alert('Upload file gagal, bisa jadi format tidak didukung');
+            }
+
+        },
+
+        error: function () {
+            alert('Upload file gagal');
+        }
+    });
+
+    $(this).val('');
+});
         $('#btnSaveImageEdit').on('click', function() {
 
 
@@ -396,8 +454,6 @@
 
   if (isReplace && currentImage && currentImage.length) {
 
-    console.log('replace jalan');
-
     let oldSrc = currentImage.attr('src');
 
     $.post("{{ route('media.destroy') }}", {
@@ -413,9 +469,7 @@
 
     return;
 }
-
-
-                    const figureHTML = `
+            const figureHTML = `
                 <figure style="text-align: center; margin: 10px 0;">
                     <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
                     <figcaption style="font-style: italic; color: #666;">
