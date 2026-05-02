@@ -823,100 +823,8 @@ if (!function_exists('is_ip')) {
         return false;
     }
 }
-if (!function_exists('processVisitorData')) {
-    function processVisitorData()
-    {
-        if (!Cache::has('visit_to_db')) {
-            $cacheKey = 'visitor_sorted';
-            $visitorDataList = Cache::pull($cacheKey, []);
 
-            if (!empty($visitorDataList)) {
-                // Step 1: Group by ip + session + page
-                $groupedVisitors = [];
 
-                foreach ($visitorDataList as $data) {
-                    if (!is_array($data))
-                        continue;
-
-                    $key = $data['ip'] . '|' . $data['session'] . '|' . $data['page'];
-
-                    if (!isset($groupedVisitors[$key])) {
-                        $groupedVisitors[$key] = $data;
-                        $groupedVisitors[$key]['times'] = 1;
-                    } else {
-                        $groupedVisitors[$key]['times'] += 1;
-                    }
-                }
-
-                foreach ($groupedVisitors as $visitorData) {
-                    \Leazycms\Web\Models\Visitor::updateOrCreate(
-                        [
-                            'ip' => $visitorData['ip'],
-                            'session' => $visitorData['session'],
-                            'page' => substr($visitorData['page'], 0, 191),
-                        ],
-                        [
-                            'user_id' => $visitorData['user_id'],
-                            'post_id' => $visitorData['post_id'],
-                            'ip_location' => $visitorData['ip_location'],
-                            'browser' => $visitorData['browser'],
-                            'device' => $visitorData['device'],
-                            'os' => $visitorData['os'],
-                            'reference' => substr($visitorData['reference'], 0, 191),
-                            'created_at' => $visitorData['created_at'],
-                            'updated_at' => now(),
-                            'status' => $visitorData['status'],
-                            'times' => \Illuminate\Support\Facades\DB::raw('times + ' . $visitorData['times']), // ⬅️ Increment times
-                        ]
-                    );
-                }
-            }
-
-            // Step 3: Set Cache lock supaya nggak double eksekusi
-            Cache::put('visit_to_db', true, now()->addMinutes(5));
-        }
-    }
-}
-if (!function_exists('stats_visitor')) {
-function stats_visitor()
-    {
-        $stats = [
-            'total_visitors' => Visitor::count(),
-            'unique_visitors' => Visitor::distinct('ip_location')->count(),
-            'today_visitors' => Visitor::whereDate('created_at', today())->count(),
-            'total_404' => Visitor::where('status', 404)->count(),
-            'top_countries' => DB::table('visitors')
-    ->selectRaw("
-        JSON_UNQUOTE(JSON_EXTRACT(ip_location, '$.country')) AS country,
-        JSON_UNQUOTE(JSON_EXTRACT(ip_location, '$.city')) AS city,
-        COUNT(*) AS total
-    ")
-    ->groupBy('country', 'city')
-    ->orderByDesc('total')
-    ->limit(5)
-    ->get(),
-            'top_browsers' => Visitor::select('browser', DB::raw('count(*) as total'))
-                                     ->groupBy('browser')->orderByDesc('total')->take(5)->get(),
-            'top_devices' => DB::table('visitors')
-    ->select('device', DB::raw('COUNT(*) as total'))
-    ->groupBy('device')
-    ->orderByDesc('total')
-    ->get()
-    ->toArray() // ✅ ubah ke array
-        ];
-
-        // Data tren 7 hari
-        $trend = Visitor::selectRaw('DATE(created_at) as date, COUNT(*) as total')
-                        ->where('created_at', '>=', now()->subDays(6))
-                        ->groupBy('date')
-                        ->orderBy('date')
-                        ->get();
-        $stats['trend_labels'] = $trend->pluck('date')->map(fn($d) => date('d M', strtotime($d)));
-        $stats['trend_values'] = $trend->pluck('total');
-
-        return view()->make('cms::backend.stats', compact('stats'));
-    }
-}
 if (!function_exists('ratelimiter')) {
     function ratelimiter($request, $limittime)
     {
@@ -2176,7 +2084,7 @@ if (!function_exists('init_meta_header')) {
             }
             $data = [
                 'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : (!request()->is('/') ? 'Halaman tidak ditemukan' : ($site_meta_description ?? $site_desc)),
-                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman tidak ditemukan' : $site_title . ($site_desc ? ' › ' . $site_desc : '')),
+                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman tidak ditemukan' : $site_title . ($site_desc ? ' - ' . $site_desc : '')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
                 'url' => request()->fullUrl(),
