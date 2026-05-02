@@ -3,7 +3,7 @@
     <div class="row">
       <div class="col-lg-12">
 
-    <div class="dd" id="nestable3" style="max-height:55vh;overflow:auto">
+    <div class="dd" id="nestable3" style="max-height:70vh;overflow:auto">
           <ol class="dd-list main-list">
             @php $menu = collect(json_decode(json_encode($looping_data))) @endphp
 
