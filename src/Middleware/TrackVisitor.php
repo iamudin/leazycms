@@ -12,7 +12,6 @@ class TrackVisitor
         protected AnalyticsService $analytics
     ) {
     }
-//ok
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);

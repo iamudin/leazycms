@@ -2045,7 +2045,7 @@ if (!function_exists('short_content')) {
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
     {
-        return view()->make('cms::layouts.floatwa');
+        return view()->make('cms::layouts.floatwa')->render();
     }
 }
 if (!function_exists('page_name')) {

@@ -15,7 +15,7 @@
             image: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
             pdf: ['pdf'],
             office: [
-                'docx', 'docm', 'dotm', 'dotx',
+                'docx','doc', 'docm', 'dotm', 'dotx',
                 'xlsx', 'xlsb', 'xls', 'xlsm',
                 'pptx', 'ppsx', 'ppt', 'pps', 'pptm', 'potm', 'ppam', 'potx', 'ppsm'
             ]
