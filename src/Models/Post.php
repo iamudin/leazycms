@@ -2,13 +2,13 @@
 
 namespace Leazycms\Web\Models;
 
-use Leazycms\FLC\Traits\Fileable;
-use Leazycms\FLC\Traits\Commentable;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+use Leazycms\FLC\Traits\Commentable;
+use Leazycms\FLC\Traits\Fileable;
+use Leazycms\Web\Models\BaseModel;
 
-class Post extends Model
+class Post extends BaseModel
 {
     use SoftDeletes,Fileable,Commentable;
     public $selected = ['id','description','redirect_to','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','data_loop','pinned','sort','status','shortcut','shortcut_counter','custom_page','visited','allow_comment','password'];

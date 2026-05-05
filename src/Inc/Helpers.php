@@ -520,6 +520,7 @@ if (!function_exists('realtime_timer')) {
         return view()->make('cms::backend.layout.realtime_timer', ['event_time' => $dateTime, 'tag' => $elementId]);
     }
 }
+
 if (!function_exists('is_main_domain')) {
     function is_main_domain()
     {
@@ -1249,12 +1250,7 @@ if (!function_exists('cached')) {
         return app()->configurationIsCached();
     }
 }
-if (!function_exists('get_option')) {
-    function get_option($val = false)
-    {
-        return config('modules.option.' . $val) ?? null;
-    }
-}
+
 
 if (!function_exists('admin_path')) {
     function admin_path()
@@ -2176,7 +2172,7 @@ if (!function_exists('init_meta_header')) {
             }
             $data = [
                 'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : (!request()->is('/') ? 'Halaman tidak ditemukan' : ($site_meta_description ?? $site_desc)),
-                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman tidak ditemukan' : $site_title . ($site_desc ? ' › ' . $site_desc : '')),
+                'title' => $pn ? $pn : (!request()->is('/') ? 'Halaman tidak ditemukan' : $site_title . ($site_desc ? ' - ' . $site_desc : '')),
                 'keywords' => $site_meta_keyword,
                 'thumbnail' => url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
                 'url' => request()->fullUrl(),

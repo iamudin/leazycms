@@ -921,6 +921,7 @@ return [
     'no_cache_for_route'=>array(),
     'custom_controllers'=>array(),
     'sidebar'=>array(),
+    'multisite_enabled'=>env('MULTISITE_ENABLED', false),
     'view_stats'=>null,
     'sampleignore'=>env('READABLESAMPLE', false),
     'teletoken'=>env('TELETOKEN',FALSE),

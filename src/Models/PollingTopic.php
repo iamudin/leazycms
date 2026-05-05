@@ -1,8 +1,9 @@
 <?php
 namespace Leazycms\Web\Models;
-use Illuminate\Database\Eloquent\Model;
 use Leazycms\FLC\Traits\Fileable;
-class PollingTopic extends Model
+use Leazycms\Web\Models\BaseModel;
+
+class PollingTopic extends BaseModel
 {
     use Fileable;
     protected $fillable = ['title','description','duration','status','keyword'];

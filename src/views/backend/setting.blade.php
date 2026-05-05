@@ -5,7 +5,7 @@
         @csrf
         <div class="row">
             <div class="col-lg-12">
-                <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-globe"></i> Setting › Website <div
+                <h3 style="font-weight:normal;margin-bottom:20px"> <i class="fa fa-globe"></i> Setting › Website  <div
                         class="btn-group pull-right">
                         @if (!app()->configurationIsCached())
                             <button name="save_setting" value="true" class="btn btn-primary btn-sm"> <i class="fa fa-save"
@@ -22,9 +22,11 @@
                         <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#profile"> <i
                                     class="fa fa-search"></i>
                                 S E O</a></li>
+                                @if(is_main_domain())
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#keamanan"> <i
                                     class="fa fa-gears"></i>
                                 Lainnya</a></li>
+                                @endif
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pwa"> <i
                                     class="fa fa-mobile-alt"></i>
                                 PWA</a></li>
@@ -37,6 +39,7 @@
                             @foreach ($site_attribute as $r)
                                 @if ($r[2] == 'file')
                                     @if ($r[1] == 'favicon')
+                                    @if(is_main_domain())
                                         <small for="" class="text-muted">Favicon (didukung hanya file gambar format
                                             .ico ukuran 64px x 64px)</small>
 
@@ -44,6 +47,7 @@
                                         <br>
                                         <input accept="image/x-icon,image/vnd.microsoft.icon" type="file"
                                             class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                                            @endif
                                     @else
                                         <small for="" class="text-muted">{{ $r[0] }}</small>
 
@@ -60,11 +64,15 @@
                                         @endif
                                     @endif
                                 @else
-                                    <small for="" class="text-muted">{{ $r[0] }} @if ($r[1] == 'site_title')
+                                    <small for="" class="text-muted">{{ $r[0] }} 
+                                @if(is_main_domain())
+
+                                        @if ($r[1] == 'site_title')
                                             <br><input type="checkbox" name="show_site_title_after_page_name" value="true"
                                                 {{ get_option('show_site_title_after_page_name') ? 'checked' : '' }}>
                                             Tampilkan setelah Nama Halaman
                                         @endif
+                                @endif
                                     </small>
                                     <input type="text"
                                         @if ($r[2] == 'number') oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" @endif
@@ -75,88 +83,91 @@
                             @endforeach
 
                         </div>
-                        <div class="tab-pane fade" id="keamanan">
-                            <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-clock"></i> Zona Waktu
-                            </h6>
-                            <select name="timezone" class="form-control form-control-sm">
-                                <option value="Asia/Jakarta"
-                                    {{ config('app.timezone') == 'Asia/Jakarta' ? 'selected' : '' }}>Asia/Jakarta (WIB)
-                                </option>
-                                <option value="Asia/Makassar"
-                                    {{ config('app.timezone') == 'Asia/Makassar' ? 'selected' : '' }}>Asia/Makassar (WITA)
-                                </option>
-                                <option value="Asia/Jayapura"
-                                    {{ config('app.timezone') == 'Asia/Jayapura' ? 'selected' : '' }}>Asia/Jayapura (WIT)
-                                </option>
-                            </select>
-                            <br>
-                            <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-lock"></i> Keamanan
-                            </h6>
-                            @foreach ($security as $r)
-                                <small for="" class="text-muted">{{ $r[0] }} @if (_us($r[0]) == 'allow_ip')
-                                        <i class="text-danger">(Khusus Akses API eg : url/berita/api/{id})</i>
-                                    @endif
-                                </small><br>
-                                <input type="text" class="form-control form-control-sm"
-                                    placeholder="Enter {{ $r[1] }}" name="{{ _us($r[0]) }}"
-                                    value="{{ get_option(_us($r[0])) }}">
-                            @endforeach
-                            <br>
-                            <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-warning"></i>
-                                Notifikasi Serangan via Telegram</h6>
-                            <small for="" class="text-muted">Bot Token</small><br>
-                            <input type="text" class="form-control form-control-sm"
-                                placeholder="Enter Bot Token Telegram 3434:tokentelegram"
-                                value="{{ dec64(config('modules.teletoken')) }}" name="telegram_token">
-                            <small for="" class="text-muted">Chat ID</small><br>
-                            <input type="text" class="form-control form-control-sm"
-                                placeholder="Enter chat ID 12345678" value="{{ dec64(config('modules.telechatid')) }}"
-                                name="telegram_chat_id">
-                            <br>
-                            <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-keyboard-o"></i>
-                                Web Control</h6>
-                            <div class="list-group mb-4">
-                                @foreach ($shortcut as $r)
-                                    <div class="list-group-item py-2"><strong for=""
-                                            class="text-muted">{{ $r[0] }}</strong>
-                                        <div class="pull-right"><input name="{{ $r[1] }}" data-width="100"
-                                                {{ get_option($r[1]) == 'Y' ? 'checked' : '' }}
-                                                title="Ubah status data publik atau draft" type="checkbox"
-                                                class="toggle-status" data-on="Active" data-off="Inactive"
-                                                data-toggle="toggle" data-onstyle="outline-success"
-                                                data-offstyle="outline-danger" data-size="sm"></div>
-                                    </div>
-                                @endforeach
-                                <div class="list-group-item py-2">
-                                    <strong for="" class="text-muted">Maintenance Status</strong>
-                                    <div class="pull-right"><input name="site_maintenance" data-width="100"
-                                            {{ get_option('site_maintenance') == 'Y' ? 'checked' : '' }}
-                                            title="Ubah status data publik atau draft" type="checkbox"
-                                            class="toggle-status" data-on="Active" data-off="Inactive"
-                                            data-toggle="toggle" data-onstyle="outline-success"
-                                            data-offstyle="outline-danger" data-size="sm"></div>
-                                </div>
-                                <div class="list-group-item py-2">
-                                    <strong for="" class="text-muted">App Environment</strong>
-                                    <div class="pull-right"><input name="app_env" data-width="100"
-                                            {{ get_option('app_env') == 'production' ? 'checked' : '' }}
-                                            title="Ubah status data publik atau draft" type="checkbox"
-                                            class="toggle-status" data-on="Production" data-off="Local"
-                                            data-toggle="toggle" data-onstyle="outline-success"
-                                            data-offstyle="outline-danger" data-size="sm"></div>
-                                </div>
-                            </div>
-                            @if (!app()->routesAreCached())
-                                <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i> Login
-                                    Path</h6>
-                                <input type="text" class="form-control form-control-sm" name="admin_path"
-                                    value="{{ admin_path() }}">
-                                <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik
-                                    / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui
-                                    form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel
-                                    </b> dan lainnya yang familiar.</small>
+                            @if (is_main_domain())
+
+                                                                <div class="tab-pane fade" id="keamanan">
+                                                                    <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-clock"></i> Zona Waktu
+                                                                    </h6>
+                                                                    <select name="timezone" class="form-control form-control-sm">
+                                                                        <option value="Asia/Jakarta"
+                                                                            {{ config('app.timezone') == 'Asia/Jakarta' ? 'selected' : '' }}>Asia/Jakarta (WIB)
+                                                                        </option>
+                                                                        <option value="Asia/Makassar"
+                                                                            {{ config('app.timezone') == 'Asia/Makassar' ? 'selected' : '' }}>Asia/Makassar (WITA)
+                                                                        </option>
+                                                                        <option value="Asia/Jayapura"
+                                                                            {{ config('app.timezone') == 'Asia/Jayapura' ? 'selected' : '' }}>Asia/Jayapura (WIT)
+                                                                        </option>
+                                                                    </select>
+                                                                    <br>
+                                                                    <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-lock"></i> Keamanan
+                                                                    </h6>
+                                                                    @foreach ($security as $r)
+                                                                        <small for="" class="text-muted">{{ $r[0] }} @if (_us($r[0]) == 'allow_ip')
+                                                                                <i class="text-danger">(Khusus Akses API eg : url/berita/api/{id})</i>
+                                                                            @endif
+                                                                        </small><br>
+                                                                        <input type="text" class="form-control form-control-sm"
+                                                                            placeholder="Enter {{ $r[1] }}" name="{{ _us($r[0]) }}"
+                                                                            value="{{ get_option(_us($r[0])) }}">
+                                                                    @endforeach
+                                                                    <br>
+                                                                    <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-warning"></i>
+                                                                        Notifikasi Serangan via Telegram</h6>
+                                                                    <small for="" class="text-muted">Bot Token</small><br>
+                                                                    <input type="text" class="form-control form-control-sm"
+                                                                        placeholder="Enter Bot Token Telegram 3434:tokentelegram"
+                                                                        value="{{ dec64(config('modules.teletoken')) }}" name="telegram_token">
+                                                                    <small for="" class="text-muted">Chat ID</small><br>
+                                                                    <input type="text" class="form-control form-control-sm"
+                                                                        placeholder="Enter chat ID 12345678" value="{{ dec64(config('modules.telechatid')) }}"
+                                                                        name="telegram_chat_id">
+                                                                    <br>
+                                                                    <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-keyboard-o"></i>
+                                                                        Web Control</h6>
+                                                                    <div class="list-group mb-4">
+                                                                        @foreach ($shortcut as $r)
+                                                                            <div class="list-group-item py-2"><strong for=""
+                                                                                    class="text-muted">{{ $r[0] }}</strong>
+                                                                                <div class="pull-right"><input name="{{ $r[1] }}" data-width="100"
+                                                                                        {{ get_option($r[1]) == 'Y' ? 'checked' : '' }}
+                                                                                        title="Ubah status data publik atau draft" type="checkbox"
+                                                                                        class="toggle-status" data-on="Active" data-off="Inactive"
+                                                                                        data-toggle="toggle" data-onstyle="outline-success"
+                                                                                        data-offstyle="outline-danger" data-size="sm"></div>
+                                                                            </div>
+                                                                        @endforeach
+                                                                        <div class="list-group-item py-2">
+                                                                            <strong for="" class="text-muted">Maintenance Status</strong>
+                                                                            <div class="pull-right"><input name="site_maintenance" data-width="100"
+                                                                                    {{ get_option('site_maintenance') == 'Y' ? 'checked' : '' }}
+                                                                                    title="Ubah status data publik atau draft" type="checkbox"
+                                                                                    class="toggle-status" data-on="Active" data-off="Inactive"
+                                                                                    data-toggle="toggle" data-onstyle="outline-success"
+                                                                                    data-offstyle="outline-danger" data-size="sm"></div>
+                                                                        </div>
+                                                                        <div class="list-group-item py-2">
+                                                                            <strong for="" class="text-muted">App Environment</strong>
+                                                                            <div class="pull-right"><input name="app_env" data-width="100"
+                                                                                    {{ get_option('app_env') == 'production' ? 'checked' : '' }}
+                                                                                    title="Ubah status data publik atau draft" type="checkbox"
+                                                                                    class="toggle-status" data-on="Production" data-off="Local"
+                                                                                    data-toggle="toggle" data-onstyle="outline-success"
+                                                                                    data-offstyle="outline-danger" data-size="sm"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                    @if(!app()->routesAreCached())
+                                                                        <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i> Login
+                                                                            Path</h6>
+                                                                        <input type="text" class="form-control form-control-sm" name="admin_path"
+                                                                            value="{{ admin_path() }}">
+                                                                        <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang unik
+                                                                            / rahasia untuk URL login dapat membantu mengamankan website anda dari serangan melalui
+                                                                            form login. Hindari menggunakan kata kunci seperti <b>login , admin , masuk , adminpanel
+                                                                            </b> dan lainnya yang familiar.</small>
+                                @endif
+                                                                </div>
                             @endif
-                        </div>
                         <div class="tab-pane fade" id="pwa">
                             <div class="alert alert-info">
                                 <i class="fa fa-info-circle"></i> Untuk semua icon, usahakan sesuai keterangan resolusi

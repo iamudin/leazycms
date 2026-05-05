@@ -2,7 +2,6 @@
 
 namespace Leazycms\Web\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
 use App\Models\User as BaseUser;

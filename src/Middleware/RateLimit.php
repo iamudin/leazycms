@@ -13,6 +13,8 @@ class RateLimit
         if (config('modules.installed') == "0") {
             return response()->view('cms::backend.pre-install');
         }
+        if(!config('modules.multisite_enabled')){
+
         if (get_option('sub_app_enabled') &&get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
             foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
                 if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
@@ -20,6 +22,7 @@ class RateLimit
                     config([$module . '.path_url' => $module]);
                 }
             }
+        }
         }
 
 
@@ -31,14 +34,13 @@ class RateLimit
         $redirectUrl = null;
         // Deteksi apakah pakai Cloudflare
         $cfVisitor = $request->server('HTTP_CF_VISITOR');
+
         $isHttpsViaCf = $cfVisitor ? (json_decode($cfVisitor, true)['scheme'] ?? 'http') === 'https' : false;
 
         // Deteksi HTTPS native
         $isHttpsNative = $request->server('HTTPS') === 'on' || $request->server('SERVER_PORT') == 443;
-
         $isHttps = $isHttpsViaCf || $isHttpsNative;
         $scheme = $isHttps ? 'https' : 'http';
-
         // 1. Redirect jika ada "index.php/" di URI
         if (strpos($uri, 'index.php/') !== false) {
             $cleanUri = str_replace('index.php/', '', $uri);
@@ -50,7 +52,7 @@ class RateLimit
             $redirectUrl = 'https://' . $host . $uri;
         }
         // 3. Validasi domain jika sub_app_enabled diaktifkan
-        elseif (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y') {
+        elseif (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled')) {
             $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
                 return parse_url($url, PHP_URL_HOST);
             })->toArray();
@@ -58,12 +60,13 @@ class RateLimit
             if (!in_array($host, $allowedHosts, true)) {
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
-        } elseif ($host !== $appUrlHost) {
+        } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-
-        if ($redirectUrl && urldecode($scheme . '://' . $appUrlHost . preg_replace('#/+#', '/', $request->getRequestUri())) !== urldecode($scheme . '://' . $appUrlHost . $uri)) {
-            return redirect(preg_replace('#/+#', '/', $redirectUrl), 301);
+        // dd($redirectUrl);
+        // && rtrim(urldecode($scheme . '://' . $appUrlHost . preg_replace('#/+#', '/', $request->getRequestUri())), '/') !== rtrim(urldecode($scheme . '://' . $appUrlHost . $uri), '/')
+        if ($redirectUrl) {
+            return redirect( $redirectUrl, 301);
         }
 
         if (!is_main_domain()) {

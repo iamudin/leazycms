@@ -1,8 +1,9 @@
 <?php
 namespace Leazycms\Web\Models;
-use Illuminate\Database\Eloquent\Model;
+use Leazycms\Web\Models\BaseModel;
 use Leazycms\FLC\Traits\Fileable;
-class Option extends Model
+
+class Option extends BaseModel
 {
     use Fileable;
     public $timestamps = false;

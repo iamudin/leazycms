@@ -20,6 +20,7 @@ use Leazycms\Web\Commands\ThemeUpdateCommand;
 use Leazycms\Web\Commands\UpdateCMS;
 use Leazycms\Web\Exceptions\NotFoundHandler;
 use Leazycms\Web\Http\Controllers\VisitorStatsController;
+use Leazycms\Web\Middleware\IdentifyTenant;
 use Leazycms\Web\Middleware\Panel;
 use Leazycms\Web\Middleware\RateLimit;
 use Leazycms\Web\Middleware\TrackVisitor;
@@ -98,46 +99,61 @@ protected function handle403(){
     }
 protected function registerRoutes()
     {
-        $webroute = get_domain_routes();
-        Route::prefix(admin_path())
-            ->middleware(['web', 'admin'])
-            ->domain(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' ? parse_url(config('app.url'), PHP_URL_HOST) : null)
-            ->group(function () {
-                $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
-            });
-        Route::middleware(['web'])
-            ->group(function () {
-                $this->loadRoutesFrom(__DIR__ . '/routes/auth.php');
-            });
+        if(config('modules.multisite_enabled')) {
+            Route::prefix(admin_path())
+                ->middleware(['web', 'admin'])
+                ->group(function () {
+                    $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
+                });
+            Route::middleware(['web'])
+                ->group(function () {
+                    $this->loadRoutesFrom(__DIR__ . '/routes/auth.php');
+                });
+            Route::middleware(['web'])
+                ->group(function () {
+                    $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
+                });
+        } else {
+            $webroute = get_domain_routes();
+            Route::prefix(admin_path())
+                ->middleware(['web', 'admin'])
+                ->domain(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' ? parse_url(config('app.url'), PHP_URL_HOST) : null)
+                ->group(function () {
+                    $this->loadRoutesFrom(__DIR__ . '/routes/admin.php');
+                });
+            Route::middleware(['web'])
+                ->group(function () {
+                    $this->loadRoutesFrom(__DIR__ . '/routes/auth.php');
+                });
+            Route::middleware(['web'])
+                ->domain(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' || $webroute ? parse_url(config('app.url'), PHP_URL_HOST) : null)
+                ->group(function () {
+                    $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
+                });
+            if ($webroute) {
+                $grouped = collect($webroute)->groupBy(function ($wr) {
+                    return parse_url($wr['path'], PHP_URL_HOST);
+                });
 
-        Route::middleware(['web'])
-            ->domain(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' || $webroute ? parse_url(config('app.url'), PHP_URL_HOST) : null)
-            ->group(function () {
-                $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
-            });
-        if ($webroute) {
-            $grouped = collect($webroute)->groupBy(function ($wr) {
-                return parse_url($wr['path'], PHP_URL_HOST);
-            });
+                foreach ($grouped as $host => $routes) {
 
-            foreach ($grouped as $host => $routes) {
+                    Route::domain($host)
+                        ->middleware(['web', 'public', TrackVisitor::class])
+                        ->group(function () use ($routes) {
 
-                Route::domain($host)
-                    ->middleware(['web', 'public',TrackVisitor::class])
-                    ->group(function () use ($routes) {
+                            foreach ($routes as $wr) {
 
-                        foreach ($routes as $wr) {
+                                $uri = parse_url($wr['path'], PHP_URL_PATH) ?? '/';
 
-                            $uri = parse_url($wr['path'], PHP_URL_PATH) ?? '/';
+                                Route::match(
+                                    is_array($wr['method']) ? $wr['method'] : [$wr['method']],
+                                    ltrim($uri, '/'),
+                                    [$wr['controller'], $wr['function']]
+                                )->name($wr['name']);
 
-                            Route::match(
-                                is_array($wr['method']) ? $wr['method'] : [$wr['method']],
-                                ltrim($uri, '/'),
-                                [$wr['controller'], $wr['function']]
-                            )->name($wr['name']);
-
-                        }
-                    });
+                            }
+                        });
+                }
             }
         }
         Route::get('stats.png', [VisitorStatsController::class, 'headerImage']);
@@ -153,6 +169,9 @@ protected function registerRoutes()
     protected function registerMigrations()
     {
         $this->loadMigrationsFrom(__DIR__ . "/database/migrations");
+        if (config('modules.multisite_enabled')) {
+            $this->loadMigrationsFrom(__DIR__ . "/database/multisite");
+        }
     }
     protected function registerServices()
     {
@@ -173,7 +192,12 @@ protected function registerRoutes()
 
         Schema::defaultStringLength(191);
         load_default_module();
+        if (config('modules.multisite_enabled')) {
+            $kernel->prependMiddlewareToGroup('web', IdentifyTenant::class);
+        }
+        require_once(__DIR__ . "/Inc/Option.php");
         $kernel->appendMiddlewareToGroup('web', RateLimit::class);
+      
         $this->registerResources();
         $this->registerMigrations();
         $this->defineAssetPublishing();
@@ -185,6 +209,7 @@ protected function registerRoutes()
         $this->log_viewer();
         $this->handle403();
         $this->handle500();
+        
 
     }
     protected function render403($request, Throwable $e)
@@ -247,7 +272,7 @@ protected function registerRoutes()
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
         if (
-            DB::connection()->getDatabaseName() &&
+            !config('modules.multisite_enabled') && DB::connection()->getDatabaseName() &&
             (config('modules.installed', false) ? true : $this->checkAllTables())
         ) {
             try {

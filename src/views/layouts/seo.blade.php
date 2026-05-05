@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="{{ strlen($description) > 0 ? $description : 'The Builded Website by LeazyCMS - Laravel'}}">
 <meta name="keywords" content="{{ strlen($keywords) > 0 ? $keywords : 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
-<title>{{$title}} {{ get_option('site_title') && get_option('show_site_title_after_page_name') && !request()->is('/') ? ' › ' . get_option('site_title') : null }}</title>
+<title>{{$title}} {{ get_option('site_title') && get_option('show_site_title_after_page_name') && !request()->is('/') ? ' - ' . get_option('site_title') : null }}</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="index,follow">

@@ -39,25 +39,30 @@ class LoginController extends Controller
     {
 
 
-        if (Auth::check()) {
-            if (!$request->user()->isAdmin() && get_option('sub_app_enabled')  && get_option('sub_app_enabled') == 'Y' && !is_main_domain()) {
-                return to_route($request->user()->level . '.dashboard');
-            }
+        if (!config('modules.multisite_enabled')) {
 
-            if (!is_main_domain() && $request->user()->isAdmin()) {
-                Auth::logout();
-            }
-            if (is_main_domain() && !$request->user()->isAdmin()) {
-                Auth::logout();
-            }
+            if (Auth::check()) {
+                if (!$request->user()->isAdmin() && get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !is_main_domain()) {
+                    return to_route($request->user()->level . '.dashboard');
+                }
 
-            return to_route('panel.dashboard');
-        } else {
-            if (!is_main_domain() && admin_path() != 'login' && admin_path() == $request->segment(1)) {
-               return redirect('login');
+                if (!is_main_domain() && $request->user()->isAdmin()) {
+                    Auth::logout();
+                }
+                if (is_main_domain() && !$request->user()->isAdmin()) {
+                    Auth::logout();
+                }
+
+                return to_route('panel.dashboard');
+            } else {
+                if (!is_main_domain() && admin_path() != 'login' && admin_path() == $request->segment(1)) {
+                    return redirect('login');
+                }
             }
         }
-
+        if (Auth::check()){
+            return to_route('panel.dashboard');
+        }
 
         $this->codeCaptcha();
 
@@ -106,7 +111,7 @@ class LoginController extends Controller
             return back()->with('error', 'Captcha tidak valid!');
         }
 
-        if (Auth::attempt(['username' => $request->username, 'password' => $request->password], $request->remember ?? false)) {
+        if (Auth::attempt(array_merge(['username' => $request->username, 'password' => $request->password], config('modules.multisite_enabled') ? ['tenant_id' => tenant()->id ?? null] : []), $request->remember ?? false)) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -143,21 +148,28 @@ class LoginController extends Controller
                     'last_login_ip' => $request->ip(),
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
-                if (is_main_domain()) {
-                    if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
-                        Auth::logout();
+                if (!config('modules.multisite_enabled')) {
+
+                    if (is_main_domain()) {
+                        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
+                            Auth::logout();
+                        } else {
+                            Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+                            return redirect()->intended('/' . admin_path());
+                        }
                     } else {
-                        Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-                        return redirect()->intended('/' . admin_path());
+                        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
+                            Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+                            return redirect()->intended('/login');
+                        } else {
+                            Auth::logout();
+                        }
                     }
-                } else {
-                    if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
-                        Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-                        return redirect()->intended('/login');
-                    } else {
-                        Auth::logout();
-                    }
+                }else{
+                    return redirect()->intended('/' . admin_path());
+
                 }
+                
             }
 
             Auth::logout();
