@@ -1,22 +1,12 @@
 <?php
 namespace Leazycms\Web\Models;
-use Illuminate\Database\Eloquent\Model;
+use Leazycms\Web\Models\BaseModel;
 
-class PollingOption extends Model
+class PollingOption extends BaseModel
 {
    
     protected $fillable = ['name','image','sort','polling_topic_id','status'];
-    public static function boot()
-    {
-        parent::boot();
-
-        static::deleting(function ($post) {
-                foreach($post->files as $row){
-                    $row->deleteFile();
-                }
-        });
-
-    }
+   
     public function responses()
     {
     return $this->hasMany(PollingResponse::class);
