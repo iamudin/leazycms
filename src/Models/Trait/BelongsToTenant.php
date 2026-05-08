@@ -24,7 +24,7 @@ trait BelongsToTenant
             $model = $builder->getModel();
 
             // hanya untuk tabel options
-            if ($model->getTable() !== 'options' && is_main_domain()) {
+            if ($model->getTable() !== 'options'  && is_main_domain()) {
                 return;
             }
 

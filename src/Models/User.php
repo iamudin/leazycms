@@ -64,9 +64,9 @@ class User extends BaseUser
         }
         return noimage();
     }
-    public function logs()
+   function tenant()
     {
-        return $this->hasMany(Log::class);
+        return $this->belongsTo(Tenant::class);
     }
     public function notifications()
     {

@@ -2,12 +2,13 @@
 namespace Leazycms\Web\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Validation\Rule;
 use Leazycms\Web\Models\Category;
 use Yajra\DataTables\DataTables;
-use Illuminate\Validation\Rule;
+
 class CategoryController extends Controller implements HasMiddleware
 {
     public static function middleware(): array {
@@ -24,8 +25,23 @@ class CategoryController extends Controller implements HasMiddleware
     public function datatable(Request $request)
     {
         $data = Category::whereType(get_post_type())->withCount('posts')->orderBy('sort');
+        if (config('modules.multisite_enabled')) {
+            $data = $data->withTenant();
+        }
         return DataTables::of($data)
             ->addIndexColumn()
+               ->filter(function ($instance) use ($request) {
+
+                if ($search = $request->search) {
+                    if(config('modules.multisite_enabled')){
+                        $instance->whereHas('tenant', function ($query) use ($search) {
+                                $query->where('domain', 'like', "{$search}%");
+                        });
+                    }else{
+                        $instance->whereHas('name', 'like', "%{$search}%");
+                    }
+                }
+            })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
                 $btn .= '<a target="_blank" href="' .url($row->url).'"  class="btn btn-info btn-sm fa fa-globe"></a>';
@@ -41,7 +57,11 @@ class CategoryController extends Controller implements HasMiddleware
                 return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
 
             })
-            ->rawColumns(['action','name','thumbnail'])
+            ->addColumn('created_at', function ($row) {
+                return $row->created_at->format('Y-m-d H:i').(config('modules.multisite_enabled') ? '<br><small>'.$row->tenant?->domain.'</small>' : '');
+
+            })
+            ->rawColumns(['action','name','thumbnail','created_at'])
             ->toJson();
 }
 public function create(Request $request){
@@ -49,9 +69,9 @@ public function create(Request $request){
 }
 public function store(Request $request){
     $request->user()->hasRole('category'.get_post_type(),'create');
-
+    $role = config('modules.multisite_enabled') ? Rule::unique('categories')->where('type',get_post_type())->where('tenant_id',tenant()->id) : Rule::unique('categories')->where('type',get_post_type());
     $data = $request->validate([
-        'name'=>'required|max:100|min:3|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'. Rule::unique('categories')->where('type',get_post_type()),
+        'name'=>'required|max:100|min:3|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'.$role,
         'icon'=> 'nullable|mimetypes:image/jpeg,image/png,image/webp',
         'sort'=>'nullable|numeric',
         'description'=>'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:200|',
@@ -82,9 +102,9 @@ public function edit(Request $request,Category $category){
 }
 public function update(Request $request, Category $category){
     $request->user()->hasRole('category'.get_post_type(),'update');
-
+    $role = config('modules.multisite_enabled') ? Rule::unique('categories')->where('type',get_post_type())->where('tenant_id',tenant()->id)->ignore($category->id) : Rule::unique('categories')->where('type',get_post_type())->ignore($category->id);
     $data = $request->validate([
-        'name'=>'required|max:100|min:3|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|'.Rule::unique('categories')->where('type',get_post_type())->ignore($category->id),
+        'name'=>'required|max:100|min:3|string|'.$role,
         'icon'=> 'nullable|mimetypes:image/jpeg,image/png,image/webp',
         'sort'=>'nullable|numeric',
         'description'=>'max:200|nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',

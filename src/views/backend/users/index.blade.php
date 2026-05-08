@@ -23,7 +23,11 @@
         <th style="vertical-align: middle" width="10px">Username</th>
         <th style="vertical-align: middle"  width="10px">Role</th>
         <th style="vertical-align: middle" width="10px">Post</th><th style="vertical-align: middle" width="160px">Login</th>
+           @if(config('modules.multisite_enabled'))
+        <th style="vertical-align: middle" width="10px">Tenant</th>
+        @endif
         <th style="vertical-align: middle" width="10px">Status</th>
+
         <th style="vertical-align: middle" width="10px">Aksi</th>
       </tr>
     </thead>
@@ -91,12 +95,21 @@
                         orderable: false,
                         searchable: false
                     },
+                          @if(config('modules.multisite_enabled'))
+                    {
+                        data: 'tenant',
+                        name: 'tenant',
+                        orderable: false,
+                        searchable: true
+                    },
+                    @endif
                     {
                         data: 'status',
                         name: 'status',
                         orderable: false,
                         searchable: false
                     },
+
                     {
                         data: 'action',
                         name: 'action',

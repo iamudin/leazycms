@@ -60,7 +60,7 @@ class LoginController extends Controller
                 }
             }
         }
-        if (Auth::check()){
+        if (Auth::check()) {
             return to_route('panel.dashboard');
         }
 
@@ -95,9 +95,9 @@ class LoginController extends Controller
     {
         // Throttle login attempts
         $limiterKey = $request->ip() . '|' . $request->username;
-        if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
-            return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
-        }
+        // if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
+        //     return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
+        // }
 
         $request->validate([
             'username' => 'required',
@@ -141,7 +141,6 @@ class LoginController extends Controller
 ";
 
                     sendTelegramBotMessage($message);
-
                 })->afterResponse();
                 $user->update([
                     'last_login_at' => now(),
@@ -165,11 +164,9 @@ class LoginController extends Controller
                             Auth::logout();
                         }
                     }
-                }else{
+                } else {
                     return redirect()->intended('/' . admin_path());
-
                 }
-                
             }
 
             Auth::logout();
@@ -185,7 +182,7 @@ class LoginController extends Controller
         dispatch(function () {
 
             $ip = get_client_ip();
-            $email = e( (new Request)->input('username'));
+            $email = e((new Request)->input('username'));
             $url = e((new Request)->fullUrl());
             $userAgent = e((new Request)->userAgent());
             $time = now()->format('Y-m-d H:i:s');
@@ -207,7 +204,6 @@ class LoginController extends Controller
 ";
 
             sendTelegramBotMessage($message);
-
         })->afterResponse();
         return back()->with('error', 'Akun tidak ditemukan!');
     }

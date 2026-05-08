@@ -44,7 +44,7 @@ class PostController extends Controller implements HasMiddleware
         }
         if ($request->from_date && $request->to_date) {
             $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
-        } 
+        }
         if ($request->user_id) {
             $query->where('user_id', $request->user_id);
         }
@@ -123,7 +123,7 @@ class PostController extends Controller implements HasMiddleware
         }elseif(Route::is($module->name.'.show')){
  $request->user()->hasRole(get_post_type(), 'show');
         }else{}
-        
+
 
         $data = $request->user()->isAdmin() || !$request->user()->hasRole(get_post_type(), 'admin', true) ? $post->with('category', 'user', 'tags')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category', 'user', 'tags')->whereType(get_post_type())->find($id);
         if (!$data) {
@@ -137,7 +137,7 @@ class PostController extends Controller implements HasMiddleware
             'field' => $field,
             'module' => $module,
             'tags' => Tag::get(),
-            'category' => $module->form->category ? Category::whereType(get_post_type())->select('id', 'name')->orderBy('sort')->get() : null
+            'category' => $module->form->category ? Category::whereType(get_post_type())->select(array_merge(['id', 'name'], config('modules.multisite_enabled') ? ['tenant_id'] : []))->orderBy('sort')->get() : null
         ]);
     }
     public function destroy(Request $request)
@@ -172,7 +172,7 @@ class PostController extends Controller implements HasMiddleware
 
         $module = current_module();
         $custom_field = [];
-      
+
         if ($module->form->custom_field) {
 
             foreach (collect($module->form->custom_field)->whereNotIn([1], ['break']) as $row) {
@@ -204,7 +204,7 @@ class PostController extends Controller implements HasMiddleware
         | Ambil module name
         |--------------------------------------------------------------------------
         */
-       
+
 
         $optionKeywords = get_option('forbidden_keyword') ?? 'dangerous_keyword';
 
@@ -218,7 +218,7 @@ class PostController extends Controller implements HasMiddleware
             $optionKeywords
         );
 
-    
+
         $forbiddenWords = array_unique(array_filter($forbiddenWords));
 
 $post_field = [
@@ -403,11 +403,11 @@ $post_field = [
 
     public function datatable(Request $req)
     {
-        
+
         $data = $req->user()->isAdmin() || !$req->user()->hasRole(get_post_type(), 'admin',true)
             ? Post::selectedColumn()
                 ->with([
-                    
+
                     'user:id,name',
                     'category:id,name',
                     'tags:id,name',
@@ -624,12 +624,12 @@ $post_field = [
 
                                 $ext = strtolower(pathinfo($value, PATHINFO_EXTENSION));
 
-                                return '<span 
-        data-media="' . e($value) . '" 
+                                return '<span
+        data-media="' . e($value) . '"
         data-ext="' . e($ext) . '"
-        class="badge badge-pill py-1 btn-view-media text-primary" 
+        class="badge badge-pill py-1 btn-view-media text-primary"
         style="border:1px solid green; cursor:pointer;">
-        <i class="fa fa-eye "></i> Lihat : '.str($ext)->upper().' 
+        <i class="fa fa-eye "></i> Lihat : '.str($ext)->upper().'
     </span>';
                             }
                         }
@@ -637,7 +637,7 @@ $post_field = [
                         // Tidak valid / tidak ada file
                         return '<span>-</span>';
                     }
-                   
+
 
                     if (
                         filter_var($value, FILTER_VALIDATE_URL)
@@ -656,8 +656,8 @@ $post_field = [
                     }
 
                     if (in_array($field, $custom_field)) {
-                        return '<span 
-                                    
+                        return '<span
+
                                     class="badge badge-pill py-1" style="border:1px solid #000;">
                                     ' . e($value) . '
                                 </span>';
@@ -754,15 +754,15 @@ $post_field = [
 
         });
         $dt->addColumn('status', function ($row) {
-            return '<input ' . (strlen($row->title) < 5 ? 'disabled ' : 'data-id="' . $row->id . '"') . ' 
-                type="checkbox" 
+            return '<input ' . (strlen($row->title) < 5 ? 'disabled ' : 'data-id="' . $row->id . '"') . '
+                type="checkbox"
                 class="toggle-status btn btn-primary"
-                
-                data-on="Publish" 
-                data-off="Draft" 
-                data-toggle="toggle" 
-                data-onstyle="outline-success" 
-                data-offstyle="outline-danger" 
+
+                data-on="Publish"
+                data-off="Draft"
+                data-toggle="toggle"
+                data-onstyle="outline-success"
+                data-offstyle="outline-danger"
                 data-size="sm"
                 ' . ($row->status == 'publish' ? 'checked' : '') . '
             >';

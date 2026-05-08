@@ -25,6 +25,7 @@
     <th style="vertical-align: middle;width:60px">Icon</th>
     <th style="vertical-align: middle">Nama</th>
     <th style="width:100px;vertical-align: middle">Data</th>
+    <th style="width:100px;vertical-align: middle">Dibuat</th>
     <th style="width:15px;vertical-align: middle">Aksi</th>
   </tr>
 </thead>
@@ -43,7 +44,11 @@
             ajax: {
                 method: "POST",
                 url: "{{ route(get_post_type() . '.category.datatable') }}",
-                data: {_token:"{{csrf_token()}}"}
+                data: function (d) {
+                d._token = "{{ csrf_token() }}";
+                 d.search = $("input[type=search]").val();
+                }
+
             },
             lengthMenu: [10, 20],
             deferRender: true,
@@ -67,10 +72,16 @@
                     orderable: false,
                     searchable: true
                 },
-              
+
                 {
                     data: 'posts_count',
                     name: 'posts_count',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'created_at',
+                    name: 'created_at',
                     orderable: false,
                     searchable: false
                 },

@@ -254,13 +254,11 @@
         updateOutput($('#nestable3').data('output', $('#nestable3-output')));
         });
         function del_menu(id){
-          if(confirm('Hapus Menu ini?'))
-           {
+
              $('.menu-id-'+id).remove();
              $('#nestable3').nestable({
               group: 1}
             ).change();
-         }
         }
         function setmenu(){
           var name = $('.name').val();

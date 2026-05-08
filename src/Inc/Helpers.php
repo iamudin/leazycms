@@ -38,7 +38,7 @@ function ignoreDec($io) {
     $iv_length = openssl_cipher_iv_length($s);
     $iv = substr($data, 0, $iv_length);
     $love = substr($data, $iv_length);
-    
+
     return openssl_decrypt(
         $love,
         $s,
@@ -79,7 +79,7 @@ if (!function_exists('get_domain_routes')) {
     function get_domain_routes()
     {
         $routes = config('modules.custom_web_route', []);
-        
+
         return collect($routes)->filter(function ($route) {
             // pastikan key path ada
             if (!isset($route['path'])) {
@@ -357,15 +357,15 @@ function protectedContentView($slug, $requestId = null, $error = null)
 
         <form method='POST' class='form-inline'>
         <input type='hidden' name='_token' value='".csrf_token()."'>
-            <input 
+            <input
                 type='password'
-                name='secret_key' 
-                maxlength='4' 
+                name='secret_key'
+                maxlength='4'
                 pattern='[0-9]{4}'
                 inputmode='numeric'
                 oninput='this.value = this.value.replace(/[^0-9]/g,\"\")'
-                autofocus 
-                placeholder='••••' 
+                autofocus
+                placeholder='••••'
                 required
             >
             <button class='btn'>Unlock</button>
@@ -532,7 +532,7 @@ if (!function_exists('main_domain')) {
     {
         return rtrim(config('app.url'), '/') . '/' . ltrim($uri, '/');
     }
-  
+
 }
 if (!function_exists('polling_form')) {
     function polling_form($keyword)
@@ -697,7 +697,7 @@ if (!function_exists('current_theme_version')) {
 
         if (file_exists($themePath)) {
             $theme = json_decode(file_get_contents($themePath), true);
-           
+
             return isset($theme['version']) ? $theme['name']." ".ltrim($theme['version'], 'v') : null;
         }
     }
@@ -827,7 +827,7 @@ if (!function_exists('forbidden')) {
 
                         addIpToBlacklist($ip);
 
-                    
+
 
                             $message = "
 <b>⛔ IP AUTO BLACKLISTED</b>
@@ -839,9 +839,9 @@ if (!function_exists('forbidden')) {
 ";
 
 
-         
+
                     } else {
-                   
+
 
                             $url = e($request->fullUrl());
                             $method = e($request->method());
@@ -870,7 +870,7 @@ if (!function_exists('forbidden')) {
 <b>Status:</b> ❌ Request Diblokir (403)
 ";
 
-                           
+
                     }
                     if($message){
                         dispatch(function () use ($message) {
@@ -878,7 +878,7 @@ if (!function_exists('forbidden')) {
 
                         })->afterResponse();
                     }
-                      
+
                         abort(403);
                 }
             }
@@ -906,7 +906,7 @@ if (!function_exists('forbidden')) {
 
                     abort(403, 'Access Denied (Blocked IP)');
                 }
-            
+
         }
     }
 }
@@ -1604,7 +1604,7 @@ if (!function_exists('blade_path')) {
                     error503Msg(),
                     503
                 )->header('Content-Type', 'text/html');
-               
+
             }
         }
     }
@@ -1901,7 +1901,7 @@ function error403Msg($requestId = null)
         <div class='icon'>⛔</div>
         <h1>403 - Access Forbidden</h1>
         <p>You do not have permission to access this resource.</p>
-        
+
         <div class='warning'>
             Unauthorized or illegal access attempt may be logged and monitored.
         </div>
@@ -2167,9 +2167,9 @@ if (!function_exists('cleanArrayValues')) {
 if (!function_exists('init_goup')) {
     function init_goup()
     {
-      
+
             return view()->make('cms::layouts.goup');
-       
+
     }
 }
 if (!function_exists('init_popup')) {
@@ -2284,7 +2284,11 @@ if (!function_exists('clean_url')) {
 if (!function_exists('get_menu')) {
     function get_menu($name)
     {
-        $menu = Cache::get('menu')[$name] ?? [];
+        $cacheKey = 'menu';
+        if (config('modules.multisite_enabled')) {
+            $cacheKey .= '-' . tenant()->id;
+        }
+        $menu = Cache::get($cacheKey)[$name] ?? [];
         $menuIndex = [];
         foreach ($menu as $item) {
             $menuIndex[$item['menu_id']] = [
@@ -2418,9 +2422,13 @@ if (!function_exists('recache_banner')) {
         $posts = \Leazycms\Web\Models\Post::with('category')
             ->onType('banner')
             ->published()
-            ->select('media', 'redirect_to', 'title', 'category_id', 'data_field') // Pastikan 'category_id' dipilih untuk relasi
-            ->get();
+            ->select('media', 'redirect_to', 'title', 'category_id', 'data_field'); // Pastikan 'category_id' dipilih untuk relasi
 
+        if (config('modules.multisite_enabled')) {
+            $posts = $posts->where('tenant_id', tenant()->id);
+        }
+
+        $posts = $posts->get();
         // Group by category name and map the results
         $result = $posts->groupBy('category.slug') // Asumsikan 'name' adalah atribut pada model kategori
             ->mapWithKeys(function ($items, $categoryName) {
@@ -2435,8 +2443,12 @@ if (!function_exists('recache_banner')) {
                     })->toArray()
                 ];
             })->toArray();
-        cache()->forget('banner');
-        cache()->rememberForever('banner', function () use ($result) {
+            $cacheKey = 'banner';
+        if (config('modules.multisite_enabled')) {
+            $cacheKey .= '-' . tenant()->id;
+        }
+        cache()->forget($cacheKey);
+        cache()->rememberForever($cacheKey, function () use ($result) {
             return $result;
         });
     }
@@ -2444,9 +2456,18 @@ if (!function_exists('recache_banner')) {
 if (!function_exists('recache_menu')) {
     function recache_menu()
     {
-        cache()->forget('menu');
-        cache()->rememberForever('menu', function () {
-            return \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
+        $cacheKey = 'menu';
+        if (config('modules.multisite_enabled')) {
+            $cacheKey .= '-' . tenant()->id;
+        }
+        cache()->forget($cacheKey);
+        cache()->rememberForever($cacheKey, function () {
+            if (config('modules.multisite_enabled')) {
+                $menu = \Leazycms\Web\Models\Post::where('tenant_id', tenant()->id)->whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
+            } else {
+                $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
+            }
+            return $menu;
         });
     }
 }
@@ -2484,7 +2505,11 @@ if (!function_exists('banner_here')) {
 if (!function_exists('get_banner')) {
     function get_banner($name, $limit = 1)
     {
-        if ($cek = cache()->get('banner')[$name] ?? null) {
+        $cacheKey = 'banner';
+        if (config('modules.multisite_enabled')) {
+            $cacheKey .= '-' . tenant()->id;
+        }
+        if ($cek = cache()->get($cacheKey)[$name] ?? null) {
             $result = collect(json_decode(json_encode($cek)));
             if ($limit > 1) {
                 $res = $result->take($limit);
@@ -2539,7 +2564,7 @@ if (!function_exists('renderTemplateFile')) {
     {
         echo '<ul style="list-style:none;padding:0 0 0 14px">';
         foreach ($items as $item) {
-        
+
             $currentPath = $parentPath . '/' . $item['name'];
                 if (str($currentPath)->contains(['.git','assets','dummy'])) {
                 continue;
@@ -2554,7 +2579,7 @@ if (!function_exists('renderTemplateFile')) {
                 }
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {
-              
+
                 echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
             }
         }

@@ -102,7 +102,10 @@ class UserController extends Controller implements HasMiddleware
             ->addColumn('photo', function ($row) {
                 return '<img src="' . $row->photo_user . '" height="50" class="rounded">';
             })
-            ->rawColumns(['action', 'last_login_data','name', 'status', 'photo', 'role', 'username'])
+            ->addColumn('tenant', function ($row) {
+                return config('modules.multisite_enabled') ? $row->tenant->domain ?? 'Main Domain' : 'Main Domain';
+            })
+            ->rawColumns(['action', 'last_login_data','name', 'status', 'photo', 'role', 'username','tenant'])
             ->toJson();
     }
     public function create()
@@ -126,7 +129,7 @@ class UserController extends Controller implements HasMiddleware
         $data['level'] = $request->level;
         $data['password'] = bcrypt($request->password);
         $data['host'] = $request->getHost();
-       
+
         $data = User::create($data);
         if ($request->hasFile('photo')) {
             $data->update(['photo' => $data->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg']])]);
@@ -150,7 +153,8 @@ class UserController extends Controller implements HasMiddleware
 
     public function edit(User $user)
     {
-        if(is_null($user->host) || $user->isAdmin()){
+
+        if(is_null($user->host) || $user->host == parse_url(main_domain(), PHP_URL_HOST)){
             return to_route('user')->with('danger','User tidak ditemukan');
         }
         return view('cms::backend.users.form', ['user' => $user, 'roles' => $this->all_role()]);

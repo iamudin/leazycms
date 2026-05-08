@@ -64,7 +64,7 @@ Route::controller(EmailController::class)->group(function () {
     Route::put('email/{email}/edit', 'update')->name('email.update');
     Route::post('email/create', 'store')->name('email.store');
     Route::delete('email/{email}/edit', 'destroy')->name('email.destroy');
-    
+
 });
 Route::controller(PanelController::class)->group(function () {
     Route::get('dashboard', 'index')->name('panel.dashboard');
@@ -88,7 +88,7 @@ Route::controller(UserController::class)->group(function () {
     Route::post('user', 'datatable')->name('user.datatable');
     Route::get('user/create', 'create')->name('user.create');
     Route::post('user/create', 'store')->name('user.store');
-    Route::get('user/{user}/edit', 'edit')->name('user.edit');
+    Route::get('user/{users}/edit', 'edit')->name('user.edit');
     Route::put('users/{user}/edit', 'update')->name('user.update');
     Route::delete('user/{user}/edit', 'destroy')->name('user.destroy');
     Route::match(['get', 'post'], 'account', 'account')->name('user.account');

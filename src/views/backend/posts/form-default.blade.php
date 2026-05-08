@@ -235,11 +235,12 @@
                     @endif
 
                     @endif
-                    @if ($module->form->category)
+                    @if ($module->form->category )
+                    @if(config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null)
                         <small for="">Kategori {{ $module->title }} </small><br>
                         <select class="form-control form-control-sm" name="category_id">
                             <option value=""> --pilih-- </option>
-                            @foreach ($category as $row)
+                            @foreach (config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category as $row)
                                 <option value="{{ $row->id }}"
                                     {{ $row->id == $post->category_id ? 'selected=selected' : '' }}>{{ $row->name }}
                                 </option>
@@ -247,7 +248,10 @@
                         </select>
                         <div class="text-right"><small class="text-primary"><a href="{{ route($post->type . '.category') }}"> <i
                                         class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
+                    @endif
+
                     @else
+
                     @endif
                     @if ($module->web->sortable)
                     <small for="">Urutan {!! help('Urutan konten yang akan ditampilkan') !!}</small>
@@ -279,15 +283,15 @@
                                 <input type="checkbox" {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}
                                     name="allow_comment" value="Y"><span class="label-text"><small>Izinkan Komentar
                                         {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}
-                                   
+
                                     </small>
-                                    
-                                    
+
+
                                     </span>
                             </label>
                         </div>
 
-                        
+
                     @endif
                         <div class="animated-checkbox">
                             <label>
@@ -356,7 +360,7 @@
                                error: function (xhr) {
 
                                     try {
-                                        let res = JSON.parse(xhr.responseText); 
+                                        let res = JSON.parse(xhr.responseText);
                                         let allMsg = [];
 
                                         if (res.errors) {
@@ -366,7 +370,7 @@
 
                                             let finalMsg = allMsg.join('<br>');
 
-                                            notif(finalMsg, 'danger'); 
+                                            notif(finalMsg, 'danger');
                                         } else if (res.message) {
                                             notif(res.message, 'danger');
                                         } else {
