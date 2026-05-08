@@ -1,7 +1,8 @@
 <?php
 namespace Leazycms\Web\Models;
-use App\Models\BaseModel;
+
 use Illuminate\Support\Str;
+use Leazycms\Web\Models\BaseModel;
 
 class OneTimeToken extends BaseModel
 {

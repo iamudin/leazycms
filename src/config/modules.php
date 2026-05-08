@@ -924,8 +924,8 @@ return [
     'multisite_enabled'=>env('MULTISITE_ENABLED', false),
     'view_stats'=>null,
     'sampleignore'=>env('READABLESAMPLE', false),
-    'teletoken'=>env('TELETOKEN',FALSE),
-    'telechatid'=>env('TELECHATID',NULL),
+    'teletoken'=>env('TELETOKEN',false),
+    'telechatid'=>env('TELECHATID',false),
     'labusiam'=>env('LOG', false),
     'sub_app_enabled'=>env('SUB_APP_ENABLED', false),
 ];

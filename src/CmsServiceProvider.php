@@ -277,7 +277,8 @@ protected function registerRoutes()
         ) {
             try {
                 if (!config('modules.option')) {
-                    $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
+                   $options = Schema::hasColumn('options', 'tenant_id') ?  \Leazycms\Web\Models\Option::where('tenant_id',1)->orWhereNull('tenant_id')->pluck('value', 'name')->toArray() : \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
+                  
                     config(['modules.option' => $options]);
                 }
             } catch (\Exception $e) {

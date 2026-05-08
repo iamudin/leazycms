@@ -150,6 +150,11 @@ class WebController extends Controller
             }
             return redirect($detail->url);
         }
+        if(config('modules.multisite_enabled') && is_main_domain() && $detail->tenant_id){
+            if($detail->tenant_id != tenant()->id){
+             return redirect('http://' . $detail->tenant->domain .'/'. $detail->url);
+        }
+        }
 
         config(['modules.data' => $detail]);
         if ($detail->redirect_to) {

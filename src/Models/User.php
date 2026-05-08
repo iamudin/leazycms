@@ -2,14 +2,15 @@
 
 namespace Leazycms\Web\Models;
 
+use App\Models\User as BaseUser;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
-use App\Models\User as BaseUser;
+use Leazycms\Web\Models\Trait\BelongsToTenant;
 
 
 class User extends BaseUser
 {
-    use SoftDeletes, Fileable;
+    use SoftDeletes, Fileable,BelongsToTenant;
 
     /**
      * The attributes that are mass assignable.
@@ -47,9 +48,10 @@ class User extends BaseUser
     protected $casts = [
         'email_verified_at' => 'datetime',
         'user_data' => 'array',
-        'last_login_at'=>'datetime'
+        'last_login_at' => 'datetime'
 
     ];
+
 
     public function posts()
     {
@@ -57,7 +59,10 @@ class User extends BaseUser
     }
     public function getPhotoUserAttribute()
     {
-        return $this->photo ? $this->photo : noimage();
+        if ($this->photo && media_exists($this->photo)) {
+            return app()->has('tenant') && !is_null($this->tenant_id) && $this->tenant_id !== tenant()->id ? 'http://' . $this->tenant?->domain . $this->photo : $this->photo;
+        }
+        return noimage();
     }
     public function logs()
     {
@@ -91,20 +96,22 @@ class User extends BaseUser
     {
         return $this->hasMany(Role::class, 'level', 'level');
     }
-    public function hasRole($module, $action,$noredirect=false)
+    public function hasRole($module, $action, $noredirect = false)
     {
-        if (!$this->isAdmin() && $this->roles->where('module', $module)->where('action', $action)->where('level', $this->level)->count()==0) {
+        if (!$this->isAdmin() && $this->roles->where('module', $module)->where('action', $action)->where('level', $this->level)->count() == 0) {
             if ($action == 'delete') {
                 return true;
             }
-            if($noredirect){
+            if ($noredirect) {
                 return true;
             }
             return redirect(route('panel.dashboard'))->send()->with('danger', 'Akses terbatas')->send();
         }
-           
-        
+
+
     }
+
+
     public function get_modules()
     {
         return $this->roles()->where('action', 'index');

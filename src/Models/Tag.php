@@ -1,9 +1,7 @@
 <?php
 
 namespace Leazycms\Web\Models;
-
 use Leazycms\Web\Models\BaseModel;
-
 class Tag extends BaseModel
 {
     protected $fillable = [

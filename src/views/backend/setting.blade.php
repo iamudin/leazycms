@@ -107,9 +107,14 @@
                                                                                 <i class="text-danger">(Khusus Akses API eg : url/berita/api/{id})</i>
                                                                             @endif
                                                                         </small><br>
+                                                                        @if (_us($r[0]) == 'block_ip')
+                                                                            <textarea name="{{ _us($r[0]) }}" class="form-control form-control-sm" 
+                                                                                placeholder="Masukkan IP yang di Blokir, pisahkan dengan koma. contoh: 192.168.1.1, 10.0.0.1">{{ implode(',', getBlacklistIps()) }}</textarea>
+                                                                        @else
                                                                         <input type="text" class="form-control form-control-sm"
                                                                             placeholder="Enter {{ $r[1] }}" name="{{ _us($r[0]) }}"
                                                                             value="{{ get_option(_us($r[0])) }}">
+                                                                        @endif
                                                                     @endforeach
                                                                     <br>
                                                                     <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-warning"></i>

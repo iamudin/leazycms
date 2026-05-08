@@ -16,8 +16,10 @@ if (!function_exists('get_option')) {
             return $default;
         }
         $defaultOption = cache()->rememberForever('default_options', function () {
-            return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')->pluck('value', 'name')->toArray();
+            
+            return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')->orWhereNull('tenant_id')->pluck('value', 'name')->toArray();
         });
-        return array_merge($defaultOption, app('tenant.options'))[$key] ?? $default;
+       
+        return array_merge($defaultOption, app('tenant.options')??[])[$key] ?? $default;
     }
 }

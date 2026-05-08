@@ -9,7 +9,7 @@
             style="width: 30px; height: 30px"
             src="{{ $userprofile->photo_user }}">
         <div>
-            <p class="app-sidebar__user-name">{{ $userprofile->name }}</p>
+            <p class="app-sidebar__user-name">{{ str($userprofile->name)->limit(10) }}</p>
             <p class="app-sidebar__user-designation">
                 {{ ucfirst($userprofile->level) }}
             </p>
@@ -34,12 +34,12 @@
             <i class="fa fa-globe" aria-hidden="true"></i> &nbsp; PUBLIKASI
         </li>
         @foreach ($userprofile->isAdmin() ?
-            collect(get_module())->sortBy('position'):
-            collect(get_module())->sortBy('position')->whereIn(
-                'name',
-                $userprofile->get_modules->pluck('module')->toArray()
-            ) as $row)
-            @if($row->name=='menu')
+    collect(get_module())->sortBy('position') :
+    collect(get_module())->sortBy('position')->whereIn(
+        'name',
+        $userprofile->get_modules->pluck('module')->toArray()
+    ) as $row)
+            @if($row->name == 'menu')
                    <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -103,6 +103,7 @@
                     <span class="app-menu__label ">Tags</span></a
                 >
             </li>
+            @if(is_main_domain())
             <li title="Komentar Pengunjung">
                 <a
                     class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"
@@ -119,6 +120,7 @@
                     <span class="app-menu__label">File Manager</span></a
                 >
             </li>
+            @endif
             <li>
                 <a
                     class="app-menu__item {{ Request::is(admin_path() . '/polling') ? 'active' : '' }}"
@@ -142,19 +144,19 @@
         @endforeach
     @endif
           @if(Auth::user()->level == 'admin')
-              @if($custom = config('modules.custom_menu'))
-            
-                @foreach(collect($custom)->where('show_in_sidebar', true) as $cs)
-                        <li title="{{$cs['title']}}">
-                    <a
-                        class="app-menu__item {{ active_item($cs['path']) }}"
-                        href="{{ admin_url($cs['path']) }}"
-                        ><i class="app-menu__icon fa {{$cs['icon']}} text-primary"></i>
-                        <span class="app-menu__label">{{$cs['title']}}</span></a
-                    >
-                </li>
-                @endforeach
-            @endif
+                  @if($custom = config('modules.custom_menu'))
+
+                    @foreach(collect($custom)->where('show_in_sidebar', true) as $cs)
+                            <li title="{{$cs['title']}}">
+                        <a
+                            class="app-menu__item {{ active_item($cs['path']) }}"
+                            href="{{ admin_url($cs['path']) }}"
+                            ><i class="app-menu__icon fa {{$cs['icon']}} text-primary"></i>
+                            <span class="app-menu__label">{{$cs['title']}}</span></a
+                        >
+                    </li>
+                    @endforeach
+                @endif
         @endif
         @if(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y')
         @if ($ext = config('modules.extension_module'))
@@ -186,7 +188,7 @@
                 
                 @foreach (collect($row->module)->where('only_admin', true) as $module)
                 <li>
-                    <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}" href="{{ Route::has(config($row->path . '.route'). $module->route) ? route(config($row->path . '.route') . $module->route) : '#' }}"
+                    <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}" href="{{ Route::has(config($row->path . '.route') . $module->route) ? route(config($row->path . '.route') . $module->route) : '#' }}"
                         ><i class="icon fa {{ $module->icon }}"></i> {{ $module->name
                         }}</a
                     >
@@ -224,7 +226,7 @@
             >
                 <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; Administrator
             </li>
-            @if(config('modules.app_master'))
+            @if(config('modules.app_master') && is_main_domain())
               <li title="Monitor Situs">
                 <a
                     class="app-menu__item {{ active_item(['site-monitor']) }}"
@@ -260,7 +262,7 @@
                             href="{{ \Illuminate\Support\Facades\Route::has('profile') ? route('profile') : '#' }}"
                             ><i class="icon fa fa-building text-primary"></i> Profile </a>
                     </li>
-                    
+
                     <li>
                         <a
                             class="treeview-item {{active_item('appearance') }}"
@@ -274,6 +276,7 @@
                             ><i class="icon fa fa-globe text-success"></i> Website</a
                         > 
                     </li>     
+                                @if(is_main_domain())
                             <li>
                         <a
                             class="treeview-item {{active_item(val: 'cache') }}"
@@ -281,9 +284,10 @@
                             ><i class="icon fa fa-flash text-warning"></i> Cache</a
                         >  
                             </li>  
+                            @endif
                 </ul>   
             </li>
-        
+
                   <li title="Pengguna">
                 <a
                     class="app-menu__item {{ active_item(['user', 'role']) }}"
@@ -292,6 +296,7 @@
                     <span class="app-menu__label">User</span></a
                 >
             </li>
+            @if(is_main_domain())
             <li title="Logs">
                 <a
                     class="app-menu__item {{ active_item(['logs']) }}"
@@ -308,6 +313,8 @@
                     <span class="app-menu__label">API Key</span></a
                 >
             </li>
+            @endif
+
         @endif
         <li
             class="text-muted"

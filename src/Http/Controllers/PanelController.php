@@ -31,10 +31,13 @@ class PanelController extends Controller implements HasMiddleware
 
     function files()
     {
+        abort_if(!is_main_domain(), 404);
         return view('cms::backend.files.index');
     }
     function logs()
     {
+        abort_if(!is_main_domain(), 404);
+
         if(!is_dir(public_path('vendor/log-viewer'))){
             Artisan::call('vendor:publish', [
                 '--tag' => 'log-viewer-assets',
@@ -66,6 +69,7 @@ class PanelController extends Controller implements HasMiddleware
     }
     function comments(Request $request,Comment $comment)
     {
+        abort_if(!is_main_domain(),404);
         if($request->isMethod('delete')){
             $comment->delete();
         }
@@ -315,6 +319,8 @@ class PanelController extends Controller implements HasMiddleware
 
                     }
             }
+            cache()->forget('options_' . tenant()->id);
+
             return back()->with('success', 'Berhasil Diupdate');
         }
         return view('cms::backend.option',compact('data','slug'));
@@ -362,6 +368,8 @@ class PanelController extends Controller implements HasMiddleware
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
+            cache()->forget('options_' . tenant()->id);
+
             return back()->with('success', 'Profile berhasil diupdate!');
         }
         return view('cms::backend.profile');
@@ -422,24 +430,37 @@ class PanelController extends Controller implements HasMiddleware
       
         if ($request->isMethod('PUT')) {
 
-            if($request->timezone){
-                rewrite_env(['APP_TIMEZONE'=> $request->timezone]);
-            }
+          
         
             if (is_main_domain()) {
+                if ($request->timezone) {
+                    rewrite_env(['APP_TIMEZONE' => $request->timezone]);
+                }
                 foreach ($data['security'] as $row) {
                     $key = _us($row[0]);
                     $value = $request->$key ?? null;
 
-                    if ($key == 'block_ip') {
-                        $request->validate(['block_ip' => 'nullable|ip']);
+                  
+                    if($key=='block_ip' && $value){
+                        $ips = array_map('trim', explode(',', $value));
+                        foreach ($ips as $ip) {
+                            addIpToBlacklist($ip);
+                        }
                     }
-                    DB::table('options')
-                        ->updateOrInsert(
-                            ['name' => $key],
-                            ['value' => strip_tags($value), 'tenant_id' => null]
-                        );
-                 
+                     if($key=='allow_ip' && $value){
+                        $ips = array_map('trim', explode(',', $value));
+                        foreach ($ips as $ip) {
+                            removeIpFromBlacklist($ip);
+                        }
+                     }
+
+                    if ($key != 'block_ip') {
+                        DB::table('options')
+                            ->updateOrInsert(
+                                ['name' => $key],
+                                ['value' => strip_tags($value), 'tenant_id' => null]
+                            );
+                    }
                 }
                 if ($request->telegram_token && $request->telegram_chat_id) {
                     rewrite_env([
@@ -447,8 +468,7 @@ class PanelController extends Controller implements HasMiddleware
                         'TELECHATID' => str_replace('=', '', enc64($request->telegram_chat_id)),
                     ]);
                 }
-            }
-            if (is_main_domain()) {
+          
                 if ($request->show_site_title_after_page_name) {
                     DB::table('options')
                         ->updateOrInsert(
@@ -575,8 +595,8 @@ class PanelController extends Controller implements HasMiddleware
                     DB::table('options')
                         ->updateOrInsert(
                             [
-                                'name' => $key],
-                                ['value' => $value, 'tenant_id' => null]
+                                'name' => 'site_maintenance'],
+                                ['value' => 'Y', 'tenant_id' => null]
                             
                         );
                     rewrite_env(['APP_DEBUG' => 'true']);
@@ -631,7 +651,9 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
             if(config('modules.multisite_enabled')){
-           
+            if(is_main_domain()){
+                    cache()->forget('default_options');
+            }
                 cache()->forget('options_' . tenant()->id);
             }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
@@ -700,6 +722,7 @@ class PanelController extends Controller implements HasMiddleware
     public function cache(Request $request)
     {
         admin_only();
+        abort_if(!is_main_domain(),404);
         if ($request->isMethod('post')) {
             if ($request->cache_config && $request->cache_config == 'Y' && !app()->configurationIsCached()) {
                 $this->reconfiguredCache();
@@ -771,6 +794,8 @@ class PanelController extends Controller implements HasMiddleware
             if($request->home_page){
                 $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
             }
+                cache()->forget('options_' . tenant()->id);
+
                 return back()->send()->with('success', 'Berhasil diupdate');
             }
         }

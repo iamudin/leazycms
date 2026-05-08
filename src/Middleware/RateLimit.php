@@ -63,10 +63,9 @@ class RateLimit
         } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-        // dd($redirectUrl);
-        // && rtrim(urldecode($scheme . '://' . $appUrlHost . preg_replace('#/+#', '/', $request->getRequestUri())), '/') !== rtrim(urldecode($scheme . '://' . $appUrlHost . $uri), '/')
+   
         if ($redirectUrl) {
-            return redirect( $redirectUrl, 301);
+            return redirect( $redirectUrl);
         }
 
         if (!is_main_domain()) {
