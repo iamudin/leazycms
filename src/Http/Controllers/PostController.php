@@ -137,7 +137,7 @@ class PostController extends Controller implements HasMiddleware
             'field' => $field,
             'module' => $module,
             'tags' => Tag::get(),
-            'category' => $module->form->category ? Category::query()->whereType(get_post_type())->select('id', 'name')->orderBy('sort')->get() : null
+            'category' => $module->form->category ? Category::whereType(get_post_type())->select('id', 'name')->orderBy('sort')->get() : null
         ]);
     }
     public function destroy(Request $request)
@@ -405,7 +405,7 @@ $post_field = [
     {
         
         $data = $req->user()->isAdmin() || !$req->user()->hasRole(get_post_type(), 'admin',true)
-            ? Post::select((new Post)->selected)
+            ? Post::selectedColumn()
                 ->with([
                     
                     'user:id,name',
@@ -418,10 +418,11 @@ $post_field = [
                     'parent.parent:id,title,type,parent_id',
                     'parent.parent.parent:id,title,type,parent_id',
                 ])
+                ->withTenant()
                 ->withCount('comments')
                 ->whereType(get_post_type())
                 ->whereIn('status', ['publish', 'draft'])
-            : Post::select((new Post)->selected)
+            : Post::selectedColumn()
                 ->with([
                     'user:id,name',
                     'category:id,name',
@@ -434,6 +435,7 @@ $post_field = [
                     'parent.parent.parent:id,title,type,parent_id',
                 ])
                 ->withCount('comments')
+                ->withTenant()
                 ->whereType(get_post_type())
                 ->whereIn('status', ['publish', 'draft'])
                 ->whereBelongsTo($req->user());

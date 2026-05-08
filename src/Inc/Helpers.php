@@ -520,6 +520,7 @@ if (!function_exists('realtime_timer')) {
         return view()->make('cms::backend.layout.realtime_timer', ['event_time' => $dateTime, 'tag' => $elementId]);
     }
 }
+
 if (!function_exists('is_main_domain')) {
     function is_main_domain()
     {
@@ -741,10 +742,72 @@ if(config('modules.telechatid')&& config('modules.teletoken')){
 
 }
 }
+if (!function_exists('getBlacklistIps')) {
+
+    function getBlacklistIps(): array
+    {
+        return Cache::rememberForever('ip_blacklist_cache', function () {
+
+            $path = storage_path('app/security/ip-blacklist.json');
+
+            if (!file_exists($path)) {
+                return [];
+            }
+
+            $content = file_get_contents($path);
+
+            $json = json_decode($content, true);
+
+            return is_array($json) ? $json : [];
+        });
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Helper - Tambah IP ke Blacklist
+|--------------------------------------------------------------------------
+*/
+
+if (!function_exists('addIpToBlacklist')) {
+
+    function addIpToBlacklist(string $ip): void
+    {
+        $path = storage_path('app/security/ip-blacklist.json');
+
+        if (!file_exists(dirname($path))) {
+            mkdir(dirname($path), 0777, true);
+        }
+
+        if (!file_exists($path)) {
+            file_put_contents($path, json_encode([]));
+        }
+
+        $ips = json_decode(file_get_contents($path), true);
+
+        if (!is_array($ips)) {
+            $ips = [];
+        }
+
+        if (!in_array($ip, $ips, true)) {
+
+            $ips[] = $ip;
+
+            file_put_contents(
+                $path,
+                json_encode(array_values(array_unique($ips)), JSON_PRETTY_PRINT)
+            );
+
+            Cache::forget('ip_blacklist_cache');
+        }
+    }
+}
 
 if (!function_exists('forbidden')) {
     function forbidden($request, $k = false)
     {
+
+        $ip = get_client_ip();
 
         $rawKeywords = get_option('forbidden_keyword') ?? '';
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
@@ -753,20 +816,51 @@ if (!function_exists('forbidden')) {
             if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
                 $redirect = get_option('forbidden_redirect');
                 if (!$k) {
-                    dispatch(function () {
+                    $cacheKey = 'attack_attempt_' . $ip;
 
-                        $ip = request()->ip();
-                        $url = request()->fullUrl();
-                        $method = request()->method();
-                        $userAgent = request()->userAgent();
-                        $time = now()->format('Y-m-d H:i:s');
+                    $count = Cache::increment($cacheKey);
 
-                        $message = "
+                    if ($count === 1) {
+                        Cache::put($cacheKey, 1, now()->addMinutes(30));
+                    }
+                    if ($count >= 3) {
+
+                        addIpToBlacklist($ip);
+
+                    
+
+                            $message = "
+<b>⛔ IP AUTO BLACKLISTED</b>
+
+<b>📍 IP:</b> <code>{$ip}</code>
+<b>🔁 Total Attempt:</b> <code>{$count}x</code>
+
+<b>Status:</b> 🚫 Permanently Blocked
+";
+
+
+         
+                    } else {
+                   
+
+                            $url = e($request->fullUrl());
+                            $method = e($request->method());
+                            $userAgent = e($request->userAgent());
+                            $time = now()->format('Y-m-d H:i:s');
+
+                            $message = "
 <b>🚨 SECURITY ALERT - TERDETEKSI SERANGAN</b>
 
 <b>📍 IP Address:</b> <code>{$ip}</code>
 <b>🕒 Waktu:</b> <code>{$time}</code>
 <b>🌐 Method:</b> <code>{$method}</code>
+
+<b>🔎 Keyword:</b>
+<code>" . $request->fullUrl() . "</code>
+
+<b>🔁 Total Attempt:</b>
+<code>{$count}x</code>
+
 <b>🔗 URL:</b>
 <code>{$url}</code>
 
@@ -776,44 +870,119 @@ if (!function_exists('forbidden')) {
 <b>Status:</b> ❌ Request Diblokir (403)
 ";
 
-                        return sendTelegramBotMessage($message);
-
-                    })->afterResponse();
-                    if (!empty($redirect) && str($redirect)->isUrl()) {
-                        return Redirect::to($redirect)->send();
-                    } else {
-                        abort(403);
+                           
                     }
+                    if($message){
+                        dispatch(function () use ($message) {
+                            sendTelegramBotMessage($message);
+
+                        })->afterResponse();
+                    }
+                      
+                        abort(403);
                 }
             }
-            $clientIp = get_client_ip();
-            
-            // 2. Ambil daftar allow & block (string bisa kosong)
+
+            $clientIp = $ip;
+
+
+
             $allowOption = trim((string) get_option('allow_ip'));
-            $blockOption = trim((string) get_option('block_ip'));
 
-            // 3. Konversi ke array, kosong jadi array kosong
-            $allowIpsRaw = $allowOption !== '' ? array_map('trim', explode(',', $allowOption)) : [];
-            $blockIpsRaw = $blockOption !== '' ? array_map('trim', explode(',', $blockOption)) : [];
+            $allowIpsRaw = $allowOption !== ''
+                ? array_map('trim', explode(',', $allowOption))
+                : [];
 
-            // 4. Filter hanya IP valid dari kedua list
-            $allowIps = array_values(array_filter($allowIpsRaw, fn($ip) => is_ip($ip)));
-            $blockIps = array_values(array_filter($blockIpsRaw, fn($ip) => is_ip($ip)));
+            $allowIps = array_values(array_filter(
+                $allowIpsRaw,
+                fn($ip) => filter_var($ip, FILTER_VALIDATE_IP)
+            ));
 
-            if (!empty($allowIps)) {
-                if (!in_array($clientIp, $allowIps, true)) {
-                    abort(403, 'Access Denied (Not in allow list)');
-                }
-            } else {
-                // 5. Tidak ada allow list → cek block
+
+
+            $blockIps = getBlacklistIps();
+
                 if (in_array($clientIp, $blockIps, true)) {
+
                     abort(403, 'Access Denied (Blocked IP)');
                 }
-            }
+            
         }
     }
 }
+if (!function_exists('removeIpFromBlacklist')) {
 
+    function removeIpFromBlacklist(string $ip): bool
+    {
+        $path = storage_path('app/security/ip-blacklist.json');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Jika file tidak ada
+        |--------------------------------------------------------------------------
+        */
+
+        if (!file_exists($path)) {
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil isi blacklist
+        |--------------------------------------------------------------------------
+        */
+
+        $ips = json_decode(file_get_contents($path), true);
+
+        if (!is_array($ips)) {
+            $ips = [];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cari IP
+        |--------------------------------------------------------------------------
+        */
+
+        $originalCount = count($ips);
+
+        $ips = array_values(array_filter(
+            $ips,
+            fn($blockedIp) => $blockedIp !== $ip
+        ));
+
+        /*
+        |--------------------------------------------------------------------------
+        | Jika tidak ada perubahan
+        |--------------------------------------------------------------------------
+        */
+
+        if ($originalCount === count($ips)) {
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan ulang JSON
+        |--------------------------------------------------------------------------
+        */
+
+        file_put_contents(
+            $path,
+            json_encode($ips, JSON_PRETTY_PRINT)
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reset cache blacklist
+        |--------------------------------------------------------------------------
+        */
+
+        cache()->forget('ip_blacklist_cache');
+
+        return true;
+    }
+}
 if (!function_exists('is_ip')) {
     function is_ip($ip)
     {
@@ -1157,12 +1326,7 @@ if (!function_exists('cached')) {
         return app()->configurationIsCached();
     }
 }
-if (!function_exists('get_option')) {
-    function get_option($val = false)
-    {
-        return config('modules.option.' . $val) ?? null;
-    }
-}
+
 
 if (!function_exists('admin_path')) {
     function admin_path()

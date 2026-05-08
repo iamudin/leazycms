@@ -1,11 +1,15 @@
 <!-- Navbar-->
 <header class="app-header" style="background:#222d32"><a href="{{ route('panel.dashboard') }}" class="app-header__logo"
         style="color:#fff;background:transparent">
+        @if(!config('modules.multisite_enabled'))
         @if(is_main_domain())
         @if(get_option('logo')  && media_exists(get_option('logo'))) <img src="{{ get_option('logo')}}" height="30" alt="">  @else Admin<b>Panel</b> @endif
         @else
         <img src="{{ $logo}}" height="30" alt="">
         @endif
+        @else
+        @if(get_option('logo')  && media_exists(get_option('logo'))) <img src="{{ get_option('logo')}}" height="30" alt="">  @else Admin<b>Panel</b> @endif
+        @endif  
     </a>
     <!-- Sidebar toggle button--><a class="app-sidebar__toggle" href="#" data-toggle="sidebar"
         aria-label="Hide Sidebar"></a>
@@ -24,10 +28,8 @@
                 <li><a class="dropdown-item" href="{{ route('setting') }}"><i class="fa fa-gear fa-lg"></i> Setting</a>
                 </li>
 @endif
-                @if(is_main_domain())
                 <li><a class="dropdown-item" href="{{ route('user.account') }}"><i class="fa fa-user fa-lg"></i> Profile</a>
                 </li>
-                @endif
 
 
                 <li>

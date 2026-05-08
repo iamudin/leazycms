@@ -178,7 +178,8 @@
     <!-- The javascript plugin to display page loading on top-->
     <script  src="{{ url('backend/js/plugins/pace.min.js') }}"></script>
     <!-- Page specific javascripts-->
-    <script  src="{{ url('backend/js/plugins/chart.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
     <script  src="{{ url('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
 

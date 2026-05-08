@@ -1,9 +1,10 @@
 <?php
 namespace Leazycms\Web\Models;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
-class OneTimeToken extends Model
+use Illuminate\Support\Str;
+use Leazycms\Web\Models\BaseModel;
+
+class OneTimeToken extends BaseModel
 {
     protected $fillable = ['user_id', 'token', 'expires_at'];
 

@@ -33,6 +33,7 @@ class WebController extends Controller
 
     public function home()
     {
+
         $hp = get_option('home_page');
         if($hp!='default' && View::exists('template.'.template().'.'.str_replace('.blade.php','',$hp))){
             return view('template.'.template().'.'.str_replace('.blade.php','',$hp));
@@ -148,6 +149,11 @@ class WebController extends Controller
                 $detail->increment('shortcut_counter');
             }
             return redirect($detail->url);
+        }
+        if(config('modules.multisite_enabled') && is_main_domain() && $detail->tenant_id){
+            if($detail->tenant_id != tenant()->id){
+             return redirect('http://' . $detail->tenant->domain .'/'. $detail->url);
+        }
         }
 
         config(['modules.data' => $detail]);

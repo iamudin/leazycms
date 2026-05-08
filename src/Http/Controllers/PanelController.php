@@ -31,10 +31,13 @@ class PanelController extends Controller implements HasMiddleware
 
     function files()
     {
+        abort_if(!is_main_domain(), 404);
         return view('cms::backend.files.index');
     }
     function logs()
     {
+        abort_if(!is_main_domain(), 404);
+
         if(!is_dir(public_path('vendor/log-viewer'))){
             Artisan::call('vendor:publish', [
                 '--tag' => 'log-viewer-assets',
@@ -66,6 +69,7 @@ class PanelController extends Controller implements HasMiddleware
     }
     function comments(Request $request,Comment $comment)
     {
+        abort_if(!is_main_domain(),404);
         if($request->isMethod('delete')){
             $comment->delete();
         }
@@ -315,6 +319,8 @@ class PanelController extends Controller implements HasMiddleware
 
                     }
             }
+            cache()->forget('options_' . tenant()->id);
+
             return back()->with('success', 'Berhasil Diupdate');
         }
         return view('cms::backend.option',compact('data','slug'));
@@ -362,6 +368,8 @@ class PanelController extends Controller implements HasMiddleware
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
+            cache()->forget('options_' . tenant()->id);
+
             return back()->with('success', 'Profile berhasil diupdate!');
         }
         return view('cms::backend.profile');
@@ -370,7 +378,6 @@ class PanelController extends Controller implements HasMiddleware
     {
 
         admin_only();
-      
         $data['site_attribute'] = array(
             ['Alamat Situs Web', 'site_url', 'text'],
             ['Nama Situs Web', 'site_title', 'text'],
@@ -423,44 +430,79 @@ class PanelController extends Controller implements HasMiddleware
       
         if ($request->isMethod('PUT')) {
 
-            if($request->timezone){
-                rewrite_env(['APP_TIMEZONE'=> $request->timezone]);
-            }
-            if ($hp = $request->home_page) {
-                if (in_array($hp, array_merge(['default'], $data['home']))) {
-                    $fid = $option->updateOrCreate(['name' => 'home_page'], ['value' => $hp, 'autoload' => 1]);
+          
+        
+            if (is_main_domain()) {
+                if ($request->timezone) {
+                    rewrite_env(['APP_TIMEZONE' => $request->timezone]);
                 }
-            }
-            
-            foreach ($data['security'] as $row) {
-                $key = _us($row[0]);
-                $value = $request->$key ?? null;
+                foreach ($data['security'] as $row) {
+                    $key = _us($row[0]);
+                    $value = $request->$key ?? null;
 
-                if ($key == 'block_ip') {
-                    $request->validate(['block_ip' => 'nullable|ip']);
+                  
+                    if($key=='block_ip' && $value){
+                        $ips = array_map('trim', explode(',', $value));
+                        foreach ($ips as $ip) {
+                            addIpToBlacklist($ip);
+                        }
+                    }
+                     if($key=='allow_ip' && $value){
+                        $ips = array_map('trim', explode(',', $value));
+                        foreach ($ips as $ip) {
+                            removeIpFromBlacklist($ip);
+                        }
+                     }
+
+                    if ($key != 'block_ip') {
+                        DB::table('options')
+                            ->updateOrInsert(
+                                ['name' => $key],
+                                ['value' => strip_tags($value), 'tenant_id' => null]
+                            );
+                    }
                 }
+                if ($request->telegram_token && $request->telegram_chat_id) {
+                    rewrite_env([
+                        'TELETOKEN' => str_replace('=', '', enc64($request->telegram_token)),
+                        'TELECHATID' => str_replace('=', '', enc64($request->telegram_chat_id)),
+                    ]);
+                }
+          
+                if ($request->show_site_title_after_page_name) {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'show_site_title_after_page_name'],
+                                ['value' => true, 'tenant_id' => null]
+                            
+                        );
 
-                $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
-            }
-            if($request->telegram_token && $request->telegram_chat_id){
-                rewrite_env([
-                    'TELETOKEN' => str_replace('=','',enc64($request->telegram_token)),
-                    'TELECHATID' => str_replace('=','',enc64($request->telegram_chat_id)),
-                ]);
-            }
-            if($request->show_site_title_after_page_name){
-                $option->updateOrCreate(['name' => 'show_site_title_after_page_name'], ['value' => true]);
-            }else{
-                $option->updateOrCreate(['name' => 'show_site_title_after_page_name'],  ['value' => false]);
+                } else {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'show_site_title_after_page_name'
+                            ],
+                            ['value' => false, 'tenant_id' => null]
+
+                        );
+                }
             }
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
                     $request->validate([$key => 'nullable|file']);
-                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
 
-                        if ($key == 'favicon') {
+                        if ($key == 'favicon' && is_main_domain()) {
+                            DB::table('options')
+                                ->updateOrInsert(
+                                    [
+                                        'name' => 'favicon'],
+                                        ['value' => true, 'tenant_id' => null]
+                                    
+                                );
                             if ($request->hasFile('favicon')) {
                                 $file = $request->file('favicon');
 
@@ -496,6 +538,7 @@ class PanelController extends Controller implements HasMiddleware
                             }
 
                         } else {
+                            $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
 
                             $fid->update([
                                 'value' => $fid->addFile([
@@ -536,51 +579,83 @@ class PanelController extends Controller implements HasMiddleware
                     $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
-            foreach ($data['shortcut'] as $row) {
-                $key = $row[1];
-                $value = $request->$key ? 'Y' : 'N';
-                $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
-            }
- if ($request->site_maintenance){
-                $option->updateOrCreate(['name' => 'site_maintenance'], ['value' => 'Y', 'autoload' => 1]);
-                rewrite_env(['APP_DEBUG' => 'true']);
-
-            }else{
-                $option->updateOrCreate(['name' => 'site_maintenance'], ['value' => 'N', 'autoload' => 1]);
-                rewrite_env(['APP_DEBUG' => 'false']);
-
-            }
-            if ($request->app_env) {
-                if ($existsenv = get_option('app_env')) {
-                    if ($existsenv != 'production') {
-                        $option->updateOrCreate(['name' => 'app_env'], ['value' => 'production', 'autoload' => 1]);
-                        rewrite_env(['APP_ENV' => 'production']);
-                    } 
+            if (is_main_domain()) {
+                foreach ($data['shortcut'] as $row) {
+                    $key = $row[1];
+                    $value = $request->$key ? 'Y' : 'N';
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' =>$key],
+                                ['value' => $value, 'tenant_id' => null]
+                            
+                        );
                 }
-            }else{
-                        $option->updateOrCreate(['name' => 'app_env'], ['value' => 'local', 'autoload' => 1]);
-                        rewrite_env(['APP_ENV' => 'local']);
-            }
+                if ($request->site_maintenance) {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'site_maintenance'],
+                                ['value' => 'Y', 'tenant_id' => null]
+                            
+                        );
+                    rewrite_env(['APP_DEBUG' => 'true']);
 
-            if (!app()->routesAreCached()) {
-                if ($request->admin_path) {
-                if (admin_path() != $request->admin_path) {
-                    $val = trim(str($request->admin_path)->slug());
-                    if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
-                        return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
+                } else {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'site_maintenance'],
+                                ['value' => 'N', 'tenant_id' => null]
+                        );
+                    rewrite_env(['APP_DEBUG' => 'false']);
+
+                }
+                if ($request->app_env) {
+                    if ($existsenv = get_option('app_env')) {
+                        if ($existsenv != 'production') {
+                            DB::table('options')
+                                ->updateOrInsert(
+                                    [
+                                        'name' => 'app_env'],
+                                        ['value' => 'production', 'tenant_id' => null]
+                                );
+                            rewrite_env(['APP_ENV' => 'production']);
+                        }
                     }
-                    //$option->updateOrCreate(['name' => 'admin_path'], ['value' => enc64($val), 'autoload' => 1]);
-                        rewrite_env(['ADMIN_PATH'=>rtrim(enc64($request->admin_path),'=')]);
-                    return redirect()->to($request->admin_path . '/setting')->send()->with('success', 'Berhasil Diperbarui');
-                }else{
-                    return back()->send()->with('success', 'Berhasil Diperbarui');
+                } else {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'app_env'],
+                                ['value' => 'local', 'tenant_id' => null]
+                        );
+                    rewrite_env(['APP_ENV' => 'local']);
                 }
-            }else{
-                return back()->send()->with('danger', 'Admin Path tidak boleh kosong');
 
+                if (!app()->routesAreCached()) {
+                    if ($request->admin_path) {
+                        if (admin_path() != $request->admin_path) {
+                            $val = trim(str($request->admin_path)->slug());
+                            if (strlen($val) <= 5 || in_array($val, not_allow_adminpath()) || is_numeric($val)) {
+                                return back()->send()->with('danger', 'Login path dengan kata kunci "' . $val . '" tidak diizinkan');
+                            }
+                            //$option->updateOrCreate(['name' => 'admin_path'], ['value' => enc64($val), 'autoload' => 1]);
+                            rewrite_env(['ADMIN_PATH' => rtrim(enc64($request->admin_path), '=')]);
+                            return redirect()->to($request->admin_path . '/setting')->send()->with('success', 'Berhasil Diperbarui');
+                        } 
+                    } else {
+                        return back()->send()->with('danger', 'Admin Path tidak boleh kosong');
+
+                    }
+                }
             }
-        }
-
+            if(config('modules.multisite_enabled')){
+            if(is_main_domain()){
+                    cache()->forget('default_options');
+            }
+                cache()->forget('options_' . tenant()->id);
+            }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
         return view('cms::backend.setting', $data);
@@ -647,6 +722,7 @@ class PanelController extends Controller implements HasMiddleware
     public function cache(Request $request)
     {
         admin_only();
+        abort_if(!is_main_domain(),404);
         if ($request->isMethod('post')) {
             if ($request->cache_config && $request->cache_config == 'Y' && !app()->configurationIsCached()) {
                 $this->reconfiguredCache();
@@ -718,6 +794,8 @@ class PanelController extends Controller implements HasMiddleware
             if($request->home_page){
                 $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
             }
+                cache()->forget('options_' . tenant()->id);
+
                 return back()->send()->with('success', 'Berhasil diupdate');
             }
         }

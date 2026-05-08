@@ -38,8 +38,8 @@ class UserController extends Controller implements HasMiddleware
             $data = $request->validate([
                 'photo' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp',
                 'name' => 'required|string',
-                'username' => 'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
-                'email' => 'required|string|regex:/^[a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
+                'username' => 'required|string|min:5|regex:/^[0-9a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
+                'email' => 'required|string|regex:/^[0-9a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
                 'password' => 'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
             ]);
             $data['photo'] = $user->photo;
@@ -64,7 +64,12 @@ class UserController extends Controller implements HasMiddleware
     }
     public function datatable(Request $request)
     {
-        $data = User::withCount('posts')->where('level', '!=', 'admin')->whereNotNull('host')->whereIn('level',$this->all_role()->toArray());
+        $data = User::withTenant()->withCount('posts')->where('id', '!=', auth()->id())->whereNotNull('host')->whereIn('level',array_merge($this->all_role()->toArray(), ['admin']))->latest();
+        if(app()->has('tenant') && !is_main_domain()){
+            $data->where(function($q){
+                $q->whereNull('tenant_id')->orWhere('tenant_id',tenant()->id);
+            });
+        }
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {

@@ -29,18 +29,69 @@
 
       <small  for="">Username</small>
       <input required type="text" class="form-control form-control-sm username" name="username" placeholder="Masukkan Username" value="{{$user->username}}">
-      <small for="">Password</small>
-      <input type="password" class="form-control form-control-sm password" name="password" placeholder="Masukkan Password" value="">
-      <small class="text-danger">Minimal 8 karakter dan di butuhkan Min 1 Kapital, 1 huruf kecil, 1 angka dan symbol khusus</small><br>
-      <small for="">Konfimasi Password</small>
-      <input type="password" class="form-control form-control-sm password" name="password_confirmation" placeholder="Masukkan Password" value="">
-      <small class="text-danger">*) Kosongkan jika tidak mengubah password</small>
+            <div class="form-group">
+              <small>Password</small>
+
+              <div class="input-group">
+                <input type="text" id="password" name="password" class="form-control form-control-sm" placeholder="Masukkan password"
+                  autocomplete="false">
+
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="generatePassword()">
+                    Generate
+                  </button>
+                  <button type="button" class="btn btn-info btn-sm" onclick="togglePassword()">
+                    Show
+                  </button>
+                  <button type="button" class="btn btn-success btn-sm" onclick="copyPassword()">
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <small class="text-danger mb-0">Minimal 8 karakter dan di butuhkan Min 1 Kapital, 1 huruf kecil, 1 angka dan symbol
+                khusus</small>
+            </div>
+
+            <div class="form-group mb-2 mt-0 pt-0">
+              <small class="mb-0">Konfirmasi Password</small>
+              <input autocomplete="false" class="form-control form-control-sm confirm_password" id="confirm_password"
+                name="password_confirmation" type="password" placeholder="Masukkan ulang password">
+              <small class="text-danger">Ketik Ulang Password</small>
+            </div>
       </div>
     </div>
   </div>
   </div>
   </form>
   @push('scripts')
-    @include('cms::backend.layout.js')
-  @endpush
+      <script>
+        function generatePassword() {
+          let length = 12;
+
+          let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+          let password = "";
+
+          for (let i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+
+          document.getElementById('password').value = password;
+          document.getElementById('confirm_password').value = password;
+        }
+
+        function togglePassword() {
+          let input = document.getElementById('password');
+          input.type = input.type === "password" ? "text" : "password";
+        }
+
+        function copyPassword() {
+          let input = document.getElementById('password');
+          input.select();
+          document.execCommand("copy");
+
+          alert("Password copied!");
+        }
+      </script>
+      @include('cms::backend.layout.js')
+    @endpush
 @endsection

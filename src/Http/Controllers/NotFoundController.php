@@ -11,7 +11,6 @@ class NotFoundController extends Controller
 
         $request = request();
         if (config('app.debug')) {
-            if (is_main_domain()) {
                 if (!Auth::check()) {
                     return response(
                         preg_replace('/\s+/', ' ', undermaintenance()),
@@ -21,9 +20,7 @@ class NotFoundController extends Controller
                         ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
 
                 }
-            } else {
-                return redirect('/');
-            }
+          
         }
         forbidden($request);
         if ($request->expectsJson()) {
@@ -32,7 +29,7 @@ class NotFoundController extends Controller
             $attr['view_type'] = '404';
             $attr['view_path'] = '404';
             config(['modules.current' => $attr]);
-            if (View::exists(get_view(get_view())) && is_main_domain()) {
+            if (View::exists(get_view(get_view())) && (is_main_domain() || config('modules.multisite_enabled'))) {
                 $showspin = true;
                 $view = 'cms::layouts.master';
             } else {

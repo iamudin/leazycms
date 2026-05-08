@@ -2,21 +2,49 @@
 
 namespace Leazycms\Web\Models;
 
-use Leazycms\FLC\Traits\Fileable;
-use Leazycms\FLC\Traits\Commentable;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Model;
+
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+use Leazycms\FLC\Traits\Commentable;
+use Leazycms\Web\Models\BaseModel;
 
-class Post extends Model
+class Post extends BaseModel
 {
-    use SoftDeletes,Fileable,Commentable;
-    public $selected = ['id','description','redirect_to','short_content','type','category_id','user_id','title','created_at','updated_at','deleted_at','parent_id','media','media_description','url','slug','data_field','data_loop','pinned','sort','status','shortcut','shortcut_counter','custom_page','visited','allow_comment','password'];
+    use SoftDeletes, Commentable;
+    public $selected = ['id', 'description', 'redirect_to', 'short_content', 'type', 'category_id', 'user_id', 'title', 'created_at', 'updated_at', 'deleted_at', 'parent_id', 'media', 'media_description', 'url', 'slug', 'data_field', 'data_loop', 'pinned', 'sort', 'status', 'shortcut', 'shortcut_counter', 'custom_page', 'visited', 'allow_comment', 'password'];
 
-    protected $userselectcolumn = ['id','name','url','photo'];
-    protected $categoryselectcolumn = ['id','name','url','slug'];
+    protected $userselectcolumn = ['id', 'name', 'url', 'photo'];
+    protected $categoryselectcolumn = ['id', 'name', 'url', 'slug'];
     protected $fillable = [
-        'custom_page','slug_edited','short_content','title', 'slug', 'content', 'url', 'media', 'media_description', 'keyword', 'description', 'parent_id', 'category_id', 'user_id', 'pinned', 'parent_type', 'type', 'redirect_to', 'status', 'allow_comment', 'mime', 'data_field', 'data_loop', 'created_at','sort','password','deleteable','shortcut','visited'
+        'custom_page',
+        'slug_edited',
+        'short_content',
+        'title',
+        'slug',
+        'content',
+        'url',
+        'media',
+        'media_description',
+        'keyword',
+        'description',
+        'parent_id',
+        'category_id',
+        'user_id',
+        'pinned',
+        'parent_type',
+        'type',
+        'redirect_to',
+        'status',
+        'allow_comment',
+        'mime',
+        'data_field',
+        'data_loop',
+        'created_at',
+        'sort',
+        'password',
+        'deleteable',
+        'shortcut',
+        'visited'
     ];
     protected $casts = [
         'data_field' => 'array',
@@ -34,14 +62,14 @@ class Post extends Model
         static::deleting(function ($post) {
             if ($post->isForceDeleting()) {
                 $post->tags()->detach();
-                foreach($post->files as $row){
+                foreach ($post->files as $row) {
                     $row->deleteFile();
                 }
             }
 
-             if (config('cache.default') === 'redis') {
-            Cache::tags(["type_{$post->type}"])->flush();
-        }
+            if (config('cache.default') === 'redis') {
+                Cache::tags(["type_{$post->type}"])->flush();
+            }
         });
 
         static::saving(function ($post) {
@@ -50,7 +78,7 @@ class Post extends Model
                 $dom = new \DOMDocument();
                 $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->content);
                 $imgs = $dom->getElementsByTagName('img');
-        
+
                 foreach ($imgs as $img) {
                     $src = $img->getAttribute('src');
                     if (strpos($src, 'data:image') !== 0) {
@@ -61,10 +89,10 @@ class Post extends Model
                 }
             }
             if (config('cache.default') === 'redis') {
-            Cache::tags(["type_{$post->type}"])->flush();
-        }
+                Cache::tags(["type_{$post->type}"])->flush();
+            }
         });
-        
+
         static::saved(function ($post) {
             if (!empty($post->media) && media_exists($post->media)) {
                 // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
@@ -92,7 +120,7 @@ class Post extends Model
     {
         return $this->belongsTo(Category::class)->select($this->categoryselectcolumn);
     }
-   
+
     public function childs()
     {
         return $this->hasMany(Post::class, 'parent_id', 'id')->select($this->selected);
@@ -104,16 +132,16 @@ class Post extends Model
 
     public function getThumbnailAttribute()
     {
-       
-    if ($this->media && media_exists($this->media)) {
-        return $this->media;
-    }
-    // Cek cache
-    $cacheKey = 'thumbnail_' . $this->slug;
-    if (Cache::has($cacheKey)) {
-        return Cache::get($cacheKey);
-    }
-    return noimage();
+
+        if ($this->media && media_exists($this->media)) {
+            return app()->has('tenant') && !is_null($this->tenant_id) && $this->tenant_id !== tenant()->id ? 'http://' . $this->tenant?->domain . $this->media : $this->media;
+        }
+        // Cek cache
+        $cacheKey = 'thumbnail_' . $this->slug;
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+        return noimage();
     }
     public function getThumbnailTextAttribute()
     {
@@ -142,7 +170,8 @@ class Post extends Model
     }
     public function getMonthAttribute()
     {
-        return $this->created_at->format('F');;
+        return $this->created_at->format('F');
+        ;
     }
     public function getFieldAttribute()
     {
@@ -161,15 +190,15 @@ class Post extends Model
     {
         return $this->onType($type)->published()->count();
     }
-    function scopeOnType($query,$type)
+    function scopeOnType($query, $type)
     {
         return $query->whereType($type);
     }
-    function scopeFieldFilter($query,$arr)
+    function scopeFieldFilter($query, $arr)
     {
 
-        foreach($arr as $key=>$value){
-            $query = $query->where('data_field->'.$key, $value);
+        foreach ($arr as $key => $value) {
+            $query = $query->where('data_field->' . $key, $value);
         }
         return $query;
     }
@@ -189,11 +218,11 @@ class Post extends Model
 
     function scopeSelectedColumn($query)
     {
-        return $query->select($this->selected);
+        return $query->select(array_merge($this->selected, app()->has('tenant') ? ['tenant_id'] : []));
     }
-    function scopeLikeSlug($query,$slug)
+    function scopeLikeSlug($query, $slug)
     {
-        return $query->where('slug','like',$slug.'%');
+        return $query->where('slug', 'like', $slug . '%');
     }
     function cachedpost($type = false)
     {
@@ -215,6 +244,7 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
             return $this->selectedColumn()
                 ->with(array_merge(['user'], $category))
+                ->withTenant()
                 ->onType($type)
                 ->published()
                 ->latest('created_at')
@@ -224,6 +254,9 @@ class Post extends Model
 
         // Jika redis aktif → pakai cache
         $cacheKey = "posts:{$type}:limit:{$limit}";
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
 
         return Cache::tags(self::cacheTag($type))
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $limit, $category) {
@@ -238,19 +271,21 @@ class Post extends Model
 
             });
     }
-    function index_author($type=false)
+    function index_author($type = false)
     {
-           if($type){
-            return User::whereHas('posts')->withCount(['posts' => function($q) use($type){
-                $q->published()->onType($type);
-            }])->get();
-           } else{
-            return User::whereHas('posts',function ($q){
+        if ($type) {
+            return User::whereHas('posts')->withCount([
+                'posts' => function ($q) use ($type) {
+                    $q->published()->onType($type);
+                }
+            ])->get();
+        } else {
+            return User::whereHas('posts', function ($q) {
                 $q->published();
             })
-            ->withCountPosts()
-            ->get();
-           }
+                ->withCountPosts()
+                ->get();
+        }
 
     }
     function index_sort_by_category($type, $sortby = 'sort', $sort = 'ASC')
@@ -263,7 +298,9 @@ class Post extends Model
         }
 
         $cacheKey = "categories:{$type}:sortby:{$sortby}:order:{$sort}";
-
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
         return Cache::tags(['categories', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $sortby, $sort) {
                 return $this->runSortByCategoryQuery($type, $sortby, $sort);
@@ -293,14 +330,16 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
 
             if ($justIndex) {
-                return Category::select('name','url','slug','icon','description')->onType($type)
+                return Category::select('name', 'url', 'slug', 'icon', 'description')->onType($type)
                     ->published()
                     ->orderBy('sort', 'ASC')
                     ->get();
             }
 
-            return Category::select('name','url','slug','icon','description')->whereHas('posts', function ($q) {
-                $q->published();
+            return Category::select('name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
+                $q->published()
+                    ->withTenant()
+                ;
             })
                 ->withCountPosts()
                 ->onType($type)
@@ -313,17 +352,21 @@ class Post extends Model
         $mode = $justIndex ? 'justIndex' : 'withCount';
         $cacheKey = "categories:{$type}:{$mode}";
 
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
+
         return Cache::tags(['categories', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $justIndex) {
 
                 if ($justIndex) {
-                    return Category::select('name','url','slug','icon','description')->onType($type)
+                    return Category::select('name', 'url', 'slug', 'icon', 'description')->onType($type)
                         ->published()
                         ->orderBy('sort', 'ASC')
                         ->get();
                 }
 
-                return Category::select('name','url','slug','icon','description')->whereHas('posts', function ($q) {
+                return Category::select('name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
                     $q->published();
                 })
                     ->withCountPosts()
@@ -343,6 +386,7 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
             return $this->selectedColumn()
                 ->with(array_merge(['user'], $category))
+                ->withTenant()
                 ->onType($type)
                 ->published()
                 ->latest('created_at')
@@ -354,11 +398,16 @@ class Post extends Model
         // Cache key unik berdasarkan parameter
         $cacheKey = "posts:{$type}:skip:{$skip}:limit:{$limit}";
 
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
+
         return Cache::tags(['posts', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $skip, $limit, $category) {
 
                 return $this->selectedColumn()
                     ->with(array_merge(['user'], $category))
+                    ->withTenant()
                     ->onType($type)
                     ->published()
                     ->latest('created_at')
@@ -397,7 +446,9 @@ class Post extends Model
 
         $typeKey = $type ? $type : 'all';
         $cacheKey = "tags:{$typeKey}";
-
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
         $tags = ['tags'];
 
         if ($type) {
@@ -418,6 +469,7 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
             $query = $this->selectedColumn()
                 ->with('user')
+                ->withTenant()
                 ->onType($type)
                 ->published()
                 ->orderBy('sort', $order);
@@ -428,7 +480,9 @@ class Post extends Model
         // Key unik
         $limitKey = $limit ? "limit:{$limit}" : "all";
         $cacheKey = "posts:{$type}:sort:{$order}:{$limitKey}";
-
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
         return Cache::tags(['posts', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $order, $limit) {
 
@@ -449,6 +503,7 @@ class Post extends Model
         // Kalau bukan redis → query normal
         if (config('cache.default') !== 'redis') {
             return $this->select('id', 'user_id')
+                ->withTenant()
                 ->with('childs')
                 ->onType($type)
                 ->published()
@@ -458,11 +513,15 @@ class Post extends Model
 
         // Cache key unik
         $cacheKey = "posts:{$type}:parent_sort:{$order}";
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
 
         return Cache::tags(['posts', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $order) {
 
                 return $this->select('id', 'user_id')
+                    ->withTenant()
                     ->with('childs')
                     ->onType($type)
                     ->published()
@@ -474,21 +533,24 @@ class Post extends Model
     public function index($type, $paginate = null)
     {
         $q = $this->selectedColumn()
-        ->with('user', 'category')
-        ->onType($type)
-        ->published()
-        ->latest('created_at');
-        if ($paginate===null)
-        return $q->get();
+            ->with('user', 'category')
+            ->withTenant()
+            ->onType($type)
+            ->published()
+            ->latest('created_at');
+        if ($paginate === null)
+            return $q->get();
         return $q->paginate($paginate);
 
     }
+
 
     public function index_popular($type, $limit)
     {
         // Kalau bukan redis → query normal
         if (config('cache.default') !== 'redis') {
             return $this->selectedColumn()
+                ->withTenant()
                 ->with('user')
                 ->onType($type)
                 ->published()
@@ -499,11 +561,16 @@ class Post extends Model
 
         $cacheKey = "posts:{$type}:popular:limit:{$limit}";
 
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
+
         return Cache::tags(['posts', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $limit) {
 
                 return $this->selectedColumn()
                     ->with('user')
+                    ->withTenant()
                     ->onType($type)
                     ->published()
                     ->orderBy('visited', 'desc')
@@ -520,6 +587,7 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
 
             $query = $this->selectedColumn()
+                ->withTenant()
                 ->pinned()
                 ->published()
                 ->latest();
@@ -534,7 +602,9 @@ class Post extends Model
         // Tentukan key
         $typeKey = $type ? $type : 'all';
         $cacheKey = "posts:pinned:{$typeKey}:limit:{$limit}";
-
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
         // Tentukan tag
         $tags = ['posts'];
 
@@ -557,30 +627,31 @@ class Post extends Model
                 return $query->take($limit)->get();
             });
     }
-    function index_by_tag($type,$tag,$limit=false,$paginate=false){
-        $q = $this->selectedColumn()->onType($type)->published()->whereHas('tags', function ($query)  use($tag){
-            $query->where('tags.slug', $tag)->where('tags.status','publish');
+    function index_by_tag($type, $tag, $limit = false, $paginate = false)
+    {
+        $q = $this->selectedColumn()->onType($type)->published()->whereHas('tags', function ($query) use ($tag) {
+            $query->where('tags.slug', $tag)->where('tags.status', 'publish');
         })->latest();
-        if($limit){
+        if ($limit) {
             return $q->take($limit)->get();
         }
-        if($paginate){
+        if ($paginate) {
             return $q->paginate(get_option('post_perpage'));
         }
         return $q->get();
     }
     function index_by_category($type, $slug, $paginate = false)
     {
-      
-            return $paginate ? $this->selectedColumn()->with('user')
-            ->whereHas('category', function ($q) use ($slug,$type) {
+
+        return $paginate ? $this->selectedColumn()->with('user')
+            ->whereHas('category', function ($q) use ($slug, $type) {
                 $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
             })->onType($type)->published()->latest('created_at')->paginate($paginate) :
-            $this->selectedColumn()->with('user')->WhereHas('category', function ($q) use ($slug,$type) {
-                    $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
-                })->onType($type)->published()->latest('created_at')
+            $this->selectedColumn()->with('user')->WhereHas('category', function ($q) use ($slug, $type) {
+                $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
+            })->onType($type)->published()->latest('created_at')
                 ->get();
-        
+
     }
 
 
@@ -590,6 +661,7 @@ class Post extends Model
         if (config('cache.default') !== 'redis') {
 
             $query = $this->selectedColumn()
+                ->withTenant()
                 ->onType($type)
                 ->published();
 
@@ -598,6 +670,7 @@ class Post extends Model
             }
 
             return $query->with('user')
+                ->withTenant()
                 ->latest('created_at')
                 ->take(5)
                 ->get();
@@ -606,6 +679,10 @@ class Post extends Model
         // Buat key unik (except bisa null)
         $exceptKey = $except ? "except:{$except}" : "noexcept";
         $cacheKey = "posts:{$type}:recent:{$exceptKey}";
+
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
 
         return Cache::tags(['posts', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $except) {
@@ -619,26 +696,28 @@ class Post extends Model
                 }
 
                 return $query->with('user')
+                    ->withTenant()
                     ->latest('created_at')
                     ->take(5)
                     ->get();
             });
     }
-    function index_child($type, $id,$perpage=false)
+    function index_child($type, $id, $perpage = false)
     {
         if (get_module($type)?->cache) {
             return $this->cachedpost($type)->where('parent_id', $id);
         } else {
             $q = $this->select($this->selected)
-            ->with('user')
-            ->onType($type)
-            ->published()
-            ->where('parent_id', $id)
-            ->latest('created_at');
-            if($perpage){
-              return  $q->paginate(get_option('post_perpage'));
-            }else{
-               return $q->get();
+                ->with('user')
+                ->withTenant()
+                ->onType($type)
+                ->published()
+                ->where('parent_id', $id)
+                ->latest('created_at');
+            if ($perpage) {
+                return $q->paginate(get_option('post_perpage'));
+            } else {
+                return $q->get();
             }
         }
     }
@@ -666,7 +745,9 @@ class Post extends Model
 
         $nameKey = $name ? "slug:{$name}" : "first";
         $cacheKey = "posts:{$type}:detail:{$nameKey}";
-
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
         return Cache::tags(['posts', "type_{$type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $name, $with) {
                 return $this->runDetailQuery($type, $name, $with);
@@ -674,7 +755,7 @@ class Post extends Model
     }
     private function runDetailQuery($type, $name, $with)
     {
-        $query = $this->with($with);
+        $query = $this->with($with)->withTenant();
 
         if ($name) {
 
@@ -700,11 +781,11 @@ class Post extends Model
                     ->first();
             }
 
-           // Jika bukan page → hanya slug sesuai type
+            // Jika bukan page → hanya slug sesuai type
             return $query
                 ->onType($type)
                 ->published()
-                ->where('slug','like', $name.'%')
+                ->where('slug', 'like', $name . '%')
                 ->first();
         }
 
@@ -715,7 +796,7 @@ class Post extends Model
     }
     function getShareToAttribute()
     {
-        return view()->make('cms::share.button',['url'=>$this->shortcut ? url($this->shortcut) : url()->full()]);
+        return view()->make('cms::share.button', ['url' => $this->shortcut ? url($this->shortcut) : url()->full()]);
     }
 
     public function getHistoryAttribute()
@@ -732,6 +813,10 @@ class Post extends Model
         }
 
         $cacheKey = "posts:{$this->type}:history:{$this->id}";
+
+        if (app()->has('tenant')) {
+            $cacheKey .= ":tenant:" . tenant()->id;
+        }
 
         return Cache::tags(['posts', "type_{$this->type}"])
             ->remember($cacheKey, now()->addMinutes(30), function () {
