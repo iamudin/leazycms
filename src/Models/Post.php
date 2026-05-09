@@ -108,10 +108,7 @@ class Post extends BaseModel
     {
         return $this->belongsToMany(Tag::class);
     }
-    public function visitors()
-    {
-        return $this->hasMany(Visitor::class);
-    }
+
     public function parent()
     {
         return $this->belongsTo(Post::class, 'parent_id', 'id');

@@ -94,7 +94,7 @@
                                 </li>
         @endforeach
         @if(Auth::user()->level == 'admin')
-      
+
             <li>
                 <a
                     class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
@@ -131,7 +131,7 @@
             </li>
         @endif
        @if(is_main_domain())
-      
+
         @foreach(array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template', ARRAY_FILTER_USE_BOTH) as $k => $row)
         <li>
             <a
@@ -168,12 +168,12 @@
         >
             <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; APLIKASI
         </li>
-        
+
         @endif
         @foreach (json_decode(json_encode($ext)) as $row)
         @if(Auth::user()->level != 'admin' && Auth::user()->level == $row->path || Auth::user()->level == 'admin')
         @if(auth()->user()->isAdmin())
-          
+
         <li class="treeview {{ Str::contains($row->path . '/' . request()->segment(3), collect($row->module)->pluck('path')->toArray()) ? 'is-expanded' : null }}">
             <a
                 title="{{ $row->description }}"
@@ -185,7 +185,7 @@
                 ><i class="treeview-indicator fa fa-chevron-right"></i
             ></a>
             <ul class="treeview-menu">
-                
+
                 @foreach (collect($row->module)->where('only_admin', true) as $module)
                 <li>
                     <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}" href="{{ Route::has(config($row->path . '.route') . $module->route) ? route(config($row->path . '.route') . $module->route) : '#' }}"
@@ -218,7 +218,7 @@
         @endif
 
         @endif
-     
+
         @if (Auth::user()->isAdmin())
             <li
                 class="text-muted"
@@ -274,18 +274,18 @@
                             class="treeview-item {{active_item('setting') }}"
                             href="{{ route('setting') }}"
                             ><i class="icon fa fa-globe text-success"></i> Website</a
-                        > 
-                    </li>     
+                        >
+                    </li>
                                 @if(is_main_domain())
                             <li>
                         <a
                             class="treeview-item {{active_item(val: 'cache') }}"
                             href="{{ route('cache-manager') }}"
                             ><i class="icon fa fa-flash text-warning"></i> Cache</a
-                        >  
-                            </li>  
+                        >
+                            </li>
                             @endif
-                </ul>   
+                </ul>
             </li>
 
                   <li title="Pengguna">
@@ -296,6 +296,16 @@
                     <span class="app-menu__label">User</span></a
                 >
             </li>
+            @if(is_main_domain() && config('modules.multisite_enabled'))
+            <li title="Tenants">
+                <a
+                    class="app-menu__item {{ active_item(['tenant']) }}"
+                    href="{{ route('tenant.index') }}"
+                    ><i class="app-menu__icon fa fa-globe text-primary"></i>
+                    <span class="app-menu__label">Tenants</span></a
+                >
+            </li>
+            @endif
             @if(is_main_domain())
             <li title="Logs">
                 <a

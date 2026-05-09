@@ -289,7 +289,7 @@ $post_field = [
         $allowed_tags = '<p><s><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
         $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content']) : null;
 
-        if (Post::onType($post->type)->whereNotIn('id', [$post->id])->whereSlug($slug)->count() > 0) {
+        if (!config('modules.multisite_enabled') ? Post::onType($post->type)->whereNotIn('id', [$post->id])->whereSlug($slug)->count() > 0 : Post::onType($post->type)->whereNotIn('id', [$post->id])->whereTenantId($post->tenant_id)->whereSlug($slug)->count() > 0) {
             $data['slug'] = $post->slug ?? str($request->title . ' ' . Str::random(4))->slug();
         } else {
             $data['slug'] = $slug;

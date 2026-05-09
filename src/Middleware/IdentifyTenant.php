@@ -5,6 +5,8 @@ use Closure;
 use Illuminate\Http\Request;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Tenant;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Cache;
 
 class IdentifyTenant
 {
@@ -16,8 +18,9 @@ class IdentifyTenant
         }
 
         $host = strtolower($request->getHost());
-
-        $tenant = Tenant::where('domain', $host)->first();
+        $tenant = json_decode(json_encode(Cache::rememberForever("tenant_{$host}", function () use ($host) {
+            return Tenant::where('domain', $host)->where('status', 'active')->first()->toArray();
+        })));
 
         // ❌ Tenant tidak ditemukan
         if (!$tenant) {
@@ -149,7 +152,7 @@ class IdentifyTenant
             <a href="{$portal}" class="btn btn-primary">Kembali ke Portal</a>
         </div>
 
-       
+
     </div>
 </body>
 </html>
@@ -166,14 +169,11 @@ HTML;
         // ✅ Set tenant
         app()->instance('tenant', $tenant);
 
-        // Force URL sesuai domain
-        \URL::forceRootUrl($request->getSchemeAndHttpHost());
+        URL::forceRootUrl($request->getSchemeAndHttpHost());
         $tenantId = $tenant->id;
-        // dd( Option::pluck('value', 'name') ->toArray());
-app()->singleton('tenant.options', function () use ($tenantId) { return cache()->remember("options_{$tenantId}", 3600, function ()  { return Option::pluck('value', 'name') ->toArray(); }); }); 
+app()->singleton('tenant.options', function () use ($tenantId) { return cache()->remember("options_{$tenantId}", 3600, function ()  { return Option::pluck('value', 'name') ->toArray(); }); });
         $response = $next($request);
 
-        // Optional debug header
         if (config('app.debug')) {
             $response->headers->set('X-Tenant-ID', $tenant->id);
             $response->headers->set('X-Tenant-Domain', $tenant->domain);

@@ -2,8 +2,10 @@
 
 namespace Leazycms\Web\Http\Controllers\Auth;
 
+use Leazycms\Web\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Leazycms\Web\Models\OneTimeToken;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -12,6 +14,34 @@ use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
+    public function loginByToken(Request $request, string $token)
+    {
+        abort_if(!config('modules.multisite_enabled'), 404);
+        $otToken = OneTimeToken::where('token', $token)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$otToken) {
+            return redirect('/' . admin_path())->with('error', 'Token login tidak valid atau sudah kadaluarsa.');
+        }
+
+        $user = User::withoutGlobalScopes()->find($otToken->user_id);
+        if (!$user || $user->status !== 'active') {
+            return redirect('/login/' . admin_path())->with('error', 'User tidak ditemukan atau tidak aktif.');
+        }
+
+        Auth::login($user);
+        $otToken->delete(); // Token hanya sekali pakai
+
+        $request->session()->regenerate();
+        $user->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+            'active_session' => md5(md5($request->session()->id())),
+        ]);
+
+        return redirect('/' . admin_path());
+    }
     public function codeCaptcha(): void
     {
         Session::put('captcha', Str::random(6));

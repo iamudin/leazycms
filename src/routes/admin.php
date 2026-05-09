@@ -5,6 +5,7 @@ use Leazycms\Web\Http\Controllers\PostController;
 use Leazycms\Web\Http\Controllers\UserController;
 use Leazycms\Web\Http\Controllers\PanelController;
 use Leazycms\Web\Http\Controllers\EmailController;
+use Leazycms\Web\Http\Controllers\TenantController;
 use Leazycms\Web\Http\Controllers\PollingController;
 use Leazycms\Web\Http\Controllers\AppMasterController;
 use Leazycms\Web\Http\Controllers\CategoryController;
@@ -93,6 +94,18 @@ Route::controller(UserController::class)->group(function () {
     Route::delete('user/{user}/edit', 'destroy')->name('user.destroy');
     Route::match(['get', 'post'], 'account', 'account')->name('user.account');
 });
+
+Route::controller(TenantController::class)->group(function () {
+    Route::get('tenant', 'index')->name('tenant.index');
+    Route::post('tenant', 'datatable')->name('tenant.datatable');
+    Route::get('tenant/create', 'create')->name('tenant.create');
+    Route::post('tenant/create', 'store')->name('tenant.store');
+    Route::get('tenant/{tenant}/login', 'loginToTenant')->name('tenant.login');
+    Route::get('tenant/{tenant}/edit', 'edit')->name('tenant.edit');
+    Route::put('tenant/{tenant}/edit', 'update')->name('tenant.update');
+    Route::delete('tenant/{tenant}/edit', 'destroy')->name('tenant.destroy');
+});
+
 if(config('modules.app_master')){
     Route::controller(AppMasterController::class)->group(function () {
         Route::get('site-monitor', 'index')->name('app.master.index');

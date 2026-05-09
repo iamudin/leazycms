@@ -53,16 +53,16 @@
         if (viewerUrl) {
             content = `
             <div class="position-relative" style="min-height:600px;">
-                <div id="mediaLoader" 
+                <div id="mediaLoader"
                      class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-white">
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
 
-                <iframe 
-                    src="${viewerUrl}" 
-                    width="100%" 
-                    height="600px" 
-                    style="border:none; display:none;" 
+                <iframe
+                    src="${viewerUrl}"
+                    width="100%"
+                    height="600px"
+                    style="border:none; display:none;"
                     onload="document.getElementById('mediaLoader').remove(); this.style.display='block';"
                     onerror="document.getElementById('mediaLoader').innerHTML='<p class=\\'text-danger\\'>Gagal memuat file.</p>';">
                 </iframe>
@@ -105,9 +105,9 @@
         <div class="modal fade" id="dynamicMediaModal" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered">
                 <div class="modal-content shadow-lg border-0">
-                    
+
                     <div class="modal-header bg-light d-flex justify-content-between align-items-center">
-                        
+
                         <div>
                             <strong>${fileName}</strong>
                             <span class="badge badge-secondary text-uppercase ml-2">
@@ -239,8 +239,8 @@ const fileselect = async (targetInput) => {
             alert(`File "${file.name}" tidak didukung. Hanya JPG, JPEG,GIF dan PNG`);
             continue;
         }
-     
-            await compressAndPreview(file, preview, dataTransfer, 1.0); 
+
+            await compressAndPreview(file, preview, dataTransfer, 1.0);
     }
 
     input.files = dataTransfer.files;
@@ -318,7 +318,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files', 'comments']))
+@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files', 'comments', 'tenant']))
 <script>
 function deleteAlert(url) {
     swal(

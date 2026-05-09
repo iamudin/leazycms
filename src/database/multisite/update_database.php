@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->enum('status',['active','maintenance','suspended'])->default('active');
             $table->timestamps();
         });
-        foreach(['posts','categories','tags','analytics_visitors','analytics_daily','options','polling_topics','roles','users'] as $tableName) {
+        foreach(['posts','categories','tags','analytics_visitors','analytics_daily','options','polling_topics','roles','users','one_time_tokens'] as $tableName) {
             if (!Schema::hasColumn($tableName, 'tenant_id')) {
                 Schema::table($tableName, function (Blueprint $table) {
                     $table->unsignedBigInteger('tenant_id')->nullable()->index();
