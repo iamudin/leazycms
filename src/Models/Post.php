@@ -753,6 +753,9 @@ class Post extends BaseModel
     private function runDetailQuery($type, $name, $with)
     {
         $query = $this->with($with)->withTenant();
+        if (config('modules.multisite_enabled')) {
+            $query->where('tenant_id', tenant()->id);
+        }
 
         if ($name) {
 
