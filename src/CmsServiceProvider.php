@@ -48,6 +48,8 @@ protected function handle403(){
             return null;
         });
 }
+    protected static $isTenantLoaded = null;
+
     protected function handle500()
     {
         $this->app->afterResolving(ExceptionHandler::class, function ($handler) {
@@ -88,11 +90,16 @@ protected function handle403(){
                     ], 500)->header('X-Request-ID', $requestId);
                 }
 
-                return response(preg_replace('/\s+/', ' ', error500Msg($requestId)), 500)
+                $content = error500Msg($requestId);
+                if (function_exists('minify_all_one_line')) {
+                    $content = minify_all_one_line($content);
+                }
+
+                return response($content, 500)
                     ->header('Content-Type', 'text/html')
                     ->header('X-Request-ID', $requestId)
-                    ->header('Cache-Control', 'public, max-age=3600')
-                    ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+                    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                    ->header('Pragma', 'no-cache');
             });
 
         });
@@ -277,7 +284,13 @@ protected function registerRoutes()
         ) {
             try {
                 if (!config('modules.option')) {
-                   $options = Schema::hasColumn('options', 'tenant_id') ?  \Leazycms\Web\Models\Option::where('tenant_id',1)->orWhereNull('tenant_id')->pluck('value', 'name')->toArray() : \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
+                    if (self::$isTenantLoaded === null) {
+                        self::$isTenantLoaded = Schema::hasColumn('options', 'tenant_id');
+                    }
+                    
+                    $options = self::$isTenantLoaded 
+                        ? \Leazycms\Web\Models\Option::where('tenant_id',1)->orWhereNull('tenant_id')->pluck('value', 'name')->toArray() 
+                        : \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                   
                     config(['modules.option' => $options]);
                 }
@@ -296,7 +309,9 @@ protected function registerRoutes()
     protected function loadTemplateConfig()
     {
         $templateName = template();
-        $configFile = resource_path("views/template/{$templateName}/modules.blade.php");
+        $configFile = config('modules.multisite_enabled')
+            ? resource_path("views/template/modules.blade.php")
+            : resource_path("views/template/{$templateName}/modules.blade.php");
 
         if (file_exists($configFile)) {
             try {

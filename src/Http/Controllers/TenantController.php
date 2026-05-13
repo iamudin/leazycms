@@ -22,6 +22,7 @@ class TenantController extends Controller implements HasMiddleware
 
     public function loginToTenant(Tenant $tenant)
     {
+        
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
         if (!$admin) {
             return back()->with('danger', 'Admin tenant tidak ditemukan.');
@@ -133,7 +134,7 @@ class TenantController extends Controller implements HasMiddleware
         // Save Options
         $this->saveTenantOptions($tenant, $request);
 
-        Cache::forget("tenant_{$domain}");
+        Cache::forget("tenant:{$domain}");
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil ditambah');
     }
@@ -203,9 +204,9 @@ class TenantController extends Controller implements HasMiddleware
         // Save Options
         $this->saveTenantOptions($tenant, $request);
 
-        Cache::forget("tenant_{$oldDomain}");
-        Cache::forget("tenant_{$domain}");
-        Cache::forget("options_{$tenant->id}");
+        Cache::forget("tenant:{$oldDomain}");
+        Cache::forget("tenant:{$domain}");
+        Cache::forget("tenant:{$tenant->id}:options");
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil diupdate');
     }
@@ -226,8 +227,8 @@ class TenantController extends Controller implements HasMiddleware
         $domain = $tenant->domain;
         $tenantId = $tenant->id;
         $tenant->delete();
-        Cache::forget("tenant_{$domain}");
-        Cache::forget("options_{$tenantId}");
+        Cache::forget("tenant:{$domain}");
+        Cache::forget("tenant:{$tenantId}:options");
         return response()->json(['success' => 'Tenant berhasil dihapus']);
     }
 }

@@ -52,11 +52,11 @@ class RateLimit
             $redirectUrl = 'https://' . $host . $uri;
         }
         // 3. Validasi domain jika sub_app_enabled diaktifkan
-        elseif (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled')) {
+        elseif (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled') && !is_main_domain()) {
+            
             $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
                 return parse_url($url, PHP_URL_HOST);
             })->toArray();
-
             if (!in_array($host, $allowedHosts, true)) {
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
@@ -65,12 +65,13 @@ class RateLimit
         }
    
         if ($redirectUrl) {
-            return redirect( $redirectUrl);
+           return redirect( $redirectUrl);
         }
 
         if (!is_main_domain()) {
             if (!$isLocal && !$isHttps && app()->environment('production')) {
-                return redirect('https://' . $host . $uri);
+                dd('dfdf');
+               return redirect('https://' . $host . $uri);
             }
         }
         if ($request->segment(1) == 'log-viewer') {

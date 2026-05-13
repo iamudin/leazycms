@@ -59,8 +59,8 @@ class User extends BaseUser
     }
     public function getPhotoUserAttribute()
     {
-        if ($this->photo && media_exists($this->photo)) {
-            return app()->has('tenant') && !is_null($this->tenant_id) && $this->tenant_id !== tenant()->id ? 'http://' . $this->tenant?->domain . $this->photo : $this->photo;
+        if ($this->photo && media($this->photo)->isExists()) {
+            return media($this->photo)->url();
         }
         return noimage();
     }

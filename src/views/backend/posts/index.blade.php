@@ -24,11 +24,18 @@
 
                       <div class="row"> 
                         @php
-  $publish = request()->user()->isAdmin() || !request()->user()->hasRole(get_post_type(), 'admin', true) ? query()->onType(get_post_type())->published()->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->published()->count();
-  $draft = request()->user()->isAdmin() || !request()->user()->hasRole(get_post_type(), 'admin', true) ? query()->onType(get_post_type())->whereStatus('draft')->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->whereStatus('draft')->count();
-  $trash = request()->user()->isAdmin() || !request()->user()->hasRole(get_post_type(), 'admin', true) ? query()->onType(get_post_type())->onlyTrashed()->count() : query()->whereBelongsTo(request()->user())->onType(get_post_type())->onlyTrashed()->count();
+  $user = request()->user();
+  $postType = get_post_type();
+  $canSeeAll = $user->isAdmin() || !$user->hasRole($postType, 'admin', true);
+  
+  $baseQuery = query()->onType($postType);
+  if (!$canSeeAll) {
+      $baseQuery = $baseQuery->whereBelongsTo($user);
+  }
 
-
+  $publish = (clone $baseQuery)->published()->count();
+  $draft = (clone $baseQuery)->whereStatus('draft')->count();
+  $trash = (clone $baseQuery)->onlyTrashed()->count();
                         @endphp
                             <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya" class="pointer col-12 col-md-6 col-lg-3">
                             <div class="widget-small primary coloured-icon"><i class="icon fa fa-globe fa-3x"></i>

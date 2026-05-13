@@ -1,7 +1,5 @@
 <?php
-
 namespace Leazycms\Web\Http\Controllers\Auth;
-
 use Leazycms\Web\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -20,14 +18,13 @@ class LoginController extends Controller
         $otToken = OneTimeToken::where('token', $token)
             ->where('expires_at', '>', now())
             ->first();
-
         if (!$otToken) {
             return redirect('/' . admin_path())->with('error', 'Token login tidak valid atau sudah kadaluarsa.');
         }
 
         $user = User::withoutGlobalScopes()->find($otToken->user_id);
         if (!$user || $user->status !== 'active') {
-            return redirect('/login/' . admin_path())->with('error', 'User tidak ditemukan atau tidak aktif.');
+            return redirect('/' . admin_path())->with('error', 'User tidak ditemukan atau tidak aktif.');
         }
 
         Auth::login($user);
@@ -93,7 +90,6 @@ class LoginController extends Controller
         if (Auth::check()) {
             return to_route('panel.dashboard');
         }
-
         $this->codeCaptcha();
 
         $captchaUrl = route('captcha') . '?time=' . time();
@@ -104,7 +100,7 @@ class LoginController extends Controller
         $data['description'] = get_option('site_description');
         $data['loginsubmit'] = url(admin_path());
         $data['logo'] = get_option('logo');
-        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y') {
+        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled')) {
             if (!is_main_domain()) {
                 $getApp = collect(config('modules.extension_module'))->where('url', '=', 'http://' . $request->getHost())->first();
                 $data['title'] = $getApp['title'];

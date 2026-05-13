@@ -6,9 +6,11 @@
                                             <div class="pull-right">
 
                                                 <div class="btn-group">
+                                                    @if(is_main_domain())
                  <button type="button" class="btn btn-primary"  onclick="$('#generateModuleModal').modal('show')">
     <i class="fa fa-plus"></i> Tambah Post Type Baru
 </button>
+@endif
                                                     <button type="button" onclick="$('.editorForm').trigger('submit')" class="btn btn-primary btn-sm"> <i
                                                             class="fa fa-save"></i> <span class="save-text">Simpan</span></button>
                                                     <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i>

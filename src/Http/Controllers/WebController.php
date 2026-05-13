@@ -16,8 +16,8 @@ class WebController extends Controller
 {
   
     public function pollingsubmit(Request $request){
-        $polling = PollingTopic::find($request->topic);
-        if(empty($request->cookie('polling_'.$request->keyword))){
+        $polling = PollingTopic::select('id', 'keyword', 'duration')->find($request->topic);
+        if($polling && empty($request->cookie('polling_'.$request->keyword))){
         PollingResponse::create([
             'polling_option_id' => $request->answer,
             'ip'=>$request->ip(),
@@ -43,12 +43,13 @@ class WebController extends Controller
 
     public function api(Request $req, Post $post, $id = null)
     {
-        abort_if(empty(get_option('allow_ip')) || get_option('allow_ip') && !in_array(get_client_ip(), explode(",", get_option('allow_ip'))), 404);
+        $allowIp = get_option('allow_ip');
+        abort_if(empty($allowIp) || ($allowIp && !in_array(get_client_ip(), explode(",", $allowIp))), 404);
         if ($id) {
             return response([
                 'code' => 200,
                 'status' => "success",
-                'data' => $post->with('user')->whereStatus('publish')->findOrFail($id)
+                'data' => $post->selectedColumn()->with('user')->whereStatus('publish')->findOrFail($id)
             ], 200);
         }
         return response([
@@ -62,8 +63,9 @@ class WebController extends Controller
 
         $modul = current_module();
         config(['modules.page_name' =>  $modul->title]);
+        $perPage = $modul->web->post_perpage ?? get_option('post_perpage');
         $data = array(
-            'index' => $modul->web->auto_query ? $post->index($modul->name, isset($modul->web->post_perpage) ? $modul->web->post_perpage : get_option('post_perpage')) : [],
+            'index' => $modul->web->auto_query ? $post->index($modul->name, $perPage) : [],
             'module' => $modul,
         );
         
@@ -98,7 +100,7 @@ class WebController extends Controller
     public function author(Request $request, $u = null)
     {
         if($u){
-            $user = User::whereSlug($u)->first();
+            $user = User::select('id', 'name', 'url', 'photo', 'slug')->whereSlug($u)->first();
             abort_if(empty($user), 404);
             config(['modules.page_name' => 'Author: ' . $user->name]);
             $data = [
@@ -106,7 +108,11 @@ class WebController extends Controller
             ];
             return view('cms::layouts.master', $data);
         }else{
-            $author = User::whereHas('posts')->where('status','active')->whereNotIn('level',['admin'])->get();
+            $author = User::select('id', 'name', 'url', 'photo', 'slug')
+                ->whereHas('posts')
+                ->where('status','active')
+                ->whereNotIn('level',['admin'])
+                ->get();
             config(['modules.page_name' => 'Author']);
             $data = [
                 'author' => $author
@@ -120,9 +126,11 @@ class WebController extends Controller
         $slug = Str::of($name)
             ->replaceMatches('/[^\p{L}\p{N}-]/u', '')
             ->toString();
-        $modul = get_module(get_post_type() ?? 'page');
-        $detail = $post->detail(get_post_type() ?? 'page', $slug);
+        $postType = get_post_type() ?? 'page';
+        $modul = get_module($postType);
+        $detail = $post->detail($postType, $slug);
         abort_if(empty($detail), '404');
+
         if ($request->ajax() && $request->isMethod('post')) {
             $request->validate([
                 'name'=>'required'
@@ -219,7 +227,13 @@ class WebController extends Controller
     {
         $modul = get_module(get_post_type());
         
-        $category = Category::where('slug', 'like', $slug . '%')->whereType($modul->name)->whereStatus('publish')->select('name', 'slug', 'url','icon','description')->whereHas('posts')->first();
+        $category = Category::select('id', 'name', 'slug', 'url', 'icon', 'description', 'type')
+            ->where('slug', 'like', $slug . '%')
+            ->whereType($modul->name)
+            ->whereStatus('publish')
+            ->whereHas('posts')
+            ->first();
+
         abort_if(!$category, '404');
         if ($category->slug != $slug){
             return redirect($category->url);
@@ -227,8 +241,9 @@ class WebController extends Controller
         config(['modules.page_name' => $modul->title . ' di kategori ' . $category->name]);
         $category->timestamps = false;
         $category->increment('visited');
+        $perPage = $modul->web?->post_perpage ?? get_option('post_perpage');
         $data = array(
-            'index' => (new Post)->index_by_category($modul->name, $slug, isset($modul->web?->post_perpage) ? $modul->web->post_perpage : get_option('post_perpage')),
+            'index' => (new Post)->index_by_category($modul->name, $slug, $perPage),
             'category' => $category,
             'module' => $modul
         );
@@ -243,12 +258,14 @@ class WebController extends Controller
             return to_route('home');
         }
         $query = str_replace('-', ' ', str($slug)->slug());
-        $type = collect(get_module())
+        $modules = get_module();
+        $type = collect($modules)
             ->where('public', true)
-        ->where('web.detail', true)
+            ->where('web.detail', true)
             ->where('web.index', true)
-        ->pluck('name')->toArray();
-        $index = Post::select((new Post)->selected)
+            ->pluck('name')->toArray();
+
+        $index = Post::selectedColumn()
             ->whereIn('type', $type)
             ->where('type', '!=', 'page')
             ->published()
@@ -294,9 +311,11 @@ class WebController extends Controller
         $module = get_module($type);
         abort_if($year > date('Y'), 404);
 
+        $perPage = $module->web?->post_perpage ?? get_option('post_perpage');
+
         if ($year && !$month && !$date) {
                 $periode = $year;
-                $data = $post->onType($type)->published()->whereYear('created_at', $year)->paginate(isset($module->web?->post_perpage) ? $module->web->post_perpage : get_option('post_perpage'));
+                $data = $post->onType($type)->published()->whereYear('created_at', $year)->paginate($perPage);
         } elseif ($year && $month && !$date) {
 
                 $periode = blnindo($month) . ' ' . $year;
@@ -304,7 +323,7 @@ class WebController extends Controller
                     ->published()
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
-                    ->paginate(isset($module->web?->post_perpage) ? $module->web->post_perpage : get_option('post_perpage'));
+                    ->paginate($perPage);
           
         } elseif ($year && $month && $date) {
 
@@ -313,7 +332,7 @@ class WebController extends Controller
                 $data = $post->onType($type)
                 ->published()
                     ->whereDate('created_at', $year . '-' . $month . '-' . $date)
-                    ->paginate(isset($module->web?->post_perpage) ? $module->web->post_perpage : get_option('post_perpage'));
+                    ->paginate($perPage);
         
         } 
 

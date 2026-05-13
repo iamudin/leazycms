@@ -7,9 +7,14 @@ class Menu
 {
     protected $dataloop;
     protected $take;
+    protected static $requestCache = null;
+
     public function __construct($name,$take=false)
     {   $this->take = $take;
-        $this->dataloop = Cache::get('menu')->where('slug', $name)->first()?->data_loop;
+        if (self::$requestCache === null) {
+            self::$requestCache = Cache::get('menu', []);
+        }
+        $this->dataloop = collect(self::$requestCache)->where('slug', $name)->first()?->data_loop;
     }
 
     public function __invoke(){

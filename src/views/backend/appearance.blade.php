@@ -7,8 +7,10 @@
 
 
             <div class="btn-group  pull-right">
+              @if(get_option('can_edit_template')=='Y' || is_main_domain())
           <a href="{{ route('appearance.editor') }}" class="btn btn-warning btn-sm btn-md "> <i class="fa fa-code"></i>
             Edit Template</a>
+            @endif
                 <a href="{{route('panel.dashboard')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
             </div>
 
@@ -22,7 +24,11 @@
     <div class="col-lg-2" style="max-height: 85vh;overflow:auto">
         <h6>Modul</h6>
         <div class="accordion mb-3" id="accordionExample" >
-            @foreach(collect(get_module())->where('public', true)->where('web.detail', true) as $row)
+          @php 
+          $module = collect(get_module())->where('public', true)->where('web.detail', true);
+          $data = query()->selectedColumn()->whereIn('type',$module->pluck('name')->toArray())->with('category')->get();
+          @endphp
+            @foreach($module as $row)
             <div class="card">
               <div class="card-header" id="heading{{ $row->name }}" style="padding:0">
                   <span class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#{{ $row->name }}" aria-expanded="true" aria-controls="{{ $row->name }}">
@@ -40,24 +46,23 @@
                   @endif
                   @if($row->web->detail)
                   <li>
-                    @php $detail = query()->detail($row->name) @endphp
+                  @php
+                  $detail= $data->where('type',$row->name)->first();
+                  @endphp
                     <a href="javascript::void(0)" onclick="$('.preview').attr('src','{{ url($detail->url ?? '/') }}')"> <i class="fa fa-arrow-right"></i> View DETAIL</a>
                 </li>
                   @endif
                   @if($row->form->category)
-                  @php $category = query()->index_category($row->name)->first() @endphp
+                  @php 
+                  $category = Leazycms\Web\Models\Category::whereType($row->name)->whereHas('posts')->first();
+                  
+                  @endphp
                   <li>
                     <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($category->url ?? '/') }}')"> <i class="fa fa-arrow-right"></i>  View CATEGORY</a>
 
                   </li>
                   @endif
-                  @if($row->web->archive)
-                  @php $archive = query()->detail($row->name) @endphp
-                  <li>
-                    <a href="javascript::void(0)"  onclick="$('.preview').attr('src','{{ url($row->name . '/archive/' . ($archive ? $archive->created_at->format('Y') : date('Y'))) }}')"> <i class="fa fa-arrow-right"></i>    Archive</a>
-
-                  </li>
-                  @endif
+               
                 </ul>
                 </div>
               </div>

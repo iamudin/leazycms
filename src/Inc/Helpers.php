@@ -1,5 +1,6 @@
 <?php
 
+use FontLib\TrueType\Collection;
 use Illuminate\Support\Str;
 use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\URL;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 if (!function_exists('query')) {
     function query()
     {
@@ -94,7 +96,7 @@ if (!function_exists('get_domain_routes')) {
     }
 }
 if (!function_exists('add_view_stats')) {
-    function add_view_stats($view)
+    function add_view_stats(string $view)
     {
         config(['modules.view_stats'=>$view]);
 
@@ -553,7 +555,7 @@ if (!function_exists('web_header')) {
 }
 
 if (!function_exists('datatable_asset')) {
-    function datatable_asset($type)
+    function datatable_asset(string $type)
     {
         if($type=='style'){
             return View::make('cms::backend.layout.dtstyle');
@@ -592,9 +594,16 @@ if (!function_exists('getThumbUrl')) {
             $images = $xpath->query('//img[contains(@class, "lz-thumbnail")]');
 
             if ($images->length > 0) {
-                // Ambil URL dari atribut 'src'
-                $src = $images->item(0)->getAttribute('data-src');
-                return $src;
+                // Ambil URL dari atribut 'data-src' atau fallback ke 'src'
+                $img = $images->item(0);
+                $src = null;
+                if ($img instanceof \DOMElement) {
+                    $src = $img->getAttribute('data-src');
+                    if (!$src) {
+                        $src = $img->getAttribute('src');
+                    }
+                }
+                return $src ?: null;
             }
         }
 
@@ -746,7 +755,12 @@ if (!function_exists('getBlacklistIps')) {
 
     function getBlacklistIps(): array
     {
-        return Cache::rememberForever('ip_blacklist_cache', function () {
+        static $ips = null;
+        if ($ips !== null) {
+            return $ips;
+        }
+
+        return $ips = Cache::rememberForever('ip_blacklist_cache', function () {
 
             $path = storage_path('app/security/ip-blacklist.json');
 
@@ -997,6 +1011,7 @@ if (!function_exists('is_ip')) {
 if (!function_exists('ratelimiter')) {
     function ratelimiter($request, $limittime)
     {
+        static $checked = [];
         $ip = get_client_ip();
         $sessionId = $request->session()->getId();
         $userAgent = $request->header('User-Agent');
@@ -1005,16 +1020,22 @@ if (!function_exists('ratelimiter')) {
         $limittime = (int) $limittime;
         $limitduration = (int) get_option('limit_duration');
         $key = generateRateLimitKey($ip, $sessionId, $userAgent, $url, $referer);
+
+        if (isset($checked[$key])) {
+            return;
+        }
+
         $maxAttempts = $limittime > 0 ? $limittime : 10;
         $decayMinutes = $limitduration > 0 ? $limitduration : 1;
-        if (Cache::has($key)) {
-            $attempts = cache::get($key);
-            if ($attempts >= $maxAttempts) {
-                return abort(429);
-            }
+
+        $attempts = Cache::get($key, 0);
+        if ($attempts >= $maxAttempts) {
+            return abort(429);
         }
+
         Cache::increment($key);
         Cache::put($key, Cache::get($key), now()->addMinutes($decayMinutes));
+        $checked[$key] = true;
     }
 }
 if (!function_exists('generateRateLimitKey')) {
@@ -1171,19 +1192,19 @@ if (!function_exists('noimage')) {
     }
 }
 if (!function_exists('underscore')) {
-    function underscore($val)
+    function underscore(string $val)
     {
         return strtolower(preg_replace('/[^A-Za-z0-9\-]/', '_', trim($val)));
     }
 }
 if (!function_exists('get_module_info')) {
-    function get_module_info($val, $post_type = false)
+    function get_module_info(string $val, $post_type = false)
     {
         return $val ? (get_module($post_type ? $post_type : get_post_type())->$val ?? '') : '';
     }
 }
 if (!function_exists('active_item')) {
-    function active_item($val)
+    function active_item(string|array $val)
     {
         if (is_array($val)) {
             foreach ($val as $r) {
@@ -1205,7 +1226,7 @@ if (!function_exists('admin_url')) {
     }
 }
 if (!function_exists('formatFilename')) {
-    function formatFilename($filename)
+    function formatFilename(string $filename)
     {
         // Mengambil nama file tanpa ekstensi
         $filenameWithoutExtension = pathinfo($filename, PATHINFO_FILENAME);
@@ -1219,32 +1240,6 @@ if (!function_exists('formatFilename')) {
         return ucfirst($formattedName);
     }
 }
-if (!function_exists('regenerate_cache')) {
-    function regenerate_cache()
-    {
-        $post_type = collect(config('modules.used'))->where('active', true)->where('public', true)->where('cache', true)->pluck('name')->toArray();
-        foreach ($post_type as $row) {
-            $with = null;
-
-            if (get_module($row)->form->category) {
-                $with[] = 'user';
-                $with[] = 'category';
-            }
-            Cache::forget($row);
-            Cache::rememberForever($row, function () use ($row, $with) {
-                return \Leazycms\Web\Models\Post::with($with ?? 'user')->whereType($row)->whereStatus('publish')->latest('created_at')->get();
-            });
-            if (get_module($row)->form->category) {
-                Cache::forget('category_' . $row);
-                Cache::rememberForever('category_' . $row, function () use ($row) {
-                    return \Leazycms\Web\Models\Category::with('posts')->whereType($row)->whereStatus('publish')->latest('created_at')->get();
-                });
-            }
-        }
-    }
-}
-
-
 
 if (!function_exists('fcm_send_notification')) {
     function fcm_send_notification($r)
@@ -1319,9 +1314,9 @@ if (!function_exists('rewrite_env')) {
         return true;
     }
 }
-if (!function_exists('cached')) {
+if (!function_exists('configIsCached')) {
 
-    function cached()
+    function configIsCached()
     {
         return app()->configurationIsCached();
     }
@@ -1337,7 +1332,7 @@ if (!function_exists('admin_path')) {
 }
 
 if (!function_exists('add_module')) {
-    function add_module($array)
+    function add_module(array $array)
     {
         $data = config('modules.used');
         if (!empty(collect($data)->where('name', $array['name'])->first())) {
@@ -1351,7 +1346,7 @@ if (!function_exists('add_module')) {
     }
 }
 if (!function_exists('no_cache_for_route')) {
-    function no_cache_for_route($array)
+    function no_cache_for_route(array $array)
     {
         if(is_array($array)){
             config(['modules.no_cache_for_route' => $array]);
@@ -1359,7 +1354,7 @@ if (!function_exists('no_cache_for_route')) {
     }
 }
 if (!function_exists('add_controller')) {
-    function add_controller($array)
+    function add_controller(array $array)
     {
         if (is_array($array)) {
             config(['modules.custom_controllers' => $array]);
@@ -1377,7 +1372,7 @@ if (!function_exists('_field')) {
 }
 
 if (!function_exists('getlistmenu')) {
-    function getlistmenu($menu, $menulist)
+    function getlistmenu( $menu,  $menulist)
     {
         $me = $menu;
         $m = '';
@@ -1399,7 +1394,7 @@ if (!function_exists('getlistmenu')) {
     }
 }
 if (!function_exists('rnd')) {
-    function rnd($length)
+    function rnd(int $length)
     {
         $str = "";
         $characters = '0123456789';
@@ -1412,7 +1407,7 @@ if (!function_exists('rnd')) {
     }
 }
 if (!function_exists('ceksubmenu')) {
-    function ceksubmenu($menu, $id)
+    function ceksubmenu( $menu,  $id)
     {
         $cek = $menu->where('menu_parent', $id);
         if (count($cek) > 0) {
@@ -1425,23 +1420,18 @@ if (!function_exists('ceksubmenu')) {
         }
     }
 }
-if (!function_exists('_loop')) {
-    function _loop($r)
-    {
-        return (!empty($r->data_loop)) ? json_decode($r->data_loop) : array();
-    }
-}
+
 if (!function_exists('is_admin')) {
     function is_admin()
     {
-        return auth()->user()->level == 'admin' ? true : false;
+        return Auth::user()->level == 'admin' ? true : false;
     }
 }
 
 if (!function_exists('use_module')) {
-    function use_module($module_selected)
+    function use_module(array $module_selected)
     {
-        if (!cached()) {
+        if (!configIsCached()) {
             foreach ($module_selected as $module => $attr) {
                 if (config('modules.menu.' . $module) !== null) {
                     $module_config = config('modules.menu.' . $module);
@@ -1464,7 +1454,7 @@ if (!function_exists('use_module')) {
     }
 }
 if (!function_exists('processMenu')) {
-    function processMenu($menu, $datanya, &$mnews, $parent = 0)
+    function processMenu(array $menu, array $datanya, &$mnews, int $parent = 0)
     {
         foreach ($menu as $value) {
             $b = collect($datanya)->where('menu_id', $value['id'])->first();
@@ -1491,16 +1481,25 @@ if (!function_exists('current_module')) {
 if (!function_exists('get_module')) {
     function get_module($name = false)
     {
-        $module = config('modules.used');
-        if ($name) {
-            return json_decode(json_encode(collect($module)->where('active', true)->where('name', $name)->first()));
-        } else {
-            return json_decode(json_encode(collect($module)->where('active', true)->sort()));
+        static $modules = null;
+        if ($modules === null) {
+            $modules = collect(config('modules.used', []))->where('active', true);
         }
+
+        if ($name) {
+            static $singleModules = [];
+            if (!isset($singleModules[$name])) {
+                $module = $modules->where('name', $name)->first();
+                $singleModules[$name] = $module ? json_decode(json_encode($module)) : null;
+            }
+            return $singleModules[$name];
+        }
+
+        return json_decode(json_encode($modules->sort()));
     }
 }
 if (!function_exists('blnindo')) {
-    function blnindo($month)
+    function blnindo(string $month)
     {
         $months = (substr($month, 0, 1) == 0) ? substr($month, 1, 2) : $month;
         $bulan_array = array(
@@ -1531,71 +1530,15 @@ if (!function_exists('get_view')) {
         }
     }
 }
-function db_resolver($url_get = false)
-{
-    $envFilePath = base_path('.env'); // Sesuaikan dengan path file .env Anda
-    // Cetak isi variabel
 
-    $envContent = file_get_contents($envFilePath);
-    $configLines = explode("\n", $envContent);
-
-    // Mendefinisikan array untuk menyimpan data
-    $host = [];
-    $url = [];
-    $db = [];
-    $user = [];
-    $pass = [];
-    // Memproses setiap baris konfigurasi
-    foreach ($configLines as $line) {
-        // Memisahkan baris menjadi variabel dan nilai
-        $parts = explode(" ", $line);
-        // Memproses setiap variabel dan nilai
-        foreach ($parts as $part) {
-            // Memisahkan variabel dan nilai menggunakan '='
-            $pair = explode("=", $part);
-            // Memastikan ada dua elemen setiap pasangan
-            if (count($pair) === 2) {
-                $key = $pair[0];
-                $value = $pair[1];
-                // Memeriksa jika variabel adalah DB_DOMAIN
-                if ($key === "DB_DOMAIN") {
-                    array_push($url, $value);
-                }
-                if ($key === "DB_HOST") {
-                    array_push($host, $value);
-                }
-                if ($key === "DB_USERNAME") {
-                    array_push($user, $value);
-                }
-                if ($key === "DB_PASSWORD") {
-                    array_push($pass, $value);
-                }
-                if ($key === "DB_DATABASE") {
-                    array_push($db, $value);
-                }
-            }
-        }
-    }
-
-    // Menampilkan array data
-
-    foreach ($url as $key => $row) {
-        $data[] = ['domain' => $row, 'host' => $host[$key], 'username' => $user[$key], 'database' => $db[$key], 'password' => $pass[$key]];
-    }
-    if ($url_get) {
-        $domain = collect($data)->where('domain', $url_get)->first();
-        return $domain ? $domain : webnotfound();
-    }
-    return json_decode(json_encode($data));
-}
 if (!function_exists('blade_path')) {
-    function blade_path($blade)
+    function blade_path(string $blade)
     {
         $blades = 'template.' . template() . '.' . $blade;
         if (View::exists($blades)) {
             return $blades;
         } else {
-            if (config('app.debug') && auth()->check()) {
+            if (config('app.debug') && Auth::check()) {
                 $path = resource_path('views\template\\' . template() . '\\' . $blade . '.blade.php') . ' Not Found<br> ';
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
@@ -2043,7 +1986,12 @@ if (!function_exists('isPre')) {
 if (!function_exists('get_thumbnail')) {
     function get_thumbnail()
     {
-        return Cache::has(md5(request()->fullUrl())) ? url(Cache::get(md5(request()->fullUrl()))) : url(noimage());
+        static $thumb = null;
+        if ($thumb !== null) {
+            return $thumb;
+        }
+        $key = md5(request()->fullUrl());
+        return $thumb = Cache::has($key) ? url(Cache::get($key)) : url(noimage());
     }
 }
 
@@ -2284,11 +2232,17 @@ if (!function_exists('clean_url')) {
 if (!function_exists('get_menu')) {
     function get_menu($name)
     {
+        static $menus = [];
         $cacheKey = 'menu';
         if (config('modules.multisite_enabled')) {
-            $cacheKey .= '-' . tenant()->id;
+            $cacheKey .= ':' . tenant()->id;
         }
-        $menu = Cache::get($cacheKey)[$name] ?? [];
+
+        if (!isset($menus[$cacheKey])) {
+            $menus[$cacheKey] = Cache::get($cacheKey, []);
+        }
+
+        $menu = $menus[$cacheKey][$name] ?? [];
         $menuIndex = [];
         foreach ($menu as $item) {
             $menuIndex[$item['menu_id']] = [
@@ -2575,6 +2529,9 @@ if (!function_exists('renderTemplateFile')) {
                     echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
                 if(str($item['name'])->contains('json')){
+                    continue;
+                }
+                if(!is_main_domain() && str($currentPath)->contains('modules')){
                     continue;
                 }
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';

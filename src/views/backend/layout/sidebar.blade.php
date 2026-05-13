@@ -158,7 +158,7 @@
                     @endforeach
                 @endif
         @endif
-        @if(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y')
+        @if(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled') && is_main_domain())
         @if ($ext = config('modules.extension_module'))
 
         @if(Auth::user()->level == 'admin')

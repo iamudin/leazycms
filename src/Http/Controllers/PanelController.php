@@ -319,7 +319,7 @@ class PanelController extends Controller implements HasMiddleware
 
                     }
             }
-            cache()->forget('options_' . tenant()->id);
+            cache()->forget('tenant:'.tenant()->id.':options');
 
             return back()->with('success', 'Berhasil Diupdate');
         }
@@ -368,7 +368,9 @@ class PanelController extends Controller implements HasMiddleware
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
-            cache()->forget('options_' . tenant()->id);
+            if(app()->has('tenant')){
+                cache()->forget('tenant:'.tenant()->id.':options');
+            }
 
             return back()->with('success', 'Profile berhasil diupdate!');
         }
@@ -652,9 +654,9 @@ class PanelController extends Controller implements HasMiddleware
             }
             if(config('modules.multisite_enabled')){
             if(is_main_domain()){
-                    cache()->forget('default_options');
+                    cache()->forget('default:options');
             }
-                cache()->forget('options_' . tenant()->id);
+                cache()->forget('tenant:'.tenant()->id.':options');
             }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
@@ -766,7 +768,7 @@ class PanelController extends Controller implements HasMiddleware
                 return $this->template_uploader($file);
             }
             if ($request->template_setting ) {
-                $ar_ta = config('modules.config.option.template') ?? null;
+                $ar_ta = config('modules.config.option.template') ?? [];
                 if($ar_ta){
 
                    foreach ($ar_ta as $field) {
@@ -781,6 +783,7 @@ class PanelController extends Controller implements HasMiddleware
                                     'mime_type'=> explode(',',$field[2]),
                                     'self_upload'=> true,
                                     ]);
+                            
                            $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                             }
                         }else{
@@ -794,9 +797,11 @@ class PanelController extends Controller implements HasMiddleware
             if($request->home_page){
                 $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
             }
-                cache()->forget('options_' . tenant()->id);
+            if(app()->has('tenant')){
+                cache()->forget('tenant:'.tenant()->id.':options');
+            }
 
-                return back()->send()->with('success', 'Berhasil diupdate');
+                return back()->with('success', 'Berhasil diupdate');
             }
         }
         view()->share('home', array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php'))));
@@ -882,13 +887,16 @@ class PanelController extends Controller implements HasMiddleware
     public function editorTemplate(Request $request)
     {
         admin_only();
+        abort_if(!is_main_domain() && get_option('can_edit_template')=='N', 404);
         $defaultfile = enc64('/home.blade.php');
         $path = resource_path('views/template/' . template());
         if (!file_exists($path . dec64($defaultfile))) {
             File::put($path . dec64($defaultfile), '<h1>Your Script Here</h1>');
         }
         $file = $request->edit ? dec64($request->edit) : dec64($defaultfile);
-
+        if(config('modules.multisite_enabled') && is_main_domain() && str($file)->contains('modules')){
+            $path = resource_path('views/template');
+        }
         if ($file == '/styles.css') {
             $file = '/styles.css';
             $path = public_path('template/' . template());
@@ -1036,33 +1044,7 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.backup-restore');
     }
 
-    function downloadLatestBackup()
-    {
-        // Dapatkan semua destinasi backup yang dikonfigurasi
-        $backupDestinations = BackupDestinationFactory::createFromArray(config('backup.backup.destination.disks'));
 
-        // Asumsikan hanya ada satu disk tujuan backup, ambil yang pertama
-        $backupDestination = $backupDestinations[0];
-        $backupFiles = $backupDestination->backupFiles();
-
-        // Dapatkan file backup terbaru
-        $latestBackupFile = $backupFiles->sortByDesc->date()->first();
-
-        if (!$latestBackupFile) {
-            return redirect()->back()->with('error', 'No backup files found.');
-        }
-
-        // Siapkan file untuk diunduh
-        $disk = Storage::disk($backupDestination->diskName());
-        $filePath = $latestBackupFile->path();
-        $fileName = $latestBackupFile->fileName();
-
-        if ($disk->exists($filePath)) {
-            return $disk->download($filePath, $fileName);
-        }
-
-        return redirect()->back()->with('error', 'File not found.');
-    }
 
 
 }

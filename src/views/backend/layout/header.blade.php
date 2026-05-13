@@ -28,8 +28,11 @@
                 <li><a class="dropdown-item" href="{{ route('setting') }}"><i class="fa fa-gear fa-lg"></i> Setting</a>
                 </li>
 @endif
+            @if(is_main_domain() || config('modules.multisite_enabled'))
                 <li><a class="dropdown-item" href="{{ route('user.account') }}"><i class="fa fa-user fa-lg"></i> Profile</a>
                 </li>
+@endif
+
 
 
                 <li>

@@ -1,4 +1,5 @@
 <?php
+
 namespace Leazycms\Web\Middleware;
 
 use Closure;
@@ -10,21 +11,22 @@ use Illuminate\Support\Facades\Cache;
 
 class IdentifyTenant
 {
+    protected static $currentTenant = null;
+
     public function handle(Request $request, Closure $next)
     {
-        // Jika multisite belum aktif
-        if (!config('modules.multisite_enabled')) {
-            return $next($request);
+        $host = $request->getHost();
+
+        if (self::$currentTenant === null) {
+            self::$currentTenant = Cache::rememberForever(
+                "tenant:$host",
+                fn() => Tenant::where(['domain' => $host, 'status' => 'active'])->first() ?? null
+            );
         }
+        $tenant = self::$currentTenant;
 
-        $host = strtolower($request->getHost());
-        $tenant = json_decode(json_encode(Cache::rememberForever("tenant_{$host}", function () use ($host) {
-            return Tenant::where('domain', $host)->where('status', 'active')->first()->toArray();
-        })));
-
-        // ❌ Tenant tidak ditemukan
         if (!$tenant) {
-        $portal = config('app.url');
+            $portal = config('app.url');
             $html = <<<HTML
 <!DOCTYPE html>
 <html lang="id">
@@ -165,20 +167,20 @@ HTML;
                 ->header('X-Frame-Options', 'SAMEORIGIN')
                 ->header('X-Content-Type-Options', 'nosniff');
         }
-
-        // ✅ Set tenant
+        $defaultOptions = Cache::rememberForever(
+            "default:options",
+            fn() => Option::withoutGlobalScope('tenant')->WhereNull('tenant_id')->pluck('value', 'name')->toArray()
+        );
         app()->instance('tenant', $tenant);
-
         URL::forceRootUrl($request->getSchemeAndHttpHost());
-        $tenantId = $tenant->id;
-app()->singleton('tenant.options', function () use ($tenantId) { return cache()->remember("options_{$tenantId}", 3600, function ()  { return Option::pluck('value', 'name') ->toArray(); }); });
+        app()->singleton('tenant.options', function () use ($tenant, $defaultOptions) {
+            return Cache::rememberForever(
+                "tenant:{$tenant->id}:options",
+                fn() =>array_merge(Option::pluck('value', 'name')
+                    ->toArray(), $defaultOptions)
+            );
+        });
         $response = $next($request);
-
-        if (config('app.debug')) {
-            $response->headers->set('X-Tenant-ID', $tenant->id);
-            $response->headers->set('X-Tenant-Domain', $tenant->domain);
-        }
-
         return $response;
     }
 }
