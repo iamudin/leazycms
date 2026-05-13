@@ -2725,22 +2725,12 @@ if (!function_exists('get_tgl')) {
             $type == 'month' => $bulan[(int) $pecahkan[1]],
             $type == 'date' => $pecahkan[0],
             $type == 'datemonth' => $pecahkan[0] . ' ' . $bulan[(int) $pecahkan[1]],
-            default => NULL
+            default => null
         };
     }
 }
 
-if (!function_exists('get_group')) {
-    function get_group($array, $class = false)
-    {
-        $attr = $class ? 'class="' . $class . '"' : '';
-        $res = '';
-        foreach ($array as $r) {
-            $res .= '<a ' . $attr . ' href="' . url($r->url) . '">' . $r->name . '</a>, ';
-        }
-        return rtrim($res, ', ');
-    }
-}
+
 if (!function_exists('system_keyword')) {
     function system_keyword($keyword)
     {
