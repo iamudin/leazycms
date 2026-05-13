@@ -18,10 +18,16 @@ class IdentifyTenant
         $host = $request->getHost();
 
         if (self::$currentTenant === null) {
-            self::$currentTenant = Cache::rememberForever(
+            $tenantData = Cache::rememberForever(
                 "tenant:$host",
-                fn() => Tenant::where(['domain' => $host, 'status' => 'active'])->first() ?? null
+                fn() => ($t = Tenant::where(['domain' => $host, 'status' => 'active'])->first()) ? $t->toArray() : null
             );
+            if ($tenantData) {
+                $tenant = new Tenant();
+                $tenant->setRawAttributes($tenantData, true);
+                $tenant->exists = true;
+                self::$currentTenant = $tenant;
+            }
         }
         $tenant = self::$currentTenant;
 

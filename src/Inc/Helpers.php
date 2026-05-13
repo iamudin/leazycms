@@ -1,15 +1,12 @@
 <?php
 
-use FontLib\TrueType\Collection;
 use Illuminate\Support\Str;
-use Leazycms\Web\Models\Visitor;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\DB;
+
 use Illuminate\Support\Facades\Auth;
 if (!function_exists('query')) {
     function query()
@@ -1479,7 +1476,7 @@ if (!function_exists('current_module')) {
     }
 }
 if (!function_exists('get_module')) {
-    function get_module($name = false)
+    function get_module($name = null)
     {
         static $modules = null;
         if ($modules === null) {
@@ -2459,34 +2456,27 @@ if (!function_exists('banner_here')) {
 if (!function_exists('get_banner')) {
     function get_banner($name, $limit = 1)
     {
-        $cacheKey = 'banner';
-        if (config('modules.multisite_enabled')) {
-            $cacheKey .= '-' . tenant()->id;
+        static $requestCache = [];
+        $cacheKey = 'banner' . (config('modules.multisite_enabled') ? ':' . tenant()->id : '');
+
+        if (!isset($requestCache[$cacheKey])) {
+            $requestCache[$cacheKey] = cache()->get($cacheKey) ?? [];
         }
-        if ($cek = cache()->get($cacheKey)[$name] ?? null) {
-            $result = collect(json_decode(json_encode($cek)));
-            if ($limit > 1) {
-                $res = $result->take($limit);
-                $banner = array();
-                foreach ($res as $r) {
-                    $a['image'] = $r->image ?? noimage();
-                    $a['link'] = $r->link;
-                    $a['name'] = $r->name;
-                    $a['description'] = $r->description;
-                    $banner[] = $a;
-                }
-            } else {
-                $res = $result->first();
-                $a['image'] = $res->image ?? noimage();
-                $a['link'] = $res->link;
-                $a['name'] = $res->name;
-                $a['description'] = $res->description;
-                $banner = $a;
-            }
-            return json_decode(json_encode($banner));
-        } else {
+
+        $banners = $requestCache[$cacheKey][$name] ?? null;
+
+        if (!$banners) {
             return $limit > 1 ? [] : null;
         }
+
+        $result = collect($banners)->map(fn($r) => (object) [
+            'image'       => $r['image'] ?? $r->image ?? noimage(),
+            'link'        => $r['link'] ?? $r->link ?? null,
+            'name'        => $r['name'] ?? $r->name ?? null,
+            'description' => $r['description'] ?? $r->description ?? null,
+        ]);
+
+        return $limit > 1 ? $result->take($limit)->all() : $result->first();
     }
 }
 if (!function_exists('banner_here')) {
