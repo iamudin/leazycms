@@ -17,6 +17,7 @@ class AnalyticsService
         }
 
         $domain = $data['domain'];
+        $tenantId = app()->has('tenant') ? tenant()->id : null;
 
         $now = now();
         $ip = $data['ip'];
@@ -30,11 +31,12 @@ class AnalyticsService
 
         $visitorKey = $this->resolveVisitorKey($data);
 
-        DB::transaction(function () use ($ip,$domain, $data, $now, $date, $page, $device, $referrer, $visitorKey,$user_agent) {
+        DB::transaction(function () use ($ip, $domain, $tenantId, $data, $now, $date, $page, $device, $referrer, $visitorKey, $user_agent) {
 
             $isNewDailyVisitor = $this->upsertVisitor(
-                ip:$ip,
+                ip: $ip,
                 domain: $domain,
+                tenantId: $tenantId,
                 visitorKey: $visitorKey,
                 sessionId: $data['session_id'],
                 currentPage: $page,
@@ -45,28 +47,25 @@ class AnalyticsService
                 today: $date
             );
 
-            $this->incrementDaily($domain, $date, 'page_view', $page);
+            $this->incrementDaily($domain, $tenantId, $date, 'page_view', $page);
 
-            $this->incrementDaily($domain, $date, 'device', $device);
+            $this->incrementDaily($domain, $tenantId, $date, 'device', $device);
 
             if ($referrer) {
-                $this->incrementDaily($domain, $date, 'referrer', $referrer);
+                $this->incrementDaily($domain, $tenantId, $date, 'referrer', $referrer);
             }
 
             if (get_post_type() == 'search') {
 
                 $keyword = str(request()->segment(2))->headline();
 
-                $this->incrementDaily($domain, $date, 'search', $keyword);
+                $this->incrementDaily($domain, $tenantId, $date, 'search', $keyword);
             }
 
             if ($isNewDailyVisitor) {
 
-                $this->incrementDaily($domain, $date, 'unique_total', 'site');
-
-           
+                $this->incrementDaily($domain, $tenantId, $date, 'unique_total', 'site');
             }
-
         });
 
     }
@@ -118,6 +117,7 @@ class AnalyticsService
     protected function upsertVisitor(
         string $ip,
         string $domain,
+        ?int $tenantId,
         string $visitorKey,
         ?string $sessionId,
         ?string $currentPage,
@@ -137,12 +137,13 @@ class AnalyticsService
 
             DB::table('analytics_visitors')->insert([
                 'domain' => $domain,
+                'tenant_id' => $tenantId,
                 'ip' => $ip,
                 'visitor_key' => $visitorKey,
                 'session_id' => $sessionId,
                 'current_page' => $currentPage,
                 'device' => $device,
-                'user_agent'=>$user_agent,
+                'user_agent' => $user_agent,
                 'referrer' => $referrer,
                 'first_seen_at' => $now,
                 'last_seen_at' => $now,
@@ -152,7 +153,6 @@ class AnalyticsService
             ]);
 
             return true;
-
         }
 
         $isNewDailyVisitor = $visitor->last_seen_date !== $today;
@@ -161,6 +161,7 @@ class AnalyticsService
             ->where('domain', $domain)
             ->where('visitor_key', $visitorKey)
             ->update([
+                'tenant_id' => $tenantId,
                 'session_id' => $sessionId,
                 'current_page' => $currentPage,
                 'device' => $device,
@@ -171,11 +172,11 @@ class AnalyticsService
             ]);
 
         return $isNewDailyVisitor;
-
     }
 
     protected function incrementDaily(
         string $domain,
+        ?int $tenantId,
         string $date,
         string $type,
         string $key,
@@ -199,17 +200,16 @@ class AnalyticsService
                 ->increment('count', $count);
 
             return;
-
         }
 
         DB::table('analytics_daily')->insert([
             'domain' => $domain,
+            'tenant_id' => $tenantId,
             'date' => $date,
             'type' => $type,
             'key' => $key,
             'count' => $count
         ]);
-
     }
 
 }

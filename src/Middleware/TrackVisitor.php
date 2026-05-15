@@ -59,9 +59,14 @@ class TrackVisitor
         return $response;
     }
     protected function cleanupVisitors(): void
-{
-    DB::table('analytics_visitors')
-        ->where('last_seen_at', '<', now()->subMinutes(5))
-        ->delete();
-}
+    {
+        $query = DB::table('analytics_visitors')
+            ->where('last_seen_at', '<', now()->subMinutes(5));
+
+        if (app()->has('tenant')) {
+            $query->where('tenant_id', tenant()->id);
+        }
+
+        $query->delete();
+    }
 }
