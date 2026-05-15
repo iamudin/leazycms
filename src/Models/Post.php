@@ -371,7 +371,7 @@ class Post extends BaseModel
                 ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $justIndex) {
 
                     if ($justIndex) {
-                        return Category::select('name', 'url', 'slug', 'icon', 'description')->onType($type)
+                        return Category::select('id','name', 'url', 'slug', 'icon', 'description')->onType($type)
                             ->published()
                             ->orderBy('sort', 'ASC')
                             ->get();
