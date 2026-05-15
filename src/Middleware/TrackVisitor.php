@@ -32,7 +32,8 @@ class TrackVisitor
                     $data['domain'] .
                     $data['path'] .
                     $data['ip'] .
-                    $data['user_agent']
+                    $data['user_agent'] .
+                    (app()->has('tenant') ? tenant()->id : '')
                 );
 
                 $cacheKey = "analytics_lock_" . $hash;
