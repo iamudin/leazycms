@@ -22,7 +22,7 @@ class TenantController extends Controller implements HasMiddleware
 
     public function loginToTenant(Tenant $tenant)
     {
-        
+
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
         if (!$admin) {
             return back()->with('danger', 'Admin tenant tidak ditemukan.');
@@ -119,7 +119,7 @@ class TenantController extends Controller implements HasMiddleware
         ]);
 
         // Create Admin for Tenant
-        User::create([
+        DB::table('users')->insert([
             'name' => $request->admin_name,
             'email' => $request->admin_email,
             'username' => $request->admin_username,
@@ -127,6 +127,7 @@ class TenantController extends Controller implements HasMiddleware
             'host' => $domain,
             'level' => 'admin',
             'status' => 'active',
+            'tenant_id' => $tenant->id, // Set manual tenant_id
             'slug' => str($request->admin_name)->slug(),
             'url' => 'author/' . str($request->admin_name)->slug(),
         ]);
