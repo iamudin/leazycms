@@ -14,6 +14,7 @@ class VisitorStatsController extends Controller
     {
         $host = request()->getHost();
         $now = Carbon::now();
+        $tenantId = app()->has('tenant') ? tenant()->id : null;
 
         $referer = request()->headers->get('referer');
 
@@ -28,10 +29,15 @@ class VisitorStatsController extends Controller
            ONLINE USER
         ==========================*/
 
-        $onlineVisitors = DB::table('analytics_visitors')
+        $onlineQuery = DB::table('analytics_visitors')
             ->where('domain', $host)
-            ->where('last_seen_at', '>=', $now->copy()->subMinutes(5))
-            ->count();
+            ->where('last_seen_at', '>=', $now->copy()->subMinutes(5));
+
+        if ($tenantId) {
+            $onlineQuery->where('tenant_id', $tenantId);
+        }
+
+        $onlineVisitors = $onlineQuery->count();
 
         /* =========================
            RANGE
@@ -46,26 +52,29 @@ class VisitorStatsController extends Controller
            PAGEVIEW
         ==========================*/
 
-        $todayViews = DB::table('analytics_daily')
-            ->where('domain', $host)
+        $baseQuery = DB::table('analytics_daily')
+            ->where('domain', $host);
+
+        if ($tenantId) {
+            $baseQuery->where('tenant_id', $tenantId);
+        }
+
+        $todayViews = (clone $baseQuery)
             ->where('type', 'page_view')
             ->where('date', $today)
             ->sum('count');
 
-        $yesterdayViews = DB::table('analytics_daily')
-            ->where('domain', $host)
+        $yesterdayViews = (clone $baseQuery)
             ->where('type', 'page_view')
             ->where('date', $yesterday)
             ->sum('count');
 
-        $weekViews = DB::table('analytics_daily')
-            ->where('domain', $host)
+        $weekViews = (clone $baseQuery)
             ->where('type', 'page_view')
             ->where('date', '>=', $weekStart)
             ->sum('count');
 
-        $monthViews = DB::table('analytics_daily')
-            ->where('domain', $host)
+        $monthViews = (clone $baseQuery)
             ->where('type', 'page_view')
             ->where('date', '>=', $monthStart)
             ->sum('count');
@@ -74,8 +83,7 @@ class VisitorStatsController extends Controller
            UNIQUE VISITOR
         ==========================*/
 
-        $uniqueVisitorsToday = DB::table('analytics_daily')
-            ->where('domain', $host)
+        $uniqueVisitorsToday = (clone $baseQuery)
             ->where('type', 'unique_total')
             ->where('key', 'site')
             ->where('date', $today)

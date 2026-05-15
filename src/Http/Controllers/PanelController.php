@@ -139,12 +139,17 @@ class PanelController extends Controller implements HasMiddleware
 
         $rangeStart = now()->subDays(29)->toDateString();
         $rangeEnd = now()->toDateString();
+        $tenantId = app()->has('tenant') ? tenant()->id : null;
 
         $visitorsQuery = DB::table('analytics_visitors')
             ->where('last_seen_at', '>=', now()->subMinutes(5));
 
         if ($domain) {
             $visitorsQuery->where('domain', $domain);
+        }
+
+        if ($tenantId) {
+            $visitorsQuery->where('tenant_id', $tenantId);
         }
 
         $realtimeVisitors = $visitorsQuery->count();
@@ -156,8 +161,13 @@ class PanelController extends Controller implements HasMiddleware
             $dailyQuery->where('domain', $domain);
         }
 
+        if ($tenantId) {
+            $dailyQuery->where('tenant_id', $tenantId);
+        }
+
         $uniqueToday = DB::table('analytics_daily')
             ->when($domain, fn($q) => $q->where('domain', $domain))
+            ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
             ->where('date', today()->toDateString())
             ->where('type', 'unique_total')
             ->where('key', 'site')
@@ -209,6 +219,9 @@ class PanelController extends Controller implements HasMiddleware
             ->when($domain, function ($q) use ($domain) {
                 $q->where('domain', $domain);
             })
+            ->when($tenantId, function ($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            })
             ->whereBetween('date', [$rangeStart, $rangeEnd])
             ->groupBy('key')
             ->orderByDesc('total')
@@ -217,6 +230,9 @@ class PanelController extends Controller implements HasMiddleware
             ->select('current_page', 'device','referrer','ip', 'last_seen_at','user_agent')
             ->when($domain, function ($q) use ($domain) {
                 $q->where('domain', $domain);
+            })
+            ->when($tenantId, function ($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId);
             })
             ->where('last_seen_at', '>=', now()->subMinutes(5))
             ->orderByDesc('last_seen_at')
