@@ -222,17 +222,19 @@ class Post extends BaseModel
     }
     function cachedpost($type = false)
     {
-        if (!$type) return [];
-        if (!isset(self::$requestCache[$type])) {
-            self::$requestCache[$type] = Cache::get($type, []);
+        if (!$type) return collect([]);
+        if (!isset(self::$requestCache[$type]) || !self::$requestCache[$type] instanceof \Illuminate\Support\Collection) {
+            $data = Cache::get($type, []);
+            self::$requestCache[$type] = $data instanceof \Illuminate\Support\Collection ? $data : collect($data);
         }
         return self::$requestCache[$type];
     }
     public function categories($type)
     {
         $cacheKey = 'category_' . $type;
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = collect(Cache::get($cacheKey))->sortBy('sort');
+        if (!isset(self::$requestCache[$cacheKey]) || !self::$requestCache[$cacheKey] instanceof \Illuminate\Support\Collection) {
+            $data = Cache::get($cacheKey, []);
+            self::$requestCache[$cacheKey] = collect($data)->sortBy('sort');
         }
         return self::$requestCache[$cacheKey];
     }
@@ -243,9 +245,10 @@ class Post extends BaseModel
     {
         $module = get_module($type);
         $category = $module?->form?->category ? ['category'] : [];
+        $cacheKey = "posts:{$type}:limit:{$limit}";
+        $tags = $this->cacheTag($type);
 
-        // Jika bukan redis → langsung query biasa
-        if (config('cache.default') !== 'redis') {
+        return $this->getCached($cacheKey, $tags, function () use ($type, $limit, $category) {
             return $this->selectedColumn()
                 ->with(array_merge(['user'], $category))
                 ->withTenant()
@@ -254,29 +257,7 @@ class Post extends BaseModel
                 ->latest('created_at')
                 ->limit($limit)
                 ->get();
-        }
-
-        // Jika redis aktif → pakai cache
-        $cacheKey = "posts:{$type}:limit:{$limit}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = Cache::tags(self::cacheTag($type))
-                ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $limit, $category) {
-
-                    return $this->selectedColumn()
-                        ->with(array_merge(['user'], $category))
-                        ->onType($type)
-                        ->published()
-                        ->latest('created_at')
-                        ->limit($limit)
-                        ->get();
-
-                });
-        }
-        return self::$requestCache[$cacheKey];
+        });
     }
     function index_author($type = false)
     {
@@ -298,24 +279,12 @@ class Post extends BaseModel
     function index_sort_by_category($type, $sortby = 'sort', $sort = 'ASC')
     {
         $sort = strtoupper($sort) === 'DESC' ? 'DESC' : 'ASC';
-
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
-            return $this->runSortByCategoryQuery($type, $sortby, $sort);
-        }
-
         $cacheKey = "categories:{$type}:sortby:{$sortby}:order:{$sort}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
+        $tags = ['categories', "type_{$type}"];
 
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = Cache::tags(['categories', "type_{$type}"])
-                ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $sortby, $sort) {
-                    return $this->runSortByCategoryQuery($type, $sortby, $sort);
-                });
-        }
-        return self::$requestCache[$cacheKey];
+        return $this->getCached($cacheKey, $tags, function () use ($type, $sortby, $sort) {
+            return $this->runSortByCategoryQuery($type, $sortby, $sort);
+        });
     }
     private function runSortByCategoryQuery($type, $sortby, $sort)
     {
@@ -341,7 +310,7 @@ class Post extends BaseModel
             $cacheKey .= ":tenant:" . tenant()->id;
         }
 
-        if (isset(self::$requestCache[$cacheKey])) {
+        if (isset(self::$requestCache[$cacheKey]) && self::$requestCache[$cacheKey] instanceof \Illuminate\Support\Collection) {
             return self::$requestCache[$cacheKey];
         }
 
@@ -350,13 +319,13 @@ class Post extends BaseModel
         }
 
         try {
-            $result = Cache::tags($tags)->remember($cacheKey, now()->addMinutes(30), $callback);
+            $result = Cache::tags($tags)->get($cacheKey);
+            if (!($result instanceof \Illuminate\Support\Collection)) {
+                $result = $callback();
+                Cache::tags($tags)->put($cacheKey, $result, now()->addMinutes(30));
+            }
         } catch (\Exception $e) {
             $result = $callback();
-        }
-
-        if (!($result instanceof \Illuminate\Support\Collection)) {
-            $result = collect([]);
         }
 
         return self::$requestCache[$cacheKey] = $result;
