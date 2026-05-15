@@ -335,68 +335,63 @@ class Post extends BaseModel
         return ["posts", "type_{$type}"];
     }
 
-    function index_category($type, $justIndex = false)
+    private function getCached($cacheKey, array $tags, \Closure $callback)
     {
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
-
-            if ($justIndex) {
-                return Category::select('id','name', 'url', 'slug', 'icon', 'description')->onType($type)
-                    ->published()
-                    ->orderBy('sort', 'ASC')
-                    ->get();
-            }
-
-            return Category::select('id','name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
-                $q->published()
-                    ->withTenant();
-            })
-                ->withCountPosts()
-                ->onType($type)
-                ->published()
-                ->orderBy('sort', 'ASC')
-                ->get();
-        }
-
-        // Key unik
-        $mode = $justIndex ? 'justIndex' : 'withCount';
-        $cacheKey = "categories:{$type}:{$mode}";
-
         if (app()->has('tenant')) {
             $cacheKey .= ":tenant:" . tenant()->id;
         }
 
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = Cache::tags(['categories', "type_{$type}"])
-                ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $justIndex) {
-
-                    if ($justIndex) {
-                        return Category::select('id','name', 'url', 'slug', 'icon', 'description')->onType($type)
-                            ->published()
-                            ->orderBy('sort', 'ASC')
-                            ->get();
-                    }
-
-                    return Category::select('id','name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
-                        $q->published();
-                    })
-                        ->withCountPosts()
-                        ->onType($type)
-                        ->published()
-                        ->orderBy('sort', 'ASC')
-                        ->get();
-                });
+        if (isset(self::$requestCache[$cacheKey])) {
+            return self::$requestCache[$cacheKey];
         }
-        return self::$requestCache[$cacheKey];
+
+        if (config('cache.default') !== 'redis') {
+            return self::$requestCache[$cacheKey] = $callback();
+        }
+
+        try {
+            $result = Cache::tags($tags)->remember($cacheKey, now()->addMinutes(30), $callback);
+        } catch (\Exception $e) {
+            $result = $callback();
+        }
+
+        if (!($result instanceof \Illuminate\Support\Collection)) {
+            $result = collect([]);
+        }
+
+        return self::$requestCache[$cacheKey] = $result;
+    }
+
+    function index_category($type, $justIndex = false)
+    {
+        $mode = $justIndex ? 'justIndex' : 'withCount';
+        $cacheKey = "categories:{$type}:{$mode}";
+        $tags = ['categories', "type_{$type}"];
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $justIndex) {
+            $query = Category::select('id', 'name', 'url', 'slug', 'icon', 'description')
+                ->onType($type)
+                ->published()
+                ->orderBy('sort', 'ASC');
+
+            if (!$justIndex) {
+                $query->whereHas('posts', function ($q) {
+                    $q->published()->withTenant();
+                })->withCountPosts();
+            }
+
+            return $query->get();
+        });
     }
 
     function index_skip($type, $skip, $limit)
     {
         $module = get_module($type);
         $category = $module?->form?->category ? ['category'] : [];
+        $cacheKey = "posts:{$type}:skip:{$skip}:limit:{$limit}";
+        $tags = ["posts", "type_{$type}"];
 
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
+        return $this->getCached($cacheKey, $tags, function () use ($type, $skip, $limit, $category) {
             return $this->selectedColumn()
                 ->with(array_merge(['user'], $category))
                 ->withTenant()
@@ -406,32 +401,23 @@ class Post extends BaseModel
                 ->skip($skip)
                 ->take($limit)
                 ->get();
-        }
-
-        // Cache key unik berdasarkan parameter
-        $cacheKey = "posts:{$type}:skip:{$skip}:limit:{$limit}";
-
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = Cache::tags(['posts', "type_{$type}"])
-                ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $skip, $limit, $category) {
-
-                    return $this->selectedColumn()
-                        ->with(array_merge(['user'], $category))
-                        ->withTenant()
-                        ->onType($type)
-                        ->published()
-                        ->latest('created_at')
-                        ->skip($skip)
-                        ->take($limit)
-                        ->get();
-                });
-        }
-        return self::$requestCache[$cacheKey];
+        });
     }
+
+    function index_tags($type = false)
+    {
+        $typeKey = $type ? $type : 'all';
+        $cacheKey = "tags:{$typeKey}";
+        $tags = ['tags'];
+        if ($type) {
+            $tags[] = "type_{$type}";
+        }
+
+        return $this->getCached($cacheKey, $tags, function () use ($type) {
+            return $this->runTagQuery($type);
+        });
+    }
+
     private function runTagQuery($type)
     {
         if ($type) {
@@ -453,39 +439,15 @@ class Post extends BaseModel
             })
             ->get();
     }
-    function index_tags($type = false)
-    {
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
-            return $this->runTagQuery($type);
-        }
-
-        $typeKey = $type ? $type : 'all';
-        $cacheKey = "tags:{$typeKey}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-        $tags = ['tags'];
-
-        if ($type) {
-            $tags[] = "type_{$type}";
-        }
-
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = Cache::tags($tags)
-                ->remember($cacheKey, now()->addMinutes(30), function () use ($type) {
-                    return $this->runTagQuery($type);
-                });
-        }
-        return self::$requestCache[$cacheKey];
-    }
 
     function index_sort($type, $order = 'asc', $limit = false)
     {
         $order = $order !== 'asc' ? 'desc' : 'asc';
+        $limitKey = $limit ? "limit:{$limit}" : "all";
+        $cacheKey = "posts:{$type}:sort:{$order}:{$limitKey}";
+        $tags = ["posts", "type_{$type}"];
 
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
+        return $this->getCached($cacheKey, $tags, function () use ($type, $order, $limit) {
             $query = $this->selectedColumn()
                 ->with('user')
                 ->withTenant()
@@ -494,37 +456,16 @@ class Post extends BaseModel
                 ->orderBy('sort', $order);
 
             return $limit ? $query->take($limit)->get() : $query->get();
-        }
-
-        // Key unik
-        $limitKey = $limit ? "limit:{$limit}" : "all";
-        $cacheKey = "posts:{$type}:sort:{$order}:{$limitKey}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        if (!isset(self::$requestCache[$cacheKey])) {
-            self::$requestCache[$cacheKey] = Cache::tags(['posts', "type_{$type}"])
-                ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $order, $limit) {
-
-                    $query = $this->selectedColumn()
-                        ->with('user')
-                        ->onType($type)
-                        ->published()
-                        ->orderBy('sort', $order);
-
-                    return $limit ? $query->take($limit)->get() : $query->get();
-                });
-        }
-        return self::$requestCache[$cacheKey];
+        });
     }
 
     function index_sort_by_parent($type, $order = 'asc')
     {
         $order = $order !== 'asc' ? 'desc' : 'asc';
+        $cacheKey = "posts:{$type}:parent_sort:{$order}";
+        $tags = ["posts", "type_{$type}"];
 
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
+        return $this->getCached($cacheKey, $tags, function () use ($type, $order) {
             return $this->select('id', 'user_id')
                 ->withTenant()
                 ->with('childs')
@@ -532,27 +473,9 @@ class Post extends BaseModel
                 ->published()
                 ->orderBy('sort', $order)
                 ->get();
-        }
-
-        // Cache key unik
-        $cacheKey = "posts:{$type}:parent_sort:{$order}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        return Cache::tags(['posts', "type_{$type}"])
-            ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $order) {
-
-                return $this->select('id', 'user_id')
-                    ->withTenant()
-                    ->with('childs')
-                    ->onType($type)
-                    ->published()
-                    ->orderBy('sort', $order)
-                    ->get();
-
-            });
+        });
     }
+
     public function index($type, $paginate = null)
     {
         $q = $this->selectedColumn()
@@ -567,48 +490,31 @@ class Post extends BaseModel
 
     }
 
-
     public function index_popular($type, $limit)
     {
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
+        $cacheKey = "posts:{$type}:popular:limit:{$limit}";
+        $tags = ["posts", "type_{$type}"];
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $limit) {
             return $this->selectedColumn()
-                ->withTenant()
                 ->with('user')
+                ->withTenant()
                 ->onType($type)
                 ->published()
                 ->orderBy('visited', 'desc')
                 ->take($limit)
                 ->get();
-        }
-
-        $cacheKey = "posts:{$type}:popular:limit:{$limit}";
-
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        return Cache::tags(['posts', "type_{$type}"])
-            ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $limit) {
-
-                return $this->selectedColumn()
-                    ->with('user')
-                    ->withTenant()
-                    ->onType($type)
-                    ->published()
-                    ->orderBy('visited', 'desc')
-                    ->take($limit)
-                    ->get();
-
-            });
+        });
     }
 
 
     function index_pinned($limit, $type = false)
     {
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
+        $typeKey = $type ? $type : 'all';
+        $cacheKey = "posts:pinned:{$typeKey}:limit:{$limit}";
+        $tags = $type ? ["posts", "type_{$type}"] : ["posts"];
 
+        return $this->getCached($cacheKey, $tags, function () use ($type, $limit) {
             $query = $this->selectedColumn()
                 ->withTenant()
                 ->pinned()
@@ -620,35 +526,7 @@ class Post extends BaseModel
             }
 
             return $query->take($limit)->get();
-        }
-
-        // Tentukan key
-        $typeKey = $type ? $type : 'all';
-        $cacheKey = "posts:pinned:{$typeKey}:limit:{$limit}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-        // Tentukan tag
-        $tags = ['posts'];
-
-        if ($type) {
-            $tags[] = "type_{$type}";
-        }
-
-        return Cache::tags($tags)
-            ->remember($cacheKey, now()->addMinutes(30), function () use ($limit, $type) {
-
-                $query = $this->selectedColumn()
-                    ->pinned()
-                    ->published()
-                    ->latest();
-
-                if ($type) {
-                    $query->onType($type);
-                }
-
-                return $query->take($limit)->get();
-            });
+        });
     }
     function index_by_tag($type, $tag, $limit = false, $paginate = false)
     {
