@@ -341,13 +341,13 @@ class Post extends BaseModel
         if (config('cache.default') !== 'redis') {
 
             if ($justIndex) {
-                return Category::select('name', 'url', 'slug', 'icon', 'description')->onType($type)
+                return Category::select('id','name', 'url', 'slug', 'icon', 'description')->onType($type)
                     ->published()
                     ->orderBy('sort', 'ASC')
                     ->get();
             }
 
-            return Category::select('name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
+            return Category::select('id','name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
                 $q->published()
                     ->withTenant();
             })
@@ -377,7 +377,7 @@ class Post extends BaseModel
                             ->get();
                     }
 
-                    return Category::select('name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
+                    return Category::select('id','name', 'url', 'slug', 'icon', 'description')->whereHas('posts', function ($q) {
                         $q->published();
                     })
                         ->withCountPosts()
