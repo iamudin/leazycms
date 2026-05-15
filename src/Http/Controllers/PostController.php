@@ -391,7 +391,6 @@ $post_field = [
     {
 
         if (in_array($type, collect(config('modules.used'))->where('active', true)->where('public', true)->where('cache', true)->pluck('name')->toArray())) {
-            regenerate_cache();
         }
         if ($type == 'menu') {
             recache_menu();

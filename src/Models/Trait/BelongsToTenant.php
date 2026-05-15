@@ -63,7 +63,7 @@ trait BelongsToTenant
             }
 
             // ambil tenant asli dari database (bukan dari request)
-            $originalTenantId = $model->getOriginal('tenant_id');
+            $originalTenantId = $model->tenant_id;
 
             if ($originalTenantId !== tenant()->id) {
                 abort(403, 'Forbidden: Anda tidak memiliki akses ke data ini');
@@ -73,7 +73,7 @@ trait BelongsToTenant
         // 🔹 Delete validation
         static::deleting(function ($model) {
             if (app()->has('tenant')) {
-                if(is_null($model->tenant_id) || !is_null($model->tenant_id)&& is_main_domain()) {
+                if(is_null($model->tenant_id) || !is_null($model->tenant_id) && is_main_domain()) {
                   return;
                 }
                 if ($model->tenant_id !== tenant()->id) {

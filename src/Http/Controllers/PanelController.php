@@ -44,10 +44,10 @@ class PanelController extends Controller implements HasMiddleware
                 '--force' => true,
             ]);
         }
-        
+
         return view('cms::backend.logs.index');
     }
- 
+
 
     function menu_target(Request $request)
     {
@@ -99,7 +99,7 @@ class PanelController extends Controller implements HasMiddleware
                 $sender .= '<br><i class="fa fa-link"></i> '.($row->link ?? '-');
                 $sender .= '<br><i class="fa fa-globe"></i> '.($row->ip ?? '-');
                 $sender .= "</small>";
-                
+
                 return $sender;
             })
             ->addColumn('action', function ($row) {
@@ -121,12 +121,12 @@ class PanelController extends Controller implements HasMiddleware
     }
     function index(Request $request)
     {
-      
+
         $user = $request->user();
         $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
-      
 
-       
+
+
         $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
 
@@ -201,7 +201,7 @@ class PanelController extends Controller implements HasMiddleware
             ->orderBy('date')
             ->get();
 
-   
+
         // LIST DOMAIN
         $deviceSummary = DB::table('analytics_daily')
             ->select('key', DB::raw('SUM(count) as total'))
@@ -221,10 +221,10 @@ class PanelController extends Controller implements HasMiddleware
             ->where('last_seen_at', '>=', now()->subMinutes(5))
             ->orderByDesc('last_seen_at')
             ->get();
-        
+
         return view('cms::backend.dashboard', [
             'latest' => $lastpublish,
-            
+
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
             'domain' => $domain,
@@ -239,7 +239,7 @@ class PanelController extends Controller implements HasMiddleware
             'domains'=>$domains,
             'deviceSummary' => $deviceSummary,
             'currentDomain'=>$domain
-            
+
         ]);
     }
     function generate_key(){
@@ -250,7 +250,7 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function apikey(Request $request){
         admin_only();
-  
+
 
         if ($request->isMethod('post')) {
 
@@ -284,7 +284,7 @@ class PanelController extends Controller implements HasMiddleware
                 $this->generate_key();
             }
 
-            
+
 
             return to_route('apikey')->with('success', 'APP_KEY berhasil digenerate ulang!');
         }
@@ -429,11 +429,11 @@ class PanelController extends Controller implements HasMiddleware
             ['Roles', 'operator,editor,publisher']
         );
 
-      
+
         if ($request->isMethod('PUT')) {
 
-          
-        
+
+
             if (is_main_domain()) {
                 if ($request->timezone) {
                     rewrite_env(['APP_TIMEZONE' => $request->timezone]);
@@ -442,7 +442,7 @@ class PanelController extends Controller implements HasMiddleware
                     $key = _us($row[0]);
                     $value = $request->$key ?? null;
 
-                  
+
                     if($key=='block_ip' && $value){
                         $ips = array_map('trim', explode(',', $value));
                         foreach ($ips as $ip) {
@@ -470,14 +470,14 @@ class PanelController extends Controller implements HasMiddleware
                         'TELECHATID' => str_replace('=', '', enc64($request->telegram_chat_id)),
                     ]);
                 }
-          
+
                 if ($request->show_site_title_after_page_name) {
                     DB::table('options')
                         ->updateOrInsert(
                             [
                                 'name' => 'show_site_title_after_page_name'],
                                 ['value' => true, 'tenant_id' => null]
-                            
+
                         );
 
                 } else {
@@ -503,7 +503,7 @@ class PanelController extends Controller implements HasMiddleware
                                     [
                                         'name' => 'favicon'],
                                         ['value' => true, 'tenant_id' => null]
-                                    
+
                                 );
                             if ($request->hasFile('favicon')) {
                                 $file = $request->file('favicon');
@@ -590,7 +590,7 @@ class PanelController extends Controller implements HasMiddleware
                             [
                                 'name' =>$key],
                                 ['value' => $value, 'tenant_id' => null]
-                            
+
                         );
                 }
                 if ($request->site_maintenance) {
@@ -599,7 +599,7 @@ class PanelController extends Controller implements HasMiddleware
                             [
                                 'name' => 'site_maintenance'],
                                 ['value' => 'Y', 'tenant_id' => null]
-                            
+
                         );
                     rewrite_env(['APP_DEBUG' => 'true']);
 
@@ -645,7 +645,7 @@ class PanelController extends Controller implements HasMiddleware
                             //$option->updateOrCreate(['name' => 'admin_path'], ['value' => enc64($val), 'autoload' => 1]);
                             rewrite_env(['ADMIN_PATH' => rtrim(enc64($request->admin_path), '=')]);
                             return redirect()->to($request->admin_path . '/setting')->send()->with('success', 'Berhasil Diperbarui');
-                        } 
+                        }
                     } else {
                         return back()->send()->with('danger', 'Admin Path tidak boleh kosong');
 
@@ -695,7 +695,7 @@ class PanelController extends Controller implements HasMiddleware
 
         if (app()->configurationIsCached()) {
             Artisan::call('config:clear');
-        } 
+        }
     }
     function reconfiguredCache()
     {
@@ -742,7 +742,6 @@ class PanelController extends Controller implements HasMiddleware
             if ($request->cache_media && $request->cache_media == 'Y' && !Cache::has('media')) {
                 media_caching();
                 recache_menu();
-                regenerate_cache();
                 recache_banner();
             }
             if ($request->cache_media && $request->cache_media == 'N' && Cache::has('media')) {
@@ -783,7 +782,7 @@ class PanelController extends Controller implements HasMiddleware
                                     'mime_type'=> explode(',',$field[2]),
                                     'self_upload'=> true,
                                     ]);
-                            
+
                            $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                             }
                         }else{
@@ -915,7 +914,7 @@ class PanelController extends Controller implements HasMiddleware
             if (!file_exists($path . $file)) {
                 File::put($path . $file, '/*You JS Here*/');
             }
-        } 
+        }
         elseif(Str::endsWith($file, 'Controller.php')){
             $path = app_path('Http/Controllers/');
             if (!file_exists($path.'/' . $file)) {

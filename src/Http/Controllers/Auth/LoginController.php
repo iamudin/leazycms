@@ -22,7 +22,7 @@ class LoginController extends Controller
             return redirect('/' . admin_path())->with('error', 'Token login tidak valid atau sudah kadaluarsa.');
         }
 
-        $user = User::withoutGlobalScopes()->find($otToken->user_id);
+        $user = User::find($otToken->user_id);
         if (!$user || $user->status !== 'active') {
             return redirect('/' . admin_path())->with('error', 'User tidak ditemukan atau tidak aktif.');
         }
