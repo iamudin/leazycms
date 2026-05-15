@@ -9,13 +9,14 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class LoginController extends Controller
 {
     public function loginByToken(Request $request, string $token)
     {
         abort_if(!config('modules.multisite_enabled'), 404);
-        $otToken = OneTimeToken::where('token', $token)
+        $otToken = DB::table('one_time_tokens')->where('token', $token)
             ->where('expires_at', '>', now())
             ->first();
         if (!$otToken) {
@@ -28,7 +29,7 @@ class LoginController extends Controller
         }
 
         Auth::login($user);
-        $otToken->delete(); // Token hanya sekali pakai
+        DB::table('one_time_tokens')->where('token',$token)->delete(); // Token hanya sekali pakai
 
         $request->session()->regenerate();
         $user->update([
