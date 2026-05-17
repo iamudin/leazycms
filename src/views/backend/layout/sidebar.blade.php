@@ -34,12 +34,12 @@
             <i class="fa fa-globe" aria-hidden="true"></i> &nbsp; PUBLIKASI
         </li>
         @foreach ($userprofile->isAdmin() ?
-    collect(get_module())->sortBy('position') :
+    (config('modules.multisite_enabled') ? collect(get_module())->whereIn('name', array_merge(app('tenant')->modules ?? [] , default_menu()))->sortBy('position') : collect(get_module())->sortBy('position') ) :
     collect(get_module())->sortBy('position')->whereIn(
         'name',
         $userprofile->get_modules->pluck('module')->toArray()
     ) as $row)
-            @if($row->name == 'menu')
+        @if($row->name == 'menu')
                    <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -303,6 +303,14 @@
                     href="{{ route('tenant.index') }}"
                     ><i class="app-menu__icon fa fa-globe text-primary"></i>
                     <span class="app-menu__label">Tenants</span></a
+                >
+            </li>
+            <li title="Themes">
+                <a
+                    class="app-menu__item {{ active_item(['theme']) }}"
+                    href="{{ route('theme.index') }}"
+                    ><i class="app-menu__icon fa fa-paint-brush text-warning"></i>
+                    <span class="app-menu__label">Themes</span></a
                 >
             </li>
             @endif

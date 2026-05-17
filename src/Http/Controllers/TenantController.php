@@ -9,10 +9,12 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Tenant;
+use Leazycms\Web\Models\Theme;
 use Leazycms\Web\Models\User;
 use Yajra\DataTables\DataTables;
 
@@ -69,9 +71,15 @@ class TenantController extends Controller implements HasMiddleware
 
     public function datatable(Request $request)
     {
-        $data = Tenant::query()->where('domain', '<>', parse_url(main_domain(), PHP_URL_HOST))->latest();
+        $data = Tenant::query()->with('theme')->with('admin')->latest();
         return DataTables::of($data)
             ->addIndexColumn()
+            ->addColumn('theme', function ($row) {
+                return $row->theme?->name ?? '-';
+            })
+            ->addColumn('admin', function ($row) {
+                return $row->admin?->name ?? '-';
+            })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
                 $btn .= '<a target="_blank" href="http://' . $row->domain . '" class="btn btn-info btn-sm fa fa-globe" title="Kunjungi Website"></a>';
@@ -90,7 +98,9 @@ class TenantController extends Controller implements HasMiddleware
 
     public function create()
     {
-        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null]);
+        $themes = Theme::where('status', 'active')->get();
+             $modules = collect(get_module())->whereNotIn("name",default_menu())->pluck('title', 'name');
+        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules]);
     }
 
     public function store(Request $request)
@@ -99,9 +109,11 @@ class TenantController extends Controller implements HasMiddleware
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain',
             'status' => 'required|in:active,inactive',
+            'theme' => 'required|string',
             'admin_name' => 'required|string|max:100',
             'admin_email' => 'required|email|unique:users,email',
             'admin_username' => 'required|string|min:5|unique:users,username',
+            'modules' => 'required|array',
             'admin_password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ], [
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
@@ -112,11 +124,33 @@ class TenantController extends Controller implements HasMiddleware
             $domain = parse_url($domain, PHP_URL_HOST);
         }
 
+        $theme = $request->theme;
+
         $tenant = Tenant::create([
             'name' => $request->name,
             'domain' => $domain,
             'status' => $request->status,
+            'theme' => $theme,
+            'modules' => $request->modules,
         ]);
+
+        if ($request->custom_theme) {
+            $sourcePath = resource_path('views/template/' . $theme);
+            $targetThemeName = $theme . '-' . $tenant->id;
+            $targetPath = resource_path('views/template/' . $targetThemeName);
+
+            if (File::exists($sourcePath)) {
+                File::copyDirectory($sourcePath, $targetPath);
+                $tenant->update(['theme' => $targetThemeName]);
+                $theme = $targetThemeName; // Update local variable for option saving
+            }
+        }
+
+        // Save theme to options table as 'template'
+        DB::table('options')->updateOrInsert(
+            ['name' => 'template', 'tenant_id' => $tenant->id],
+            ['value' => $theme, 'autoload' => 1]
+        );
 
         // Create Admin for Tenant
         DB::table('users')->insert([
@@ -142,9 +176,11 @@ class TenantController extends Controller implements HasMiddleware
 
     public function edit(Tenant $tenant)
     {
+        $themes = Theme::where('status', 'active')->get();
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
+        $modules = collect(get_module())->whereNotIn("name",default_menu())->pluck('title', 'name');
         $options = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->pluck('value', 'name')->toArray();
-        return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options'));
+        return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules'));
     }
 
     public function update(Request $request, Tenant $tenant)
@@ -155,9 +191,11 @@ class TenantController extends Controller implements HasMiddleware
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
             'status' => 'required|in:active,inactive',
+            'theme' => 'required|string',
             'admin_name' => 'required|string|max:100',
             'admin_email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin?->id)],
             'admin_username' => ['required', 'string', 'min:5', Rule::unique('users', 'username')->ignore($admin?->id)],
+            'modules' => 'required|array',
             'admin_password' => 'nullable|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ], [
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
@@ -169,11 +207,34 @@ class TenantController extends Controller implements HasMiddleware
             $domain = parse_url($domain, PHP_URL_HOST);
         }
 
+        $theme = $request->theme;
+        $oldTheme = $tenant->theme;
+
         $tenant->update([
             'name' => $request->name,
             'domain' => $domain,
             'status' => $request->status,
+            'theme' => $theme,
+            'modules' => $request->modules,
         ]);
+
+        if ($request->custom_theme && $theme !== $oldTheme) {
+            $sourcePath = resource_path('views/template/' . $theme);
+            $targetThemeName = $theme . '-' . $tenant->id;
+            $targetPath = resource_path('views/template/' . $targetThemeName);
+
+            if (File::exists($sourcePath) && !File::exists($targetPath)) {
+                File::copyDirectory($sourcePath, $targetPath);
+                $tenant->update(['theme' => $targetThemeName]);
+                $theme = $targetThemeName; // Update local variable for option saving
+            }
+        }
+
+        // Save theme to options table as 'template'
+        DB::table('options')->updateOrInsert(
+            ['name' => 'template', 'tenant_id' => $tenant->id],
+            ['value' => $theme, 'autoload' => 1]
+        );
 
         // Update or Create Admin
         $userData = [

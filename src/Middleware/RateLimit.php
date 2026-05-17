@@ -53,7 +53,7 @@ class RateLimit
         }
         // 3. Validasi domain jika sub_app_enabled diaktifkan
         elseif (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled') && !is_main_domain()) {
-            
+
             $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
                 return parse_url($url, PHP_URL_HOST);
             })->toArray();
@@ -63,7 +63,7 @@ class RateLimit
         } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
             $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
         }
-   
+
         if ($redirectUrl) {
            return redirect( $redirectUrl);
         }
@@ -82,7 +82,7 @@ class RateLimit
             $attr['post_type'] = $modul->name;
 
             if ($modul->web->index && $request->is($modul->name)) {
-                $attr['detail_visited'] = false;    
+                $attr['detail_visited'] = false;
                 $attr['view_type'] = 'index';
                 $attr['view_path'] = $modul->name . '.index';
                 config([
@@ -186,9 +186,15 @@ class RateLimit
                 'modules.current' => $attr
             ]);
         }
+         if(config('modules.multisite_enabled')){
+            if(config('modules.current.post_type') && in_array(get_post_type(),collect(get_module())->pluck('name')->toArray()) && !in_array(get_post_type(),array_merge(default_menu(),tenant()->modules ?? []))){
+                abort(404);
+            }
+        }
+
         $this->logging_request($request);
         $this->dangerous_request($request);
-        if ($o = config('modules.current.detail_visited') && !in_array($request->segment(1), ['secure', 'media'])) {
+        if (get_post_type() || !in_array($request->segment(1), ['secure', 'media','favicon.ico'])) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request, config('modules.current.detail_visited'));
@@ -224,7 +230,7 @@ class RateLimit
             }
         }
         $dangerousFunctions = [
-            
+
             'hex2bin(',
             'exit(',
             'eval(',
@@ -338,11 +344,11 @@ class RateLimit
 
         $content = file_get_contents($path);
 
-      
+
 
         // Cek fungsi berbahaya hanya untuk file teks
         $danger = [
-           
+
             'hex2bin(',
             'exit(',
                 'eval(',

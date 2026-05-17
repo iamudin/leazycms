@@ -1,14 +1,15 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use Leazycms\Web\Http\Controllers\TagController;
-use Leazycms\Web\Http\Controllers\PostController;
-use Leazycms\Web\Http\Controllers\UserController;
-use Leazycms\Web\Http\Controllers\PanelController;
-use Leazycms\Web\Http\Controllers\EmailController;
-use Leazycms\Web\Http\Controllers\TenantController;
-use Leazycms\Web\Http\Controllers\PollingController;
 use Leazycms\Web\Http\Controllers\AppMasterController;
 use Leazycms\Web\Http\Controllers\CategoryController;
+use Leazycms\Web\Http\Controllers\EmailController;
+use Leazycms\Web\Http\Controllers\PanelController;
+use Leazycms\Web\Http\Controllers\PollingController;
+use Leazycms\Web\Http\Controllers\PostController;
+use Leazycms\Web\Http\Controllers\TagController;
+use Leazycms\Web\Http\Controllers\TenantController;
+use Leazycms\Web\Http\Controllers\ThemeController;
+use Leazycms\Web\Http\Controllers\UserController;
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
 Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileSummernote'])->name('upload_file_summernote');
@@ -124,6 +125,19 @@ Route::controller(TagController::class)->group(function () {
     Route::put('tags/{tag}/update', 'update')->name('tag.update');
     Route::delete('tags/{tag}/edit', 'destroy')->name('tag.destroy');
 });
+
+if(config('modules.multisite_enabled')){
+Route::controller(ThemeController::class)->group(function () {
+    Route::get('theme', 'index')->name('theme.index');
+    Route::post('theme', 'datatable')->name('theme.datatable');
+    Route::get('theme/create', 'create')->name('theme.create');
+    Route::post('theme/create', 'store')->name('theme.store');
+    Route::get('theme/{theme}/edit', 'edit')->name('theme.edit');
+    Route::put('theme/{theme}/edit', 'update')->name('theme.update');
+    Route::delete('theme/{theme}/edit', 'destroy')->name('theme.destroy');
+    Route::post('theme/{theme}/update-git', 'updateFromGit')->name('theme.update_git');
+});
+}
 Route::controller(PollingController::class)->group(function () {
     Route::get('polling', 'index')->name('polling');
     Route::get('polling/create', 'create')->name('polling.create');

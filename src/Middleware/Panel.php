@@ -99,8 +99,13 @@ class Panel
             }
 
         }
+        if(config('modules.multisite_enabled')){
+            if(config('modules.current.post_type') && !in_array(config('modules.current.post_type'),array_merge(default_menu(),tenant()->modules ?? []))){
+                abort(404);
+            }
+        }
         isNotInSession($request);
-    
+
         $response = $next($request);
         if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
 
@@ -126,6 +131,6 @@ class Panel
 
         return $response;
     }
-    
+
 
 }

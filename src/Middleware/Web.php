@@ -33,7 +33,6 @@ class Web
                 ->header('Cache-Control', 'public, max-age=3600')
                 ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
         }
-    
         $path = $request->path();
         if ($path !== strtolower($path) && !Route::is('tag.posts')) {
             return redirect(strtolower($request->fullUrl()), 301);
@@ -42,7 +41,7 @@ class Web
 
         if (str($response->headers->get('Content-Type'))->lower()== 'text/html; charset=utf-8') {
             $content = $response->getContent();
-            
+
             if (strpos($content, '<head>') !== false && !is_custom_web_route_matched()) {
                 $content = str_replace(
                     '<head>',
@@ -67,13 +66,13 @@ class Web
                 }
 
                 // Cache jika class mengandung lz-thumbnail
-         
+
 
                 return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
             if(!is_custom_web_route_matched()){
             $footer = '';
-         
+
             $footer .= $request->is('/') ? init_popup() : null;
             $footer .= init_wabutton();
             $footer .= get_option('top_button') && get_option('top_button') == 'Y' ? init_goup() : null;

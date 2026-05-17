@@ -5,6 +5,8 @@ use Leazycms\Web\Http\Controllers\WebController;
 use Leazycms\Web\Http\Controllers\NotFoundController;
 use Leazycms\Web\Middleware\TrackVisitor;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Leazycms\FLC\Controllers\FileManagerController;
+
 Route::fallback(function () {
     return app(NotFoundController::class)->error404();
 })->middleware('web');
@@ -46,7 +48,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
 
     if($webroute = get_non_domain_routes()){
         foreach($webroute as $wr){
-        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public',TrackVisitor::class]);  
+        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public',TrackVisitor::class]);
         }
     }
     if(config('modules.env_key')){
@@ -58,6 +60,10 @@ Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
         $modules->pluck('name')->toArray()
     )) . ')[a-zA-Z0-9-_]+')
     ->middleware(['public', TrackVisitor::class]);
+
+    if(config('modules.multisite_enabled')){
+        Route::get('favicon.ico',[FileManagerController::class,'favicon'])->name('favicon');
+    }
 
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public',TrackVisitor::class]);
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');

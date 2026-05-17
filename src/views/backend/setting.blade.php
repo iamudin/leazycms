@@ -39,32 +39,33 @@
                             @foreach ($site_attribute as $r)
                                 @if ($r[2] == 'file')
                                     @if ($r[1] == 'favicon')
-                                    @if(is_main_domain())
+                                    @if(is_main_domain() || config('modules.multisite_enabled') && !get_option('favicon_for_all') && !is_main_domain() )
                                         <small for="" class="text-muted">Favicon (didukung hanya file gambar format
                                             .ico ukuran 64px x 64px)</small>
+                                                @if(is_main_domain() && config('modules.multisite_enabled'))<br> <input name="favicon_for_all" value="1" type="checkbox" @if(get_option('favicon_for_all'))checked @endif> (Aktikan untuk Semua tenant)@endif
 
                                         <br><img height="60" src="/favicon.ico" onerror="{{ noimage() }}">
                                         <br>
                                         <input accept="image/x-icon,image/vnd.microsoft.icon" type="file"
                                             class="form-control-sm form-control-file" name="{{ $r[1] }}">
-                                            @endif
+
+                                        @endif
                                     @else
                                         <small for="" class="text-muted">{{ $r[0] }}</small>
-
                                         @if (get_option($r[1]) && media_exists(get_option($r[1])))
-                                            <br><img height="60" src="{{ url(get_option($r[1])) }}"
+                                            <br><img height="60" src="{{ get_option($r[1]) }}"
                                                 onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
                                                 href="javascript:void(0)" onclick="media_destroy('{{ get_option($r[1]) }}')"
                                                 class=" btn-sm text-danger"> <i class="fa fa-trash"></i> </a>
                                             <br>
                                         @else
-                                            <input accept="image/png,imgage/jpeg" type="file"
+                                            <input accept="image/png,imgage/jpeg,image/gif,image/webp" type="file"
                                                 class="form-control-sm form-control-file compress-image"
                                                 name="{{ $r[1] }}">
                                         @endif
                                     @endif
                                 @else
-                                    <small for="" class="text-muted">{{ $r[0] }} 
+                                    <small for="" class="text-muted">{{ $r[0] }}
                                 @if(is_main_domain())
 
                                         @if ($r[1] == 'site_title')
@@ -108,7 +109,7 @@
                                                                             @endif
                                                                         </small><br>
                                                                         @if (_us($r[0]) == 'block_ip')
-                                                                            <textarea name="{{ _us($r[0]) }}" class="form-control form-control-sm" 
+                                                                            <textarea name="{{ _us($r[0]) }}" class="form-control form-control-sm"
                                                                                 placeholder="Masukkan IP yang di Blokir, pisahkan dengan koma. contoh: 192.168.1.1, 10.0.0.1">{{ implode(',', getBlacklistIps()) }}</textarea>
                                                                         @else
                                                                         <input type="text" class="form-control form-control-sm"

@@ -245,6 +245,107 @@ if (!function_exists('add_view_stats')) {
 </body>
 </html>";
 }
+function tooManyRequestsMsg($requestId = null)
+{
+    $requestBlock = $requestId
+        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        : "";
+
+    return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>429 - Too Many Requests</title>
+    <style>
+        body {
+            margin:0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100vh;
+            text-align:center;
+        }
+
+        .card {
+            background:#1e293b;
+            padding:40px;
+            border-radius:16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            max-width:500px;
+            width:90%;
+        }
+
+        h1 {
+            margin:0 0 10px;
+            font-size:28px;
+            color:#facc15;
+        }
+
+        p {
+            opacity:0.85;
+            margin-bottom:20px;
+            line-height:1.6;
+        }
+
+        .request-id {
+            background:#0f172a;
+            padding:10px 15px;
+            border-radius:8px;
+            font-family: monospace;
+            font-size:14px;
+            color:#38bdf8;
+            word-break: break-all;
+            margin-bottom:20px;
+        }
+
+        .btn {
+            display:inline-block;
+            padding:10px 18px;
+            background:#38bdf8;
+            color:#0f172a;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight:600;
+            transition:0.2s;
+        }
+
+        .btn:hover {
+            opacity:0.9;
+        }
+
+        .footer {
+            margin-top:25px;
+            font-size:12px;
+            opacity:0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <h1>429 - Too Many Requests</h1>
+
+        <p>
+            You have sent too many requests in a short period of time.
+            Please wait a moment before trying again.
+        </p>
+
+        {$requestBlock}
+
+        <a href='javascript:location.reload()' class='btn'>
+            Try Again
+        </a>
+
+        <div class='footer'>
+            Rate limit protection is enabled to maintain server stability and security.
+        </div>
+    </div>
+</body>
+</html>";
+}
 function protectedContentView($slug, $requestId = null, $error = null)
 {
     $requestBlock = $requestId
@@ -1023,11 +1124,15 @@ if (!function_exists('ratelimiter')) {
         }
 
         $maxAttempts = $limittime > 0 ? $limittime : 10;
-        $decayMinutes = $limitduration > 0 ? $limitduration : 1;
+        $decayMinutes = $limitduration > 0 ? $limitduration :3;
 
         $attempts = Cache::get($key, 0);
         if ($attempts >= $maxAttempts) {
-            return abort(429);
+            response(
+                minify_all_one_line(tooManyRequestsMsg()),
+                429
+            )->header('Content-Type', 'text/html')->send();
+            exit;
         }
 
         Cache::increment($key);
@@ -2409,7 +2514,7 @@ if (!function_exists('recache_menu')) {
     {
         $cacheKey = 'menu';
         if (config('modules.multisite_enabled')) {
-            $cacheKey .= '-' . tenant()->id;
+            $cacheKey .= ':' . tenant()->id;
         }
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () {

@@ -12,7 +12,7 @@
         const fileName = url.split('/').pop();
 
         const extensions = {
-            image: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            image: ['jpg', 'jpeg', 'png', 'gif', 'webp','ico'],
             pdf: ['pdf'],
             office: [
                 'docx','doc', 'docm', 'dotm', 'dotx',
@@ -318,7 +318,7 @@ function showalert(val) {
     swal(val);
 }
 </script>
-@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files', 'comments', 'tenant']))
+@if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files', 'comments', 'tenant','theme']))
 <script>
 function deleteAlert(url) {
     swal(

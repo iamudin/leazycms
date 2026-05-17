@@ -4,11 +4,11 @@ namespace Leazycms\Web\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Tenant;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Cache;
-
+use Redis;
 class IdentifyTenant
 {
     protected static $currentTenant = null;
@@ -20,9 +20,16 @@ class IdentifyTenant
         if (self::$currentTenant === null) {
             $tenantData = Cache::rememberForever(
                 "tenant:$host",
-                fn() => ($t = Tenant::where(['domain' => $host, 'status' => 'active'])->first()) ? $t->toArray() : null
+                fn() => ($t = Tenant::where(['domain' => $host, 'status' => 'active'])->first()) ? $t->getRawOriginal() : null
             );
+
             if ($tenantData) {
+                // Safeguard: Jika cache lama masih menyimpan array, konversi balik ke string JSON
+                // agar Eloquent Casting tidak error saat memproses setRawAttributes
+                if (isset($tenantData['modules']) && is_array($tenantData['modules'])) {
+                    $tenantData['modules'] = json_encode($tenantData['modules']);
+                }
+
                 $tenant = new Tenant();
                 $tenant->setRawAttributes($tenantData, true);
                 $tenant->exists = true;
@@ -173,17 +180,19 @@ HTML;
                 ->header('X-Frame-Options', 'SAMEORIGIN')
                 ->header('X-Content-Type-Options', 'nosniff');
         }
-        $defaultOptions = Cache::rememberForever(
+            app()->singleton('default.options', function ()  {
+            return Cache::rememberForever(
             "default:options",
             fn() => Option::withoutGlobalScope('tenant')->WhereNull('tenant_id')->pluck('value', 'name')->toArray()
         );
+    });
         app()->instance('tenant', $tenant);
         URL::forceRootUrl($request->getSchemeAndHttpHost());
-        app()->singleton('tenant.options', function () use ($tenant, $defaultOptions) {
+        app()->singleton('tenant.options', function () use ($tenant) {
             return Cache::rememberForever(
                 "tenant:{$tenant->id}:options",
-                fn() =>array_merge(Option::pluck('value', 'name')
-                    ->toArray(), $defaultOptions)
+                fn() =>Option::pluck('value', 'name')
+                    ->toArray()
             );
         });
         $response = $next($request);

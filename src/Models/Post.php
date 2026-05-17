@@ -68,7 +68,11 @@ class Post extends BaseModel
             }
 
             if (config('cache.default') === 'redis') {
-                Cache::tags(["type_{$post->type}"])->flush();
+                try {
+                    Cache::tags(["type_{$post->type}", 'categories', 'tags', 'authors'])->flush();
+                } catch (\Exception $e) {
+                    \Log::warning('Cache flush error on delete: ' . $e->getMessage());
+                }
             }
         });
 
@@ -89,7 +93,11 @@ class Post extends BaseModel
                 }
             }
             if (config('cache.default') === 'redis') {
-                Cache::tags(["type_{$post->type}"])->flush();
+                try {
+                    Cache::tags(["type_{$post->type}", 'categories', 'tags', 'authors'])->flush();
+                } catch (\Exception $e) {
+                    \Log::warning('Cache flush error on save: ' . $e->getMessage());
+                }
             }
         });
 
@@ -220,23 +228,32 @@ class Post extends BaseModel
     {
         return $query->where('slug', 'like', $slug . '%');
     }
-    function cachedpost($type = false)
+    function cachedpost($type = null)
     {
         if (!$type) return collect([]);
-        if (!isset(self::$requestCache[$type]) || !self::$requestCache[$type] instanceof \Illuminate\Support\Collection) {
-            $data = Cache::get($type, []);
-            self::$requestCache[$type] = $data instanceof \Illuminate\Support\Collection ? $data : collect($data);
+        $cacheKey = "cachedpost:{$type}";
+        if (app()->has('tenant')) {
+            $cacheKey .= ':tenant:' . tenant()->id;
         }
-        return self::$requestCache[$type];
+        if (isset(self::$requestCache[$cacheKey])) {
+            return self::$requestCache[$cacheKey];
+        }
+        $data = Cache::get($type, []);
+        return self::$requestCache[$cacheKey] = collect($data);
     }
+
     public function categories($type)
     {
-        $cacheKey = 'category_' . $type;
-        if (!isset(self::$requestCache[$cacheKey]) || !self::$requestCache[$cacheKey] instanceof \Illuminate\Support\Collection) {
-            $data = Cache::get($cacheKey, []);
-            self::$requestCache[$cacheKey] = collect($data)->sortBy('sort');
-        }
-        return self::$requestCache[$cacheKey];
+        $cacheKey = "categories_list:{$type}";
+        $tags = ['categories', "type_{$type}"];
+
+        return $this->getCached($cacheKey, $tags, function () use ($type) {
+            return Category::select('id', 'name', 'url', 'slug', 'icon', 'description')
+                ->onType($type)
+                ->published()
+                ->orderBy('sort', 'ASC')
+                ->get();
+        });
     }
 
 
@@ -261,20 +278,25 @@ class Post extends BaseModel
     }
     function index_author($type = false)
     {
-        if ($type) {
-            return User::whereHas('posts')->withCount([
-                'posts' => function ($q) use ($type) {
-                    $q->published()->onType($type);
-                }
-            ])->get();
-        } else {
+        $typeKey = $type ?: 'all';
+        $cacheKey = "authors:{$typeKey}";
+        $tags = $type ? ['authors', "type_{$type}"] : ['authors'];
+
+        return $this->getCached($cacheKey, $tags, function () use ($type) {
+            if ($type) {
+                return User::whereHas('posts')->withCount([
+                    'posts' => function ($q) use ($type) {
+                        $q->published()->onType($type);
+                    }
+                ])->get();
+            }
+
             return User::whereHas('posts', function ($q) {
                 $q->published();
             })
                 ->withCountPosts()
                 ->get();
-        }
-
+        });
     }
     function index_sort_by_category($type, $sortby = 'sort', $sort = 'ASC')
     {
@@ -310,7 +332,7 @@ class Post extends BaseModel
             $cacheKey .= ":tenant:" . tenant()->id;
         }
 
-        if (isset(self::$requestCache[$cacheKey]) && self::$requestCache[$cacheKey] instanceof \Illuminate\Support\Collection) {
+        if (array_key_exists($cacheKey, self::$requestCache)) {
             return self::$requestCache[$cacheKey];
         }
 
@@ -319,16 +341,101 @@ class Post extends BaseModel
         }
 
         try {
-            $result = Cache::tags($tags)->get($cacheKey);
-            if (!($result instanceof \Illuminate\Support\Collection)) {
+            $cached = Cache::tags($tags)->remember($cacheKey, now()->addMinutes(30), function () use ($callback) {
                 $result = $callback();
-                Cache::tags($tags)->put($cacheKey, $result, now()->addMinutes(30));
-            }
+                // Serialize sebagai array agar tidak corrupt di phpredis
+                return [
+                    '__type' => $result instanceof \Illuminate\Database\Eloquent\Collection ? 'collection' : (is_null($result) ? 'null' : 'model'),
+                    '__class' => $result instanceof \Illuminate\Database\Eloquent\Model ? get_class($result) : ($result instanceof \Illuminate\Database\Eloquent\Collection && $result->isNotEmpty() ? get_class($result->first()) : null),
+                    '__data' => $result instanceof \Illuminate\Database\Eloquent\Collection ? $result->map->getAttributes()->toArray() : ($result instanceof \Illuminate\Database\Eloquent\Model ? $result->getAttributes() : null),
+                    '__relations' => $result instanceof \Illuminate\Database\Eloquent\Collection
+                        ? $result->map(fn($m) => collect($m->getRelations())->map(fn($r) => $r instanceof \Illuminate\Database\Eloquent\Model ? ['__class' => get_class($r), '__data' => $r->getAttributes()] : ($r instanceof \Illuminate\Database\Eloquent\Collection ? $r->map(fn($rm) => ['__class' => get_class($rm), '__data' => $rm->getAttributes()])->toArray() : null))->toArray())->toArray()
+                        : ($result instanceof \Illuminate\Database\Eloquent\Model ? collect($result->getRelations())->map(fn($r) => $r instanceof \Illuminate\Database\Eloquent\Model ? ['__class' => get_class($r), '__data' => $r->getAttributes()] : ($r instanceof \Illuminate\Database\Eloquent\Collection ? $r->map(fn($rm) => ['__class' => get_class($rm), '__data' => $rm->getAttributes()])->toArray() : null))->toArray() : null),
+                ];
+            });
+
+            $result = $this->hydrateFromCache($cached);
         } catch (\Exception $e) {
+            \Log::warning("Cache getCached error [{$cacheKey}]: " . $e->getMessage());
             $result = $callback();
         }
 
         return self::$requestCache[$cacheKey] = $result;
+    }
+
+    /**
+     * Hydrate cached array data back into Eloquent models/collections.
+     */
+    private function hydrateFromCache($cached)
+    {
+        if (!is_array($cached) || !isset($cached['__type'])) {
+            return $cached;
+        }
+
+        if ($cached['__type'] === 'null') {
+            return null;
+        }
+
+        $class = $cached['__class'];
+
+        if ($cached['__type'] === 'model') {
+            if (!$class || !class_exists($class)) {
+                return null;
+            }
+            $model = (new $class)->newInstance([], true);
+            $model->setRawAttributes($cached['__data'] ?? [], true);
+            if (!empty($cached['__relations'])) {
+                $this->hydrateRelations($model, $cached['__relations']);
+            }
+            return $model;
+        }
+
+        if ($cached['__type'] === 'collection') {
+            if (!$class || !class_exists($class) || empty($cached['__data'])) {
+                return new \Illuminate\Database\Eloquent\Collection();
+            }
+            $models = collect($cached['__data'])->map(function ($attrs, $index) use ($class, $cached) {
+                $model = (new $class)->newInstance([], true);
+                $model->setRawAttributes($attrs, true);
+                if (!empty($cached['__relations'][$index])) {
+                    $this->hydrateRelations($model, $cached['__relations'][$index]);
+                }
+                return $model;
+            });
+            return new \Illuminate\Database\Eloquent\Collection($models->all());
+        }
+
+        return $cached;
+    }
+
+    /**
+     * Hydrate relations from cached array data.
+     */
+    private function hydrateRelations($model, array $relations)
+    {
+        foreach ($relations as $name => $data) {
+            if (is_null($data)) {
+                continue;
+            }
+            // Single relation (e.g. belongsTo)
+            if (isset($data['__class']) && class_exists($data['__class'])) {
+                $related = (new $data['__class'])->newInstance([], true);
+                $related->setRawAttributes($data['__data'] ?? [], true);
+                $model->setRelation($name, $related);
+            }
+            // Collection relation (e.g. hasMany)
+            elseif (is_array($data)) {
+                $relatedModels = collect($data)->map(function ($item) {
+                    if (is_array($item) && isset($item['__class']) && class_exists($item['__class'])) {
+                        $related = (new $item['__class'])->newInstance([], true);
+                        $related->setRawAttributes($item['__data'] ?? [], true);
+                        return $related;
+                    }
+                    return null;
+                })->filter();
+                $model->setRelation($name, new \Illuminate\Database\Eloquent\Collection($relatedModels->all()));
+            }
+        }
     }
 
     function index_category($type, $justIndex = false)
@@ -447,16 +554,28 @@ class Post extends BaseModel
 
     public function index($type, $paginate = null)
     {
-        $q = $this->selectedColumn()
-            ->with('user', 'category')
-            ->withTenant()
-            ->onType($type)
-            ->published()
-            ->latest('created_at');
-        if ($paginate === null)
-            return $q->get();
-        return $q->paginate($paginate);
+        if ($paginate !== null) {
+            return $this->selectedColumn()
+                ->with('user', 'category')
+                ->withTenant()
+                ->onType($type)
+                ->published()
+                ->latest('created_at')
+                ->paginate($paginate);
+        }
 
+        $cacheKey = "posts:{$type}:index:all";
+        $tags = $this->cacheTag($type);
+
+        return $this->getCached($cacheKey, $tags, function () use ($type) {
+            return $this->selectedColumn()
+                ->with('user', 'category')
+                ->withTenant()
+                ->onType($type)
+                ->published()
+                ->latest('created_at')
+                ->get();
+        });
     }
 
     public function index_popular($type, $limit)
@@ -499,37 +618,72 @@ class Post extends BaseModel
     }
     function index_by_tag($type, $tag, $limit = false, $paginate = false)
     {
-        $q = $this->selectedColumn()->onType($type)->published()->whereHas('tags', function ($query) use ($tag) {
-            $query->where('tags.slug', $tag)->where('tags.status', 'publish');
-        })->latest();
-        if ($limit) {
-            return $q->take($limit)->get();
-        }
         if ($paginate) {
-            return $q->paginate(get_option('post_perpage'));
+            return $this->selectedColumn()
+                ->onType($type)
+                ->published()
+                ->whereHas('tags', function ($query) use ($tag) {
+                    $query->where('tags.slug', $tag)->where('tags.status', 'publish');
+                })
+                ->latest()
+                ->paginate(get_option('post_perpage'));
         }
-        return $q->get();
+
+        $limitKey = $limit ? "limit:{$limit}" : 'all';
+        $cacheKey = "posts:{$type}:tag:{$tag}:{$limitKey}";
+        $tags = ['posts', "type_{$type}", 'tags'];
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $tag, $limit) {
+            $q = $this->selectedColumn()
+                ->onType($type)
+                ->published()
+                ->whereHas('tags', function ($query) use ($tag) {
+                    $query->where('tags.slug', $tag)->where('tags.status', 'publish');
+                })
+                ->latest();
+
+            return $limit ? $q->take($limit)->get() : $q->get();
+        });
     }
+
     function index_by_category($type, $slug, $paginate = false)
     {
+        if ($paginate) {
+            return $this->selectedColumn()
+                ->with('user')
+                ->whereHas('category', function ($q) use ($slug, $type) {
+                    $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
+                })
+                ->onType($type)
+                ->published()
+                ->latest('created_at')
+                ->paginate($paginate);
+        }
 
-        return $paginate ? $this->selectedColumn()->with('user')
-            ->whereHas('category', function ($q) use ($slug, $type) {
-                $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
-            })->onType($type)->published()->latest('created_at')->paginate($paginate) :
-            $this->selectedColumn()->with('user')->WhereHas('category', function ($q) use ($slug, $type) {
-                $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
-            })->onType($type)->published()->latest('created_at')
+        $cacheKey = "posts:{$type}:category:{$slug}";
+        $tags = ['posts', "type_{$type}", 'categories'];
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $slug) {
+            return $this->selectedColumn()
+                ->with('user')
+                ->whereHas('category', function ($q) use ($slug, $type) {
+                    $q->where('slug', $slug)->whereType($type)->whereStatus('publish');
+                })
+                ->onType($type)
+                ->published()
+                ->latest('created_at')
                 ->get();
-
+        });
     }
 
 
     function index_recent($type, $except = null)
     {
-        // Kalau bukan redis → query normal
-        if (config('cache.default') !== 'redis') {
+        $exceptKey = $except ? "except:{$except}" : 'noexcept';
+        $cacheKey = "posts:{$type}:recent:{$exceptKey}";
+        $tags = $this->cacheTag($type);
 
+        return $this->getCached($cacheKey, $tags, function () use ($type, $except) {
             $query = $this->selectedColumn()
                 ->withTenant()
                 ->onType($type)
@@ -540,60 +694,47 @@ class Post extends BaseModel
             }
 
             return $query->with('user')
-                ->withTenant()
                 ->latest('created_at')
                 ->take(5)
                 ->get();
-        }
-
-        // Buat key unik (except bisa null)
-        $exceptKey = $except ? "except:{$except}" : "noexcept";
-        $cacheKey = "posts:{$type}:recent:{$exceptKey}";
-
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        return Cache::tags(['posts', "type_{$type}"])
-            ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $except) {
-
-                $query = $this->selectedColumn()
-                    ->onType($type)
-                    ->published();
-
-                if ($except) {
-                    $query->whereNotIn('id', [$except]);
-                }
-
-                return $query->with('user')
-                    ->withTenant()
-                    ->latest('created_at')
-                    ->take(5)
-                    ->get();
-            });
+        });
     }
+
     function index_child($type, $id, $perpage = false)
     {
-        if (get_module($type)?->cache) {
-            return $this->cachedpost($type)->where('parent_id', $id);
-        } else {
-            $q = $this->select($this->selected)
+        if ($perpage) {
+            return $this->select($this->selected)
                 ->with('user')
                 ->withTenant()
                 ->onType($type)
                 ->published()
                 ->where('parent_id', $id)
-                ->latest('created_at');
-            if ($perpage) {
-                return $q->paginate(get_option('post_perpage'));
-            } else {
-                return $q->get();
-            }
+                ->latest('created_at')
+                ->paginate(get_option('post_perpage'));
         }
+
+        $cacheKey = "posts:{$type}:child:{$id}";
+        $tags = $this->cacheTag($type);
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $id) {
+            return $this->select($this->selected)
+                ->with('user')
+                ->withTenant()
+                ->onType($type)
+                ->published()
+                ->where('parent_id', $id)
+                ->latest('created_at')
+                ->get();
+        });
     }
     function detail_by_title($type, $title)
     {
-        return $this->with('user')->whereTitle($title)->onType($type)->published()->first();
+        $cacheKey = "posts:{$type}:detail_title:" . md5($title);
+        $tags = $this->cacheTag($type);
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $title) {
+            return $this->with('user')->whereTitle($title)->onType($type)->published()->first();
+        });
     }
 
     function detail($type, $name = false, $cache = false)
@@ -607,21 +748,17 @@ class Post extends BaseModel
 
         $with[] = 'user';
 
-        // Jika cache tidak diminta atau bukan redis → query normal
-        if (!$cache || config('cache.default') !== 'redis') {
-
+        if (!$cache) {
             return $this->runDetailQuery($type, $name, $with);
         }
 
-        $nameKey = $name ? "slug:{$name}" : "first";
+        $nameKey = $name ? "slug:{$name}" : 'first';
         $cacheKey = "posts:{$type}:detail:{$nameKey}";
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-        return Cache::tags(['posts', "type_{$type}"])
-            ->remember($cacheKey, now()->addMinutes(30), function () use ($type, $name, $with) {
-                return $this->runDetailQuery($type, $name, $with);
-            });
+        $tags = $this->cacheTag($type);
+
+        return $this->getCached($cacheKey, $tags, function () use ($type, $name, $with) {
+            return $this->runDetailQuery($type, $name, $with);
+        });
     }
     private function runDetailQuery($type, $name, $with)
     {
@@ -680,21 +817,12 @@ class Post extends BaseModel
             return null;
         }
 
-        // Kalau bukan redis → langsung jalankan
-        if (config('cache.default') !== 'redis') {
-            return $this->runHistoryQuery();
-        }
-
         $cacheKey = "posts:{$this->type}:history:{$this->id}";
+        $tags = $this->cacheTag($this->type);
 
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
-
-        return Cache::tags(['posts', "type_{$this->type}"])
-            ->remember($cacheKey, now()->addMinutes(30), function () {
-                return $this->runHistoryQuery();
-            });
+        return $this->getCached($cacheKey, $tags, function () {
+            return $this->runHistoryQuery();
+        });
     }
     private function runHistoryQuery()
     {

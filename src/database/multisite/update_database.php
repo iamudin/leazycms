@@ -14,7 +14,20 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('domain')->unique();
+            $table->string('theme')->nullable();
+            $table->json('modules')->nullable();
             $table->enum('status',['active','maintenance','suspended'])->default('active');
+            $table->timestamps();
+        });
+
+
+        Schema::create('themes', function (Blueprint $table) {
+            $table->id();
+            $table->string('path')->unique();
+            $table->string('name')->nullable();
+            $table->string('preview')->nullable();
+            $table->string('git')->nullable();
+            $table->enum('status',['active','inactive'])->default('active');
             $table->timestamps();
         });
         foreach(['posts','categories','tags','analytics_visitors','analytics_daily','options','polling_topics','roles','users','one_time_tokens'] as $tableName) {

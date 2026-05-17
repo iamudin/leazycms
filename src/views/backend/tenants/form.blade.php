@@ -27,6 +27,28 @@
                             <small class="text-muted">Jika memasukkan URL (misal: http://sub.domain.com), sistem akan otomatis mengambil hostname-nya.</small>
                         </div>
                         <div class="form-group mt-2 mb-2">
+
+                                    <label for="">Module</label>
+                            <select name="modules[]" id="select2" class="form-control form-control-sm form-control-select" multiple id="">
+                                @foreach($modules as $k=>$row)
+                                <option  {{ in_array($k, $tenant->modules ?? []) ? 'selected' : '' }} value="{{  $k }}">{{ $row }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Pilih Tema</label>
+                            <select class="form-control form-control-sm" name="theme" required>
+                                <option value="">-- Pilih Tema --</option>
+                                @foreach($themes as $row)
+                                    <option value="{{ $row->path }}" {{ (($tenant && $tenant->theme == $row->path) || old('theme') == $row->path) ? 'selected' : '' }}>{{ $row->name }} ({{ $row->path }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Custom Theme ?</label><br>
+                            <input name="custom_theme" type="checkbox" value="1"> <small class="text-muted">Ceklis jika ingin menduplikasi tema terpilih khusus untuk tenant ini agar bisa diedit secara terpisah.</small>
+                        </div>
+                        <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Status</label><br>
                             @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif'] as $key => $val)
                                 <input name="status" type="radio" value="{{ $key }}" {{ (($tenant && $tenant->status == $key) || old('status', 'active') == $key) ? 'checked' : '' }}> {{ $val }} &nbsp; &nbsp;
@@ -173,4 +195,16 @@
             }
         }
     </script>
+    @push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#select2').select2({
+                tags: true,
+                placeholder: 'Pilih Modul'
+            });
+        });
+    </script>
+
+    @include('cms::backend.layout.js')
+    @endpush
 @endsection

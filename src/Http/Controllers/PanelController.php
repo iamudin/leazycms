@@ -38,7 +38,7 @@ class PanelController extends Controller implements HasMiddleware
     {
         abort_if(!is_main_domain(), 404);
 
-        if(!is_dir(public_path('vendor/log-viewer'))){
+        if (!is_dir(public_path('vendor/log-viewer'))) {
             Artisan::call('vendor:publish', [
                 '--tag' => 'log-viewer-assets',
                 '--force' => true,
@@ -52,7 +52,7 @@ class PanelController extends Controller implements HasMiddleware
     function menu_target(Request $request)
     {
         $search = $request->q ? strip_tags($request->q) : null;
-        $type = collect(get_module())->where('web.detail', '=',true)->pluck('name')->toArray();
+        $type = collect(get_module())->where('web.detail', '=', true)->pluck('name')->toArray();
         return query()
             ->whereIn('type', $type)
             ->select('url', 'title')
@@ -62,54 +62,52 @@ class PanelController extends Controller implements HasMiddleware
             ->limit(10)
             ->get();
     }
-    function get_comments(Request $request,Post $post){
+    function get_comments(Request $request, Post $post)
+    {
         $data = $post->load('comments');
         return $data;
-
     }
-    function comments(Request $request,Comment $comment)
+    function comments(Request $request, Comment $comment)
     {
-        abort_if(!is_main_domain(),404);
-        if($request->isMethod('delete')){
+        abort_if(!is_main_domain(), 404);
+        if ($request->isMethod('delete')) {
             $comment->delete();
         }
 
-        if($request->isMethod('post')){
-        $data = Comment::with('user')->latest();
-         return \Yajra\DataTables\Facades\DataTables::of($data)
-            ->addIndexColumn()
-            ->filter(
-                function ($instance) use ($request) {
+        if ($request->isMethod('post')) {
+            $data = Comment::with('user')->latest();
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->filter(
+                    function ($instance) use ($request) {}
+                )
+                ->addColumn('created_at', function ($row) {
+                    return '<code>' . Carbon::parse($row->created_at)->diffForHumans() . '</code>';
+                })
+                ->addColumn('content', function ($row) {
+                    return '<p>' . $row->content . '</p>';
+                })
+                ->addColumn('reference', function ($row) {
+                    return '<a target="_blank" href="' . $row->reference . '">' . $row->reference . '</a>';
+                })
+                ->addColumn('sender', function ($row) {
+                    $sender = "<small>";
+                    $sender .= '<i class="fa fa-user"></i> ' . $row->name;
+                    $sender .= '<br><i class="fa fa-envelope"></i> ' . ($row->email ?? '-');
+                    $sender .= '<br><i class="fa fa-link"></i> ' . ($row->link ?? '-');
+                    $sender .= '<br><i class="fa fa-globe"></i> ' . ($row->ip ?? '-');
+                    $sender .= "</small>";
 
-                }
-            )
-            ->addColumn('created_at', function ($row) {
-                return '<code>' . Carbon::parse($row->created_at)->diffForHumans() . '</code>';
-            })
-           ->addColumn('content', function ($row) {
-                return '<p>'.$row->content.'</p>';
-            })
-             ->addColumn('reference', function ($row) {
-                return '<a target="_blank" href="'.$row->reference.'">'.$row->reference.'</a>';
-            })
-            ->addColumn('sender', function ($row) {
-                $sender = "<small>";
-                $sender .= '<i class="fa fa-user"></i> '.$row->name;
-                $sender .= '<br><i class="fa fa-envelope"></i> '.($row->email ?? '-');
-                $sender .= '<br><i class="fa fa-link"></i> '.($row->link ?? '-');
-                $sender .= '<br><i class="fa fa-globe"></i> '.($row->ip ?? '-');
-                $sender .= "</small>";
-
-                return $sender;
-            })
-            ->addColumn('action', function ($row) {
-                $btn = '<div class="btn-group">';
-                $btn .= '<button onclick="deleteAlert(\''.route('comments',$row->id).'\')" class="btn btn-sm btn-danger fa fa-trash-alt"></button>';
-                $btn .= '</div>';
-                return $btn;
-            })
-            ->rawColumns(['created_at','sender','action','content','DT_RowIndex','reference'])
-            ->toJson();
+                    return $sender;
+                })
+                ->addColumn('action', function ($row) {
+                    $btn = '<div class="btn-group">';
+                    $btn .= '<button onclick="deleteAlert(\'' . route('comments', $row->id) . '\')" class="btn btn-sm btn-danger fa fa-trash-alt"></button>';
+                    $btn .= '</div>';
+                    return $btn;
+                })
+                ->rawColumns(['created_at', 'sender', 'action', 'content', 'DT_RowIndex', 'reference'])
+                ->toJson();
         }
 
         return view('cms::backend.comments.index');
@@ -227,7 +225,7 @@ class PanelController extends Controller implements HasMiddleware
             ->orderByDesc('total')
             ->get();
         $realtimeList = DB::table('analytics_visitors')
-            ->select('current_page', 'device','referrer','ip', 'last_seen_at','user_agent')
+            ->select('current_page', 'device', 'referrer', 'ip', 'last_seen_at', 'user_agent')
             ->when($domain, function ($q) use ($domain) {
                 $q->where('domain', $domain);
             })
@@ -244,7 +242,7 @@ class PanelController extends Controller implements HasMiddleware
             'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
             'domain' => $domain,
-            'realtimeList'=>$realtimeList,
+            'realtimeList' => $realtimeList,
             'realtimeVisitors' => $realtimeVisitors,
             'uniqueToday' => $uniqueToday,
             'topPages' => $topPages,
@@ -252,19 +250,21 @@ class PanelController extends Controller implements HasMiddleware
             'topReferrers' => $topReferrers,
             'devices' => $devices,
             'pageChart' => $pageChart,
-            'domains'=>$domains,
+            'domains' => $domains,
             'deviceSummary' => $deviceSummary,
-            'currentDomain'=>$domain
+            'currentDomain' => $domain
 
         ]);
     }
-    function generate_key(){
+    function generate_key()
+    {
 
         $key = Str::random(32);
-        rewrite_env(['ENV_KEY'=> $key]);
+        rewrite_env(['ENV_KEY' => $key]);
         return $key;
     }
-    public function apikey(Request $request){
+    public function apikey(Request $request)
+    {
         admin_only();
 
 
@@ -275,7 +275,7 @@ class PanelController extends Controller implements HasMiddleware
             $wasEncrypted = file_exists(base_path('.env.encrypted'));
             // Jika terenkripsi → decrypt dulu
             if ($wasEncrypted) {
-             Artisan::call('env:decrypt', [
+                Artisan::call('env:decrypt', [
                     '--force' => true,
                     '--key' => $envKey,
                 ]);
@@ -295,7 +295,6 @@ class PanelController extends Controller implements HasMiddleware
                         unlink($envFile);
                     }
                 }
-
             } else {
                 $this->generate_key();
             }
@@ -304,45 +303,45 @@ class PanelController extends Controller implements HasMiddleware
 
             return to_route('apikey')->with('success', 'APP_KEY berhasil digenerate ulang!');
         }
-        return view('cms::backend.apikey', ['key'=>config('modules.env_key') ? md5(enc64(config('modules.env_key'))) : null]);
+        return view('cms::backend.apikey', ['key' => config('modules.env_key') ? md5(enc64(config('modules.env_key'))) : null]);
     }
-    public function option(Request $request, $slug=null)
+    public function option(Request $request, $slug = null)
     {
 
-        $data = config('modules.config.option.'._us($slug));
-        if (empty($data) || $data && $slug=='template' || !is_main_domain()) {
+        $data = config('modules.config.option.' . _us($slug));
+        if (empty($data) || $data && $slug == 'template' || !is_main_domain()) {
             return abort('404');
         }
 
         if ($request->isMethod('post')) {
             $option = new Option;
-                foreach ($data as $field) {
-                    $key = _us($field[0]);
-                    if ($request->$key) {
-                        if($field[1]=='file'){
-                            if($request->hasFile(_us($field[0]))){
+            foreach ($data as $field) {
+                $key = _us($field[0]);
+                if ($request->$key) {
+                    if ($field[1] == 'file') {
+                        if ($request->hasFile(_us($field[0]))) {
                             $value = (new Flc)->addFile([
-                                    'file'=>$request->file(_us($field[0])),
-                                    'purpose'=> _us($field[0]),
-                                    'mime_type'=> explode(',',$field[2]),
-                                    'self_upload'=> true,
-                                    ]);
-                           $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
-                            }
-                        }else{
-                            $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
+                                'file' => $request->file(_us($field[0])),
+                                'purpose' => _us($field[0]),
+                                'mime_type' => explode(',', $field[2]),
+                                'self_upload' => true,
+                            ]);
+                            $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                         }
-
+                    } else {
+                        $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
                     }
+                }
             }
-            cache()->forget('tenant:'.tenant()->id.':options');
+            cache()->forget('tenant:' . tenant()->id . ':options');
 
             return back()->with('success', 'Berhasil Diupdate');
         }
-        return view('cms::backend.option',compact('data','slug'));
+        return view('cms::backend.option', compact('data', 'slug'));
     }
 
-    function profile(Request $request, Option $option){
+    function profile(Request $request, Option $option)
+    {
         $data = [
             'logo_organisasi',
             'nama_organisasi',
@@ -363,12 +362,12 @@ class PanelController extends Controller implements HasMiddleware
             'twitter',
             'facebook',
             'whatsapp'
-    ];
+        ];
         if ($request->isMethod('put')) {
             foreach ($data as $row) {
                 $key = $row;
 
-                if ($row== 'logo_organisasi') {
+                if ($row == 'logo_organisasi') {
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($request->hasFile($key)) {
                         $fid->update([
@@ -384,8 +383,8 @@ class PanelController extends Controller implements HasMiddleware
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
-            if(app()->has('tenant')){
-                cache()->forget('tenant:'.tenant()->id.':options');
+            if (app()->has('tenant')) {
+                cache()->forget('tenant:' . tenant()->id . ':options');
             }
 
             return back()->with('success', 'Profile berhasil diupdate!');
@@ -430,8 +429,8 @@ class PanelController extends Controller implements HasMiddleware
             ['Preloader Effect', 'preload'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
-            ['Accesibility Widget','accessibility_widget'],
-            ['Sub App Enabled','sub_app_enabled'],
+            ['Accesibility Widget', 'accessibility_widget'],
+            ['Sub App Enabled', 'sub_app_enabled'],
         );
         $data['security'] = array(
 
@@ -459,18 +458,18 @@ class PanelController extends Controller implements HasMiddleware
                     $value = $request->$key ?? null;
 
 
-                    if($key=='block_ip' && $value){
+                    if ($key == 'block_ip' && $value) {
                         $ips = array_map('trim', explode(',', $value));
                         foreach ($ips as $ip) {
                             addIpToBlacklist($ip);
                         }
                     }
-                     if($key=='allow_ip' && $value){
+                    if ($key == 'allow_ip' && $value) {
                         $ips = array_map('trim', explode(',', $value));
                         foreach ($ips as $ip) {
                             removeIpFromBlacklist($ip);
                         }
-                     }
+                    }
 
                     if ($key != 'block_ip') {
                         DB::table('options')
@@ -491,11 +490,11 @@ class PanelController extends Controller implements HasMiddleware
                     DB::table('options')
                         ->updateOrInsert(
                             [
-                                'name' => 'show_site_title_after_page_name'],
-                                ['value' => true, 'tenant_id' => null]
+                                'name' => 'show_site_title_after_page_name'
+                            ],
+                            ['value' => true, 'tenant_id' => null]
 
                         );
-
                 } else {
                     DB::table('options')
                         ->updateOrInsert(
@@ -507,27 +506,47 @@ class PanelController extends Controller implements HasMiddleware
                         );
                 }
             }
+            if (is_main_domain()) {
+                if ($request->favicon_for_all) {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'favicon_for_all'
+                            ],
+                            ['value' => true, 'tenant_id' => null]
+
+                        );
+                } else {
+                    DB::table('options')
+                        ->updateOrInsert(
+                            [
+                                'name' => 'favicon_for_all'
+                            ],
+                            ['value' => false, 'tenant_id' => null]
+
+                        );
+
+                        if(file_exists(public_path('favicon.ico'))){
+                            unlink(public_path('favicon.ico'));
+                        }
+                }
+            }
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
                     $request->validate([$key => 'nullable|file']);
                     if ($value = $request->hasFile($key)) {
+                        $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
 
-                        if ($key == 'favicon' && is_main_domain()) {
-                            DB::table('options')
-                                ->updateOrInsert(
-                                    [
-                                        'name' => 'favicon'],
-                                        ['value' => true, 'tenant_id' => null]
+                        if ($key == 'favicon') {
 
-                                );
-                            if ($request->hasFile('favicon')) {
-                                $file = $request->file('favicon');
 
-                                // Validasi MIME dan ekstensi
-                                $allowedMime = ['image/x-icon', 'image/vnd.microsoft.icon'];
-                                $allowedExt = ['ico'];
 
+                            $file = $request->file('favicon');
+                            // Validasi MIME dan ekstensi
+                            $allowedMime = ['image/x-icon', 'image/vnd.microsoft.icon'];
+                            $allowedExt = ['ico'];
+                            if (!config('modules.multisite_enabled') || (config('modules.multisite_enabled') && get_option('favicon_for_all') == 1)) {
                                 $mime = $file->getMimeType();
                                 $ext = strtolower($file->getClientOriginalExtension());
 
@@ -552,17 +571,25 @@ class PanelController extends Controller implements HasMiddleware
                                 }
 
                                 $file->move(public_path(), 'favicon.ico');
+                            } else {
 
+                                $fid->update([
+                                    'value' => $fid->addFile([
+                                        'file' => $request->file($key),
+                                        'purpose' => $key . (app()->has('tenant') ? '_' . tenant()->id : ''),
+                                        'mime_type' => ['image/x-icon', 'image/vnd.microsoft.icon'],
+                                    ])
+                                ]);
+                                if (file_exists(public_path('favicon.ico'))) {
+                                    unlink(public_path('favicon.ico'));
+                                }
                             }
-
                         } else {
-                            $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
-
                             $fid->update([
                                 'value' => $fid->addFile([
                                     'file' => $request->file($key),
-                                    'purpose' => $key,
-                                    'mime_type' => ['image/png', 'image/jpeg'],
+                                    'purpose' => $key . (app()->has('tenant') ? '_' . tenant()->id : ''),
+                                    'mime_type' => ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
                                 ])
                             ]);
                         }
@@ -584,7 +611,7 @@ class PanelController extends Controller implements HasMiddleware
                         $filename = $fid->addFile([
                             'file' => $request->file($key),
                             'purpose' => $key,
-                            'mime_type' => ['image/png','image/webp'],
+                            'mime_type' => ['image/png', 'image/webp'],
                             'width' => $res,
                             'height' => $res
                         ]);
@@ -604,8 +631,9 @@ class PanelController extends Controller implements HasMiddleware
                     DB::table('options')
                         ->updateOrInsert(
                             [
-                                'name' =>$key],
-                                ['value' => $value, 'tenant_id' => null]
+                                'name' => $key
+                            ],
+                            ['value' => $value, 'tenant_id' => null]
 
                         );
                 }
@@ -613,21 +641,21 @@ class PanelController extends Controller implements HasMiddleware
                     DB::table('options')
                         ->updateOrInsert(
                             [
-                                'name' => 'site_maintenance'],
-                                ['value' => 'Y', 'tenant_id' => null]
+                                'name' => 'site_maintenance'
+                            ],
+                            ['value' => 'Y', 'tenant_id' => null]
 
                         );
                     rewrite_env(['APP_DEBUG' => 'true']);
-
                 } else {
                     DB::table('options')
                         ->updateOrInsert(
                             [
-                                'name' => 'site_maintenance'],
-                                ['value' => 'N', 'tenant_id' => null]
+                                'name' => 'site_maintenance'
+                            ],
+                            ['value' => 'N', 'tenant_id' => null]
                         );
                     rewrite_env(['APP_DEBUG' => 'false']);
-
                 }
                 if ($request->app_env) {
                     if ($existsenv = get_option('app_env')) {
@@ -635,8 +663,9 @@ class PanelController extends Controller implements HasMiddleware
                             DB::table('options')
                                 ->updateOrInsert(
                                     [
-                                        'name' => 'app_env'],
-                                        ['value' => 'production', 'tenant_id' => null]
+                                        'name' => 'app_env'
+                                    ],
+                                    ['value' => 'production', 'tenant_id' => null]
                                 );
                             rewrite_env(['APP_ENV' => 'production']);
                         }
@@ -645,8 +674,9 @@ class PanelController extends Controller implements HasMiddleware
                     DB::table('options')
                         ->updateOrInsert(
                             [
-                                'name' => 'app_env'],
-                                ['value' => 'local', 'tenant_id' => null]
+                                'name' => 'app_env'
+                            ],
+                            ['value' => 'local', 'tenant_id' => null]
                         );
                     rewrite_env(['APP_ENV' => 'local']);
                 }
@@ -664,15 +694,14 @@ class PanelController extends Controller implements HasMiddleware
                         }
                     } else {
                         return back()->send()->with('danger', 'Admin Path tidak boleh kosong');
-
                     }
                 }
             }
-            if(config('modules.multisite_enabled')){
-            if(is_main_domain()){
+            if (config('modules.multisite_enabled')) {
+                if (is_main_domain()) {
                     cache()->forget('default:options');
-            }
-                cache()->forget('tenant:'.tenant()->id.':options');
+                }
+                cache()->forget('tenant:' . tenant()->id . ':options');
             }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
@@ -688,15 +717,17 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.appconfig');
     }
 
-    function admin_path(Request $request,$path){
+    function admin_path(Request $request, $path)
+    {
         $pathnew = base64_decode($path);
         if ($pathnew && $pathnew != admin_path()) {
             Artisan::call('route:cache');
-            return redirect()->to(secure_url($pathnew.'/setting'));
+            return redirect()->to(secure_url($pathnew . '/setting'));
         }
     }
 
-    function unconfiguredCache(){
+    function unconfiguredCache()
+    {
 
         $envKey = config('modules.env_key');
 
@@ -729,7 +760,7 @@ class PanelController extends Controller implements HasMiddleware
 
         if (!app()->configurationIsCached()) {
             Artisan::call('config:cache');
-            if($wasEncrypted){
+            if ($wasEncrypted) {
                 $envFile = base_path('.env');
                 if (file_exists($envFile)) {
                     unlink($envFile);
@@ -740,7 +771,7 @@ class PanelController extends Controller implements HasMiddleware
     public function cache(Request $request)
     {
         admin_only();
-        abort_if(!is_main_domain(),404);
+        abort_if(!is_main_domain(), 404);
         if ($request->isMethod('post')) {
             if ($request->cache_config && $request->cache_config == 'Y' && !app()->configurationIsCached()) {
                 $this->reconfiguredCache();
@@ -771,9 +802,9 @@ class PanelController extends Controller implements HasMiddleware
     {
 
         admin_only();
-        if($request->act && $request->act=='updatetemplate'){
-            Artisan::call('cms:update-template '.template());
-            return back()->send()->with('success','Template Berhasil diupdate');
+        if ($request->act && $request->act == 'updatetemplate') {
+            Artisan::call('cms:update-template ' . template());
+            return back()->send()->with('success', 'Template Berhasil diupdate');
         }
         if ($request->isMethod('post')) {
             if ($file = $request->file('template')) {
@@ -782,39 +813,38 @@ class PanelController extends Controller implements HasMiddleware
                 ]);
                 return $this->template_uploader($file);
             }
-            if ($request->template_setting ) {
+            if ($request->template_setting) {
                 $ar_ta = config('modules.config.option.template') ?? [];
-                if($ar_ta){
+                if ($ar_ta) {
 
-                   foreach ($ar_ta as $field) {
-                    $key = _us($field[0]);
-                    if ($request->$key) {
-                        if($field[1]=='file'){
-                            if($request->hasFile(_us($field[0]))){
-                            $value = (new Flc)->addFile([
-                                    'file'=>$request->file(_us($field[0])),
-                                    'purpose'=> _us($field[0]),
-                                    'width'=> 1700,
-                                    'mime_type'=> explode(',',$field[2]),
-                                    'self_upload'=> true,
+                    foreach ($ar_ta as $field) {
+                        $key = _us($field[0]);
+                        if ($request->$key) {
+                            if ($field[1] == 'file') {
+                                if ($request->hasFile(_us($field[0]))) {
+                                    $value = (new Flc)->addFile([
+                                        'file' => $request->file(_us($field[0])),
+                                        'purpose' => _us($field[0]),
+                                        'width' => 1700,
+                                        'mime_type' => explode(',', $field[2]),
+                                        'self_upload' => true,
                                     ]);
 
-                           $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                                    $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                                }
+                            } else {
+                                $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
                             }
-                        }else{
-                            $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
                         }
-
                     }
-            }
                 }
 
-            if($request->home_page){
-                $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
-            }
-            if(app()->has('tenant')){
-                cache()->forget('tenant:'.tenant()->id.':options');
-            }
+                if ($request->home_page) {
+                    $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
+                }
+                if (app()->has('tenant')) {
+                    cache()->forget('tenant:' . tenant()->id . ':options');
+                }
 
                 return back()->with('success', 'Berhasil diupdate');
             }
@@ -890,9 +920,9 @@ class PanelController extends Controller implements HasMiddleware
             }
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
-            Option::where('name','template')->update([
-                    'value'=>$mainFolderName
-                ]);
+            Option::where('name', 'template')->update([
+                'value' => $mainFolderName
+            ]);
             return to_route('appearance');
         } else {
             return back()->with('danger', 'Template Gagal Diupload');
@@ -902,15 +932,22 @@ class PanelController extends Controller implements HasMiddleware
     public function editorTemplate(Request $request)
     {
         admin_only();
-        abort_if(!is_main_domain() && get_option('can_edit_template')=='N', 404);
+        abort_if(!is_main_domain() && get_option('can_edit_template') == 'N', 404);
         $defaultfile = enc64('/home.blade.php');
         $path = resource_path('views/template/' . template());
         if (!file_exists($path . dec64($defaultfile))) {
             File::put($path . dec64($defaultfile), '<h1>Your Script Here</h1>');
         }
         $file = $request->edit ? dec64($request->edit) : dec64($defaultfile);
-        if(config('modules.multisite_enabled') && is_main_domain() && str($file)->contains('modules')){
+        if (config('modules.multisite_enabled') && is_main_domain() && str($file)->contains('modules')) {
             $path = resource_path('views/template');
+            if (!file_exists($path .$file)) {
+                        $myfile = fopen($path . $file, "w") or die("Unable to open file!");
+                        fwrite($myfile, '<h1>You Script Here</h1>');
+                        fclose($myfile);
+                        File::put($path . '/' . $file, 'You Script Here');
+
+                    }
         }
         if ($file == '/styles.css') {
             $file = '/styles.css';
@@ -930,14 +967,12 @@ class PanelController extends Controller implements HasMiddleware
             if (!file_exists($path . $file)) {
                 File::put($path . $file, '/*You JS Here*/');
             }
-        }
-        elseif(Str::endsWith($file, 'Controller.php')){
+        } elseif (Str::endsWith($file, 'Controller.php')) {
             $path = app_path('Http/Controllers/');
-            if (!file_exists($path.'/' . $file)) {
+            if (!file_exists($path . '/' . $file)) {
                 Artisan::call('make:controller ' . Str::beforeLast($file, '.php'));
             }
-        }
-        else {
+        } else {
         }
         if ($request->isMethod('post')) {
             switch ($request->type) {
@@ -965,7 +1000,7 @@ class PanelController extends Controller implements HasMiddleware
                     if (strpos($filename, 'modules.blade.php') !== false) {
                         return to_route('appearance')->with('danger', 'Action denied!');
                     }
-                    if(Str::endsWith($filename, 'Controller.php')){
+                    if (Str::endsWith($filename, 'Controller.php')) {
                         $path = app_path('Http/Controllers');
                         $filename = '/' . $filename;
                     }
@@ -1010,8 +1045,6 @@ class PanelController extends Controller implements HasMiddleware
                         return response()->json(['msg' => 'success', 'file' => $file]);
                     }
                     break;
-
-
             }
         }
         $src = $file && file_exists($path . $file) && is_file($path . $file) ? (file_get_contents($path . $file) ? file_get_contents($path . $file) : 'Here You Script') : null;
@@ -1058,8 +1091,4 @@ class PanelController extends Controller implements HasMiddleware
         }
         return view('cms::backend.backup-restore');
     }
-
-
-
-
 }

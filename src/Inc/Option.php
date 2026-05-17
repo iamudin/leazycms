@@ -5,6 +5,12 @@ if (!function_exists('tenant')) {
         return app('tenant');
     }
 }
+if (!function_exists('default_menu')) {
+    function default_menu()
+    {
+        return ['berita','menu','galeri','banner','page'];
+    }
+}
 if (!function_exists('get_option')) {
     function get_option($key, $default = null)
     {
@@ -16,8 +22,8 @@ if (!function_exists('get_option')) {
         }
 
         // Jika multisite aktif, gunakan static cache untuk menghindari hit app('tenant.options') berulang
-        if ($options === null && app()->bound('tenant.options')) {
-            $options = app('tenant.options');
+        if ($options === null && app()->bound('tenant.options') && app()->bound('default.options')) {
+            $options = array_merge(app('tenant.options'), app('default.options'));
         }
 
         if ($options !== null) {
