@@ -16,7 +16,14 @@
         @csrf
     <div class="row">
 
-        @foreach(collect(get_module())->whereNotIn('name', ['media', 'menu','sites']) as $row)
+        @php
+            $modules = collect(get_module())->whereNotIn('name', ['media', 'menu','sites']);
+            if(config('modules.multisite_enabled')){
+                $allowed = array_merge(default_menu(), tenant()->modules ?? []);
+                $modules = $modules->whereIn('name', $allowed);
+            }
+        @endphp
+        @foreach($modules as $row)
             <div class="col-lg-6 mb-4">
                 <div class="card">
                     <h4 class="card-header bg-dark text-white"> <i class="fa {{ $row->icon }} }}"></i> {{ $row->title }}</h4>

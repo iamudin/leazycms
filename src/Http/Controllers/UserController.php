@@ -151,11 +151,24 @@ class UserController extends Controller implements HasMiddleware
 
     }
 
-    public function edit(User $user)
+    public function edit($id)
     {
 
-        if(is_null($user->host) || $user->host == parse_url(main_domain(), PHP_URL_HOST)){
+        $user = User::where('host','<>',parse_url(main_domain(), PHP_URL_HOST))->find($id);
+        if(is_null($user)){
             return to_route('user')->with('danger','User tidak ditemukan');
+        }
+        if(config('modules.multisite_enabled')){
+            if(!is_main_domain()){
+if(is_null($user->host) || $user->host != tenant()->domain || $user->level == 'admin'){
+                return to_route('user')->with('danger','User tidak ditemukan');
+            }
+            }
+            
+        }else{
+             if(is_null($user->host) || $user->host == parse_url(main_domain(), PHP_URL_HOST) || $user->level =='admin'){
+                return to_route('user')->with('danger','User tidak ditemukan');
+            }
         }
         return view('cms::backend.users.form', ['user' => $user, 'roles' => $this->all_role()]);
     }

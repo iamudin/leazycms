@@ -1124,7 +1124,7 @@ if (!function_exists('ratelimiter')) {
         }
 
         $maxAttempts = $limittime > 0 ? $limittime : 10;
-        $decayMinutes = $limitduration > 0 ? $limitduration :3;
+        $decayMinutes = $limitduration > 0 ? $limitduration :1;
 
         $attempts = Cache::get($key, 0);
         if ($attempts >= $maxAttempts) {

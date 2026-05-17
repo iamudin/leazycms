@@ -13,10 +13,10 @@
     <div class="col-lg-12">
         @if ($user)
         <div style="border-left:3px solid green" class="alert alert-success"><b>URL : </b><a
-                title="Kunjungi URL" data-toggle="tooltip" href="{{ url($user->url) }}"
-                target="_blank"><i><u>{{ url($user->url) }}</u></i></a> <span
+                title="Kunjungi URL" data-toggle="tooltip" href="{{ url('/') }}"
+                target="_blank"><i><u>{{ url('/'.$user->url) }}</u></i></a> <span
                 title="Klik Untuk Menyalin alamat URL Kategori" data-toggle="tooltip"
-                class="pointer copy pull-right badge badge-primary" data-copy="{{ url($user->url) }}"><i
+                class="pointer copy pull-right badge badge-primary" data-copy="{{ url('/'.$user->url) }}"><i
                     class="fa fa-copy" aria-hidden></i> <b>Salin </b></span></div>
     @endif
     @include('cms::backend.layout.error')

@@ -194,7 +194,7 @@ class RateLimit
 
         $this->logging_request($request);
         $this->dangerous_request($request);
-        if (get_post_type() || !in_array($request->segment(1), ['secure', 'media','favicon.ico'])) {
+        if (get_post_type() || !in_array($request->segment(1), ['secure', 'media','favicon.ico']) && !$request->ajax()) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request, config('modules.current.detail_visited'));

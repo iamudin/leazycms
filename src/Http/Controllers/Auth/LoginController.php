@@ -122,9 +122,9 @@ class LoginController extends Controller
     {
         // Throttle login attempts
         $limiterKey = $request->ip() . '|' . $request->username;
-        // if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
-        //     return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
-        // }
+        if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
+            return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
+        }
 
         $request->validate([
             'username' => 'required',
