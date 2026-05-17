@@ -67,12 +67,10 @@ class Post extends BaseModel
                 }
             }
 
-            if (config('cache.default') === 'redis') {
-                try {
-                    Cache::tags(["type_{$post->type}", 'categories', 'tags', 'authors'])->flush();
-                } catch (\Exception $e) {
-                    \Log::warning('Cache flush error on delete: ' . $e->getMessage());
-                }
+            try {
+                self::flushCacheTags(["type_{$post->type}", 'categories', 'tags', 'authors']);
+            } catch (\Exception $e) {
+                \Log::warning('Cache flush error on delete: ' . $e->getMessage());
             }
         });
 
@@ -92,12 +90,10 @@ class Post extends BaseModel
                     }
                 }
             }
-            if (config('cache.default') === 'redis') {
-                try {
-                    Cache::tags(["type_{$post->type}", 'categories', 'tags', 'authors'])->flush();
-                } catch (\Exception $e) {
-                    \Log::warning('Cache flush error on save: ' . $e->getMessage());
-                }
+            try {
+                self::flushCacheTags(["type_{$post->type}", 'categories', 'tags', 'authors']);
+            } catch (\Exception $e) {
+                \Log::warning('Cache flush error on save: ' . $e->getMessage());
             }
         });
 
@@ -326,6 +322,62 @@ class Post extends BaseModel
         return ["posts", "type_{$type}"];
     }
 
+    /**
+     * Check if the current cache store supports tagging.
+     */
+    private static function cacheSupportsTag(): bool
+    {
+        try {
+            return Cache::getStore() instanceof \Illuminate\Cache\TaggableStore;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Flush cache by tags — works for both taggable and non-taggable drivers.
+     * For taggable drivers (Redis, Memcached): uses native Cache::tags()->flush().
+     * For non-taggable drivers (file, database, array): forgets all registered keys for those tags.
+     */
+    private static function flushCacheTags(array $tags): void
+    {
+        if (self::cacheSupportsTag()) {
+            Cache::tags($tags)->flush();
+            return;
+        }
+
+        // Non-taggable: forget all keys registered under any of the given tags
+        $allKeys = [];
+        foreach ($tags as $tag) {
+            $registryKey = "cache_registry:{$tag}";
+            $keys = Cache::get($registryKey, []);
+            $allKeys = array_merge($allKeys, $keys);
+            Cache::forget($registryKey);
+        }
+
+        foreach (array_unique($allKeys) as $key) {
+            Cache::forget($key);
+        }
+
+        // Also clear request cache
+        self::$requestCache = [];
+    }
+
+    /**
+     * Register a cache key under its associated tags (for non-taggable drivers).
+     */
+    private static function registerCacheKey(string $cacheKey, array $tags): void
+    {
+        foreach ($tags as $tag) {
+            $registryKey = "cache_registry:{$tag}";
+            $keys = Cache::get($registryKey, []);
+            if (!in_array($cacheKey, $keys)) {
+                $keys[] = $cacheKey;
+                Cache::put($registryKey, $keys, now()->addHours(24));
+            }
+        }
+    }
+
     private function getCached($cacheKey, array $tags, \Closure $callback)
     {
         if (app()->has('tenant')) {
@@ -336,23 +388,22 @@ class Post extends BaseModel
             return self::$requestCache[$cacheKey];
         }
 
-        if (config('cache.default') !== 'redis') {
-            return self::$requestCache[$cacheKey] = $callback();
-        }
-
         try {
-            $cached = Cache::tags($tags)->remember($cacheKey, now()->addMinutes(30), function () use ($callback) {
-                $result = $callback();
-                // Serialize sebagai array agar tidak corrupt di phpredis
-                return [
-                    '__type' => $result instanceof \Illuminate\Database\Eloquent\Collection ? 'collection' : (is_null($result) ? 'null' : 'model'),
-                    '__class' => $result instanceof \Illuminate\Database\Eloquent\Model ? get_class($result) : ($result instanceof \Illuminate\Database\Eloquent\Collection && $result->isNotEmpty() ? get_class($result->first()) : null),
-                    '__data' => $result instanceof \Illuminate\Database\Eloquent\Collection ? $result->map->getAttributes()->toArray() : ($result instanceof \Illuminate\Database\Eloquent\Model ? $result->getAttributes() : null),
-                    '__relations' => $result instanceof \Illuminate\Database\Eloquent\Collection
-                        ? $result->map(fn($m) => collect($m->getRelations())->map(fn($r) => $r instanceof \Illuminate\Database\Eloquent\Model ? ['__class' => get_class($r), '__data' => $r->getAttributes()] : ($r instanceof \Illuminate\Database\Eloquent\Collection ? $r->map(fn($rm) => ['__class' => get_class($rm), '__data' => $rm->getAttributes()])->toArray() : null))->toArray())->toArray()
-                        : ($result instanceof \Illuminate\Database\Eloquent\Model ? collect($result->getRelations())->map(fn($r) => $r instanceof \Illuminate\Database\Eloquent\Model ? ['__class' => get_class($r), '__data' => $r->getAttributes()] : ($r instanceof \Illuminate\Database\Eloquent\Collection ? $r->map(fn($rm) => ['__class' => get_class($rm), '__data' => $rm->getAttributes()])->toArray() : null))->toArray() : null),
-                ];
-            });
+            if (self::cacheSupportsTag()) {
+                // Taggable driver (Redis, Memcached): use tags natively
+                $cached = Cache::tags($tags)->remember($cacheKey, now()->addMinutes(30), function () use ($callback) {
+                    return $this->serializeForCache($callback());
+                });
+            } else {
+                // Non-taggable driver (file, database, array): use plain cache + key registry
+                $cached = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($callback, $cacheKey, $tags) {
+                    self::registerCacheKey($cacheKey, $tags);
+                    return $this->serializeForCache($callback());
+                });
+
+                // Register key even on cache hit (in case registry expired but data didn't)
+                self::registerCacheKey($cacheKey, $tags);
+            }
 
             $result = $this->hydrateFromCache($cached);
         } catch (\Exception $e) {
@@ -361,6 +412,21 @@ class Post extends BaseModel
         }
 
         return self::$requestCache[$cacheKey] = $result;
+    }
+
+    /**
+     * Serialize Eloquent result into a plain array for safe cache storage.
+     */
+    private function serializeForCache($result): array
+    {
+        return [
+            '__type' => $result instanceof \Illuminate\Database\Eloquent\Collection ? 'collection' : (is_null($result) ? 'null' : 'model'),
+            '__class' => $result instanceof \Illuminate\Database\Eloquent\Model ? get_class($result) : ($result instanceof \Illuminate\Database\Eloquent\Collection && $result->isNotEmpty() ? get_class($result->first()) : null),
+            '__data' => $result instanceof \Illuminate\Database\Eloquent\Collection ? $result->map->getAttributes()->toArray() : ($result instanceof \Illuminate\Database\Eloquent\Model ? $result->getAttributes() : null),
+            '__relations' => $result instanceof \Illuminate\Database\Eloquent\Collection
+                ? $result->map(fn($m) => collect($m->getRelations())->map(fn($r) => $r instanceof \Illuminate\Database\Eloquent\Model ? ['__class' => get_class($r), '__data' => $r->getAttributes()] : ($r instanceof \Illuminate\Database\Eloquent\Collection ? $r->map(fn($rm) => ['__class' => get_class($rm), '__data' => $rm->getAttributes()])->toArray() : null))->toArray())->toArray()
+                : ($result instanceof \Illuminate\Database\Eloquent\Model ? collect($result->getRelations())->map(fn($r) => $r instanceof \Illuminate\Database\Eloquent\Model ? ['__class' => get_class($r), '__data' => $r->getAttributes()] : ($r instanceof \Illuminate\Database\Eloquent\Collection ? $r->map(fn($rm) => ['__class' => get_class($rm), '__data' => $rm->getAttributes()])->toArray() : null))->toArray() : null),
+        ];
     }
 
     /**
