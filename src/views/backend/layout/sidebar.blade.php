@@ -1,5 +1,6 @@
 <!-- Sidebar menu-->
 <div class="app-sidebar__overlay" data-toggle="sidebar"></div>
+@auth
 @php $userprofile = Auth::user() @endphp
 <aside class="app-sidebar" style="background: #1D2327; font-size: 12px">
     <div class="app-sidebar__user" style="cursor: pointer; margin-bottom: 0">
@@ -334,6 +335,15 @@
             @endif
 
         @endif
+    <li>
+            <a
+                class="app-menu__item"
+                href="javascript:void(0)"
+                onclick="event.preventDefault(); var f=document.createElement('form'); f.method='POST'; f.action='{{ route('logout') }}'; f.style.display='none'; var t=document.createElement('input'); t.type='hidden'; t.name='_token'; t.value='{{ csrf_token() }}'; f.appendChild(t); document.body.appendChild(f); f.submit();"
+                ><i class="app-menu__icon fa fa-sign-out text-danger"></i>
+                <span class="app-menu__label">Keluar</span></a
+            >
+        </li>
         @if(is_main_domain())
         <li
             class="text-muted"
@@ -352,3 +362,4 @@
         @endif
     </ul>
 </aside>
+@endauth

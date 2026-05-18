@@ -6,7 +6,13 @@ trait BelongsToTenant
     public function scopeWithTenant($query)
     {
         if (config('modules.multisite_enabled')) {
-            $query->with(['tenant:id,domain']);
+            $query->with(['tenant' => function ($q) {
+                $q->select('id', 'domain')->where('status', 'active');
+            }])->where(function ($q) {
+                $q->whereHas('tenant', function ($sub) {
+                    $sub->where('status', 'active');
+                })->orWhereNull('tenant_id');
+            });
         }
 
         return $query;

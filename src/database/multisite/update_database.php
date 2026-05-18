@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('domain')->unique();
             $table->string('theme')->nullable();
             $table->json('modules')->nullable();
+            $table->boolean('custom_theme')->default(false);
             $table->enum('status',['active','maintenance','suspended'])->default('active');
             $table->timestamps();
         });

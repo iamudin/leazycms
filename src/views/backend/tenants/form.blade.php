@@ -37,8 +37,11 @@
                         </div>
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Pilih Tema</label>
-                            <select class="form-control form-control-sm" name="theme" required>
+                            <select class="form-control form-control-sm" name="theme" id="theme-select" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? '' : 'required' }}>
                                 <option value="">-- Pilih Tema --</option>
+                                @if($tenant && $tenant->custom_theme && $tenant->theme && !$themes->contains('path', $tenant->theme))
+                                    <option value="{{ $tenant->theme }}" selected>{{ Str::title(str_replace('-', ' ', $tenant->theme)) }} (Tema Custom Aktif)</option>
+                                @endif
                                 @foreach($themes as $row)
                                     <option value="{{ $row->path }}" {{ (($tenant && $tenant->theme == $row->path) || old('theme') == $row->path) ? 'selected' : '' }}>{{ $row->name }} ({{ $row->path }})</option>
                                 @endforeach
@@ -46,8 +49,26 @@
                         </div>
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Custom Theme ?</label><br>
-                            <input name="custom_theme" type="checkbox" value="1"> <small class="text-muted">Ceklis jika ingin menduplikasi tema terpilih khusus untuk tenant ini agar bisa diedit secara terpisah.</small>
+                            <input name="custom_theme" id="custom-theme-check" type="checkbox" value="1" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? 'checked' : '' }}> <small class="text-muted">Ceklis jika ingin menduplikasi tema terpilih khusus untuk tenant ini agar bisa diedit secara terpisah.</small>
                         </div>
+                        
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() { 
+                                const themeSelect = document.getElementById('theme-select');
+                                const customThemeCheck = document.getElementById('custom-theme-check');
+                                
+                                function toggleThemeRequired() {
+                                    if (customThemeCheck.checked) {
+                                        themeSelect.removeAttribute('required');
+                                    } else {
+                                        themeSelect.setAttribute('required', 'required');
+                                    }
+                                }
+                                
+                                customThemeCheck.addEventListener('change', toggleThemeRequired);
+                                toggleThemeRequired();
+                            });
+                        </script>
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Status</label><br>
                             @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif'] as $key => $val)

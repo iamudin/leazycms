@@ -440,6 +440,7 @@ $post_field = [
                 ->whereType(get_post_type())
                 ->whereIn('status', ['publish', 'draft'])
                 ->whereBelongsTo($req->user());
+      
         $current_module = current_module();
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');

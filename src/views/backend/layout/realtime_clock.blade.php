@@ -26,7 +26,7 @@
                     let monthName = months[now.getMonth()];
                     let year = now.getFullYear();
                     
-                    timeString = dayName + ", " + day + " " + monthName + " " + year + " - " + timeString;
+                    timeString = dayName + ", " + day + " " + monthName + " " + year + " - " + timeString+" WIB";
                 }
 
                 clockElement.innerHTML = timeString;

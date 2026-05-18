@@ -14,6 +14,7 @@
                         <th style="width:5px;vertical-align: middle">No</th>
                         <th style="vertical-align: middle">Nama Tenant</th>
                         <th style="vertical-align: middle">Domain</th>
+                        <th style="vertical-align: middle">Theme</th>
                         <th style="vertical-align: middle" width="10px">Status</th>
                         <th style="vertical-align: middle" width="10px">Aksi</th>
                     </tr>
@@ -51,6 +52,11 @@
                     {
                         data: 'domain',
                         name: 'domain',
+                        searchable: true
+                    },
+                    {
+                        data: 'theme',
+                        name: 'theme',
                         searchable: true
                     },
                     {

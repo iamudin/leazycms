@@ -55,6 +55,14 @@
             gap: 10px;
             white-space: nowrap;
         }
+        .clock-fixed-bottom .clock-separator {
+            opacity: 0.5;
+            margin: 0 2px;
+        }
+        .clock-fixed-bottom .session-duration {
+            opacity: 0.85;
+            font-size: 12px;
+        }
         .clock-fixed-bottom i {
             font-size: 16px;
         }
@@ -217,8 +225,31 @@
     @stack('scripts')
     <div class="clock-fixed-bottom">
         <i class="fa fa-clock"></i> <span id="clock-global"></span>
+        @auth
+        <span class="clock-separator">|</span>
+        <span class="session-duration" title="Durasi sesi aktif">
+            <i class="fa fa-user-clock"></i> Sesi Aktif : <span id="session-duration">00:00:00</span>
+        </span>
+        @endauth
     </div>
     {{ realtime_clock('clock-global', true) }}
+    @auth
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginAt = new Date("{{ auth()->user()->last_login_at?->toIso8601String() }}");
+            const durationEl = document.getElementById('session-duration');
+            if (durationEl && !isNaN(loginAt.getTime())) {
+                setInterval(() => {
+                    const diff = Math.floor((Date.now() - loginAt.getTime()) / 1000);
+                    const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                    const s = String(diff % 60).padStart(2, '0');
+                    durationEl.textContent = h + ':' + m + ':' + s;
+                }, 1000);
+            }
+        });
+    </script>
+    @endauth
 </body>
 
 </html>

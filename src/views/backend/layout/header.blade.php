@@ -36,12 +36,9 @@
 
 
                 <li>
-                    <form id="logout-form" action="{{  route('logout')  }}" method="POST">
-                        @csrf
-                        <button type="submit" class="dropdown-item">
-                            <i class="fa fa-sign-out fa-lg"></i> Logout
-                        </button>
-                    </form>
+               <a class="dropdown-item" href="javascript:void(0)" onclick="event.preventDefault(); var f=document.createElement('form'); f.method='POST'; f.action='{{ route('logout') }}'; f.style.display='none'; var t=document.createElement('input'); t.type='hidden'; t.name='_token'; t.value='{{ csrf_token() }}'; f.appendChild(t); document.body.appendChild(f); f.submit();"><i class="fa fa-sign-out fa-lg"></i> Logout</a>
+                </li>
+
                 </li>
             </ul>
         </li>

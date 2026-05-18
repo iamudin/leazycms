@@ -28,7 +28,7 @@
   $postType = get_post_type();
   $canSeeAll = $user->isAdmin() || !$user->hasRole($postType, 'admin', true);
   
-  $baseQuery = query()->onType($postType);
+  $baseQuery = query()->onType($postType)->withTenant();
   if (!$canSeeAll) {
       $baseQuery = $baseQuery->whereBelongsTo($user);
   }

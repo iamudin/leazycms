@@ -71,11 +71,11 @@ class TenantController extends Controller implements HasMiddleware
 
     public function datatable(Request $request)
     {
-        $data = Tenant::query()->with('theme')->with('admin')->latest();
+        $data = Tenant::query()->with('themeSelected')->with('admin')->latest();
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('theme', function ($row) {
-                return $row->theme?->name ?? '-';
+                return $row->custom_theme ? '<span class="text-primary">'.(Str::upper(str_replace('-'.$row->id,'',$row->theme)) ?? '-').' (Custom)</span>' : (str($row->themeSelected?->path )->upper()?? '-');
             })
             ->addColumn('admin', function ($row) {
                 return $row->admin?->name ?? '-';
@@ -92,7 +92,7 @@ class TenantController extends Controller implements HasMiddleware
             ->addColumn('status', function ($row) {
                 return $row->status == 'active' ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>';
             })
-            ->rawColumns(['action', 'status'])
+            ->rawColumns(['action', 'status','theme'])
             ->toJson();
     }
 
@@ -109,7 +109,7 @@ class TenantController extends Controller implements HasMiddleware
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain',
             'status' => 'required|in:active,inactive',
-            'theme' => 'required|string',
+            'theme' => 'required_unless:custom_theme,1',
             'admin_name' => 'required|string|max:100',
             'admin_email' => 'required|email|unique:users,email',
             'admin_username' => 'required|string|min:5|unique:users,username',
@@ -130,27 +130,35 @@ class TenantController extends Controller implements HasMiddleware
             'name' => $request->name,
             'domain' => $domain,
             'status' => $request->status,
-            'theme' => $theme,
+            'theme' => $theme ?? '',
             'modules' => $request->modules,
+            'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
 
-        if ($request->custom_theme) {
+        if ($request->custom_theme && $theme && !Str::endsWith($theme, '-' . $tenant->id)) {
             $sourcePath = resource_path('views/template/' . $theme);
             $targetThemeName = $theme . '-' . $tenant->id;
             $targetPath = resource_path('views/template/' . $targetThemeName);
 
             if (File::exists($sourcePath)) {
-                File::copyDirectory($sourcePath, $targetPath);
+                if(!File::exists($targetPath)) {
+                    File::copyDirectory($sourcePath, $targetPath);
+                }
                 $tenant->update(['theme' => $targetThemeName]);
                 $theme = $targetThemeName; // Update local variable for option saving
             }
         }
 
         // Save theme to options table as 'template'
-        DB::table('options')->updateOrInsert(
-            ['name' => 'template', 'tenant_id' => $tenant->id],
-            ['value' => $theme, 'autoload' => 1]
-        );
+        if ($theme) {
+            DB::table('options')->updateOrInsert(
+                [
+                'name' => 'template', 
+                'tenant_id' => $tenant->id
+            ],
+                ['value' => $theme, 'autoload' => 1]
+            );
+        }
 
         // Create Admin for Tenant
         DB::table('users')->insert([
@@ -191,7 +199,7 @@ class TenantController extends Controller implements HasMiddleware
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
             'status' => 'required|in:active,inactive',
-            'theme' => 'required|string',
+            'theme' => 'required_unless:custom_theme,1',
             'admin_name' => 'required|string|max:100',
             'admin_email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin?->id)],
             'admin_username' => ['required', 'string', 'min:5', Rule::unique('users', 'username')->ignore($admin?->id)],
@@ -214,17 +222,20 @@ class TenantController extends Controller implements HasMiddleware
             'name' => $request->name,
             'domain' => $domain,
             'status' => $request->status,
-            'theme' => $theme,
+            'theme' => $theme ?: $oldTheme,
             'modules' => $request->modules,
+            'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
 
-        if ($request->custom_theme && $theme !== $oldTheme) {
+        if ($request->custom_theme && $theme && !Str::endsWith($theme, '-' . $tenant->id)) {
             $sourcePath = resource_path('views/template/' . $theme);
             $targetThemeName = $theme . '-' . $tenant->id;
             $targetPath = resource_path('views/template/' . $targetThemeName);
 
-            if (File::exists($sourcePath) && !File::exists($targetPath)) {
-                File::copyDirectory($sourcePath, $targetPath);
+            if (File::exists($sourcePath)) {
+                if(!File::exists($targetPath)) {
+                    File::copyDirectory($sourcePath, $targetPath);
+                }
                 $tenant->update(['theme' => $targetThemeName]);
                 $theme = $targetThemeName; // Update local variable for option saving
             }
@@ -233,7 +244,7 @@ class TenantController extends Controller implements HasMiddleware
         // Save theme to options table as 'template'
         DB::table('options')->updateOrInsert(
             ['name' => 'template', 'tenant_id' => $tenant->id],
-            ['value' => $theme, 'autoload' => 1]
+            ['value' => $theme ?: $oldTheme, 'autoload' => 1]
         );
 
         // Update or Create Admin
