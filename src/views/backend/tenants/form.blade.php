@@ -69,15 +69,18 @@
                                 toggleThemeRequired();
                             });
                         </script>
+                @if($tenant && parse_url(config('app.url'), PHP_URL_HOST) != $tenant->domain || !$tenant)
+
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Status</label><br>
                             @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif'] as $key => $val)
                                 <input name="status" type="radio" value="{{ $key }}" {{ (($tenant && $tenant->status == $key) || old('status', 'active') == $key) ? 'checked' : '' }}> {{ $val }} &nbsp; &nbsp;
                             @endforeach
                         </div>
+                        @endif
                     </div>
                 </div>
-
+            @if($tenant && parse_url(config('app.url'), PHP_URL_HOST) != $tenant->domain || !$tenant)
                 <div class="card mb-3">
                     <div class="card-header bg-primary text-white">Akun Administrator Tenant</div>
                     <div class="card-body">
@@ -106,7 +109,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="card mb-3">
                     <div class="card-header bg-success text-white">Konfigurasi & Opsi Tenant</div>
                     <div class="card-body">
@@ -176,6 +178,7 @@
                         @endif
                     </div>
                 </div>
+                @endif
 
                 <div class="form-group mt-2 mb-2 text-right">
                     <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Simpan Tenant & Admin</button>

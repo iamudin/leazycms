@@ -370,8 +370,8 @@ class PanelController extends Controller implements HasMiddleware
             'facebook',
             'instagram',
             'twitter',
-            'facebook',
-            'whatsapp'
+            'whatsapp',
+            'jam_kerja'
         ];
         if ($request->isMethod('put')) {
             foreach ($data as $row) {
@@ -390,7 +390,12 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 } else {
                     $value = $request->$key;
-                    $fid = $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+                    if ($key == 'jam_kerja') {
+                        $value = nl2br(strip_tags($value));
+                    } else {
+                        $value = strip_tags($value);
+                    }
+                    $fid = $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                 }
             }
             if (app()->has('tenant')) {

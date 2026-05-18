@@ -194,18 +194,24 @@ class TenantController extends Controller implements HasMiddleware
     public function update(Request $request, Tenant $tenant)
     {
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
+        $isMainDomain = parse_url(config('app.url'), PHP_URL_HOST) == $tenant->domain;
 
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
-            'status' => 'required|in:active,inactive',
             'theme' => 'required_unless:custom_theme,1',
-            'admin_name' => 'required|string|max:100',
-            'admin_email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin?->id)],
-            'admin_username' => ['required', 'string', 'min:5', Rule::unique('users', 'username')->ignore($admin?->id)],
             'modules' => 'required|array',
-            'admin_password' => 'nullable|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
-        ], [
+        ];
+
+        if (!$isMainDomain) {
+            $rules['status'] = 'required|in:active,inactive';
+            $rules['admin_name'] = 'required|string|max:100';
+            $rules['admin_email'] = ['required', 'email', Rule::unique('users', 'email')->ignore($admin?->id)];
+            $rules['admin_username'] = ['required', 'string', 'min:5', Rule::unique('users', 'username')->ignore($admin?->id)];
+            $rules['admin_password'] = 'nullable|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/';
+        }
+
+        $request->validate($rules, [
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
         ]);
 
@@ -221,7 +227,7 @@ class TenantController extends Controller implements HasMiddleware
         $tenant->update([
             'name' => $request->name,
             'domain' => $domain,
-            'status' => $request->status,
+            'status' => $isMainDomain ? $tenant->status : $request->status,
             'theme' => $theme ?: $oldTheme,
             'modules' => $request->modules,
             'custom_theme' => $request->custom_theme ? 1 : 0,
@@ -248,25 +254,27 @@ class TenantController extends Controller implements HasMiddleware
         );
 
         // Update or Create Admin
-        $userData = [
-            'name' => $request->admin_name,
-            'email' => $request->admin_email,
-            'username' => $request->admin_username,
-            'host' => $domain,
-            'level' => 'admin',
-            'status' => 'active',
-            'slug' => str($request->admin_name)->slug(),
-            'url' => 'author/' . str($request->admin_name)->slug(),
-        ];
+        if (!$isMainDomain) {
+            $userData = [
+                'name' => $request->admin_name,
+                'email' => $request->admin_email,
+                'username' => $request->admin_username,
+                'host' => $domain,
+                'level' => 'admin',
+                'status' => 'active',
+                'slug' => str($request->admin_name)->slug(),
+                'url' => 'author/' . str($request->admin_name)->slug(),
+            ];
 
-        if ($request->admin_password) {
-            $userData['password'] = bcrypt($request->admin_password);
-        }
+            if ($request->admin_password) {
+                $userData['password'] = bcrypt($request->admin_password);
+            }
 
-        if ($admin) {
-            $admin->update($userData);
-        } else {
-            User::create($userData);
+            if ($admin) {
+                $admin->update($userData);
+            } else {
+                User::create($userData);
+            }
         }
 
         // Jika domain berubah, update semua user yang terkait dengan domain lama
@@ -286,6 +294,35 @@ class TenantController extends Controller implements HasMiddleware
 
     private function saveTenantOptions($tenant, $request)
     {
+
+    DB::table('options')
+        ->whereNull('tenant_id')
+        ->whereIn('name', [
+            'site_title',
+            'site_url',
+            'site_meta_keyword',
+            'site_description',
+            'address',
+            'phone',
+            'email',
+            'fax',
+            'latitude',
+            'longitude',
+            'facebook',
+            'youtube',
+            'instagram',
+            'google_analytics_code',
+            'pwa_name',
+            'pwa_short_name',
+            'pwa_description',
+            'pwa_background_color',
+            'pwa_theme_color',
+            'pwa_icon_512',
+            'pwa_icon_180',
+            'pwa_icon_32',
+            'pwa_icon_16',
+        ])
+        ->delete();
         $options = $request->input('options', []);
         foreach ($options as $name => $value) {
             DB::table('options')->updateOrInsert(

@@ -183,6 +183,25 @@
                         </div>
                     </div>
 
+            <div class="form-group mt-3">
+    <small>Jam Kerja</small>
+
+    @php
+        $jamKerja = get_option('jam_kerja');
+
+        $jamKerja = preg_replace('/<br\s*\/?>/i', "&#10;", $jamKerja);
+    @endphp
+
+    <textarea class="form-control form-control-sm"
+        name="jam_kerja"
+        rows="4"
+        placeholder="Misal:&#10;Senin - Kamis: 08.00 - 16.00&#10;Jumat: 08.00 - 11.30&#10;Sabtu - Minggu: Tutup"> {!! old('jam_kerja', $jamKerja) !!}</textarea>
+
+    <small class="text-muted">
+        Gunakan tombol Enter untuk baris baru.
+    </small>
+</div>
+
 
 
                 </div>
