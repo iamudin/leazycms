@@ -1,6 +1,5 @@
 @extends('cms::backend.layout.app', ['title' => 'Setting › Profile'])
 @section('content')
-
         <div class="row">
             <div class="col-lg-12">
                 <h3 style="font-weight:normal">

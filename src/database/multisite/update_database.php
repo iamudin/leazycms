@@ -40,12 +40,30 @@ return new class extends Migration {
         }
 
         Schema::table('options', function (Blueprint $table) {
-
             $table->dropUnique('options_name_unique');
-            // tambah composite unique
             $table->unique(['tenant_id', 'name']);
         });
 
+        $mainDomain = parse_url(main_domain(), PHP_URL_HOST);
+        if ($mainDomain) {
+            $tenant = \Leazycms\Web\Models\Tenant::firstOrCreate(
+                ['domain' => $mainDomain],
+                [
+                    'name' => 'Main Site',
+                    'status' => 'active',
+                    'custom_theme' => 0,
+                    'theme' => null
+                ]
+            );
+
+            \Leazycms\Web\Models\User::where('level', 'admin')->update([
+                'tenant_id' => $tenant->id,
+                'host' => $mainDomain
+            ]);
+        }
+
+        \Leazycms\Web\Http\Controllers\TenantController::deleteOptionsDefault();
+        
     }
 
     public function down(): void

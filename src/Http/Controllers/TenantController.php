@@ -292,14 +292,17 @@ class TenantController extends Controller implements HasMiddleware
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil diupdate');
     }
 
-    private function saveTenantOptions($tenant, $request)
+     public static function deleteOptionsDefault()
     {
-
-    DB::table('options')
+   DB::table('options')
         ->whereNull('tenant_id')
         ->whereIn('name', [
             'site_title',
             'site_url',
+            'logo',
+            'favicon',
+            'preview',
+            'template',
             'site_meta_keyword',
             'site_description',
             'address',
@@ -311,6 +314,7 @@ class TenantController extends Controller implements HasMiddleware
             'facebook',
             'youtube',
             'instagram',
+            'jam_kerja',
             'google_analytics_code',
             'pwa_name',
             'pwa_short_name',
@@ -323,6 +327,13 @@ class TenantController extends Controller implements HasMiddleware
             'pwa_icon_16',
         ])
         ->delete();
+    }
+    private function saveTenantOptions($tenant, $request)
+    {
+     
+        if($tenant->id==1){
+        self::deleteOptionsDefault();
+        }
         $options = $request->input('options', []);
         foreach ($options as $name => $value) {
             DB::table('options')->updateOrInsert(
