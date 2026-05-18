@@ -83,9 +83,9 @@ class TenantController extends Controller implements HasMiddleware
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
                 $btn .= '<a target="_blank" href="http://' . $row->domain . '" class="btn btn-info btn-sm fa fa-globe" title="Kunjungi Website"></a>';
-                $btn .= '<a target="_blank" href="' . route('tenant.login', $row->id) . '" class="btn btn-primary btn-sm fa fa-sign-in" title="Auto Login ke Admin"></a>';
+                $btn .= $row->id!==1 ? '<a target="_blank" href="' . route('tenant.login', $row->id) . '" class="btn btn-primary btn-sm fa fa-sign-in" title="Auto Login ke Admin"></a>' : '';
                 $btn .= '<a href="' . route('tenant.edit', $row->id) . '" class="btn btn-warning btn-sm fa fa-edit" title="Edit Tenant"></a>';
-                $btn .= '<button onclick="deleteAlert(\'' . route('tenant.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash" title="Hapus Tenant"></button>';
+                $btn .= $row->id!==1 ? '<button onclick="deleteAlert(\'' . route('tenant.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash" title="Hapus Tenant"></button>' : '';
                 $btn .= '</div>';
                 return $btn;
             })
@@ -345,11 +345,15 @@ class TenantController extends Controller implements HasMiddleware
 
     public function destroy(Tenant $tenant)
     {
+        if($tenant->id==1){
+            return response()->json(['success' => 'Tenant utama tidak dapat dihapus']);
+        }
         $domain = $tenant->domain;
         $tenantId = $tenant->id;
-        $tenant->delete();
+        query()->where('tenant_id', $tenantId)->forceDelete();
         Cache::forget("tenant:{$domain}");
         Cache::forget("tenant:{$tenantId}:options");
+        $tenant->delete();
         return response()->json(['success' => 'Tenant berhasil dihapus']);
     }
 }
