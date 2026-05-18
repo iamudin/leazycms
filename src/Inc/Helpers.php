@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 
-use Illuminate\Support\Facades\Auth;
 if (!function_exists('query')) {
     function query()
     {
@@ -609,9 +609,9 @@ if (!function_exists('get_path_domain')) {
 }
 
 if(!function_exists('realtime_clock')){
-    function realtime_clock($elementId=null)
+    function realtime_clock($elementId=null, $showDate = false)
     {
-        return view()->make('cms::backend.layout.realtime_clock', ['tag'=>$elementId]);
+        return view()->make('cms::backend.layout.realtime_clock', ['tag'=>$elementId, 'show_date' => $showDate]);
     }
 }
 if (!function_exists('realtime_timer')) {
@@ -1645,10 +1645,11 @@ if (!function_exists('blade_path')) {
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
             } else {
-                return response(
+            response(
                     error503Msg(),
                     503
-                )->header('Content-Type', 'text/html');
+            );
+            exit;
 
             }
         }
@@ -2554,7 +2555,7 @@ if (!function_exists('_tohref')) {
 if (!function_exists('banner_here')) {
     function banner_here($name, $data)
     {
-        return \Illuminate\Support\Facades\Auth::user()?->isAdmin() ? View::make('cms::layouts.banner', ['banner' => $name, 'data' => $data]) : null;
+        return Auth::user()?->level=='admin' ? View::make('cms::layouts.banner', ['banner' => $name, 'data' => $data]) : null;
     }
 }
 

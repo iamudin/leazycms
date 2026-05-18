@@ -121,12 +121,22 @@ class PanelController extends Controller implements HasMiddleware
     {
 
         $user = $request->user();
-        $posts = $user->isAdmin() ? Post::selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray() : Post::whereBelongsTo($user)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
 
+        $type_list = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
+        if (config('modules.multisite_enabled') && app()->has('tenant')) {
+            $type_list = array_intersect($type_list, array_merge(default_menu(), tenant()->modules ?? []));
+        }
 
+        $posts = $user->isAdmin()
+            ? Post::whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray()
+            : Post::whereBelongsTo($user)->whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
 
-        $type = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
-        $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])->with('user')->whereIn('type', $type)->latest('created_at')->limit(5)->get();
+        $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])
+            ->with('user')
+            ->whereIn('type', $type_list)
+            ->latest('created_at')
+            ->limit(5)
+            ->get();
 
         $domain = $request->get('domain');
 
@@ -239,7 +249,7 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.dashboard', [
             'latest' => $lastpublish,
 
-            'type' => $user->isAdmin() ? collect(get_module()) : collect(get_module())->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
+            'type' => $user->isAdmin() ? collect(get_module())->whereIn('name', $type_list) : collect(get_module())->whereIn('name', $type_list)->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
             'posts' => $posts,
             'domain' => $domain,
             'realtimeList' => $realtimeList,

@@ -1,16 +1,16 @@
 @extends('cms::backend.layout.app', ['title' => 'Dashboard'])
 @section('content')
         <div class="row">
-        <div class="col-lg-12 mb-1">
+        <div class="col-lg-12 mb-3">
 
-            <h3 style="font-weight:normal;"> <i class="fa fa-dashboard"></i> Dashboard</h3>
-
+            <h3 style="font-weight:normal;"> <i class="fa fa-dashboard"></i> Dashboard 
+          </h3>
         </div>
             <div class="col-lg-12">
 
           <div class="row">
             @foreach(collect($type ?? []) as $row)
-                  <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{Route::has($row->name) ? route($row->name) : ''}}'">
+                  <div title="Klik untuk selengkapnya" class="pointer col-md-6 col-lg-3" onclick="location.href='{{Route::has($row->name) ? route($row->name) : null}}'">
                     <div class="widget-small danger coloured-icon"><i class="icon fa {{$row->icon}} fa-3x"></i>
                       <div class="info pl-3">
                         <p class="mt-2 text-muted">{{$row->title}}</p>

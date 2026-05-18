@@ -138,25 +138,25 @@
                               <button type="submit" class="submit_form btn w-100 mt-2 btn-sm btn-outline-primary"> <i class="fa fa-save" ></i> Simpan</button>
           </form>
 
-
+@if(is_main_domain())
           <h6>Info Template</h6>
 
           <ul class="list-group mb-3">
             {{template_info()}}
                 <div class="mb-5 text-right">
-    <form  class="list-group-item py-0 px-1 m-0" action="{{ url()->full() }}" method="post" enctype="multipart/form-data">
+    <form  class="list-group-item py-0 px-1 m-0" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
       @csrf
       <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
         accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
         <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm w-100 my-1"> <i class="fa fa-upload"></i>
           Upload Template</button>
-        <a type="button" onclick="location.href='{{ asset('sample/sample.zip')}}'" class="btn btn-info btn-sm w-100 my-1"> <i
-            class="fa fa-brush"></i> Sample Template</a>
+ 
 
     </form>
 
   </div>
       </ul>
+      @endif
 
     </div>
 

@@ -334,6 +334,7 @@
             @endif
 
         @endif
+        @if(is_main_domain())
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -348,5 +349,6 @@
                 <i class="fa fa-book"></i> Docs</a
             >
         </li>
+        @endif
     </ul>
 </aside>

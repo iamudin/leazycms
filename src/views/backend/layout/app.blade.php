@@ -35,6 +35,36 @@
         .pointer {
             cursor: pointer;
         }
+        .clock-fixed-bottom {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 150, 136, 0.7);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+        .clock-fixed-bottom i {
+            font-size: 16px;
+        }
+        @media (max-width: 768px) {
+            .clock-fixed-bottom {
+                bottom: 10px;
+                font-size: 12px;
+                padding: 6px 15px;
+            }
+        }
     </style>
     @if (\Session::has('success'))
         <script>
@@ -185,7 +215,10 @@
 
     <script  src="{{ url('backend/js/plugins/sweetalert.min.js') }}"></script>
     @stack('scripts')
-
+    <div class="clock-fixed-bottom">
+        <i class="fa fa-clock"></i> <span id="clock-global"></span>
+    </div>
+    {{ realtime_clock('clock-global', true) }}
 </body>
 
 </html>
