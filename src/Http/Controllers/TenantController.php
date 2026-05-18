@@ -108,12 +108,12 @@ class TenantController extends Controller implements HasMiddleware
         $request->validate([
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain',
-            'status' => 'required|in:active,inactive',
+            'status' => 'required|in:active,inactive,suspended',
             'theme' => 'required_unless:custom_theme,1',
             'admin_name' => 'required|string|max:100',
             'admin_email' => 'required|email|unique:users,email',
             'admin_username' => 'required|string|min:5|unique:users,username',
-            'modules' => 'required|array',
+            'modules' => 'nullable|array',
             'admin_password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ], [
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
@@ -200,11 +200,11 @@ class TenantController extends Controller implements HasMiddleware
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
             'theme' => 'required_unless:custom_theme,1',
-            'modules' => 'required|array',
+            'modules' => 'nullable|array',
         ];
 
         if (!$isMainDomain) {
-            $rules['status'] = 'required|in:active,inactive';
+            $rules['status'] = 'required|in:active,inactive,suspended';
             $rules['admin_name'] = 'required|string|max:100';
             $rules['admin_email'] = ['required', 'email', Rule::unique('users', 'email')->ignore($admin?->id)];
             $rules['admin_username'] = ['required', 'string', 'min:5', Rule::unique('users', 'username')->ignore($admin?->id)];

@@ -63,6 +63,7 @@ return new class extends Migration {
         }
 
         \Leazycms\Web\Http\Controllers\TenantController::deleteOptionsDefault();
+        rewrite_env(['MULTITENANT_INSTALLED'=>true]);
         
     }
 

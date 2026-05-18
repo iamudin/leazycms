@@ -8,7 +8,7 @@ if (!function_exists('tenant')) {
 if (!function_exists('default_menu')) {
     function default_menu()
     {
-        return ['berita','menu','galeri','banner','page'];
+        return ['berita','menu','banner','page'];
     }
 }
 if (!function_exists('get_option')) {

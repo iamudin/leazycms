@@ -15,12 +15,18 @@ class IdentifyTenant
 
     public function handle(Request $request, Closure $next)
     {
+
+        if(!config('modules.multitenant_installed')){
+            $view = view('cms::backend.multisite-active')->render();
+            return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
+        }
+    
         $host = $request->getHost();
 
         if (self::$currentTenant === null) {
             $tenantData = Cache::rememberForever(
                 "tenant:$host",
-                fn() => ($t = Tenant::where(['domain' => $host, 'status' => 'active'])->first()) ? $t->getRawOriginal() : null
+                fn() => ($t = Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended'])->first()) ? $t->getRawOriginal() : null
             );
 
             if ($tenantData) {
@@ -179,6 +185,11 @@ HTML;
                 ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
                 ->header('X-Frame-Options', 'SAMEORIGIN')
                 ->header('X-Content-Type-Options', 'nosniff');
+        }
+
+                if(config('modules.multitenant_installed') && !is_main_domain() && $tenant->status == 'suspended'){
+            $view = view('cms::backend.suspended')->render();
+            return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
         }
             app()->singleton('default.options', function ()  {
             return Cache::rememberForever(

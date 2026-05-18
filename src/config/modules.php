@@ -928,4 +928,5 @@ return [
     'telechatid'=>env('TELECHATID',false),
     'labusiam'=>env('LOG', false),
     'sub_app_enabled'=>env('SUB_APP_ENABLED', false),
+    'multitenant_installed'=>env('MULTITENANT_INSTALLED', false)
 ];

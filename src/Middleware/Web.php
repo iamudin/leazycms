@@ -29,10 +29,9 @@ class Web
                     undermaintenance()
                 ),
                 503
-            )->header('Content-Type', 'text/html')
-                ->header('Cache-Control', 'public, max-age=3600')
-                ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+            )->header('Content-Type', 'text/html');
         }
+    
         $path = $request->path();
         if ($path !== strtolower($path) && !Route::is('tag.posts')) {
             return redirect(strtolower($request->fullUrl()), 301);

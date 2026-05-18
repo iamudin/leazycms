@@ -11,7 +11,8 @@ class RateLimit
 
     public function handle(Request $request, Closure $next) {
         if (config('modules.installed') == "0") {
-            return response()->view('cms::backend.pre-install');
+            $view = view('cms::backend.pre-install')->render();
+            return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
         }
         if(!config('modules.multisite_enabled')){
 

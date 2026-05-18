@@ -73,7 +73,7 @@
 
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Status</label><br>
-                            @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif'] as $key => $val)
+                            @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif', 'suspended' => 'Suspended'] as $key => $val)
                                 <input name="status" type="radio" value="{{ $key }}" {{ (($tenant && $tenant->status == $key) || old('status', 'active') == $key) ? 'checked' : '' }}> {{ $val }} &nbsp; &nbsp;
                             @endforeach
                         </div>
