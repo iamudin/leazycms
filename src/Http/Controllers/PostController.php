@@ -198,6 +198,9 @@ class PostController extends Controller implements HasMiddleware
 
         if ($module->form->unique_title) {
             $uniq = 'unique:posts,title,' . $post->id . ',id,type,' . $post->type . ',deleted_at,NULL';
+                 if(config('modules.multisite_enabled')){
+                $uniq = 'unique:posts,title,' . $post->id . ',id,type,' . $post->type . ',deleted_at,NULL,tenant_id,' . $request->user()->tenant_id;
+            }
         }
         /*
         |--------------------------------------------------------------------------
@@ -569,7 +572,7 @@ $post_field = [
 
             $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
             $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
-            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ?'<a title="Klik untuk melihat di tampilan web" href="' . url($row->url . '/') . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ?'<a title="Klik untuk melihat di tampilan web" href="' . $row->link  . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
 
             $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';

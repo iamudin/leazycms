@@ -166,7 +166,7 @@ class Post extends BaseModel
     }
     public function getLinkAttribute()
     {
-        return url($this->url);
+        return !config('modules.multisite_enabled') ? url($this->url) : ($this->tenant ? 'http://' . $this->tenant->domain . '/' . $this->url : url($this->url));
     }
     public function getMonthAttribute()
     {
@@ -829,7 +829,7 @@ class Post extends BaseModel
     private function runDetailQuery($type, $name, $with)
     {
         $query = $this->with($with)->withTenant();
-        if (config('modules.multisite_enabled') && $this->tenant_id !== null) {
+        if (config('modules.multisite_enabled') && is_main_domain() && $this->tenant_id) {
             $query->where('tenant_id', tenant()->id);
         }
 
