@@ -7,10 +7,10 @@ trait BelongsToTenant
     {
         if (config('modules.multisite_enabled')) {
             $query->with(['tenant' => function ($q) {
-                $q->select('id', 'domain')->where('status', 'active');
+                $q->select('id', 'domain')->whereIn('status', ['active','maintenance','suspended']);
             }])->where(function ($q) {
                 $q->whereHas('tenant', function ($sub) {
-                    $sub->where('status', 'active');
+                    $sub->whereIn('status', ['active','maintenance','suspended']);
                 })->orWhereNull('tenant_id');
             });
         }
