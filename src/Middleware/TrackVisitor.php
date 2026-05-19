@@ -15,7 +15,7 @@ class TrackVisitor
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
-        if (is_local()) {
+        if (!is_local()) {
             try {
                 $data = [
                     'domain' => $request->getHost(),
