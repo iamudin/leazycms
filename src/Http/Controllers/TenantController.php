@@ -90,7 +90,14 @@ class TenantController extends Controller implements HasMiddleware
                 return $btn;
             })
             ->addColumn('status', function ($row) {
-                return $row->status == 'active' ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>';
+                $badges = [
+                    'active' => '<span class="badge badge-success">Aktif</span>',
+                    'inactive' => '<span class="badge badge-danger">Nonaktif</span>',
+                    'suspended' => '<span class="badge badge-warning">Suspended</span>',
+                    'maintenance' => '<span class="badge badge-danger">Maintenance</span>',
+                ];
+
+                return $badges[$row->status] ?? '-';
             })
             ->rawColumns(['action', 'status','theme'])
             ->toJson();
@@ -108,7 +115,7 @@ class TenantController extends Controller implements HasMiddleware
         $request->validate([
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain',
-            'status' => 'required|in:active,inactive,suspended',
+            'status' => 'required|in:active,inactive,suspended,maintenance',
             'theme' => 'required_unless:custom_theme,1',
             'admin_name' => 'required|string|max:100',
             'admin_email' => 'required|email|unique:users,email',
@@ -153,7 +160,7 @@ class TenantController extends Controller implements HasMiddleware
         if ($theme) {
             DB::table('options')->updateOrInsert(
                 [
-                'name' => 'template', 
+                'name' => 'template',
                 'tenant_id' => $tenant->id
             ],
                 ['value' => $theme, 'autoload' => 1]
@@ -204,7 +211,7 @@ class TenantController extends Controller implements HasMiddleware
         ];
 
         if (!$isMainDomain) {
-            $rules['status'] = 'required|in:active,inactive,suspended';
+            $rules['status'] = 'required|in:active,inactive,suspended,maintenance';
             $rules['admin_name'] = 'required|string|max:100';
             $rules['admin_email'] = ['required', 'email', Rule::unique('users', 'email')->ignore($admin?->id)];
             $rules['admin_username'] = ['required', 'string', 'min:5', Rule::unique('users', 'username')->ignore($admin?->id)];
@@ -330,7 +337,7 @@ class TenantController extends Controller implements HasMiddleware
     }
     private function saveTenantOptions($tenant, $request)
     {
-     
+
         if($tenant->id==1){
         self::deleteOptionsDefault();
         }

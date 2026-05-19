@@ -31,7 +31,25 @@ class Web
                 503
             )->header('Content-Type', 'text/html');
         }
-    
+
+        if (config('modules.multisite_enabled') && app()->has('tenant')) {
+            $currentTenant = tenant();
+            if (
+                isset($currentTenant->status) &&
+                $currentTenant->status === 'maintenance' &&
+                !Auth::check() &&
+                !Route::is('formaster')
+            ) {
+                return response(
+                    preg_replace(
+                        '/\s+/',
+                        ' ',
+                        undermaintenance()
+                    ),
+                    503
+                )->header('Content-Type', 'text/html');
+            }
+        }
         $path = $request->path();
         if ($path !== strtolower($path) && !Route::is('tag.posts')) {
             return redirect(strtolower($request->fullUrl()), 301);

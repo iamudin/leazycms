@@ -51,12 +51,12 @@
                             <label class="mb-0">Custom Theme ?</label><br>
                             <input name="custom_theme" id="custom-theme-check" type="checkbox" value="1" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? 'checked' : '' }}> <small class="text-muted">Ceklis jika ingin menduplikasi tema terpilih khusus untuk tenant ini agar bisa diedit secara terpisah.</small>
                         </div>
-                        
+
                         <script>
-                            document.addEventListener('DOMContentLoaded', function() { 
+                            document.addEventListener('DOMContentLoaded', function() {
                                 const themeSelect = document.getElementById('theme-select');
                                 const customThemeCheck = document.getElementById('custom-theme-check');
-                                
+
                                 function toggleThemeRequired() {
                                     if (customThemeCheck.checked) {
                                         themeSelect.removeAttribute('required');
@@ -64,7 +64,7 @@
                                         themeSelect.setAttribute('required', 'required');
                                     }
                                 }
-                                
+
                                 customThemeCheck.addEventListener('change', toggleThemeRequired);
                                 toggleThemeRequired();
                             });
@@ -73,7 +73,7 @@
 
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Status</label><br>
-                            @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif', 'suspended' => 'Suspended'] as $key => $val)
+                            @foreach(['active' => 'Aktif', 'inactive' => 'Nonaktif', 'suspended' => 'Suspended', 'maintenance' => 'Maintenance'] as $key => $val)
                                 <input name="status" type="radio" value="{{ $key }}" {{ (($tenant && $tenant->status == $key) || old('status', 'active') == $key) ? 'checked' : '' }}> {{ $val }} &nbsp; &nbsp;
                             @endforeach
                         </div>

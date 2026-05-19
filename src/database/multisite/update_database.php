@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string('theme')->nullable();
             $table->json('modules')->nullable();
             $table->boolean('custom_theme')->default(false);
-            $table->enum('status',['active','inactive','suspended'])->default('active');
+            $table->enum('status',['active','inactive','suspended','maintenance'])->default('active');
             $table->timestamps();
         });
 
@@ -64,7 +64,7 @@ return new class extends Migration {
 
         \Leazycms\Web\Http\Controllers\TenantController::deleteOptionsDefault();
         rewrite_env(['MULTITENANT_INSTALLED'=>true]);
-        
+
     }
 
     public function down(): void
