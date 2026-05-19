@@ -21,41 +21,6 @@ class Web
     {
 
         $response = $next($request);
-
-        $renderUnderMaintenance = function () {
-            return response(
-                preg_replace(
-                    '/\s+/',
-                    ' ',
-                    undermaintenance()
-                ),
-                503
-            )->header('Content-Type', 'text/html');
-        };
-
-        if (config('modules.multisite_enabled')) {
-            $isMainDomain = is_main_domain();
-
-            if (config('app.debug')) {
-                if (!$isMainDomain || !Auth::check()) {
-                    return $renderUnderMaintenance();
-                }
-            }
-
-            if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
-                $currentTenant = tenant();
-                if (
-                    isset($currentTenant->status) &&
-                    $currentTenant->status === 'maintenance' &&
-                    !Auth::check() &&
-                    !Route::is('formaster')
-                ) {
-                    return $renderUnderMaintenance();
-                }
-            }
-        } elseif (config('app.debug') && !Auth::check() && !Route::is('formaster')) {
-            return $renderUnderMaintenance();
-        }
         $path = $request->path();
         if ($path !== strtolower($path) && !Route::is('tag.posts')) {
             return redirect(strtolower($request->fullUrl()), 301);

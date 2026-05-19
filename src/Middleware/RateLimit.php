@@ -4,6 +4,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 class RateLimit
 {
@@ -26,9 +27,12 @@ class RateLimit
                 }
             }
         }
-        }else{
-            if(!is_main_domain() && config('app.debug')){
-               return response(
+        }
+        $adminPath = admin_path();
+        $isAdminRoute = $request->is($adminPath) || $request->is($adminPath . '/*');
+
+        $renderUnderMaintenance = function () {
+            return response(
                 preg_replace(
                     '/\s+/',
                     ' ',
@@ -36,7 +40,31 @@ class RateLimit
                 ),
                 503
             )->header('Content-Type', 'text/html');
+        };
+
+        if (config('modules.multisite_enabled')) {
+            $isMainDomain = is_main_domain();
+
+            if (config('app.debug') && !Route::is('formaster') && !in_array($request->segment(1),['secure'])) {
+
+                if (!$isMainDomain) {
+                    return $renderUnderMaintenance();
+                }
+                if (!$isAdminRoute && !Auth::check()) {
+                    return $renderUnderMaintenance();
+                }
             }
+
+            if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
+                $currentTenant = tenant();
+                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance') {
+                    if (!$isAdminRoute && !Auth::check() && !Route::is('formaster')) {
+                        return $renderUnderMaintenance();
+                    }
+                }
+            }
+        } elseif (config('app.debug') && !Route::is('formaster') && !$isAdminRoute && !Auth::check()) {
+            return $renderUnderMaintenance();
         }
 
 
