@@ -163,7 +163,7 @@ protected function registerRoutes()
                 }
             }
         }
-        Route::get('stats.png', [VisitorStatsController::class, 'headerImage']);
+        Route::get('stats.webp', [VisitorStatsController::class, 'headerImage'])->name('stats');
     }
     protected function registerResources()
     {
