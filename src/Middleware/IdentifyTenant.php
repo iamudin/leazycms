@@ -46,135 +46,318 @@ class IdentifyTenant
 
         if (!$tenant) {
             $portal = config('app.url');
-            $html = <<<HTML
+$html = <<<HTML
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Website Tidak Ditemukan</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Website Tidak Ditemukan</title>
+
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f1f5f9;
-            --text: #0f172a;
-            --muted: #64748b;
+
+        :root{
+            --bg:#f8fafc;
+            --card:#ffffff;
+            --text:#0f172a;
+            --muted:#64748b;
+            --primary:#0f766e;
+            --border:#e2e8f0;
         }
 
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #eef2ff, #f8fafc);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        .card {
-            background: #ffffff;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-            animation: fadeIn 0.4s ease-in-out;
+        body{
+            min-height:100vh;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            padding:20px;
+
+            background:
+                radial-gradient(circle at top left,#dbeafe 0%,transparent 30%),
+                radial-gradient(circle at bottom right,#ccfbf1 0%,transparent 30%),
+                var(--bg);
+
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                sans-serif;
+
+            color:var(--text);
         }
 
-        .icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+        .wrapper{
+            width:100%;
+            max-width:540px;
         }
 
-        h1 {
-            font-size: 22px;
-            color: var(--text);
-            margin-bottom: 10px;
+        .card{
+
+            position:relative;
+
+            background:rgba(255,255,255,0.92);
+
+            backdrop-filter:blur(12px);
+
+            border:1px solid rgba(255,255,255,0.6);
+
+            border-radius:28px;
+
+            padding:50px 40px;
+
+            box-shadow:
+                0 20px 60px rgba(15,23,42,0.08),
+                0 8px 20px rgba(15,23,42,0.04);
+
+            overflow:hidden;
+
+            animation:fadeIn .4s ease;
         }
 
-        p {
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.6;
+        .card::before{
+
+            content:"";
+
+            position:absolute;
+
+            top:-120px;
+            right:-120px;
+
+            width:240px;
+            height:240px;
+
+            background:linear-gradient(
+                135deg,
+                rgba(13,148,136,.18),
+                rgba(59,130,246,.10)
+            );
+
+            border-radius:50%;
         }
 
-        .domain {
-            font-weight: 600;
-            color: var(--text);
+        .icon{
+
+            width:82px;
+            height:82px;
+
+            margin:0 auto 25px;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            border-radius:24px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0f766e,
+                    #14b8a6
+                );
+
+            box-shadow:
+                0 10px 30px rgba(15,118,110,.25);
+
+            font-size:36px;
+
+            color:white;
+
+            position:relative;
+            z-index:2;
         }
 
-        .actions {
-            margin-top: 25px;
+        h1{
+
+            font-size:30px;
+            font-weight:800;
+
+            text-align:center;
+
+            margin-bottom:14px;
+
+            letter-spacing:-0.5px;
+
+            position:relative;
+            z-index:2;
         }
 
-        .btn {
-            display: inline-block;
-            padding: 10px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            margin: 5px;
-            transition: 0.2s;
+        .desc{
+
+            text-align:center;
+
+            font-size:15px;
+            line-height:1.8;
+
+            color:var(--muted);
+
+            position:relative;
+            z-index:2;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
+        .domain-box{
+
+            margin-top:30px;
+
+            background:#f8fafc;
+
+            border:1px solid var(--border);
+
+            border-radius:18px;
+
+            padding:18px 20px;
+
+            text-align:center;
+
+            position:relative;
+            z-index:2;
         }
 
-        .btn-primary:hover {
-            background: #1d4ed8;
+        .domain-label{
+
+            font-size:12px;
+
+            color:#94a3b8;
+
+            margin-bottom:8px;
+
+            text-transform:uppercase;
+
+            letter-spacing:1px;
         }
 
-        .btn-outline {
-            border: 1px solid #cbd5f5;
-            color: var(--primary);
+        .domain{
+
+            font-size:18px;
+            font-weight:700;
+
+            color:var(--text);
+
+            word-break:break-word;
         }
 
-        .btn-outline:hover {
-            background: #eef2ff;
+        .note{
+
+            margin-top:24px;
+
+            text-align:center;
+
+            font-size:13px;
+
+            color:#94a3b8;
+
+            line-height:1.7;
+
+            position:relative;
+            z-index:2;
         }
 
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #94a3b8;
+        .footer{
+
+            margin-top:35px;
+
+            text-align:center;
+
+            font-size:12px;
+
+            color:#cbd5e1;
+
+            position:relative;
+            z-index:2;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+        @keyframes fadeIn{
+
+            from{
+                opacity:0;
+                transform:translateY(15px);
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            to{
+                opacity:1;
+                transform:translateY(0);
             }
+
         }
+
+        @media(max-width:640px){
+
+            .card{
+                padding:40px 25px;
+                border-radius:24px;
+            }
+
+            h1{
+                font-size:24px;
+            }
+
+            .domain{
+                font-size:16px;
+            }
+
+        }
+
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <div class="icon">🌐</div>
-        <h1>Website Tidak Ditemukan</h1>
 
-        <p>
-            Domain <span class="domain">{$host}</span> belum terdaftar atau tidak aktif di sistem kami.
-        </p>
+    <div class="wrapper">
 
-        <p>
-            Pastikan alamat yang Anda akses sudah benar, atau hubungi administrator jika ini adalah website resmi.
-        </p>
+        <div class="card">
 
-        <div class="actions">
-            <a href="{$portal}" class="btn btn-primary">Kembali ke Portal</a>
+            <div class="icon">
+                🌐
+            </div>
+
+            <h1>
+                Website Tidak Ditemukan
+            </h1>
+
+            <div class="desc">
+
+                Domain yang Anda akses saat ini belum terdaftar,
+                dinonaktifkan, atau belum diarahkan ke sistem.
+
+            </div>
+
+            <div class="domain-box">
+
+                <div class="domain-label">
+                    DOMAIN
+                </div>
+
+                <div class="domain">
+                    {$host}
+                </div>
+
+            </div>
+
+            <div class="note">
+
+                Pastikan penulisan domain sudah benar
+                atau hubungi administrator website terkait
+                untuk informasi lebih lanjut.
+
+            </div>
+
+            <div class="footer">
+                Terima Kasih Telah Menggunakan Layanan Kami
+            </div>
+
         </div>
 
-
     </div>
+
 </body>
 </html>
 HTML;
