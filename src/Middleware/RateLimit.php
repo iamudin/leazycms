@@ -14,6 +14,8 @@ class RateLimit
             $view = view('cms::backend.pre-install')->render();
             return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
         }
+
+
         if(!config('modules.multisite_enabled')){
 
         if (get_option('sub_app_enabled') &&get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
@@ -24,6 +26,17 @@ class RateLimit
                 }
             }
         }
+        }else{
+            if(!is_main_domain() && config('app.debug')){
+               return response(
+                preg_replace(
+                    '/\s+/',
+                    ' ',
+                    undermaintenance()
+                ),
+                503
+            )->header('Content-Type', 'text/html');
+            }
         }
 
 

@@ -10,17 +10,32 @@ class NotFoundController extends Controller
     {
 
         $request = request();
-        if (config('app.debug')) {
-                if (!Auth::check()) {
-                    return response(
-                        preg_replace('/\s+/', ' ', undermaintenance()),
-                        503
-                    )->header('Content-Type', 'text/html');
+        $renderUnderMaintenance = function () {
+            return response(
+                preg_replace('/\s+/', ' ', undermaintenance()),
+                503
+            )->header('Content-Type', 'text/html');
+        };
 
+        if (config('modules.multisite_enabled')) {
+            $isMainDomain = is_main_domain();
+
+            if (config('app.debug')) {
+                if (!$isMainDomain || !Auth::check()) {
+                    return $renderUnderMaintenance();
                 }
-          
+            }
+
+            if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
+                $currentTenant = tenant();
+                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' && !Auth::check()) {
+                    return $renderUnderMaintenance();
+                }
+            }
+        } elseif (config('app.debug') && !Auth::check()) {
+            return $renderUnderMaintenance();
         }
-      
+
         forbidden($request);
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Not Found'], 404);
@@ -45,7 +60,7 @@ class NotFoundController extends Controller
                 );
             }
 
-      
+
 
             if (is_main_domain() && $showspin &&
                 strpos($content, '<body') !== false &&

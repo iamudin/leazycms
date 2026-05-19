@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Tenant;
-use Redis;
 class IdentifyTenant
 {
     protected static $currentTenant = null;
