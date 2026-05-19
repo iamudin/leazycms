@@ -15,10 +15,8 @@ use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Spatie\Backup\BackupDestination\BackupDestinationFactory;
 
 class PanelController extends Controller implements HasMiddleware
 {
@@ -140,14 +138,16 @@ class PanelController extends Controller implements HasMiddleware
 
         $domain = $request->get('domain');
 
+        $rangeStart = now()->subDays(29)->toDateString();
+        $rangeEnd = now()->toDateString();
+        $tenantId = (!is_main_domain() && app()->has('tenant')) ? tenant()->id : null;
+        $showDomain = config('modules.multisite_enabled') && is_main_domain() && empty($domain);
+
         $domains = DB::table('analytics_daily')
             ->select('domain')
             ->distinct()
+            ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
             ->pluck('domain');
-
-        $rangeStart = now()->subDays(29)->toDateString();
-        $rangeEnd = now()->toDateString();
-        $tenantId = app()->has('tenant') ? tenant()->id : null;
 
         $visitorsQuery = DB::table('analytics_visitors')
             ->where('last_seen_at', '>=', now()->subMinutes(5));
@@ -179,28 +179,58 @@ class PanelController extends Controller implements HasMiddleware
             ->where('date', today()->toDateString())
             ->where('type', 'unique_total')
             ->where('key', 'site')
-            ->value('count') ?? 0;
+            ->sum('count') ?? 0;
 
-        $topPages = (clone $dailyQuery)
-            ->select('key', DB::raw('SUM(count) as total'))
-            ->where('type', 'page_view')
-            ->groupBy('key')
+        $topPagesQuery = (clone $dailyQuery)
+            ->where('type', 'page_view');
+
+        if ($showDomain) {
+            $topPagesQuery
+                ->select('domain', 'key', DB::raw('SUM(count) as total'))
+                ->groupBy('domain', 'key');
+        } else {
+            $topPagesQuery
+                ->select('key', DB::raw('SUM(count) as total'))
+                ->groupBy('key');
+        }
+
+        $topPages = $topPagesQuery
             ->orderByDesc('total')
             ->limit(10)
             ->get();
 
-        $topKeywords = (clone $dailyQuery)
-            ->select('key', DB::raw('SUM(count) as total'))
-            ->where('type', 'search')
-            ->groupBy('key')
+        $topKeywordsQuery = (clone $dailyQuery)
+            ->where('type', 'search');
+
+        if ($showDomain) {
+            $topKeywordsQuery
+                ->select('domain', 'key', DB::raw('SUM(count) as total'))
+                ->groupBy('domain', 'key');
+        } else {
+            $topKeywordsQuery
+                ->select('key', DB::raw('SUM(count) as total'))
+                ->groupBy('key');
+        }
+
+        $topKeywords = $topKeywordsQuery
             ->orderByDesc('total')
             ->limit(10)
             ->get();
 
-        $topReferrers = (clone $dailyQuery)
-            ->select('key', DB::raw('SUM(count) as total'))
-            ->where('type', 'referrer')
-            ->groupBy('key')
+        $topReferrersQuery = (clone $dailyQuery)
+            ->where('type', 'referrer');
+
+        if ($showDomain) {
+            $topReferrersQuery
+                ->select('domain', 'key', DB::raw('SUM(count) as total'))
+                ->groupBy('domain', 'key');
+        } else {
+            $topReferrersQuery
+                ->select('key', DB::raw('SUM(count) as total'))
+                ->groupBy('key');
+        }
+
+        $topReferrers = $topReferrersQuery
             ->orderByDesc('total')
             ->limit(10)
             ->get();
@@ -235,7 +265,7 @@ class PanelController extends Controller implements HasMiddleware
             ->orderByDesc('total')
             ->get();
         $realtimeList = DB::table('analytics_visitors')
-            ->select('current_page', 'device', 'referrer', 'ip', 'last_seen_at', 'user_agent')
+            ->select('domain', 'current_page', 'device', 'referrer', 'ip', 'last_seen_at', 'user_agent')
             ->when($domain, function ($q) use ($domain) {
                 $q->where('domain', $domain);
             })
@@ -262,7 +292,8 @@ class PanelController extends Controller implements HasMiddleware
             'pageChart' => $pageChart,
             'domains' => $domains,
             'deviceSummary' => $deviceSummary,
-            'currentDomain' => $domain
+            'currentDomain' => $domain,
+            'showDomain' => $showDomain
 
         ]);
     }

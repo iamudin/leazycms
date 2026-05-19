@@ -5,6 +5,7 @@ namespace Leazycms\Web\Models;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Leazycms\FLC\Traits\Commentable;
 use Leazycms\Web\Models\BaseModel;
@@ -70,7 +71,7 @@ class Post extends BaseModel
             try {
                 self::flushCacheTags(["type_{$post->type}", 'categories', 'tags', 'authors']);
             } catch (\Exception $e) {
-                \Log::warning('Cache flush error on delete: ' . $e->getMessage());
+                Log::warning('Cache flush error on delete: ' . $e->getMessage());
             }
         });
 
@@ -93,7 +94,7 @@ class Post extends BaseModel
             try {
                 self::flushCacheTags(["type_{$post->type}", 'categories', 'tags', 'authors']);
             } catch (\Exception $e) {
-                \Log::warning('Cache flush error on save: ' . $e->getMessage());
+                Log::warning('Cache flush error on save: ' . $e->getMessage());
             }
         });
 
@@ -407,7 +408,7 @@ class Post extends BaseModel
 
             $result = $this->hydrateFromCache($cached);
         } catch (\Exception $e) {
-            \Log::warning("Cache getCached error [{$cacheKey}]: " . $e->getMessage());
+            Log::warning("Cache getCached error [{$cacheKey}]: " . $e->getMessage());
             $result = $callback();
         }
 

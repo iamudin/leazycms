@@ -1,4 +1,7 @@
 <div class="container-fluid mt-4">
+    @php
+        $showDomain = $showDomain ?? (config('modules.multisite_enabled') && is_main_domain() && empty($domain));
+    @endphp
 
     {{-- HEADER + DOMAIN SWITCH --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -78,24 +81,24 @@
             </div>
         </div>
             <div class="col-md-4 mb-4">
-            
+
                 <div class="card shadow">
-            
+
                     <div class="card-header font-weight-bold">
                         Device Distribution
                     </div>
-            
+
                     <div class="card-body">
-            
+
                         <canvas id="deviceChart"></canvas>
-            
+
                     </div>
-            
+
                 </div>
-            
+
             </div>
 
- 
+
 
     </div>
 
@@ -113,7 +116,12 @@
 
                     @foreach($topPages as $p)
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>{{$p->key}}</span>
+                            <span>
+                                @if($showDomain && isset($p->domain))
+                                    <small class="text-muted d-block">{{$p->domain}}</small>
+                                @endif
+                                {{$p->key}}
+                            </span>
                             <strong>{{$p->total}}</strong>
                         </li>
                     @endforeach
@@ -133,7 +141,12 @@
 
                     @foreach($topKeywords as $p)
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>{{$p->key}}</span>
+                            <span>
+                                @if($showDomain && isset($p->domain))
+                                    <small class="text-muted d-block">{{$p->domain}}</small>
+                                @endif
+                                {{$p->key}}
+                            </span>
                             <strong>{{$p->total}}</strong>
                         </li>
                     @endforeach
@@ -153,7 +166,12 @@
 
                     @foreach($topReferrers as $p)
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>{{$p->key}}</span>
+                            <span>
+                                @if($showDomain && isset($p->domain))
+                                    <small class="text-muted d-block">{{$p->domain}}</small>
+                                @endif
+                                {{$p->key}}
+                            </span>
                             <strong>{{$p->total}}</strong>
                         </li>
                     @endforeach
@@ -167,31 +185,37 @@
 
 
         <div class="col-md-12">
-    
+
             <div class="card shadow mb-4">
-    
+
                 <div class="card-header font-weight-bold">
                     Realtime Visitors (Last 5 Minutes)
                 </div>
-    
+
                 <div class="card-body p-0">
-    
+
                     <table class="table table-sm table-striped mb-0">
-    
+
                         <thead class="thead-light">
                             <tr>
+                                @if($showDomain)
+                                    <th>Domain</th>
+                                @endif
                                 <th>Page</th>
                                 <th>Device</th><th>IP</th>
                                 <th>Referer</th><th>UA</th>
                                 <th>Last Activity</th>
                             </tr>
                         </thead>
-    
+
                         <tbody>
-    
+
                             @forelse($realtimeList as $v)
 
                                 <tr>
+                                    @if($showDomain)
+                                        <td>{{$v->domain}}</td>
+                                    @endif
                                     <td>{{$v->current_page}}</td>
                                     <td>{{$v->device}}</td>
                                     <td>{{$v->ip}}</td>
@@ -202,21 +226,21 @@
                             @empty
 
                                 <tr>
-                                    <td colspan="5" class="text-center">No visitor online</td>
+                                    <td colspan="{{$showDomain ? 7 : 6}}" class="text-center">No visitor online</td>
                                 </tr>
 
                             @endforelse
-    
+
                         </tbody>
-    
+
                     </table>
-    
+
                 </div>
-    
+
             </div>
-    
+
         </div>
-    
+
     </div>
 
 </div>
