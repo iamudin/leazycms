@@ -20,13 +20,13 @@ class IdentifyTenant
             $view = view('cms::backend.multisite-active')->render();
             return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
         }
-    
+
         $host = $request->getHost();
 
         if (self::$currentTenant === null) {
             $tenantData = Cache::rememberForever(
                 "tenant:$host",
-                fn() => ($t = Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended'])->first()) ? $t->getRawOriginal() : null
+                fn() => ($t = Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended', 'maintenance'])->first()) ? $t->getRawOriginal() : null
             );
 
             if ($tenantData) {
