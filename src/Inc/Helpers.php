@@ -2502,7 +2502,7 @@ if (!function_exists('recache_banner')) {
             })->toArray();
             $cacheKey = 'banner';
         if (config('modules.multisite_enabled')) {
-            $cacheKey .= '-' . tenant()->id;
+            $cacheKey .= ':' . tenant()->id;
         }
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () use ($result) {
