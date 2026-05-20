@@ -628,7 +628,7 @@ if (!function_exists('is_main_domain')) {
     }
 }
 if (!function_exists('main_domain')) {
-    function main_domain($uri = '')
+    function main_domain($uri = null)
     {
         return rtrim(config('app.url'), '/') . '/' . ltrim($uri, '/');
     }

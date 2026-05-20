@@ -28,6 +28,7 @@ class RateLimit
             }
         }
         }
+
         $adminPath = admin_path();
         $isAdminRoute = $request->is($adminPath) || $request->is($adminPath . '/*');
 
@@ -47,7 +48,7 @@ class RateLimit
 
             if (config('app.debug') && !Route::is('formaster') && !in_array($request->segment(1),['secure'])) {
 
-                if (!$isMainDomain) {
+                if (!$isMainDomain ) {
                     return $renderUnderMaintenance();
                 }
                 if (!$isAdminRoute && !Auth::check()) {
@@ -58,7 +59,7 @@ class RateLimit
             if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
                 $currentTenant = tenant();
                 if (isset($currentTenant->status) && $currentTenant->status === 'maintenance') {
-                    if (!$isAdminRoute && !Auth::check() && !Route::is('formaster')) {
+                    if (!$isAdminRoute && !Auth::check() &&!in_array($request->segment(1),['secure','login-token'])) {
                         return $renderUnderMaintenance();
                     }
                 }
