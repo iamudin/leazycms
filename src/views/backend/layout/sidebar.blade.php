@@ -315,6 +315,14 @@
                 >
             </li>
             @endif
+            <li title="Backup & Restore">
+                <a
+                    class="app-menu__item {{ active_item(['backup']) }}"
+                    href="{{ route('backup') }}"
+                    ><i class="app-menu__icon fa fa-database text-warning"></i>
+                    <span class="app-menu__label">Backup</span></a
+                >
+            </li>
             @if(is_main_domain())
             <li title="Logs">
                 <a

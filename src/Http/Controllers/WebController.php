@@ -14,7 +14,7 @@ use Leazycms\Web\Models\User;
 
 class WebController extends Controller
 {
-  
+
     public function pollingsubmit(Request $request){
         $polling = PollingTopic::select('id', 'keyword', 'duration')->find($request->topic);
         if($polling && empty($request->cookie('polling_'.$request->keyword))){
@@ -68,7 +68,7 @@ class WebController extends Controller
             'index' => $modul->web->auto_query ? $post->index($modul->name, $perPage) : [],
             'module' => $modul,
         );
-        
+
      return view('cms::layouts.master', $data);
     }
     public function tags($slug)
@@ -175,11 +175,11 @@ class WebController extends Controller
             'detail' => $detail,
             'history' => $detail->history
         );
-     
+
         if (!empty($detail->password)) {
-                
+
             $sessionKey = "post_access_{$detail->id}";
-        
+
             // Kalau belum submit
             if (!$request->isMethod('post')) {
                 if (session()->has($sessionKey)) {
@@ -187,7 +187,7 @@ class WebController extends Controller
                     if (Carbon::now()->lt($expiredAt)) {
 
                     } else {
-                        
+
                         session()->forget($sessionKey);
                         return redirect()->to($request->url());
                     }
@@ -196,12 +196,12 @@ class WebController extends Controller
                 }
             }else{
 
-    
+
             // Validasi input
             $request->validate([
                 'secret_key' => 'required|digits:4'
             ]);
-    
+
             // Cek password
             if ($request->secret_key !== dec64($detail->password)) {
                 return response(protectedContentView(
@@ -210,7 +210,7 @@ class WebController extends Controller
                     'Kode salah, coba lagi.'
                 ));
             }
-    
+
             session([
                 $sessionKey => Carbon::now()->addMinutes(1)
             ]);
@@ -226,7 +226,7 @@ class WebController extends Controller
     public function category($slug = null)
     {
         $modul = get_module(get_post_type());
-        
+
         $category = Category::select('id', 'name', 'slug', 'url', 'icon', 'description', 'type')
             ->where('slug', 'like', $slug . '%')
             ->whereType($modul->name)
@@ -324,7 +324,7 @@ class WebController extends Controller
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->paginate($perPage);
-          
+
         } elseif ($year && $month && $date) {
 
 
@@ -333,8 +333,8 @@ class WebController extends Controller
                 ->published()
                     ->whereDate('created_at', $year . '-' . $month . '-' . $date)
                     ->paginate($perPage);
-        
-        } 
+
+        }
 
         $data = array(
             'title' => 'Arsip ' . $module->title. ' ' . $periode,

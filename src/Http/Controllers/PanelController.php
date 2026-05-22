@@ -14,9 +14,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Leazycms\FLC\Models\File as Flc;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Leazycms\Web\Services\BackupTransferService;
 
 class PanelController extends Controller implements HasMiddleware
 {
@@ -1110,31 +1112,24 @@ class PanelController extends Controller implements HasMiddleware
 
     function backup_restore(Request $request)
     {
-        return to_route('panel.dashboard');
-        try {
-            Artisan::call('backup:list');
-            $output = Artisan::output();
+        admin_only();
 
-            // Pisahkan hasil output menjadi baris dan kolom
-            $lines = explode(PHP_EOL, $output);
-            $data = [];
-
-            foreach ($lines as $line) {
-                if (strpos($line, '|') !== false) {
-                    $data[] = array_map('trim', explode('|', $line));
-                }
+        if ($request->isMethod('post')) {
+            $action = $request->string('action')->toString();
+            if ($action === 'export') {
+                return app(BackupTransferService::class)->export($request);
             }
-
-            // Simpan ke dalam file atau database, atau kembalikan sebagai hasil command
-            // Storage::put('backup_list.json', json_encode($data));
-
-
-            return $this->downloadLatestBackup();
-
-            return response()->json(['message' => 'Backup successfully created.'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Backup failed: ' . $e->getMessage()], 500);
+            if ($action === 'import') {
+                return app(BackupTransferService::class)->import($request);
+            }
+            return back()->with('danger', 'Aksi tidak dikenal.');
         }
-        return view('cms::backend.backup-restore');
+
+        $isTenantScope = config('modules.multisite_enabled') && app()->has('tenant') && !is_main_domain();
+        return view('cms::backend.backup-restore', [
+            'scope' => $isTenantScope ? 'tenant' : 'induk',
+            'host' => request()->getHost(),
+            'tenant' => $isTenantScope ? tenant() : null,
+        ]);
     }
 }

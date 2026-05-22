@@ -26,8 +26,8 @@ class VisitorStatsController extends Controller
         $slogan = get_option('keterangan_organisasi')
             ?? 'DESKRIPSIWEB';
 
-        $logoPath = get_option('logo_organisasi') 
-            ? media(get_option('logo_organisasi'))->path() 
+        $logoPath = get_option('logo_organisasi')
+            ? media(get_option('logo_organisasi'))->path()
             : public_path('noimage.png');
 
         /*
@@ -63,7 +63,7 @@ class VisitorStatsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $img = Image::canvas(600, 110); // Default is transparent
+        $img = Image::canvas(650, 110); // Default is transparent
 
         /*
         |--------------------------------------------------------------------------
@@ -88,9 +88,9 @@ class VisitorStatsController extends Controller
         */
 
         // Membuat garis menggunakan rectangle dengan ketebalan 4px (v2 syntax)
-      
 
-      
+
+
 
         /*
         |--------------------------------------------------------------------------
