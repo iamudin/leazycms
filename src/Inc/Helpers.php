@@ -1680,10 +1680,8 @@ if (!function_exists('blade_path')) {
             text-align:center;
         }
         .card {
-            background:#111827;
             padding:50px 40px;
             border-radius:18px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
             max-width:520px;
             width:90%;
         }
@@ -1887,10 +1885,8 @@ function error403Msg($requestId = null)
             text-align:center;
         }
         .card {
-            background:#1e293b;
             padding:40px;
             border-radius:16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             max-width:500px;
             width:90%;
         }

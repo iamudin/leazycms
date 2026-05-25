@@ -271,6 +271,16 @@ protected function registerRoutes()
  
     protected function cmsHandler()
     {
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
+         if (!config('modules.installed')) {
+            $view = view('cms::backend.pre-install')->render();
+             response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html')->send();
+            exit;
+        }
+
         Carbon::setLocale('ID');
         date_default_timezone_set(config('modules.timezone'));
         if(config('log-viewer.route_path')){

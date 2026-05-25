@@ -3,6 +3,7 @@ namespace Leazycms\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Leazycms\Web\Models\Category;
@@ -126,6 +127,7 @@ class WebController extends Controller
         $slug = Str::of($name)
             ->replaceMatches('/[^\p{L}\p{N}-]/u', '')
             ->toString();
+        abort_if(strlen($slug)<=5, '404');
         $postType = get_post_type() ?? 'page';
         $modul = get_module($postType);
         $detail = $post->detail($postType, $slug);
@@ -135,7 +137,7 @@ class WebController extends Controller
             $request->validate([
                 'name'=>'required'
             ]);
-           if(session()->get('captcha')==$request->captcha){
+           if(Session::get('captcha')==$request->captcha){
 
             $detail->addComment([
                 'name' => strip_tags(substr($request->name,0,20)),
@@ -182,13 +184,13 @@ class WebController extends Controller
 
             // Kalau belum submit
             if (!$request->isMethod('post')) {
-                if (session()->has($sessionKey)) {
-                    $expiredAt = session($sessionKey);
+                if (Session::cachehas($sessionKey)) {
+                    $expiredAt = Session::get($sessionKey);
                     if (Carbon::now()->lt($expiredAt)) {
 
                     } else {
 
-                        session()->forget($sessionKey);
+                        Session::forget($sessionKey);
                         return redirect()->to($request->url());
                     }
                 }else{
@@ -226,7 +228,7 @@ class WebController extends Controller
     public function category($slug = null)
     {
         $modul = get_module(get_post_type());
-
+        abort_if(strlen($slug)<=4, '404');
         $category = Category::select('id', 'name', 'slug', 'url', 'icon', 'description', 'type')
             ->where('slug', 'like', $slug . '%')
             ->whereType($modul->name)

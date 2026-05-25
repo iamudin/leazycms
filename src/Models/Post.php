@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Leazycms\FLC\Traits\Commentable;
 use Leazycms\Web\Models\BaseModel;
 
@@ -873,7 +874,7 @@ class Post extends BaseModel
     }
     function getShareToAttribute()
     {
-        return view()->make('cms::share.button', ['url' => $this->shortcut ? url($this->shortcut) : URL::full()]);
+        return View::make('cms::share.button', ['url' => $this->shortcut ? url($this->shortcut) : URL::full()]);
     }
 
     public function getHistoryAttribute()

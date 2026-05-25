@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Leazycms\Web\Jobs\BackupExportJob;
+use Leazycms\Web\Jobs\BackupImportJob;
 use Leazycms\Web\Services\BackupTransferService;
 
 class PanelController extends Controller implements HasMiddleware
@@ -1113,23 +1115,199 @@ class PanelController extends Controller implements HasMiddleware
     function backup_restore(Request $request)
     {
         admin_only();
-//OK
+        $context = $this->backupTransferContext($request);
+
+        $exportStatusKey = $this->backupTransferStatusKey('export', $context);
+        $importStatusKey = $this->backupTransferStatusKey('import', $context);
+
         if ($request->isMethod('post')) {
             $action = $request->string('action')->toString();
+
             if ($action === 'export') {
-                return app(BackupTransferService::class)->export($request);
+                $includeUsers = empty($context['is_tenant_scope']) && $request->boolean('include_users');
+
+                Cache::put($exportStatusKey, [
+                    'state' => 'queued',
+                    'queued_at' => now()->toIso8601String(),
+                    'message' => 'Export masuk antrian.',
+                    'download_rel_path' => null,
+                    'download_name' => null,
+                    'include_users' => $includeUsers,
+                ], now()->addHours(6));
+
+                dispatch(new BackupExportJob(
+                    statusCacheKey: $exportStatusKey,
+                    host: $context['host'],
+                    multisite: $context['multisite'],
+                    isTenantScope: $context['is_tenant_scope'],
+                    isMainDomain: $context['is_main_domain'],
+                    tenantId: $context['tenant_id'],
+                    includeUsers: $includeUsers,
+                ));
+
+                return back()->with('success', 'Export sedang diproses di background. Pastikan queue worker berjalan, lalu refresh halaman untuk melihat status.');
             }
+
             if ($action === 'import') {
-                return app(BackupTransferService::class)->import($request);
+                $request->validate([
+                    'backup_file' => ['required', 'file', 'mimes:zip'],
+                ]);
+
+                $stored = $request->file('backup_file')->storeAs(
+                    'leazycms-transfer/imports',
+                    'import-' . Str::uuid()->toString() . '.zip',
+                    'local'
+                );
+
+                $zipPath = Storage::path($stored);
+
+                Cache::put($importStatusKey, [
+                    'state' => 'queued',
+                    'queued_at' => now()->toIso8601String(),
+                    'message' => 'Import masuk antrian.',
+                    'overwrite_users' => $request->boolean('overwrite_users'),
+                ], now()->addHours(6));
+
+                dispatch(new BackupImportJob(
+                    statusCacheKey: $importStatusKey,
+                    zipPath: $zipPath,
+                    host: $context['host'],
+                    multisite: $context['multisite'],
+                    isTenantScope: $context['is_tenant_scope'],
+                    tenantId: $context['tenant_id'],
+                    replace: $request->boolean('replace'),
+                    replaceNonTenant: $request->boolean('replace_non_tenant'),
+                    overwriteUsers: $request->boolean('overwrite_users'),
+                ));
+
+                return back()->with('success', 'Import sedang diproses di background. Pastikan queue worker berjalan, lalu refresh halaman untuk melihat status.');
             }
+
             return back()->with('danger', 'Aksi tidak dikenal.');
         }
 
-        $isTenantScope = config('modules.multisite_enabled') && app()->has('tenant') && !is_main_domain();
+        $exportStatus = $this->backupTransferAugmentStatusFromQueue($exportStatusKey, BackupExportJob::class);
+        $importStatus = $this->backupTransferAugmentStatusFromQueue($importStatusKey, BackupImportJob::class);
+
         return view('cms::backend.backup-restore', [
-            'scope' => $isTenantScope ? 'tenant' : 'induk',
-            'host' => request()->getHost(),
-            'tenant' => $isTenantScope ? tenant() : null,
+            'scope' => $context['is_tenant_scope'] ? 'tenant' : 'induk',
+            'host' => $context['host'],
+            'tenant' => $context['is_tenant_scope'] ? tenant() : null,
+            'exportStatus' => $exportStatus,
+            'importStatus' => $importStatus,
         ]);
+    }
+
+    function backup_download(Request $request)
+    {
+        admin_only();
+
+        $context = $this->backupTransferContext($request);
+        $exportStatusKey = $this->backupTransferStatusKey('export', $context);
+        $status = Cache::get($exportStatusKey);
+
+        if (!is_array($status) || ($status['state'] ?? null) !== 'done' || empty($status['download_rel_path'])) {
+            return to_route('backup')->with('danger', 'File export belum siap atau sudah kadaluarsa.');
+        }
+
+        $storageApp = rtrim(storage_path('app'), DIRECTORY_SEPARATOR);
+        $zipAbs = $storageApp . DIRECTORY_SEPARATOR . ltrim((string) $status['download_rel_path'], DIRECTORY_SEPARATOR);
+
+        $exportsBase = storage_path('app/leazycms-transfer/exports');
+        $exportsReal = realpath($exportsBase);
+        $zipReal = realpath($zipAbs);
+        if (!$exportsReal || !$zipReal || !str_starts_with($zipReal, rtrim($exportsReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            return to_route('backup')->with('danger', 'Lokasi file export tidak valid.');
+        }
+
+        Cache::forget($exportStatusKey);
+
+        $name = (string) ($status['download_name'] ?? basename($zipReal));
+        return response()->download($zipReal, $name)->deleteFileAfterSend(true);
+    }
+
+    private function backupTransferContext(Request $request): array
+    {
+        $multisite = (bool) config('modules.multisite_enabled');
+        $isTenantScope = $multisite && app()->has('tenant') && !is_main_domain();
+        $isMainDomain = $multisite && is_main_domain();
+
+        return [
+            'host' => $request->getHost(),
+            'multisite' => $multisite,
+            'is_tenant_scope' => $isTenantScope,
+            'is_main_domain' => $isMainDomain,
+            'tenant_id' => $isTenantScope ? tenant()->id : null,
+        ];
+    }
+
+    private function backupTransferStatusKey(string $action, array $context): string
+    {
+        $host = $context['host'] ?? request()->getHost();
+        $scopePart = !empty($context['is_tenant_scope'])
+            ? ('tenant:' . ($context['tenant_id'] ?? 'unknown'))
+            : 'induk';
+
+        return 'leazycms-transfer:' . $action . ':' . $scopePart . ':' . $host;
+    }
+
+    private function backupTransferAugmentStatusFromQueue(string $statusKey, string $jobClass): array
+    {
+        $status = Cache::get($statusKey);
+        $status = is_array($status) ? $status : [];
+
+        $conn = (string) config('queue.default');
+        $queueName = (string) (config('queue.connections.' . $conn . '.queue') ?? 'default');
+        $status['queue_connection'] = $conn;
+        $status['queue_name'] = $queueName;
+
+        $schema = DB::getSchemaBuilder();
+        if (!$schema->hasTable('jobs')) {
+            return $status;
+        }
+
+        $pending = DB::table('jobs')
+            ->where('payload', 'like', '%' . $jobClass . '%')
+            ->where('payload', 'like', '%' . $statusKey . '%')
+            ->count();
+
+        $status['pending_jobs'] = $pending;
+
+        $state = $status['state'] ?? null;
+        if (!in_array($state, ['queued', 'running'], true)) {
+            return $status;
+        }
+
+        if ($pending > 0) {
+            return $status;
+        }
+
+        if (!$schema->hasTable('failed_jobs')) {
+            return $status;
+        }
+
+        $failed = DB::table('failed_jobs')
+            ->where('payload', 'like', '%' . $jobClass . '%')
+            ->where('payload', 'like', '%' . $statusKey . '%')
+            ->orderByDesc('failed_at')
+            ->first();
+
+        if (!$failed) {
+            return $status;
+        }
+
+        $msg = (string) ($failed->exception ?? '');
+        if ($msg !== '' && str_contains($msg, "\n")) {
+            $msg = explode("\n", $msg, 2)[0] ?? $msg;
+        }
+
+        $updated = array_merge($status, [
+            'state' => 'failed',
+            'finished_at' => now()->toIso8601String(),
+            'message' => $msg !== '' ? $msg : 'Job gagal (lihat failed_jobs).',
+        ]);
+
+        Cache::put($statusKey, $updated, now()->addHours(6));
+        return $updated;
     }
 }
