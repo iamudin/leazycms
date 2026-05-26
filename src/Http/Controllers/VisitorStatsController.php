@@ -114,11 +114,11 @@ class VisitorStatsController extends Controller
         */
 
         $fontRegular = public_path('fonts/Poppins-Regular.ttf');
-        $img->text($slogan, 101, 88, function ($font) use ($fontRegular) {
+        $img->text($slogan, 102, 91, function ($font) use ($fontRegular) {
             if (File::exists($fontRegular)) {
                 $font->file($fontRegular);
             }
-            $font->size(28);
+            $font->size(30);
             $font->color('#B8860B');
         });
 
