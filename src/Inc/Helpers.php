@@ -119,10 +119,7 @@ if (!function_exists('add_view_stats')) {
             text-align:center;
         }
         .card {
-            background:#1e293b;
             padding:40px;
-            border-radius:16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             max-width:500px;
             width:90%;
         }

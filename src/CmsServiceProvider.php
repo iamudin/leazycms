@@ -4,6 +4,7 @@ namespace Leazycms\Web;
 use Carbon\Carbon;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -214,8 +215,8 @@ protected function registerRoutes()
             InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class,AssetLink::class
         ]);
         $this->log_viewer();
-        $this->handle403();
         $this->handle500();
+        $this->handle403();
         
 
     }
@@ -229,7 +230,7 @@ protected function registerRoutes()
             'url' => $request->fullUrl(),
             'method' => $request->method(),
             'ip' => $request->ip(),
-            'user_id' => optional(auth()->user())->id,
+            'user_id' => optional(Auth::user())->id,
         ]);
 
         // Jika API / JSON
