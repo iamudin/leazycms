@@ -378,7 +378,7 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 }
             }
-            cache()->forget('tenant:' . tenant()->id . ':options');
+            Cache::forget('tenant:' . tenant()->id . ':options');
 
             return back()->with('success', 'Berhasil Diupdate');
         }

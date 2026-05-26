@@ -2,8 +2,11 @@
 
 namespace Leazycms\Web;
 use Carbon\Carbon;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +16,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Leazycms\Web\Commands\AssetLink;
 use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Commands\ResetPassword;
@@ -60,11 +64,28 @@ protected function handle403(){
                     return null;
                 }
 
+                if ($e instanceof AuthenticationException) {
+                    return null;
+                }
+
+                if ($e instanceof ValidationException) {
+                    return null;
+                }
+
+                if ($e instanceof AuthorizationException) {
+                    return null;
+                }
+
+                if ($e instanceof ModelNotFoundException) {
+                    return null;
+                }
+
                 // Jika HttpException tapi bukan 500 → biarkan default
                 if (
                     $e instanceof HttpExceptionInterface &&
                     $e->getStatusCode() !== 500
                 ) {
+
                     return null;
                 }
 
@@ -194,7 +215,7 @@ protected function registerRoutes()
             __DIR__ . '/views/template' => resource_path('views/template')
         ], 'cms');
     }
-  
+
     public function boot(Kernel $kernel)
     {
 
@@ -205,7 +226,7 @@ protected function registerRoutes()
         }
         require_once(__DIR__ . "/Inc/Option.php");
         $kernel->appendMiddlewareToGroup('web', RateLimit::class);
-      
+
         $this->registerResources();
         $this->registerMigrations();
         $this->defineAssetPublishing();
@@ -217,7 +238,7 @@ protected function registerRoutes()
         $this->log_viewer();
         $this->handle500();
         $this->handle403();
-        
+
 
     }
     protected function render403($request, Throwable $e)
@@ -256,7 +277,7 @@ protected function registerRoutes()
                     'admin',
                 ]);
         });
-  
+
   }
     public function register()
     {
@@ -269,7 +290,7 @@ protected function registerRoutes()
             $this->app->usePublicPath(base_path() . '/' . config('modules.public_path'));
         }
     }
- 
+
     protected function cmsHandler()
     {
         if ($this->app->runningInConsole()) {
@@ -298,11 +319,11 @@ protected function registerRoutes()
                     if (self::$isTenantLoaded === null) {
                         self::$isTenantLoaded = Schema::hasColumn('options', 'tenant_id');
                     }
-                    
-                    $options = self::$isTenantLoaded 
-                        ? \Leazycms\Web\Models\Option::where('tenant_id',1)->orWhereNull('tenant_id')->pluck('value', 'name')->toArray() 
+
+                    $options = self::$isTenantLoaded
+                        ? \Leazycms\Web\Models\Option::where('tenant_id',1)->orWhereNull('tenant_id')->pluck('value', 'name')->toArray()
                         : \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
-                  
+
                     config(['modules.option' => $options]);
                 }
             } catch (\Exception $e) {
@@ -352,5 +373,5 @@ protected function registerRoutes()
         return (Schema::hasTable('users') && Schema::hasTable('files') && Schema::hasTable('posts') && Schema::hasTable('categories') && Schema::hasTable('visitors') && Schema::hasTable('comments') && Schema::hasTable('tags') && Schema::hasTable('roles') && Schema::hasTable('logs') && Schema::hasTable('options')) ? true : false;
     }
 
-   
+
 }

@@ -440,7 +440,7 @@ $post_field = [
                 ->whereType(get_post_type())
                 ->whereIn('status', ['publish', 'draft'])
                 ->whereBelongsTo($req->user());
-      
+
         $current_module = current_module();
         if ($current_module->web->sortable) {
             $data->orderBy('sort', 'ASC');
@@ -580,8 +580,9 @@ $post_field = [
             $locked =  (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\''.dec64($row->password).'\')" title="Akses '.$current_module->title.' ini  dibatasi. Klik untuk menyalin kode akses"></i>': '');
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
+            $tenant = $row->tenant ? '<i class="fa fa-globe"></i> '.$row->tenant->domain : null;
             $b = '<b class="text-primary">' . $tit . '</b><br>';
-            $b .= '<small class="text-muted">'.$locked.' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . '</small>';
+            $b .= '<small class="text-muted">'.$locked.' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
             return $b;
         });
 

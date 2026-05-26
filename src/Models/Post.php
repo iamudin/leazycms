@@ -87,7 +87,7 @@ class Post extends BaseModel
                     $src = $img->getAttribute('src');
                     if (strpos($src, 'data:image') !== 0) {
                         // Simpan ke dalam cache langsung saat saving
-                        Cache::put('thumbnail:' . $post->slug, $src);
+                        Cache::put('thumbnail:' . $post->id, $src);
                         break;
                     }
                 }
@@ -102,7 +102,7 @@ class Post extends BaseModel
         static::saved(function ($post) {
             if (!empty($post->media) && media_exists($post->media)) {
                 // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
-                Cache::forget('thumbnail:' . $post->slug);
+                Cache::forget('thumbnail:' . $post->id);
             }
         });
     }
@@ -142,7 +142,7 @@ class Post extends BaseModel
             return media($this->media)->url();
         }
         // Cek cache
-        $cacheKey = 'thumbnail:' . $this->slug;
+        $cacheKey = 'thumbnail:' . $this->id;
         return Cache::get($cacheKey, noimage());
     }
     public function getThumbnailTextAttribute()
