@@ -184,7 +184,7 @@ class WebController extends Controller
 
             // Kalau belum submit
             if (!$request->isMethod('post')) {
-                if (Session::cachehas($sessionKey)) {
+                if (Session::has($sessionKey)) {
                     $expiredAt = Session::get($sessionKey);
                     if (Carbon::now()->lt($expiredAt)) {
 
