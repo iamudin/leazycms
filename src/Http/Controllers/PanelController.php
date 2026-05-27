@@ -20,7 +20,6 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Leazycms\Web\Jobs\BackupExportJob;
 use Leazycms\Web\Jobs\BackupImportJob;
-use Leazycms\Web\Services\BackupTransferService;
 
 class PanelController extends Controller implements HasMiddleware
 {
@@ -522,10 +521,16 @@ class PanelController extends Controller implements HasMiddleware
                     }
 
                     if ($key != 'block_ip') {
+                        $match = ['name' => $key];
+                        if (app()->has('tenant')) {
+                            $match['tenant_id'] = null;
+                        }
                         DB::table('options')
                             ->updateOrInsert(
-                                ['name' => $key],
-                                ['value' => strip_tags($value), 'tenant_id' => null]
+                                $match,
+                                app()->has('tenant')
+                                    ? ['value' => strip_tags($value), 'tenant_id' => null]
+                                    : ['value' => strip_tags($value)]
                             );
                     }
                 }
@@ -537,42 +542,58 @@ class PanelController extends Controller implements HasMiddleware
                 }
 
                 if ($request->show_site_title_after_page_name) {
+                    $match = ['name' => 'show_site_title_after_page_name'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'show_site_title_after_page_name'
-                            ],
-                            ['value' => true, 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => true, 'tenant_id' => null]
+                                : ['value' => true]
 
                         );
                 } else {
+                    $match = ['name' => 'show_site_title_after_page_name'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'show_site_title_after_page_name'
-                            ],
-                            ['value' => false, 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => false, 'tenant_id' => null]
+                                : ['value' => false]
 
                         );
                 }
             }
             if (is_main_domain()) {
                 if ($request->favicon_for_all) {
+                    $match = ['name' => 'favicon_for_all'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'favicon_for_all'
-                            ],
-                            ['value' => true, 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => true, 'tenant_id' => null]
+                                : ['value' => true]
 
                         );
                 } else {
+                    $match = ['name' => 'favicon_for_all'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'favicon_for_all'
-                            ],
-                            ['value' => false, 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => false, 'tenant_id' => null]
+                                : ['value' => false]
 
                         );
 
@@ -678,55 +699,75 @@ class PanelController extends Controller implements HasMiddleware
                 foreach ($data['shortcut'] as $row) {
                     $key = $row[1];
                     $value = $request->$key ? 'Y' : 'N';
+                    $match = ['name' => $key];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => $key
-                            ],
-                            ['value' => $value, 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => $value, 'tenant_id' => null]
+                                : ['value' => $value]
 
                         );
                 }
                 if ($request->site_maintenance) {
+                    $match = ['name' => 'site_maintenance'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'site_maintenance'
-                            ],
-                            ['value' => 'Y', 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => 'Y', 'tenant_id' => null]
+                                : ['value' => 'Y']
 
                         );
                     rewrite_env(['APP_DEBUG' => 'true']);
                 } else {
+                    $match = ['name' => 'site_maintenance'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'site_maintenance'
-                            ],
-                            ['value' => 'N', 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => 'N', 'tenant_id' => null]
+                                : ['value' => 'N']
                         );
                     rewrite_env(['APP_DEBUG' => 'false']);
                 }
                 if ($request->app_env) {
                     if ($existsenv = get_option('app_env')) {
                         if ($existsenv != 'production') {
+                            $match = ['name' => 'app_env'];
+                            if (app()->has('tenant')) {
+                                $match['tenant_id'] = null;
+                            }
                             DB::table('options')
                                 ->updateOrInsert(
-                                    [
-                                        'name' => 'app_env'
-                                    ],
-                                    ['value' => 'production', 'tenant_id' => null]
+                                    $match,
+                                    app()->has('tenant')
+                                        ? ['value' => 'production', 'tenant_id' => null]
+                                        : ['value' => 'production']
                                 );
                             rewrite_env(['APP_ENV' => 'production']);
                         }
                     }
                 } else {
+                    $match = ['name' => 'app_env'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
                     DB::table('options')
                         ->updateOrInsert(
-                            [
-                                'name' => 'app_env'
-                            ],
-                            ['value' => 'local', 'tenant_id' => null]
+                            $match,
+                            app()->has('tenant')
+                                ? ['value' => 'local', 'tenant_id' => null]
+                                : ['value' => 'local']
                         );
                     rewrite_env(['APP_ENV' => 'local']);
                 }
