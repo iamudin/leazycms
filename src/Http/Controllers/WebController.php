@@ -228,7 +228,7 @@ class WebController extends Controller
     public function category($slug = null)
     {
         $modul = get_module(get_post_type());
-        abort_if(strlen($slug)<=4, '404');
+        abort_if(strlen($slug)<=5, '404');
         $category = Category::select('id', 'name', 'slug', 'url', 'icon', 'description', 'type')
             ->where('slug', 'like', $slug . '%')
             ->whereType($modul->name)
