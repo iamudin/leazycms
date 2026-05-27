@@ -809,7 +809,7 @@ $post_field = [
             ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')
             ->orderColumn('created_at', '-created_at $1')
-            ->toJson();
+            ->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 
     public function updateStatus(Request $request)
