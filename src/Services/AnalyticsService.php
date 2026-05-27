@@ -135,9 +135,8 @@ class AnalyticsService
 
         if (!$visitor) {
 
-            DB::table('analytics_visitors')->insert([
+            $payload = [
                 'domain' => $domain,
-                'tenant_id' => $tenantId,
                 'ip' => $ip,
                 'visitor_key' => $visitorKey,
                 'session_id' => $sessionId,
@@ -150,26 +149,37 @@ class AnalyticsService
                 'last_seen_date' => $today,
                 'created_at' => $now,
                 'updated_at' => $now
-            ]);
+            ];
+
+            if ($tenantId !== null) {
+                $payload['tenant_id'] = $tenantId;
+            }
+
+            DB::table('analytics_visitors')->insert($payload);
 
             return true;
         }
 
         $isNewDailyVisitor = $visitor->last_seen_date !== $today;
 
+        $update = [
+            'session_id' => $sessionId,
+            'current_page' => $currentPage,
+            'device' => $device,
+            'referrer' => $referrer,
+            'last_seen_at' => $now,
+            'last_seen_date' => $today,
+            'updated_at' => $now
+        ];
+
+        if ($tenantId !== null) {
+            $update['tenant_id'] = $tenantId;
+        }
+
         DB::table('analytics_visitors')
             ->where('domain', $domain)
             ->where('visitor_key', $visitorKey)
-            ->update([
-                'tenant_id' => $tenantId,
-                'session_id' => $sessionId,
-                'current_page' => $currentPage,
-                'device' => $device,
-                'referrer' => $referrer,
-                'last_seen_at' => $now,
-                'last_seen_date' => $today,
-                'updated_at' => $now
-            ]);
+            ->update($update);
 
         return $isNewDailyVisitor;
     }
@@ -202,14 +212,19 @@ class AnalyticsService
             return;
         }
 
-        DB::table('analytics_daily')->insert([
+        $payload = [
             'domain' => $domain,
-            'tenant_id' => $tenantId,
             'date' => $date,
             'type' => $type,
             'key' => $key,
             'count' => $count
-        ]);
+        ];
+
+        if ($tenantId !== null) {
+            $payload['tenant_id'] = $tenantId;
+        }
+
+        DB::table('analytics_daily')->insert($payload);
     }
 
 }
