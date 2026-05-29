@@ -100,18 +100,43 @@ class PostController extends Controller implements HasMiddleware
     public function create(Request $request)
     {
         $request->user()->hasRole(get_post_type(), __FUNCTION__);
-        if ($blankexists = query()->onType(get_post_type())->whereStatus('draft')->whereUserId($request->user()->id)->where('title', null)->first()) {
+        $type = get_post_type();
+
+        if ($slugParam = $request->string('slug')->toString()) {
+            $slug = str($slugParam)->slug()->toString();
+            if ($slug !== '') {
+                $existing = query()->onType($type)->where('slug', $slug)->first();
+                if ($existing) {
+                    return to_route($type . '.edit', $existing->id);
+                }
+
+                $title = str($slug)->replace('-', ' ')->title()->toString();
+
+                $newpost = $request->user()->posts()->create([
+                    'type' => $type,
+                    'title' => $title,
+                    'slug' => $slug,
+                    'url' => $type . '/' . $slug,
+                    'status' => 'draft',
+                    'shortcut' => Str::random(6)
+                ]);
+
+                return to_route($type . '.edit', $newpost->id);
+            }
+        }
+
+        if ($blankexists = query()->onType($type)->whereStatus('draft')->whereBelongsTo($request->user())->where('title', null)->first()) {
             $newpost = $blankexists;
         } else {
             $newpost = $request->user()->posts()->create([
-                'type' => get_post_type(),
-                'url' => get_post_type() . '/' . rand(),
+                'type' => $type,
+                'url' => $type . '/' . rand(),
                 'status' => 'draft',
                 'shortcut' => Str::random(6)
             ]);
         }
 
-        return to_route(get_post_type() . '.edit', $newpost->id);
+        return to_route($type . '.edit', $newpost->id);
     }
 
     public function edit(Request $request, Post $post, $id)

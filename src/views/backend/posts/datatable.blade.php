@@ -5,7 +5,6 @@ window.addEventListener('DOMContentLoaded', function () {
     $childColumns = collect(current_module()->datatable?->child_count ?? [])
         ->map(fn($type) => \Illuminate\Support\Str::snake($type) . '_count');
     @endphp
-    // ambil index kolom "Dibuat"
     var sort_col = $('.datatable')
         .find("th:contains('Dibuat')")[0]
         ?.cellIndex ?? 0;
@@ -100,9 +99,6 @@ window.addEventListener('DOMContentLoaded', function () {
 @endif
     });
 
-    // ================================
-    // RE-INIT TOGGLE SETIAP DRAW
-    // ================================
     function initToggle() {
         $('input[data-toggle="toggle"]').each(function () {
             if (!$(this).parent().hasClass('toggle')) {
@@ -115,9 +111,6 @@ window.addEventListener('DOMContentLoaded', function () {
         initToggle();
     });
 
-    // ================================
-    // FIX RESPONSIVE CHILD ROW
-    // ================================
     table.on('responsive-display', function (e, datatable, row, showHide) {
         if (showHide) {
             setTimeout(() => {
@@ -126,9 +119,6 @@ window.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ================================
-    // EVENT DELEGATION TOGGLE STATUS
-    // ================================
     $(document).on('change', '.toggle-status', function () {
 
         let $el = $(this);
@@ -145,7 +135,7 @@ window.addEventListener('DOMContentLoaded', function () {
             },
             error: function () {
                 alert("Gagal update status!");
-                $el.bootstrapToggle('toggle'); // rollback
+                $el.bootstrapToggle('toggle');
             }
         });
 

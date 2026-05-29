@@ -22,12 +22,12 @@
 
                     <div class="col-lg-12">
 
-                      <div class="row"> 
+                      <div class="row">
                         @php
   $user = request()->user();
   $postType = get_post_type();
   $canSeeAll = $user->isAdmin() || !$user->hasRole($postType, 'admin', true);
-  
+
   $baseQuery = query()->onType($postType)->withTenant();
   if (!$canSeeAll) {
       $baseQuery = $baseQuery->whereBelongsTo($user);
@@ -230,22 +230,19 @@
                       </script>
                                           <script>
                                         function show_comment(post_id) {
-                                          // Reset tampilan
 
                                           $("#commentList").empty();
                                           $("#commentLoader").show();
 
-                                          // Tampilkan modal
                                           $("#commentModal").modal("show");
 
-                                          // Panggil AJAX POST
                                           $.ajax({
-                                            url: "{{ route('comments.get', null) }}/"+post_id,          // ganti dengan route/URL backend kamu
+                                            url: "{{ route('comments.get', null) }}/"+post_id,
                                             type: "GET",
                                             success: function(res) {
                                               $("#commentLoader").hide();
                                                 $("#modalPostId").text(res.title);
-                                              let comments = res.comments || []; // sesuaikan dengan struktur JSON
+                                              let comments = res.comments || [];
 
                                               if (comments.length === 0) {
                                                 $("#commentList").append(`<li class="list-group-item text-muted">Belum ada komentar</li>`);

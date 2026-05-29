@@ -22,7 +22,8 @@
             <div class="form-group">
                 @if($looping_data)
                 <input type="hidden" name="title" value="{{ $post->title ?? '' }}">
-                <div class="alert alert-primary py-2" style="border-left:4px solid #000;font-size:20px">{{ $post->title ?? '' }}</div>
+                <div class="alert alert-primary py-2" style="border-left:4px solid #000;font-size:20px">{{ $post->title ?? '' }}
+                </div>
                 @else
                 <input data-toggle="tooltip" title="Masukkan {{ $module->datatable->data_title }}" required
                     name="title" type="text" value="{{ $post->title ?? '' }}"
@@ -47,6 +48,15 @@
                    <input {{($post && $post->status == 'draft') ? 'checked=checked' : ''}} required type="radio" name="status" value="draft"><small class="label-text">Draft</small>
                    </label>
                 </div>
+             </div>
+             <div class="alert alert-dark py-2 text-white" style="border-left:4px solid #000;font-size:20px; background:#222;">
+                <small>Untuk memanggil menu di file  <code>.blade.php</code><br>
+                <code>@ php<br> @ foreach(get_menu('{{ $post->slug }}') as $menu)
+                    <br>$menu->name
+                    <br>$menu->sub
+                    <br>$menu->link
+                    <br>@ endforeaceh<br>@ endphp</code>
+                </small>
              </div>
 
           </div>

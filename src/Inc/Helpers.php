@@ -1460,7 +1460,14 @@ if (!function_exists('add_controller')) {
         }
     }
 }
-
+if (!function_exists('add_static_menu_profile')) {
+    function add_static_menu_profile(array $array)
+    {
+        if (is_array($array)) {
+            config(['modules.static_menu_profile' => $array]);
+        }
+    }
+}
 
 if (!function_exists('_field')) {
     function _field($r, $k, $link = false)

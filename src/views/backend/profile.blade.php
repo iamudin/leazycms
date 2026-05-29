@@ -26,7 +26,7 @@
                  <div class="alert alert-danger">
                             <i class="fa fa-info"></i> Pengaturan Profile tidak dapat diubah karena cache config aktif, silahkan nonaktifkan <a href="{{route('cache-manager')}}" class="">disini.</a>
                         </div>
-            @else 
+            @else
 
         <form method="POST" action="{{ route('profile') }}" class="form-profile" enctype="multipart/form-data">
             @csrf
@@ -73,6 +73,19 @@
                         <small>Keterangan</small>
                         <textarea class="form-control form-control-sm" name="keterangan_organisasi" rows="3"
                             placeholder="Masukkan keterangan organisasi">{{ old('keterangan_organisasi', get_option('keterangan_organisasi')) }}</textarea>
+                    </div>
+                      <div class="form-group">
+                        <small class="mb-5">Informasi Statis<br></small>
+                        @foreach (array_merge(['Sejarah','Visi dan Misi','Struktur Organisasi'],config('modules.static_menu_profile')) as $key => $page)
+                            <div class="btn-group mr-1 mb-2" role="group">
+                                <a class="btn btn-outline-success btn-sm" href="{{ route('page.create') }}?slug={{ str($page)->slug() }}" target="_blank">
+                                    <i class="fa fa-edit"></i> {{ str($page)->headline() }}
+                                </a>
+                                <button type="button" class="btn btn-outline-secondary btn-sm js-copy-url" data-copy-url="{{ url(str($page)->slug()) }}">
+                                    <i class="fa fa-copy"></i>
+                                </button>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
                 </div>
@@ -261,5 +274,46 @@
         </div>
     @push('scripts')
     @include('cms::backend.layout.js')
+    <script>
+        (() => {
+            const copyText = async (text) => {
+                if (!text) return false;
+                if (navigator.clipboard && window.isSecureContext) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        return true;
+                    } catch (e) {
+                    }
+                }
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.top = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    const ok = document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    return ok;
+                } catch (e) {
+                    return false;
+                }
+            };
+
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.js-copy-url');
+                if (!btn) return;
+                e.preventDefault();
+                const url = btn.getAttribute('data-copy-url');
+                const ok = await copyText(url);
+                const original = btn.innerHTML;
+                btn.innerHTML = ok ? '<i class="fa fa-check"></i> Copied' : '<i class="fa fa-triangle-exclamation"></i> Failed';
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                }, 1200);
+            });
+        })();
+    </script>
     @endpush
 @endsection

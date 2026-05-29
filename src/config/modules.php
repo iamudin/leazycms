@@ -42,6 +42,47 @@ return [
             'public' => true,
             'active' => true,
         ],
+         'docs' => [
+            'position' => 7,
+            'name' => 'docs',
+            'title' => 'Docs',
+            'description' => 'Menu Untuk Mengelola Pengumuman',
+            'parent' => false,
+            'icon' => 'fa-hourglass',
+            'route' => ['index', 'create', 'show', 'update', 'delete'],
+            'datatable' => [
+                'custom_column' => false,
+                'data_title' => 'Docs Name',
+
+            ],
+            'form' => [
+                'unique_title' => false,
+                'post_parent' => false,
+                'thumbnail' => false,
+                'editor' => true,
+                'category' => false,
+                'tag' => false,
+                'looping_name' => 'Arsip',
+                'looping_data' => [
+                    ['Nama Waktu', 'text', 'required'],
+                    ['Jenis Waktu', 'text', 'required'],
+                ],
+                'custom_field' => [
+                    ['Tanggal Berangkat', 'date', 'required'],
+                ]
+            ],
+            'web' => [
+                'api' => false,
+                'archive' => false,
+                'index' => false,
+                'detail' => false,
+                'history' => false,
+                'auto_query' => false,
+                'sortable' => false,
+            ],
+            'public' => true,
+            'active' => true,
+        ],
         'pengumuman' => [
             'position' => 3,
             'name' => 'pengumuman',
@@ -465,7 +506,7 @@ return [
                     ['File', 'file','required'],
                     ['Tahun', 'number'],
                     ['Tanggal Entry', 'datetime-local'],
-                 
+
                 ],
             ],
             'web' => [
@@ -681,7 +722,7 @@ return [
                     ['Email', 'text'],
                     ['Login', 'break'],
                     ['API Key', 'text'],
-                    ['URL Login', 'text'],  
+                    ['URL Login', 'text'],
                     ['Username', 'text'],
                     ['Password', 'text'],
                 ],
@@ -923,6 +964,7 @@ return [
     'sidebar'=>array(),
     'multisite_enabled'=>env('MULTISITE_ENABLED', false),
     'view_stats'=>null,
+    'static_menu_profile'=>array(),
     'sampleignore'=>env('READABLESAMPLE', false),
     'teletoken'=>env('TELETOKEN',false),
     'telechatid'=>env('TELECHATID',false),
