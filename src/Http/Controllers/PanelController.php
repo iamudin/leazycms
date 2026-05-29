@@ -1040,6 +1040,7 @@ class PanelController extends Controller implements HasMiddleware
 
                     }
         }
+
         if ($file == '/styles.css') {
             $file = '/styles.css';
             $path = public_path('template/' . template());
