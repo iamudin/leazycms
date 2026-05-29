@@ -295,7 +295,7 @@ protected function registerRoutes()
     {
 
 
-         if (config('modules.installed') && !$this->app->runningInConsole()) {
+         if (!config('modules.installed') && !$this->app->runningInConsole()) {
             $view = view('cms::backend.pre-install')->render();
              response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html')->send();
             exit;
