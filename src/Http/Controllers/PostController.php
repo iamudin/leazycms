@@ -429,7 +429,7 @@ $post_field = [
 
     public function datatable(Request $req)
     {
-
+        $maindomain = is_main_domain();
         $data = $req->user()->isAdmin() || !$req->user()->hasRole(get_post_type(), 'admin',true)
             ? Post::selectedColumn()
                 ->with([
@@ -588,7 +588,7 @@ $post_field = [
             });
 
 
-        $dt->addColumn('title', function ($row) use ($current_module) {
+        $dt->addColumn('title', function ($row) use ($current_module, $maindomain) {
 
             $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
             $tags = '';
@@ -605,7 +605,7 @@ $post_field = [
             $locked =  (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\''.dec64($row->password).'\')" title="Akses '.$current_module->title.' ini  dibatasi. Klik untuk menyalin kode akses"></i>': '');
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
-            $tenant = $row->tenant ? '<i class="fa fa-globe"></i> '.$row->tenant->domain : null;
+            $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> '.$row->tenant?->domain : null;
             $b = '<b class="text-primary">' . $tit . '</b><br>';
             $b .= '<small class="text-muted">'.$locked.' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
             return $b;

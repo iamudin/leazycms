@@ -931,6 +931,14 @@ class PanelController extends Controller implements HasMiddleware
                 }
 
                 if ($request->home_page) {
+                     if (app()->has('tenant')) {
+                         $cekdefault = DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->first();
+                         if($cekdefault){
+                             DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->delete();
+                             cache()->forget('default:options');
+                         }
+                     }
+
                     $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
                 }
                 if (app()->has('tenant')) {
