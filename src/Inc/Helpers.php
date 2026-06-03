@@ -1863,7 +1863,22 @@ if (!function_exists('blade_path')) {
 </body>
 </html>"));
 }
+if (!function_exists('custom_field_filter')) {
 
+    /**
+     * Filter collection berdasarkan key pada index [1]
+     */
+    function custom_field_filter($data, $key, $value, $exclude = false)
+    {
+        return collect($data)->filter(function ($item) use ($key, $value, $exclude) {
+
+            $match = isset($item[1][$key]) &&
+                     $item[1][$key] == $value;
+
+            return $exclude ? !$match : $match;
+        });
+    }
+}
 if (!function_exists('custom_field_without_break')) {
 function custom_field_without_break($data)
 {

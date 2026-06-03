@@ -199,15 +199,14 @@ class PostController extends Controller implements HasMiddleware
         $custom_field = [];
 
         if ($module->form->custom_field) {
-
-            foreach (collect($module->form->custom_field)->whereNotIn([1], ['break']) as $row) {
+            foreach (custom_field_without_break($module->form->custom_field) as $row) {
                 $custom_f[_us($row[0])] = (isset($row[1]->required) && $row[1]->required ? 'required' : 'nullable');
             }
 
             foreach (array_keys($custom_f) as $row) {
                 $msg[$row . '.required'] = str($row)->headline() . ' tidak boleh kosong';
             }
-            foreach (collect($module->form->custom_field)->whereIn([1], ['file']) as $row) {
+            foreach (custom_field_filter($module->form->custom_field, 'type', 'file') as $row) {
                 $k = _us($row[0]);
                 if ($request->hasFile($k)) {
                     $required = isset($row[1]->required) && $row[1]->required ? 'required' : 'nullable';
