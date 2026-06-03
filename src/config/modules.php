@@ -910,7 +910,7 @@ return [
                 'tag' => false,
                 'looping_name' => 'Daftar Menu',
                 'looping_data' => false,
-                'custom_field' => [['Description', 'textarea']],
+                'custom_field' => [['Description', ['type' => 'textarea']]],
             ],
             'web' => [
                 'api' => false,

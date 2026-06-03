@@ -1863,6 +1863,14 @@ if (!function_exists('blade_path')) {
 </body>
 </html>"));
 }
+
+if (!function_exists('custom_field_without_break')) {
+function custom_field_without_break($data)
+{
+    return collect($data)
+        ->reject(fn($item) => ($item[1]['type'] ?? null) === 'break');
+}
+}
 function error403Msg($requestId = null)
 {
     $requestBlock = $requestId
