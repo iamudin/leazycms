@@ -1872,8 +1872,8 @@ if (!function_exists('custom_field_filter')) {
     {
         return collect($data)->filter(function ($item) use ($key, $value, $exclude) {
 
-            $match = isset($item[1][$key]) &&
-                     $item[1][$key] == $value;
+            $match = isset($item[1]->$key) &&
+                     $item[1]->$key == $value;
 
             return $exclude ? !$match : $match;
         });
@@ -1883,7 +1883,7 @@ if (!function_exists('custom_field_without_break')) {
 function custom_field_without_break($data)
 {
     return collect($data)
-        ->reject(fn($item) => ($item[1]['type'] ?? null) === 'break');
+        ->reject(fn($item) => ($item[1]->type ?? null) === 'break');
 }
 }
 function error403Msg($requestId = null)

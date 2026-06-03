@@ -143,6 +143,7 @@ class PostController extends Controller implements HasMiddleware
     {
         abort_if(!is_numeric($id), '403');
         $module = current_module();
+
         if(Route::is($module->name.'.edit')){
             $request->user()->hasRole(get_post_type(), 'update');
         }elseif(Route::is($module->name.'.show')){
