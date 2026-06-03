@@ -17,7 +17,7 @@
 <meta property="og:description" content="Masuk Sebagai Admin / Operator" />
 <style>
   .no-focus-border {
-border: 1px solid #ccc; 
+border: 1px solid #ccc;
 outline: none;
 }
 
@@ -167,11 +167,11 @@ pattern="[a-z0-9]+" autofocus>
         <label class="control-label" style="color:#f5f5f5">
           <i class="fa fa-key"></i> Kata Sandi
         </label>
-      
+
         <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Kata Sandi"
           type="password" class="form-control form-control-lg pr-5" name="password" required autocomplete="current-password"
           autofocus>
-      
+
         <!-- Icon show / hide -->
         <span onclick="togglePassword()" style="
                   position:absolute;

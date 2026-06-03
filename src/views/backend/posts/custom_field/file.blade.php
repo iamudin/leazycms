@@ -7,7 +7,7 @@
 @if(Route::is($post->type.'.show'))
 <small class="text-danger">Tidak teresedia</small>
 @endif
-<input {{ isset($r[2]) ? 'required' : '' }} accept="{{ isset($r[3]) ? $r[3] : allow_mime() }}" type="file" class="compress-image form-control form-control-file" value="{{ $field[_us($r[0])] ?? null }}" name="{{_us($r[0])}}" placeholder="Entri {{$r[0]}}">
+<input {{ isset($r[1]->required) ? 'required' : '' }} accept="{{ isset($r[3]->mime_type) ? $r[3]->mime_type : allow_mime() }}" type="file" class="compress-image form-control form-control-file" value="{{ $field[_us($r[0])] ?? null }}" name="{{_us($r[0])}}" placeholder="Entri {{$r[0]}}">
 @endif
 <br>
 

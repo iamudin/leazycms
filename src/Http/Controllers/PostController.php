@@ -201,7 +201,7 @@ class PostController extends Controller implements HasMiddleware
         if ($module->form->custom_field) {
 
             foreach (collect($module->form->custom_field)->whereNotIn([1], ['break']) as $row) {
-                $custom_f[_us($row[0])] = (isset($row[2]) ? 'required' : 'nullable');
+                $custom_f[_us($row[0])] = (isset($row[1]->required) && $row[1]->required ? 'required' : 'nullable');
             }
 
             foreach (array_keys($custom_f) as $row) {
@@ -210,8 +210,8 @@ class PostController extends Controller implements HasMiddleware
             foreach (collect($module->form->custom_field)->whereIn([1], ['file']) as $row) {
                 $k = _us($row[0]);
                 if ($request->hasFile($k)) {
-                    $required = isset($row[1]) ? 'required' : 'nullable';
-                    $mime = isset($row[3]) ? $row[3] : allow_mime();
+                    $required = isset($row[1]->required) && $row[1]->required ? 'required' : 'nullable';
+                    $mime = isset($row[1]->mime_type) ? $row[1]->mime_type : allow_mime();
 
                     $request->validate([
                         $k => $required . '|file|mimetypes:' . $mime,
@@ -343,10 +343,15 @@ $post_field = [
         if ($module->form->custom_field) {
             foreach (collect($module->form->custom_field)->where([1], '!=', 'break') as $key => $value) {
                 $fieldname = _us($value[0]);
-                switch ($value[1]) {
+                switch ($value[1]->type) {
                     case 'file':
                         $custom_field[$fieldname] = $request->hasFile($fieldname) ?
-                            $post->addFile(['file' => $request->file($fieldname), 'purpose' => $fieldname, 'mime_type' => explode(',', allow_mime())]) : strip_tags($request->$fieldname);
+                            $post->addFile([
+                                'file' => $request->file($fieldname),
+                                'purpose' => $fieldname,
+                                'mime_type' => explode(',', $value[1]->mime_type ?? allow_mime()),
+                                'is_encrypt' => $value[1]->is_encrypt ?? false,
+                            ]) : strip_tags($request->$fieldname);
                         break;
                     default:
                         $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;

@@ -230,7 +230,7 @@ class RateLimit
 
         $this->logging_request($request);
         $this->dangerous_request($request);
-        if (!in_array($request->segment(1), ['secure', 'media','favicon.ico','logo.webp','stats.webp','stats.png','stats.jpg']) && !$request->ajax() && app()->environment('production')) {
+        if (!in_array($request->segment(1), ['favicon.ico','logo.webp','stats.webp','stats.png','stats.jpg']) && !$request->ajax() && app()->environment('production') && !Route::is('stream') && !Route::is('captcha')) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request, config('modules.current.detail_visited'));

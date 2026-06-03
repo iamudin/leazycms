@@ -1,7 +1,7 @@
 <small for="{{_us($r[0])}}">{{$r[0]}}</small>
-<select {{ isset($r[2]) ? 'required':'' }} class="form-control" name="{{_us($r[0])}}">
+<select {{ isset($r[1]->required) ? 'required':'' }} class="form-control" name="{{_us($r[0])}}">
    <option value="">--pilih--</option>
-   @foreach($r[1] as $i)
+   @foreach($r[1]->type as $i)
    <option  {{($field && isset($field[_us($r[0])]) && $field[_us($r[0])]==$i)? 'selected':'' }} value="{{$i}}">{{$i}}</option>
    @endforeach
 </select>

@@ -312,9 +312,7 @@ return [
                 'tag' => true,
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
-                'custom_field' => array(
-                    ['Tanggal Entry', 'datetime']
-                ),
+                'custom_field' => false,
             ],
             'web' => [
                 'api' => false,
@@ -351,7 +349,7 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['Tanggal Entry', 'datetime']
+                    ['Tanggal Entry', ['type' => 'datetime']]
                 ),
             ],
             'web' => [
@@ -389,8 +387,8 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['File', 'file', 'required'],
-                    ['Tanggal Entry', 'datetime']
+                    ['File', ['type' => 'file', 'required' => true]],
+                    ['Tanggal Entry', ['type' => 'datetime']]
                 ),
             ],
             'web' => [
@@ -428,8 +426,8 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['File', 'file', 'required'],
-                    ['Tanggal Entry', 'datetime']
+                    ['File', ['type' => 'file', 'required' => true]],
+                    ['Tanggal Entry', ['type' => 'datetime']]
                 ),
             ],
             'web' => [
@@ -503,9 +501,9 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['File', 'file','required'],
-                    ['Tahun', 'number'],
-                    ['Tanggal Entry', 'datetime-local'],
+                    ['File', ['type' => 'file', 'required' => true]],
+                    ['Tahun', ['type' => 'number']],
+                    ['Tanggal Entry', ['type' => 'datetime-local']],
 
                 ],
             ],
@@ -544,10 +542,10 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Alamat Kantor', 'text'],
-                    ['Email', 'email'],
-                    ['Telp', 'text'],
-                    ['Website', 'text'],
+                    ['Alamat Kantor', ['type' => 'text']],
+                    ['Email', ['type' => 'email']],
+                    ['Telp', ['type' => 'text']],
+                    ['Website', ['type' => 'text']],
                 ],
             ],
             'web' => [
@@ -585,10 +583,10 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Alamat Kantor', 'text'],
-                    ['Email', 'email'],
-                    ['Telp', 'text'],
-                    ['Website', 'text'],
+                    ['Alamat Kantor', ['type' => 'text']],
+                    ['Email', ['type' => 'email']],
+                    ['Telp', ['type' => 'text']],
+                    ['Website', ['type' => 'text']],
                 ],
             ],
             'web' => [
@@ -626,12 +624,12 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Alamat', 'text'],
-                    ['Telp', 'text'],
-                    ['Instagram', 'text'],
-                    ['Facebook', 'text'],
-                    ['Youtube', 'text'],
-                    ['Website', 'text'],
+                    ['Alamat', ['type' => 'text']],
+                    ['Telp', ['type' => 'text']],
+                    ['Instagram', ['type' => 'text']],
+                    ['Facebook', ['type' => 'text']],
+                    ['Youtube', ['type' => 'text']],
+                    ['Website', ['type' => 'text']],
                 ],
             ],
             'web' => [
@@ -705,26 +703,26 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Info', 'break'],
-                    ['Nama', 'text', 'required'],
-                    ['Deskripsi', 'text'],
-                    ['Status', ['Aktif','Tidak Aktif']],
-                    ['Status Maintenance', ['Aktif', 'Tidak Aktif']],
-                    ['Hosting', 'break'],
-                    ['Provider', 'text'],
-                    ['IP', 'text'],
-                    ['NS', 'text'],
+                    ['Info', ['type' => 'break']],
+                    ['Nama', ['type' => 'text', 'required' => 'required']],
+                    ['Deskripsi', ['type' => 'text']],
+                    ['Status', ['type' => ['Aktif','Tidak Aktif']]],
+                    ['Status Maintenance', ['type' => ['Aktif', 'Tidak Aktif']]],
+                    ['Hosting', ['type' => 'break']],
+                    ['Provider', ['type' => 'text']],
+                    ['IP', ['type' => 'text']],
+                    ['NS', ['type' => 'text']],
                     ['Aktif Tanggal', 'date'],
                     ['Nonaktif Tanggal', 'date'],
-                    ['Pengelola', 'break'],
-                    ['Nama Pengelola', 'text'],
-                    ['Whatsapp', 'text'],
-                    ['Email', 'text'],
-                    ['Login', 'break'],
-                    ['API Key', 'text'],
-                    ['URL Login', 'text'],
-                    ['Username', 'text'],
-                    ['Password', 'text'],
+                    ['Pengelola', ['type' => 'break']],
+                    ['Nama Pengelola', ['type' => 'text']],
+                    ['Whatsapp', ['type' => 'text']],
+                    ['Email', ['type' => 'email']],
+                    ['Login', ['type' => 'break']],
+                    ['API Key', ['type' => 'text']],
+                    ['URL Login', ['type' => 'text']],
+                    ['Username', ['type' => 'text']],
+                    ['Password', ['type' => 'text']],
                 ],
             ],
             'web' => [
@@ -798,11 +796,11 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['Jam', 'datetime'],
-                    ['Tempat', 'text'],
-                    ['Alamat', 'text'],
-                    ['Pejabat', 'text'],
-                    ['Tanggal Entry', 'datetime']
+                    ['Jam', ['type' => 'datetime']],
+                    ['Tempat', ['type' => 'text']],
+                    ['Alamat', ['type' => 'text']],
+                    ['Pejabat', ['type' => 'text']],
+                    ['Tanggal Entry', ['type' => 'datetime']]
                 ),
             ],
             'web' => [
@@ -839,8 +837,8 @@ return [
                 'tag' => true,
                 'looping_name' => 'Periode',
                 'looping_data' => array(
-                    ['Tahun', range(2000, 2025)],
-                    ['Data Excel', 'file']
+                    ['Tahun', ['type' =>  range(2000, 2025)]],
+                    ['Data Excel', ['type' => 'file']]
                 ),
                 'custom_field' => false
             ],

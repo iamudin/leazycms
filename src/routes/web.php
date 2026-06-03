@@ -56,7 +56,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
     }
 Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
     ->where('slug', '(?!' . implode('|', array_merge(
-        [admin_path(), 'search', 'tags','log-viewer', 'author', 'sitemap.xml', 'favicon.ico','logo.webp','stats.png'],
+        [admin_path(), 'search', 'tags','log-viewer', 'author', 'sitemap.xml', 'favicon.ico','logo.webp','stats.webp'],
         $modules->pluck('name')->toArray()
     )) . ')[a-zA-Z0-9-_]+')
     ->middleware(['public', TrackVisitor::class]);

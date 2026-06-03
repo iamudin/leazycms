@@ -45,8 +45,9 @@ class LoginController extends Controller
         Session::put('captcha', Str::random(6));
     }
 
-    public function generateCaptcha(Request $request)
+    public function generateCaptcha(Request $request,$session)
     {
+        abort_if($session != md5($request->session()->id()),'404');
         $image = imagecreatetruecolor(120, 40);
         $bgColor = imagecolorallocate($image, 255, 255, 255);
         $textColor = imagecolorallocate($image, 0, 0, 0);
@@ -93,7 +94,7 @@ class LoginController extends Controller
         }
         $this->codeCaptcha();
 
-        $captchaUrl = route('captcha') . '?time=' . time();
+        $captchaUrl = route('captcha',md5($request->session()->id()));
         $data = null;
 
 

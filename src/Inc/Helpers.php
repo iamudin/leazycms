@@ -1854,7 +1854,6 @@ if (!function_exists('blade_path')) {
     <div class='card'>
         <h1>🛠 Under Maintenance</h1>
         <p>This page is currently being improved. Please check back later.</p>
-        <div class='spinner'></div>
         {$requestBlock}
         <a href='/' class='btn'>Back to Homepage</a>
         <div class='footer'>
