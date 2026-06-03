@@ -337,20 +337,28 @@ $post_field = [
         if ($pp = $module->form->post_parent) {
             if ($pid = $request->parent_id) {
                 $custom_field[_us($pp[0])] = $post->parent?->title;
-
             }
         }
         if ($module->form->custom_field) {
-            foreach (collect($module->form->custom_field)->where([1], '!=', 'break') as $key => $value) {
+            $customFields = collect($module->form->custom_field)->filter(function ($item) {
+                $meta = $item[1] ?? null;
+                $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                return $type !== 'break';
+            });
+            foreach ($customFields as $key => $value) {
                 $fieldname = _us($value[0]);
-                switch ($value[1]->type) {
+                $meta = $value[1] ?? null;
+                $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                switch ($type) {
                     case 'file':
+                        $mimeType = is_array($meta) ? ($meta['mime_type'] ?? null) : (is_object($meta) ? ($meta->mime_type ?? null) : null);
+                        $isEncrypt = is_array($meta) ? ($meta['is_encrypt'] ?? false) : (is_object($meta) ? ($meta->is_encrypt ?? false) : false);
                         $custom_field[$fieldname] = $request->hasFile($fieldname) ?
                             $post->addFile([
                                 'file' => $request->file($fieldname),
                                 'purpose' => $fieldname,
-                                'mime_type' => explode(',', $value[1]->mime_type ?? allow_mime()),
-                                'is_encrypt' => $value[1]->is_encrypt ?? false,
+                                'mime_type' => explode(',', $mimeType ?? allow_mime()),
+                                'is_encrypt' => $isEncrypt,
                             ]) : strip_tags($request->$fieldname);
                         break;
                     default:

@@ -21,14 +21,9 @@ return [
                 'editor' => false,
                 'category' => false,
                 'tag' => false,
-                'looping_name' => 'Arsip',
-                'looping_data' => [
-                    ['Nama Waktu', 'text', 'required'],
-                    ['Jenis Waktu', 'text', 'required'],
-                ],
-                'custom_field' => [
-                    ['Tanggal Berangkat', 'date', 'required'],
-                ]
+                'looping_name' => false,
+                'looping_data' => false,
+                'custom_field' => false
             ],
             'web' => [
                 'api' => false,
@@ -62,14 +57,9 @@ return [
                 'editor' => true,
                 'category' => false,
                 'tag' => false,
-                'looping_name' => 'Arsip',
-                'looping_data' => [
-                    ['Nama Waktu', 'text', 'required'],
-                    ['Jenis Waktu', 'text', 'required'],
-                ],
-                'custom_field' => [
-                    ['Tanggal Berangkat', 'date', 'required'],
-                ]
+                'looping_name' => false,
+                'looping_data' => false,
+                'custom_field' => false,
             ],
             'web' => [
                 'api' => false,
@@ -105,7 +95,7 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['Lampiran', 'file']
+                    ['Lampiran',['type'=>'file']]
                 )
             ],
             'web' => [
@@ -178,10 +168,10 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Pemberi Sambutan', 'break'],
-                    ['Nama', 'text', 'required'],
-                    ['Jabatan', 'text', 'required'],
-                    ['Visi Misi', 'textarea'],
+                    ['Pemberi Sambutan',['type'=>'break']],
+                    ['Nama',['type'=>'text','required'=>true]],
+                    ['Jabatan',['type'=>'text','required']],
+                    ['Visi Misi',['type'=>'textarea']],
 
                 ],
             ],
@@ -220,13 +210,13 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['NIP', 'text', 'required'],
-                    ['Kelahiran', 'text', 'required'],
-                    ['Jabatan', 'text', 'required'],
-                    ['Pangkat/Golongan', 'text', 'required'],
-                    ['Pendidikan', 'text', 'required'],
-                    ['Tahun Mulai', 'text', 'required'],
-                    ['Motivasi', 'textarea'],
+                    ['NIP',['type'=>'text','required'=>true]],
+                    ['Kelahiran',['type'=>'text','required'=>true]],
+                    ['Jabatan',['type'=>'text','required'=>true]],
+                    ['Pangkat/Golongan',['type'=>'text','required'=>true]],
+                    ['Pendidikan',['type'=>'text','required'=>true]],
+                    ['Tahun Mulai',['type'=>'text','required'=>true]],
+                    ['Motivasi',['type'=>'textarea']],
                 ],
             ],
             'web' => [
@@ -264,18 +254,18 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Pemerintahan','break'],
-                    ['Kepala','text'],
-                    ['Sekretaris','text'],
-                    ['Kantor','break'],
-                    ['Alamat','text'],
-                    ['Email','text'],
-                    ['Telp','text'],
-                    ['Link SIPPN','text'],
-                    ['Google Maps','text'],
-                    ['Instagram','text'],
-                    ['Facebook','text'],
-                    ['Website','text'],
+                    ['Pemerintahan',['type'=>'break']],
+                    ['Kepala',['type'=>'text']],
+                    ['Sekretaris',['type'=>'text']],
+                    ['Kantor',['type'=>'break']],
+                    ['Alamat',['type'=>'text']],
+                    ['Email',['type'=>'text']],
+                    ['Telp',['type'=>'text']],
+                    ['Link SIPPN',['type'=>'text']],
+                    ['Google Maps',['type'=>'text']],
+                    ['Instagram',['type'=>'text']],
+                    ['Facebook',['type'=>'text']],
+                    ['Website',['type'=>'text']],
                 ],
             ],
             'web' => [
