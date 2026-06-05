@@ -2209,11 +2209,34 @@ if (!function_exists('template_info')) {
     function template_info()
     {
         $path = resource_path('views/template/' . template() . '/theme.json');
+        $unknown = 'tidak diketahui';
+        $info = [
+            'name' => $unknown,
+            'author' => $unknown,
+            'url' => '#',
+            'version' => $unknown,
+        ];
+
         if (file_exists($path)) {
-            $info = json_decode(file_get_contents($path), true);
-            return view()->make('cms::layouts.themeinfo', compact('info'));
+            $decoded = json_decode((string) file_get_contents($path), true);
+            if (is_array($decoded)) {
+                $info = array_merge($info, $decoded);
+            }
         }
-        return null;
+
+        foreach (['name', 'author', 'version'] as $k) {
+            $v = $info[$k] ?? null;
+            if (!is_string($v) || trim($v) === '') {
+                $info[$k] = $unknown;
+            }
+        }
+
+        $url = $info['url'] ?? '#';
+        if (!is_string($url) || trim($url) === '' || $url === $unknown) {
+            $info['url'] = '#';
+        }
+
+        return view()->make('cms::layouts.themeinfo', compact('info'));
     }
 }
 

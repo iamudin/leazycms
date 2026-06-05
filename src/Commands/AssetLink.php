@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace Leazycms\Web\Commands;
 
 use Illuminate\Console\Command;
@@ -14,11 +14,18 @@ class AssetLink extends Command
         $slug   = $this->argument('slug');
         $target = resource_path("views/template/$slug/assets");
         $link   = public_path("template/$slug/assets");
+        if (!File::exists($target)) {
+            $this->info("ℹ️ Folder assets tidak ditemukan. Link asset diabaikan.");
+            return 0;
+        }
+
+        if (count(File::allFiles($target)) === 0) {
+            $this->info("ℹ️ Folder assets kosong. Link asset diabaikan.");
+            return 0;
+        }
+
          if (!File::exists($link)) {
             File::makeDirectory( public_path("template/$slug"));
-        }
-        if (!File::exists($target)) {
-            return $this->error("Folder assets tidak ditemukan: $target");
         }
 
         $this->info("🔍 Membersihkan file berbahaya di: $target");

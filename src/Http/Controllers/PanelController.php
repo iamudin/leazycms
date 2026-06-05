@@ -960,6 +960,10 @@ class PanelController extends Controller implements HasMiddleware
         if ($zip->open($zipFilePath) === TRUE) {
             // Ekstrak file ZIP ke direktori sementara
             $extractPath = storage_path('app/temp');
+            if (File::exists($extractPath)) {
+                File::deleteDirectory($extractPath);
+            }
+            File::ensureDirectoryExists($extractPath);
             $zip->extractTo($extractPath);
             $zip->close();
 
@@ -973,8 +977,7 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
 
-            // Cek apakah folder induk dan subfolder assets ada
-            if (empty($mainFolderName) || !File::exists($extractPath . '/' . $mainFolderName . '/assets')) {
+            if (empty($mainFolderName) || !File::isDirectory($extractPath . '/' . $mainFolderName)) {
                 // Hapus folder sementara
                 File::deleteDirectory($extractPath);
 
@@ -984,44 +987,96 @@ class PanelController extends Controller implements HasMiddleware
 
             // Path sumber dari folder temaku
             $sourcePath = $extractPath . '/' . $mainFolderName;
+            $assetsSourcePath = $sourcePath . '/assets';
+            $hasAssets = File::isDirectory($assetsSourcePath);
 
-            // Path tujuan untuk resource_path
-            $templatePath = resource_path('views/template/' . $mainFolderName . '/');
+            $danger = [
+                'hex2bin(',
+                'exit(',
+                'eval(',
+                'phpinfo(',
+                'exec(',
+                'system(',
+                'passthru(',
+                'shell_exec(',
+                'proc_open(',
+                'popen(',
+                'assert(',
+                'base64_decode(',
+                'file_put_contents(',
+                'fopen(',
+                'unlink(',
+                'mkdir(',
+                'curl_exec(',
+                'create_function(',
+                'file_get_contents(',
+                'delete('
+            ];
 
-            // Pastikan direktori target ada
-            File::ensureDirectoryExists($templatePath);
+            $scanExt = [
+                'php', 'blade.php', 'js', 'css', 'json', 'html', 'htm', 'xml', 'txt', 'md', 'yml', 'yaml', 'env',
+            ];
 
-            // Pindahkan semua file dan folder kecuali "assets" ke resource_path('template')
-            $items = new \FilesystemIterator($sourcePath);
-            foreach ($items as $item) {
-                $itemName = $item->getFilename();
-                if ($itemName !== 'assets') {
-                    $targetPath = $templatePath . '/' . $itemName;
-                    if ($item->isDir()) {
-                        File::copyDirectory($item->getPathname(), $targetPath);
-                    } else {
-                        File::copy($item->getPathname(), $targetPath);
+            $baseLen = strlen($sourcePath) + 1;
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($sourcePath, \FilesystemIterator::SKIP_DOTS)
+            );
+            foreach ($iterator as $item) {
+                if (!$item->isFile()) {
+                    continue;
+                }
+                $filePath = $item->getPathname();
+                $relative = str_replace('\\', '/', substr($filePath, $baseLen));
+                if ($relative === 'assets' || str_starts_with($relative, 'assets/')) {
+                    continue;
+                }
+                if ($item->getSize() > 5 * 1024 * 1024) {
+                    continue;
+                }
+                $nameLower = strtolower($item->getFilename());
+                $ext = strtolower(pathinfo($nameLower, PATHINFO_EXTENSION));
+                if (str_ends_with($nameLower, '.blade.php')) {
+                    $ext = 'blade.php';
+                }
+                if (!in_array($ext, $scanExt, true)) {
+                    continue;
+                }
+                $content = @file_get_contents($filePath);
+                if (!is_string($content)) {
+                    continue;
+                }
+                foreach ($danger as $func) {
+                    if (stripos($content, $func) !== false) {
+                        File::deleteDirectory($extractPath);
+                        return back()->with('danger', 'File Template Tidak Valid. Terdeteksi keyword berbahaya "' . $func . '" pada file: ' . $relative);
                     }
                 }
             }
 
-            // Pindahkan isi folder assets ke public_path('template/temaku')
-            $assetsSourcePath = $sourcePath . '/assets';
-            $assetsDestinationPath = public_path('template/' . $mainFolderName);
+            // Path tujuan untuk resource_path
+            $templatePath = resource_path('views/template/' . $mainFolderName);
 
-            if (File::exists($assetsSourcePath)) {
-                File::ensureDirectoryExists($assetsDestinationPath);
-                File::copyDirectory($assetsSourcePath, $assetsDestinationPath);
+            // Pastikan direktori target ada
+            if (File::exists($templatePath)) {
+                File::deleteDirectory($templatePath);
             }
-            $assetsResourcePath = $templatePath . '/assets';
-            if (File::exists($assetsResourcePath)) {
-                File::deleteDirectory($assetsResourcePath);
-            }
+            File::ensureDirectoryExists($templatePath);
+            File::copyDirectory($sourcePath, $templatePath);
+
             // Hapus file sementara dan folder setelah pemindahan
             File::deleteDirectory($extractPath);
-            Option::where('name', 'template')->update([
+            Option::updateOrCreate(['name' => 'template'], [
                 'value' => $mainFolderName
             ]);
+            if ($hasAssets) {
+                $exit = Artisan::call('cms:link-asset', [
+                    'slug' => $mainFolderName,
+                    '--force' => true,
+                ]);
+                if ($exit !== 0) {
+                    return to_route('appearance')->with('danger', trim((string) Artisan::output()) ?: 'Template berhasil diupload, tapi gagal link asset.');
+                }
+            }
             return to_route('appearance');
         } else {
             return back()->with('danger', 'Template Gagal Diupload');
@@ -1032,8 +1087,10 @@ class PanelController extends Controller implements HasMiddleware
     {
         admin_only();
         abort_if(!is_main_domain() && get_option('can_edit_template') == 'N', 404);
+        $templateSlug = template();
+        $templateRootPath = resource_path('views/template/' . $templateSlug);
         $defaultfile = enc64('/home.blade.php');
-        $path = resource_path('views/template/' . template());
+        $path = $templateRootPath;
         if (!file_exists($path . dec64($defaultfile))) {
             File::put($path . dec64($defaultfile), '<h1>Your Script Here</h1>');
         }
@@ -1076,6 +1133,46 @@ class PanelController extends Controller implements HasMiddleware
         }
         if ($request->isMethod('post')) {
             switch ($request->type) {
+                case 'export_template':
+                    abort_if(!File::isDirectory($templateRootPath), 404);
+                    $zipName = $templateSlug . '-template-' . now()->format('YmdHis') . '.zip';
+                    $tempDir = storage_path('app/tmp');
+                    File::ensureDirectoryExists($tempDir);
+                    $zipPath = $tempDir . '/' . $zipName;
+                    if (File::exists($zipPath)) {
+                        File::delete($zipPath);
+                    }
+                    $zip = new ZipArchive();
+                    $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+                    $baseLen = strlen($templateRootPath) + 1;
+                    $iterator = new \RecursiveIteratorIterator(
+                        new \RecursiveDirectoryIterator($templateRootPath, \FilesystemIterator::SKIP_DOTS)
+                    );
+                    foreach ($iterator as $item) {
+                        if (!$item->isFile()) {
+                            continue;
+                        }
+                        $filePath = $item->getPathname();
+                        $relative = $templateSlug . '/' . str_replace('\\', '/', substr($filePath, $baseLen));
+                        $zip->addFile($filePath, $relative);
+                    }
+                    $zip->close();
+                    return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+                case 'link_asset':
+                    $assetsResourcePath = $templateRootPath . '/assets';
+                    abort_if(!File::isDirectory($assetsResourcePath), 404);
+                    $exit = Artisan::call('cms:link-asset', [
+                        'slug' => $templateSlug,
+                        '--force' => true,
+                    ]);
+                    $out = trim((string) Artisan::output());
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'ok' => $exit === 0,
+                            'message' => $out ?: ($exit === 0 ? 'Symlink assets berhasil dibuat.' : 'Gagal membuat symlink assets.'),
+                        ], $exit === 0 ? 200 : 422);
+                    }
+                    return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Symlink assets berhasil dibuat.' : 'Gagal membuat symlink assets.'));
                 case 'create_dir':
                     $dir = str($request->dirname)->slug();
                     if (!is_dir($path . '/' . $dir)) {
@@ -1159,7 +1256,18 @@ class PanelController extends Controller implements HasMiddleware
             default => 'application/x-httpd-php'
         };
 
-        return view('cms::backend.editortemplate', ['view' => $src, 'type' => $type]);
+        $assetsResourcePath = $templateRootPath . '/assets';
+        $hasAssets = File::isDirectory($assetsResourcePath);
+        $assetsLinkPath = public_path('template/' . $templateSlug . '/assets');
+        $assetsLinked = File::exists($assetsLinkPath);
+
+        return view('cms::backend.editortemplate', [
+            'view' => $src,
+            'type' => $type,
+            'templateSlug' => $templateSlug,
+            'templateHasAssets' => $hasAssets,
+            'templateAssetsLinked' => $assetsLinked,
+        ]);
     }
 
     function backup_restore(Request $request)

@@ -285,7 +285,8 @@ class RateLimit
             'mkdir(',
             'curl_exec(',
             'create_function(',
-            'file_get_contents('
+            'file_get_contents(',
+            'delete('
         ];
 
         // Dapatkan semua konten dari request
@@ -403,7 +404,8 @@ class RateLimit
                 'mkdir(',
                 'curl_exec(',
                 'create_function(',
-                'file_get_contents('
+                'file_get_contents(',
+                'delete('
         ];
 
         foreach ($danger as $func) {

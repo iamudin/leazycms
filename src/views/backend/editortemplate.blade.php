@@ -11,6 +11,13 @@
     <i class="fa fa-plus"></i> Tambah Post Type Baru
 </button>
 @endif
+                                                    <form method="post" action="{{ route('appearance.editor') }}" style="display:inline">
+                                                        @csrf
+                                                        <input type="hidden" name="type" value="export_template">
+                                                        <button type="submit" class="btn btn-success btn-md">
+                                                            <i class="fa fa-file-archive-o"></i> Export ZIP
+                                                        </button>
+                                                    </form>
                                                     <button type="button" onclick="$('.editorForm').trigger('submit')" class="btn btn-primary btn-sm"> <i
                                                             class="fa fa-save"></i> <span class="save-text">Simpan</span></button>
                                                     <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i>
@@ -24,6 +31,28 @@
                                                 <div class="alert alert-warning">
                                                     <i class="fa fa-warning"></i> Status Maintenance tidak aktif. Aktifkan pada menu <b>Pengaturan</b> <i
                                                         class="fa fa-arrow-right"></i> <b>Situs Web</b>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if(isset($templateHasAssets) && $templateHasAssets)
+                                            <div class="col-lg-12">
+                                                <div class="alert alert-info d-flex align-items-center justify-content-between" style="gap:12px">
+                                                    <div>
+                                                        <i class="fa fa-folder"></i> Template ini memiliki folder <b>assets</b>. Jalankan perintah
+                                                        <code>php artisan cms:link-asset {{ $templateSlug ?? template() }}</code> agar assets ter-link ke folder public.
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <span class="badge {{ !empty($templateAssetsLinked) ? 'badge-success' : 'badge-danger' }}">
+                                                            {{ !empty($templateAssetsLinked) ? 'ASSET LINKED' : 'BELUM LINKED' }}
+                                                        </span>
+                                                        <form method="post" action="{{ route('appearance.editor') }}" style="display:inline">
+                                                            @csrf
+                                                            <input type="hidden" name="type" value="link_asset">
+                                                            <button type="submit" class="btn btn-sm {{ !empty($templateAssetsLinked) ? 'btn-secondary' : 'btn-info' }}" {{ !empty($templateAssetsLinked) ? 'disabled' : '' }}>
+                                                                <i class="fa fa-link"></i> Link Asset
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endif
@@ -51,7 +80,7 @@
                                                             <li style="padding-left:20px"><a href="{{ url()->current() . '?edit=' . enc64($row) }}">
                                                                 @if(file_exists(app_path('Http/Controllers/' . $row)))
                                                                     {{ $row }}
-                                                                @else 
+                                                                @else
                                                                     <span class="text-danger">{{ $row }}</span>
                                                                 @endif
                                                                 </a></li>
@@ -291,7 +320,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Looping Data (satu baris per field)</label>
-                                <textarea id="looping_data" class="form-control" rows="3" 
+                                <textarea id="looping_data" class="form-control" rows="3"
                                     placeholder="Nama Waktu, text, required&#10;Jenis Waktu, text, required"></textarea>
                             </div>
                         </div>
@@ -336,7 +365,7 @@
 
                 <hr>
                 <h6>Hasil Script:</h6>
-                <pre id="output" class="bg-dark text-light p-3 rounded overflow-auto" 
+                <pre id="output" class="bg-dark text-light p-3 rounded overflow-auto"
                      style="max-height: 320px; font-size: 13px; white-space: pre-wrap;"></pre>
             </div>
 
