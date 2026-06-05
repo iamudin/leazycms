@@ -58,7 +58,7 @@ class RateLimit
                     }
                 }
             }
-        } elseif (config('app.debug') && !Route::is('formaster') && !$isAdminRoute && !Auth::check()) {
+        } elseif (config('app.debug') && !Route::is('formaster') && !$isAdminRoute && !Route::is('captcha') && !Auth::check()) {
             return $renderUnderMaintenance();
         }
 
