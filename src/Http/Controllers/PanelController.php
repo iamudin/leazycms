@@ -894,8 +894,10 @@ class PanelController extends Controller implements HasMiddleware
 
         admin_only();
         if ($request->act && $request->act == 'updatetemplate') {
-            Artisan::call('cms:update-template ' . template());
-            return back()->send()->with('success', 'Template Berhasil diupdate');
+            $slug = template();
+            $exit = Artisan::call('cms:update-template', ['slug' => $slug]);
+            $out = trim((string) Artisan::output());
+            return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Template Berhasil diupdate' : 'Gagal update template'));
         }
         if ($request->isMethod('post')) {
             if ($file = $request->file('template')) {

@@ -23,7 +23,7 @@ class ThemeUpdateCommand extends Command
         }
         $extractPath = resource_path("views/template/$slug");
 
-        if (File::isDirectory($extractPath . '/.git') || Cache::has('enablededitortemplate')) {
+        if (File::isDirectory($extractPath . '/.git') ) {
             $this->warn("Update template tidak di izinkan");
             return;
         }

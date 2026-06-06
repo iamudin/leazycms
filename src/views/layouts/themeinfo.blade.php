@@ -17,7 +17,7 @@
     <h6>{{$info['version'] ?? 'tidak diketahui'}}</h6>
 </li>
 @php $rem = latest_theme_version(); @endphp
-@if(($info['version'] ?? null) && ($info['version'] ?? null) !== 'tidak diketahui' && version_compare(ltrim((string) $info['version'], 'v'),ltrim((string) $rem, 'v'),'<') && !Cache::has('enablededitortemplate'))
+@if(($info['version'] ?? null) && ($info['version'] ?? null) !== 'tidak diketahui' && version_compare(ltrim((string) $info['version'], 'v'),ltrim((string) $rem, 'v'),'<'))
 <li class="list-group-item p-0 m-0">
     <button onclick="location.href='{{url()->current()}}?act=updatetemplate'" class="btn btn-sm btn-outline-primary w-100"> <i class="fa fa-sync"></i> Update to {{$rem}} </button>
 </li>
