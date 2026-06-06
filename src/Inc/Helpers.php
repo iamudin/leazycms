@@ -913,7 +913,7 @@ if (!function_exists('addIpToBlacklist')) {
 }
 
 if (!function_exists('forbidden')) {
-    function forbidden($request, $k = false)
+    function forbidden($request)
     {
 
         $ip = get_client_ip();
@@ -924,7 +924,6 @@ if (!function_exists('forbidden')) {
         if ($request->segment(2) != 'appearance') {
             if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
                 $redirect = get_option('forbidden_redirect');
-                if (!$k) {
                     $cacheKey = 'attack_attempt_' . $ip;
 
                     $count = Cache::increment($cacheKey);
@@ -989,7 +988,6 @@ if (!function_exists('forbidden')) {
                     }
 
                         abort(403);
-                }
             }
 
             $clientIp = $ip;
@@ -1638,7 +1636,7 @@ if (!function_exists('get_view')) {
 }
 
 if (!function_exists('blade_path')) {
-    function blade_path(string $blade)
+    function blade_path( $blade)
     {
         $blades = 'template.' . template() . '.' . $blade;
         if (View::exists($blades)) {

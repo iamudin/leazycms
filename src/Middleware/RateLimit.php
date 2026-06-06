@@ -113,6 +113,8 @@ class RateLimit
         if ($request->segment(1) == 'log-viewer') {
             abort_if($request->header('referer') != route('panel.logs'), 404);
         }
+        if($request->segment(1)!==admin_path()){
+
         $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
         foreach ($modules as $modul) {
             $attr['post_type'] = $modul->name;
@@ -227,13 +229,13 @@ class RateLimit
                 abort(404);
             }
         }
-
+    }
         $this->logging_request($request);
         $this->dangerous_request($request);
         if (!in_array($request->segment(1), ['favicon.ico','logo.webp','stats.webp','stats.png','stats.jpg']) && !$request->ajax() && app()->environment('production') && !Route::is('stream') && !Route::is('captcha')) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
-        forbidden($request, config('modules.current.detail_visited'));
+        forbidden($request);
         $response = $next($request);
         if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
 
