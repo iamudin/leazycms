@@ -1560,7 +1560,7 @@ if (!function_exists('use_module')) {
     }
 }
 if (!function_exists('processMenu')) {
-    function processMenu(array $menu, array $datanya, &$mnews, int $parent = 0)
+    function processMenu( $menu,  $datanya, &$mnews, $parent = 0)
     {
         foreach ($menu as $value) {
             $b = collect($datanya)->where('menu_id', $value['id'])->first();
