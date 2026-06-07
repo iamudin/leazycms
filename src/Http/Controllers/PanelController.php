@@ -282,7 +282,7 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.dashboard', [
             'latest' => $lastpublish,
 
-            'type' => $user->isAdmin() ? collect(get_module())->whereIn('name', $type_list) : collect(get_module())->whereIn('name', $type_list)->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true),
+            'type' => $user->isAdmin() ? collect(get_module())->whereIn('name', $type_list)->sortBy('position') : collect(get_module())->whereIn('name', $type_list)->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true)->sortBy('position'),
             'posts' => $posts,
             'domain' => $domain,
             'realtimeList' => $realtimeList,

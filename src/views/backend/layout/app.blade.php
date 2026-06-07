@@ -183,7 +183,7 @@
 
     <main class="app-content" style="background: #F0F0F1">
 
-      
+
 
         @yield('content')
 
@@ -228,7 +228,8 @@
         @auth
         <span class="clock-separator">|</span>
         <span class="session-duration" title="Durasi sesi aktif">
-            <i class="fa fa-user-clock"></i> Sesi Aktif : <span id="session-duration">00:00:00</span>
+            <i class="fa fa-user-clock"></i> Sesi Aktif : <span id="session-duration">00:00:00</span> | IP : {{ get_client_ip() ?? 'N/A' }}
+
         </span>
         @endauth
     </div>
