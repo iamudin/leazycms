@@ -131,7 +131,7 @@ return [
                 'tag' => true,
                 'looping_name' => 'Arsip',
                 'looping_data' => [['Dataku','text','required'],['Gambar','file']],
-                'custom_field' => array(['Link Video', 'text']),
+                'custom_field' => array(['Link Video', ['type'=>'text','required'=>true]]),
             ],
             'web' => [
                 'api' => true,
