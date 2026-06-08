@@ -236,7 +236,7 @@
 
                     @endif
                     @if ($module->form->category )
-                    @if(config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null)
+                    @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category )
                         <small for="">Kategori {{ $module->title }} </small><br>
                         <select class="form-control form-control-sm" name="category_id">
                             <option value=""> --pilih-- </option>

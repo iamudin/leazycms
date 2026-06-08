@@ -244,7 +244,7 @@ class WebController extends Controller
         $category->increment('visited');
         $perPage = $modul->web?->post_perpage ?? get_option('post_perpage');
         $data = array(
-            'index' => (new Post)->index_by_category($modul->name, $slug, $perPage),
+            'index' => query()->index_by_category($modul->name, $slug, $perPage),
             'category' => $category,
             'module' => $modul
         );

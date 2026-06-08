@@ -714,7 +714,7 @@ class Post extends BaseModel
         });
     }
 
-    function index_by_category($type, $slug, $paginate = false)
+    function index_by_category($type, $slug, $paginate = 10)
     {
         if ($paginate) {
             return $this->selectedColumn()
