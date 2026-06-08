@@ -154,7 +154,7 @@ class UserController extends Controller implements HasMiddleware
     public function edit($id)
     {
 
-        $user = User::where('host','<>',parse_url(main_domain(), PHP_URL_HOST))->find($id);
+        $user = User::find($id);
         if(is_null($user)){
             return to_route('user')->with('danger','User tidak ditemukan');
         }
@@ -164,7 +164,6 @@ if(is_null($user->host) || $user->host != tenant()->domain || $user->level == 'a
                 return to_route('user')->with('danger','User tidak ditemukan');
             }
             }
-            
         }else{
              if(is_null($user->host) || $user->host == parse_url(main_domain(), PHP_URL_HOST) || $user->level =='admin'){
                 return to_route('user')->with('danger','User tidak ditemukan');
