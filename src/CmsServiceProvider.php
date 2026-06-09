@@ -53,8 +53,6 @@ protected function handle403(){
             return null;
         });
 }
-    protected static $isTenantLoaded = null;
-
     protected function handle500()
     {
         $this->app->afterResolving(ExceptionHandler::class, function ($handler) {
@@ -314,14 +312,7 @@ protected function registerRoutes()
         ) {
             try {
                 if (!config('modules.option')) {
-                    if (self::$isTenantLoaded === null) {
-                        self::$isTenantLoaded = Schema::hasColumn('options', 'tenant_id');
-                    }
-
-                    $options = self::$isTenantLoaded
-                        ? \Leazycms\Web\Models\Option::where('tenant_id',1)->orWhereNull('tenant_id')->pluck('value', 'name')->toArray()
-                        : \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
-
+                    $options = \Leazycms\Web\Models\Option::pluck('value', 'name')->toArray();
                     config(['modules.option' => $options]);
                 }
             } catch (\Exception $e) {
