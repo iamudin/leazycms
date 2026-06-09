@@ -40,7 +40,7 @@ class RateLimit
         if (config('modules.multisite_enabled')) {
             $isMainDomain = is_main_domain();
 
-            if (config('app.debug') && !Route::is('formaster') && !in_array($request->segment(1),['secure'])) {
+            if (config('app.debug') && !Route::is('formaster')  ) {
 
                 if (!$isMainDomain ) {
                     return $renderUnderMaintenance();
@@ -52,7 +52,7 @@ class RateLimit
 
             if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
                 $currentTenant = tenant();
-                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance') {
+                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' &&  !Route::is('captcha')) {
                     if (!$isAdminRoute && !Auth::check() &&!in_array($request->segment(1),['secure','login-token'])) {
                         return $renderUnderMaintenance();
                     }
