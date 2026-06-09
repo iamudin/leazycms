@@ -2,9 +2,10 @@
 namespace Leazycms\Web\Middleware;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 
 class RateLimit
 {
@@ -36,11 +37,11 @@ class RateLimit
                 503
             )->header('Content-Type', 'text/html');
         };
-
+        $isNotLogo =  !(Route::is('stream') && strpos(URL::current(), get_option('logo')) !== false);
         if (config('modules.multisite_enabled')) {
             $isMainDomain = is_main_domain();
 
-            if (config('app.debug') && !Route::is('formaster')  ) {
+            if (config('app.debug') && !Route::is('formaster') && !Route::is('captcha') && $isNotLogo ) {
 
                 if (!$isMainDomain ) {
                     return $renderUnderMaintenance();
@@ -52,16 +53,15 @@ class RateLimit
 
             if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
                 $currentTenant = tenant();
-                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' &&  !Route::is('captcha')) {
-                    if (!$isAdminRoute && !Auth::check() &&!in_array($request->segment(1),['secure','login-token'])) {
+                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' &&  !Route::is('captcha') && $isNotLogo) {
+                    if (!$isAdminRoute && !Auth::check() &&!in_array($request->segment(1),['secure','login-token']) && $isNotLogo) {
                         return $renderUnderMaintenance();
                     }
                 }
             }
-        } elseif (config('app.debug') && !Route::is('formaster') && !$isAdminRoute && !Route::is('captcha') && !Auth::check()) {
+        } elseif (config('app.debug') && !Route::is('formaster') && !$isAdminRoute && !Route::is('captcha') && !Auth::check() && $isNotLogo) {
             return $renderUnderMaintenance();
         }
-
 
         $uri = $request->getRequestUri();
         $host = $request->getHost();
