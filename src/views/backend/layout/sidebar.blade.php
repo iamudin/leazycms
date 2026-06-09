@@ -34,12 +34,18 @@
         >
             <i class="fa fa-globe" aria-hidden="true"></i> &nbsp; PUBLIKASI
         </li>
-        @foreach ($userprofile->isAdmin() ?
-    (config('modules.multisite_enabled') ? collect(get_module())->whereIn('name', array_merge(app('tenant')->modules ?? [] , default_menu()))->sortBy('position') : collect(get_module())->sortBy('position') ) :
-    collect(get_module())->sortBy('position')->whereIn(
-        'name',
-        $userprofile->get_modules->pluck('module')->toArray()
-    ) as $row)
+        @php
+            $modulesForSidebar = collect(get_module())->sortBy('position');
+            if (config('modules.multisite_enabled')) {
+                $tenantModules = app()->bound('tenant') ? (app('tenant')->modules ?? []) : [];
+                $modulesForSidebar = $modulesForSidebar->whereIn('name', array_merge($tenantModules, default_menu()));
+            }
+
+            if (!$userprofile->isAdmin()) {
+                $modulesForSidebar = $modulesForSidebar->whereIn('name', $userprofile->get_modules->pluck('module')->toArray());
+            }
+        @endphp
+        @foreach ($modulesForSidebar as $row)
         @if($row->name == 'menu')
                    <li
             class="text-muted"

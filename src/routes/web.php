@@ -43,6 +43,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
     Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->name('author.posts')->middleware(['public', TrackVisitor::class]);
     Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->name('search.posts')->middleware(['public', TrackVisitor::class])->withoutMiddleware([VerifyCsrfToken::class]);
     Route::match(['get', 'post'],'sitemap.xml', [ExtController::class, 'sitemap_xml'])->name('sitemap');
+    Route::match(['get', 'post'], 'sitemap_{part}.xml', [ExtController::class, 'sitemap_part'])->whereNumber('part')->name('sitemap.part');
     Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
     Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
 
@@ -68,7 +69,6 @@ Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
 Route::match(['get', 'post'],'/', [WebController::class, 'home'])->name('home')->middleware(['public',TrackVisitor::class]);
 Route::get('logo.webp', [Leazycms\Web\Http\Controllers\VisitorStatsController::class, 'logoGenerator'])->name('logo');
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
-
 
 
 

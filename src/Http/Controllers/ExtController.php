@@ -37,86 +37,162 @@ class ExtController extends Controller
     ->header('Content-Type', 'application/json')
     ->header('Content-Disposition', 'inline; filename="site.manifest"');
     }
-    public function sitemap_xml()
+
+    private function sitemapHostKey(): string
     {
-        // Cek apakah sitemap sudah ada di cache
-        $sitemap = Cache::remember('sitemap', 60, function () {
-            $type = collect(get_module())
-                ->where('active', true)
-                ->where('public', true)
-                ->where('web.detail', true);
+        if (config('modules.multisite_enabled')) {
+            return request()->getHost();
+        }
+        return 'default';
+    }
 
-            $post = Post::whereIn('type', $type->pluck('name')->toArray())
-                ->published()
-                ->select('updated_at', 'url', 'type')
-                ->get();
+    private function sitemapBaseUrl(): string
+    {
+        return rtrim(request()->getSchemeAndHttpHost(), '/');
+    }
 
-            $lastmod = Post::select('updated_at')->latest('updated_at')->first()?->updated_at;
+    private function sitemapStorageDir(): string
+    {
+        return storage_path('app/sitemaps/' . $this->sitemapHostKey());
+    }
 
-            $type_index = [
-                [
-                    'loc' => url('/'),
-                    'priority' => '1.0',
-                    'lastmod' => $lastmod ? $lastmod->toIso8601String() : now()->toIso8601String(),
-                ]
-            ];
+    private function cleanupPublicSitemaps(): void
+    {
+        $main = public_path('sitemap.xml');
+        if (File::exists($main)) {
+            File::delete($main);
+        }
 
-            foreach ($type as $row) {
-                if ($row->web->index) {
-                    $lst = $post->where('type', $row->name)->sortByDesc('updated_at')->first();
-                    $a['loc'] = url($row->name);
-                    $a['priority'] = '0.80';
-                    $a['lastmod'] = $lst ? $lst->updated_at->toIso8601String() : $lastmod->toIso8601String();
-                    $type_index[] = $a;
-                }
+        $parts = glob(public_path('sitemap_*.xml')) ?: [];
+        foreach ($parts as $file) {
+            if (is_string($file) && File::exists($file)) {
+                File::delete($file);
             }
+        }
+    }
 
-            $post_index = [];
-            foreach ($post as $row) {
-                $a['loc'] = url($row->url);
-                $a['priority'] = $row->type == 'halaman' ? '0.64' : '0.80';
-                $a['lastmod'] = $row->updated_at->toIso8601String();
-                $post_index[] = $a;
-            }
+    private function generateSitemaps(): void
+    {
+        $baseUrl = $this->sitemapBaseUrl();
+        $dir = $this->sitemapStorageDir();
 
-            $urls = array_merge($type_index, $post_index);
+        File::ensureDirectoryExists($dir);
 
-            // Pisahkan URL ke dalam beberapa file dengan maksimal 50.000 URL per file
-            $chunkedUrls = array_chunk($urls, 50000);
-            $sitemaps = [];
+        $type = collect(get_module())
+            ->where('active', true)
+            ->where('public', true)
+            ->where('web.detail', true);
 
-            foreach ($chunkedUrls as $index => $chunk) {
-                $filename = "sitemap_" . ($index + 1) . ".xml";
+        if (config('modules.multisite_enabled')) {
+            $tenantModules = app()->bound('tenant') ? (app('tenant')->modules ?? []) : [];
+            $type = $type->whereIn('name', array_merge($tenantModules, default_menu()));
+        }
 
-                // Render Blade tanpa deklarasi XML
-                $sitemapContent = view('cms::layouts.sitemap-xml', ['urls' => $chunk])->render();
+        $typeNames = $type->pluck('name')->filter()->values()->all();
 
-                // Tambahkan deklarasi XML manual di awal string
-                $sitemapContentWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapContent;
+        $post = Post::whereIn('type', $typeNames)
+            ->published()
+            ->select('updated_at', 'url', 'type')
+            ->get();
 
-                // Simpan file ke direktori publik
-                File::put(public_path($filename), $sitemapContentWithDeclaration);
+        $lastmod = $post->max('updated_at');
+        $lastmodIso = $lastmod ? $lastmod->toIso8601String() : now()->toIso8601String();
 
-                // Tambahkan ke daftar indeks
-                $sitemaps[] = [
-                    'loc' => url($filename),
-                    'lastmod' => now()->toIso8601String(),
+        $type_index = [
+            [
+                'loc' => $baseUrl . '/',
+                'priority' => '1.0',
+                'lastmod' => $lastmodIso,
+            ]
+        ];
+
+        foreach ($type as $row) {
+            if ($row->web->index) {
+                $lst = $post->where('type', $row->name)->sortByDesc('updated_at')->first();
+                $type_index[] = [
+                    'loc' => $baseUrl . '/' . ltrim((string) $row->name, '/'),
+                    'priority' => '0.80',
+                    'lastmod' => $lst?->updated_at?->toIso8601String() ?: $lastmodIso,
                 ];
             }
+        }
 
-            // Generate indeks sitemap utama
-            $sitemapIndexContent = view('cms::layouts.sitemap-index', ['sitemaps' => $sitemaps])->render();
+        $post_index = [];
+        foreach ($post as $row) {
+            $post_index[] = [
+                'loc' => $baseUrl . '/' . ltrim((string) $row->url, '/'),
+                'priority' => $row->type == 'halaman' ? '0.64' : '0.80',
+                'lastmod' => $row->updated_at->toIso8601String(),
+            ];
+        }
 
-            // Tambahkan deklarasi XML di awal konten
-            $sitemapIndexWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapIndexContent;
+        $urls = array_merge($type_index, $post_index);
+        $chunkedUrls = array_chunk($urls, 50000);
+        $sitemaps = [];
 
-            // Simpan ke file sitemap.xml
-            // File::put(public_path('sitemap.xml'), $sitemapIndexWithDeclaration);
-            return $sitemapIndexWithDeclaration;
+        foreach ($chunkedUrls as $index => $chunk) {
+            $filename = "sitemap_" . ($index + 1) . ".xml";
+            $sitemapContent = view('cms::layouts.sitemap-xml', ['urls' => $chunk])->render();
+            $sitemapContentWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapContent;
+            File::put($dir . DIRECTORY_SEPARATOR . $filename, $sitemapContentWithDeclaration);
+
+            $sitemaps[] = [
+                'loc' => $baseUrl . '/' . $filename,
+                'lastmod' => now()->toIso8601String(),
+            ];
+        }
+
+        $sitemapIndexContent = view('cms::layouts.sitemap-index', ['sitemaps' => $sitemaps])->render();
+        $sitemapIndexWithDeclaration = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $sitemapIndexContent;
+        File::put($dir . DIRECTORY_SEPARATOR . 'sitemap.xml', $sitemapIndexWithDeclaration);
+    }
+
+    public function sitemap_xml()
+    {
+        abort_if(function_exists('is_custom_web_route_matched') && is_custom_web_route_matched(), 404);
+        $this->cleanupPublicSitemaps();
+
+        $hostKey = $this->sitemapHostKey();
+        $dir = $this->sitemapStorageDir();
+        $path = $dir . DIRECTORY_SEPARATOR . 'sitemap.xml';
+
+        Cache::remember("sitemap:{$hostKey}", 60, function () {
+            $this->generateSitemaps();
+            return true;
         });
 
-        // Kembalikan file sitemap.xml sebagai respons
-        return response($sitemap)
+        if (!File::exists($path)) {
+            $this->generateSitemaps();
+        }
+
+        return response(File::get($path))
+            ->header('Content-Type', 'application/xml');
+    }
+
+    public function sitemap_part($part)
+    {
+        abort_if(function_exists('is_custom_web_route_matched') && is_custom_web_route_matched(), 404);
+        $this->cleanupPublicSitemaps();
+
+        $part = (int) $part;
+        abort_if($part < 1, 404);
+
+        $hostKey = $this->sitemapHostKey();
+        $dir = $this->sitemapStorageDir();
+        $path = $dir . DIRECTORY_SEPARATOR . "sitemap_{$part}.xml";
+
+        Cache::remember("sitemap:{$hostKey}", 60, function () {
+            $this->generateSitemaps();
+            return true;
+        });
+
+        if (!File::exists($path)) {
+            $this->generateSitemaps();
+        }
+
+        abort_if(!File::exists($path), 404);
+
+        return response(File::get($path))
             ->header('Content-Type', 'application/xml');
     }
 
