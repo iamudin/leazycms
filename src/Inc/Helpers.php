@@ -1107,7 +1107,7 @@ if (!function_exists('forbidden')) {
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
         $keywords = explode(',', $cleanedKeywords);
 
-            if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), array_unique(
+            if (Str::contains(strtolower($request->fullUrl()), array_unique(
 array_merge($keywords,forbidden_keyword())))) {
                 $redirect = get_option('forbidden_redirect');
                     $cacheKey = 'attack_attempt_' . $ip;
