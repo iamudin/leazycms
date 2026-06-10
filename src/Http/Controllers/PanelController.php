@@ -6,6 +6,7 @@ use ZipArchive;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Leazycms\Web\Models\BlockedIp;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Option;
 use Leazycms\FLC\Models\Comment;
@@ -35,6 +36,54 @@ class PanelController extends Controller implements HasMiddleware
         abort_if(!is_main_domain(), 404);
         return view('cms::backend.files.index');
     }
+
+    function blockedIps(Request $request, BlockedIp $blockedIp = null)
+    {
+        abort_if(!is_main_domain() || !$request->user()?->isAdmin(), 404);
+
+        if ($request->isMethod('delete') && $blockedIp) {
+            $removed = removeIpFromBlacklist($blockedIp->ip);
+            return back()->with($removed ? 'success' : 'danger', $removed ? 'IP berhasil di-unblock' : 'IP tidak ditemukan di daftar blokir');
+        }
+
+        if ($request->isMethod('post')) {
+            $data = BlockedIp::query()
+                ->whereNull('unblocked_at')
+                ->latest('blocked_at');
+
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('location', function ($row) {
+                    $location = collect([$row->country, $row->region])->filter()->implode(', ');
+                    return $location ?: '-';
+                })
+                ->addColumn('device_info', function ($row) {
+                    $html = '<small>';
+                    $html .= '<b>Device:</b> ' . e($row->device ?: '-') . '<br>';
+                    $html .= '<b>User Agent:</b> ' . e(str((string) $row->user_agent)->limit(120));
+                    $html .= '</small>';
+                    return $html;
+                })
+                ->addColumn('reason_text', function ($row) {
+                    return '<small>' . e($row->reason ?: '-') . '</small>';
+                })
+                ->addColumn('blocked_date', function ($row) {
+                    return $row->blocked_at
+                        ? '<code>' . e($row->blocked_at->translatedFormat('d M Y H:i')) . '</code>'
+                        : '-';
+                })
+                ->addColumn('action', function ($row) {
+                    return '<div class="btn-group">'
+                        . '<button onclick="deleteAlert(\'' . route('blocked-ip.destroy', $row->id) . '\')" class="btn btn-sm btn-warning fa fa-unlock"></button>'
+                        . '</div>';
+                })
+                ->rawColumns(['device_info', 'reason_text', 'blocked_date', 'action'])
+                ->toJson();
+        }
+
+        return view('cms::backend.security.blocked-ips.index');
+    }
+
     function logs()
     {
         abort_if(!is_main_domain(), 404);
@@ -483,7 +532,6 @@ class PanelController extends Controller implements HasMiddleware
         );
         $data['security'] = array(
 
-            ['Block IP', '0.0.0.0,0.0.1.0,..,..'],
             ['Allow IP', '0.0.0.0,0.0.1.0,..,..'],
             ['Forbidden Keyword', 'Judi Online, Gacor, xxx, other'],
             ['Forbidden Redirect', 'Eg: https://yourpage.url or other'],

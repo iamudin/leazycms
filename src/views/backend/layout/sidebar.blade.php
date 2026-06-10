@@ -127,6 +127,7 @@
                     <span class="app-menu__label">File Manager</span></a
                 >
             </li>
+
             @endif
             <li>
                 <a
@@ -336,6 +337,14 @@
                     href="{{ route('panel.logs') }}"
                     ><i class="app-menu__icon fa fa-history text-danger"></i>
                     <span class="app-menu__label">Logs</span></a
+                >
+            </li>
+               <li>
+                <a
+                    class="app-menu__item {{ Request::is(admin_path() . '/security/blocked-ip') ? 'active' : '' }}"
+                    href="{{ route('blocked-ip') }}"
+                    ><i class="app-menu__icon fa fa-shield-alt text-danger"></i>
+                    <span class="app-menu__label">Blocked IP</span></a
                 >
             </li>
                       <li title="API Key">

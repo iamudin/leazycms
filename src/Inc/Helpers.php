@@ -14,7 +14,136 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
-
+if (!function_exists('forbidden_keyword')) {
+function forbidden_keyword(){
+   return [
+    '.env',
+    '.php',
+    '.git',
+    '.svn',
+    '.hg',
+    'DS_Store',
+    'phpmyadmin',
+    'pma',
+    'adminer',
+    'mysqladmin',
+    'wp-admin',
+    'wp-login',
+    'xmlrpc',
+    'wp-json',
+    'wordpress',
+    'joomla',
+    'drupal',
+    'magento',
+    'cgi-bin',
+    'server-status',
+    'server-info',
+    'phpinfo',
+    'info.php',
+    'test.php',
+    'shell',
+    'webshell',
+    'c99',
+    'r57',
+    'b374k',
+    'wso',
+    'upload.php',
+    'backdoor',
+    'cmd',
+    'exec',
+    'passthru',
+    'system',
+    'eval',
+    'assert',
+    'base64',
+    'decode',
+    '/etc/passwd',
+    '/etc/shadow',
+    'proc/self',
+    'boot.ini',
+    'win.ini',
+    'system32',
+    'config.php',
+    'wp-config',
+    'configuration.php',
+    'local.xml',
+    'database.sql',
+    'backup.sql',
+    'dump.sql',
+    'backup.zip',
+    'backup.tar',
+    'backup.rar',
+    'composer.json',
+    'composer.lock',
+    'package.json',
+    'package-lock.json',
+    'yarn.lock',
+    'vendor',
+    'storage/logs',
+    'laravel.log',
+    'telescope',
+    'ignition',
+    'horizon',
+    'debugbar',
+    'actuator',
+    'swagger',
+    'openapi',
+    'graphql',
+    'jenkins',
+    'gitlab',
+    'sonarqube',
+    'kibana',
+    'elasticsearch',
+    'prometheus',
+    'grafana',
+    'docker',
+    'docker-compose',
+    'kubernetes',
+    'k8s',
+    'redis',
+    'memcached',
+    'mongodb',
+    'sqlmap',
+    'nuclei',
+    'nikto',
+    'acunetix',
+    'nessus',
+    'masscan',
+    'zgrab',
+    'wpscan',
+    'metasploit',
+    'burpsuite',
+    '../',
+    '..\\',
+    '%2e%2e',
+    '%252e%252e',
+    'union select',
+    'information_schema',
+    'sleep(',
+    'benchmark(',
+    'load_file(',
+    'into outfile',
+    '<script',
+    'javascript:',
+    'document.cookie',
+    'onerror=',
+    'onload=',
+    'slot',
+    'judi',
+    'casino',
+    'bet',
+    'togel',
+    'gacor',
+    'maxwin',
+    'pragmatic',
+    'slot88',
+    'slot777',
+    'slot-online',
+    'situs-judi',
+    'agen-judi',
+    'judi-online'
+];
+}}
 if (!function_exists('ignoreEnc')) {
 function ignoreEnc($io) {
     $s = base64_decode(dec64(config('modules.labusiam')));
@@ -856,19 +985,60 @@ if (!function_exists('getBlacklistIps')) {
         }
 
         return $ips = Cache::rememberForever('ip_blacklist_cache', function () {
+            $blockedIps = [];
 
-            $path = storage_path('app/security/ip-blacklist.json');
-
-            if (!file_exists($path)) {
-                return [];
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('blocked_ips')) {
+                    $blockedIps = \Leazycms\Web\Models\BlockedIp::query()
+                        ->whereNull('unblocked_at')
+                        ->pluck('ip')
+                        ->filter()
+                        ->values()
+                        ->all();
+                }
+            } catch (\Throwable $e) {
             }
 
-            $content = file_get_contents($path);
+            $path = storage_path('app/security/ip-blacklist.json');
+            if (file_exists($path)) {
+                $content = file_get_contents($path);
+                $json = json_decode($content, true);
+                if (is_array($json)) {
+                    $blockedIps = array_merge($blockedIps, $json);
+                }
+            }
 
-            $json = json_decode($content, true);
-
-            return is_array($json) ? $json : [];
+            return array_values(array_unique(array_filter($blockedIps)));
         });
+    }
+}
+
+if (!function_exists('detectClientDevice')) {
+    function detectClientDevice(?string $userAgent = null): string
+    {
+        $agent = strtolower((string) $userAgent);
+
+        if ($agent === '') {
+            return 'Unknown';
+        }
+
+        if (str_contains($agent, 'bot') || str_contains($agent, 'crawler') || str_contains($agent, 'spider')) {
+            return 'Bot';
+        }
+
+        if (str_contains($agent, 'tablet') || str_contains($agent, 'ipad')) {
+            return 'Tablet';
+        }
+
+        if (
+            str_contains($agent, 'mobile') ||
+            str_contains($agent, 'android') ||
+            str_contains($agent, 'iphone')
+        ) {
+            return 'Mobile';
+        }
+
+        return 'Desktop';
     }
 }
 
@@ -880,7 +1050,7 @@ if (!function_exists('getBlacklistIps')) {
 
 if (!function_exists('addIpToBlacklist')) {
 
-    function addIpToBlacklist(string $ip): void
+    function addIpToBlacklist(string $ip, ?string $reason = null, ?string $userAgent = null): void
     {
         $path = storage_path('app/security/ip-blacklist.json');
 
@@ -899,16 +1069,31 @@ if (!function_exists('addIpToBlacklist')) {
         }
 
         if (!in_array($ip, $ips, true)) {
-
             $ips[] = $ip;
-
             file_put_contents(
                 $path,
                 json_encode(array_values(array_unique($ips)), JSON_PRETTY_PRINT)
             );
-
-            Cache::forget('ip_blacklist_cache');
         }
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('blocked_ips')) {
+                $location = get_ip_info($ip);
+                $record = \Leazycms\Web\Models\BlockedIp::firstOrNew(['ip' => $ip]);
+                $record->country = $location['country'] ?? null;
+                $record->region = $location['region'] ?? null;
+                $record->device = detectClientDevice($userAgent);
+                $record->user_agent = $userAgent;
+                $record->reason = $reason ?: 'Auto blacklist';
+                $record->blocked_at = now();
+                $record->unblocked_at = null;
+                $record->unblocked_by = null;
+                $record->save();
+            }
+        } catch (\Throwable $e) {
+        }
+
+        Cache::forget('ip_blacklist_cache');
     }
 }
 
@@ -921,8 +1106,9 @@ if (!function_exists('forbidden')) {
         $rawKeywords = get_option('forbidden_keyword') ?? '';
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
         $keywords = explode(',', $cleanedKeywords);
-        if ($request->segment(2) != 'appearance') {
-            if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), $keywords)) {
+
+            if (get_option('forbidden_keyword') && strlen(get_option('forbidden_keyword')) > 0 && \Illuminate\Support\Str::contains(strtolower($request->fullUrl()), array_unique(
+array_merge($keywords,forbidden_keyword())))) {
                 $redirect = get_option('forbidden_redirect');
                     $cacheKey = 'attack_attempt_' . $ip;
 
@@ -932,11 +1118,11 @@ if (!function_exists('forbidden')) {
                         Cache::put($cacheKey, 1, now()->addMinutes(30));
                     }
                     if ($count >= 3) {
-
-                        addIpToBlacklist($ip);
-
-
-
+                        addIpToBlacklist(
+                            $ip,
+                            'Forbidden keyword terdeteksi 3x pada URL: ' . $request->fullUrl(),
+                            $request->userAgent()
+                        );
                             $message = "
 <b>⛔ IP AUTO BLACKLISTED</b>
 
@@ -1014,7 +1200,6 @@ if (!function_exists('forbidden')) {
                     abort(403, 'Access Denied (Blocked IP)');
                 }
 
-        }
     }
 }
 if (!function_exists('removeIpFromBlacklist')) {
@@ -1022,6 +1207,7 @@ if (!function_exists('removeIpFromBlacklist')) {
     function removeIpFromBlacklist(string $ip): bool
     {
         $path = storage_path('app/security/ip-blacklist.json');
+        $changed = false;
 
         /*
         |--------------------------------------------------------------------------
@@ -1029,9 +1215,7 @@ if (!function_exists('removeIpFromBlacklist')) {
         |--------------------------------------------------------------------------
         */
 
-        if (!file_exists($path)) {
-            return false;
-        }
+        if (file_exists($path)) {
 
         /*
         |--------------------------------------------------------------------------
@@ -1039,11 +1223,11 @@ if (!function_exists('removeIpFromBlacklist')) {
         |--------------------------------------------------------------------------
         */
 
-        $ips = json_decode(file_get_contents($path), true);
+            $ips = json_decode(file_get_contents($path), true);
 
-        if (!is_array($ips)) {
-            $ips = [];
-        }
+            if (!is_array($ips)) {
+                $ips = [];
+            }
 
         /*
         |--------------------------------------------------------------------------
@@ -1051,12 +1235,12 @@ if (!function_exists('removeIpFromBlacklist')) {
         |--------------------------------------------------------------------------
         */
 
-        $originalCount = count($ips);
+            $originalCount = count($ips);
 
-        $ips = array_values(array_filter(
-            $ips,
-            fn($blockedIp) => $blockedIp !== $ip
-        ));
+            $ips = array_values(array_filter(
+                $ips,
+                fn($blockedIp) => $blockedIp !== $ip
+            ));
 
         /*
         |--------------------------------------------------------------------------
@@ -1064,9 +1248,7 @@ if (!function_exists('removeIpFromBlacklist')) {
         |--------------------------------------------------------------------------
         */
 
-        if ($originalCount === count($ips)) {
-            return false;
-        }
+            $changed = $originalCount !== count($ips);
 
         /*
         |--------------------------------------------------------------------------
@@ -1074,10 +1256,25 @@ if (!function_exists('removeIpFromBlacklist')) {
         |--------------------------------------------------------------------------
         */
 
-        file_put_contents(
-            $path,
-            json_encode($ips, JSON_PRETTY_PRINT)
-        );
+            file_put_contents(
+                $path,
+                json_encode($ips, JSON_PRETTY_PRINT)
+            );
+        }
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('blocked_ips')) {
+                $updated = \Leazycms\Web\Models\BlockedIp::query()
+                    ->where('ip', $ip)
+                    ->whereNull('unblocked_at')
+                    ->update([
+                        'unblocked_at' => now(),
+                        'unblocked_by' => auth()->id(),
+                    ]);
+                $changed = $changed || $updated > 0;
+            }
+        } catch (\Throwable $e) {
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -1087,7 +1284,7 @@ if (!function_exists('removeIpFromBlacklist')) {
 
         cache()->forget('ip_blacklist_cache');
 
-        return true;
+        return $changed;
     }
 }
 if (!function_exists('is_ip')) {

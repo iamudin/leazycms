@@ -16,6 +16,8 @@ Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileS
 Route::match(['get','post','delete'],'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
 Route::get('files', [PanelController::class, 'files'])->name('files');
+Route::match(['get', 'post'], 'security/blocked-ip', [PanelController::class, 'blockedIps'])->name('blocked-ip');
+Route::delete('security/blocked-ip/{blockedIp}', [PanelController::class, 'blockedIps'])->name('blocked-ip.destroy');
 Route::post('print/posts', [PostController::class, 'printPosts'])->name('print.posts');
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
