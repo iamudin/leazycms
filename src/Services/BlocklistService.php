@@ -229,6 +229,15 @@ class BlocklistService
         $ip = get_client_ip();
         $sessionId = $request->hasSession() ? $request->session()->getId() : null;
 
+        if ($this->isBlocked($ip, $sessionId, (string) $request->userAgent())) {
+            abort(403, 'Access Denied (Blocked IP / Session)');
+        }
+
+        $filterRequestClient = (string) get_option('filter_request_client', 'N');
+        if ($filterRequestClient !== 'Y') {
+            return;
+        }
+
         $rawKeywords = get_option('forbidden_keyword') ?? 'xxx,porn';
         $cleanedKeywords = str_replace(' ', '', $rawKeywords);
         $keywords = explode(',', $cleanedKeywords);
@@ -323,10 +332,6 @@ class BlocklistService
             }
 
             abort(403);
-        }
-
-        if ($this->isBlocked($ip, $sessionId, (string) $request->userAgent())) {
-            abort(403, 'Access Denied (Blocked IP / Session)');
         }
     }
 

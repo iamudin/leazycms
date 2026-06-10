@@ -533,6 +533,7 @@ class PanelController extends Controller implements HasMiddleware
         $data['security'] = array(
 
             ['Allow IP', '0.0.0.0,0.0.1.0,..,..'],
+            ['Filter Request Client', 'Aktifkan / Nonaktifkan'],
             ['Forbidden Keyword', 'Judi Online, Gacor, xxx, other'],
             ['Forbidden Redirect', 'Eg: https://yourpage.url or other'],
             ['Time Limit Login', 'default 10 times'],
@@ -553,6 +554,10 @@ class PanelController extends Controller implements HasMiddleware
                 foreach ($data['security'] as $row) {
                     $key = _us($row[0]);
                     $value = $request->$key ?? null;
+
+                    if ($key === 'filter_request_client') {
+                        $value = $request->has($key) ? 'Y' : 'N';
+                    }
 
 
                     if ($key == 'block_ip' && $value) {

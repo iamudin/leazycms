@@ -111,7 +111,10 @@
                                     Keamanan
                                 </h6>
                                 @foreach ($security as $r)
-                                    <small for="" class="text-muted">{{ $r[0] }} @if (_us($r[0]) == 'allow_ip')
+                                    @php
+                                        $key = _us($r[0]);
+                                    @endphp
+                                    <small for="" class="text-muted">{{ $r[0] }} @if ($key == 'allow_ip')
                                             <i class="text-danger">(Khusus Akses API eg : url/berita/api/{id})</i>
                                         @endif
                                     </small>   @if (_us($r[0]) == 'forbidden_keyword')
@@ -119,10 +122,23 @@
                                     @endif
                                     <br>
 
-
+                                    @if ($key == 'filter_request_client')
+                                        {!! help('Jika aktif, request client akan difilter menggunakan Forbidden Keyword.') !!}
+                                        <div class="clearfix" style="margin-bottom:10px">
+                                            <div class="pull-right">
+                                                <input name="{{ $key }}" data-width="140" value="Y"
+                                                    {{ get_option($key) == 'Y' ? 'checked' : '' }}
+                                                    type="checkbox" class="toggle-status" data-on="Active"
+                                                    data-off="Inactive" data-toggle="toggle"
+                                                    data-onstyle="outline-success" data-offstyle="outline-danger"
+                                                    data-size="sm">
+                                            </div>
+                                        </div>
+                                    @else
                                         <input type="text" class="form-control form-control-sm"
-                                            placeholder="Enter {{ $r[1] }}" name="{{ _us($r[0]) }}"
-                                            value="{{ get_option(_us($r[0])) }}">
+                                            placeholder="Enter {{ $r[1] }}" name="{{ $key }}"
+                                            value="{{ get_option($key) }}">
+                                    @endif
                                 @endforeach
                                 <br>
                                 <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-warning"></i>
