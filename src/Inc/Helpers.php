@@ -975,70 +975,31 @@ if(config('modules.telechatid')&& config('modules.teletoken')){
 
 }
 }
+if (!function_exists('blocklist_service')) {
+    function blocklist_service(): \Leazycms\Web\Services\BlocklistService
+    {
+        return app(\Leazycms\Web\Services\BlocklistService::class);
+    }
+}
 if (!function_exists('getBlacklistIps')) {
 
     function getBlacklistIps(): array
     {
-        static $ips = null;
-        if ($ips !== null) {
-            return $ips;
-        }
+        return blocklist_service()->getBlacklistIps();
+    }
+}
 
-        return $ips = Cache::rememberForever('ip_blacklist_cache', function () {
-            $blockedIps = [];
-
-            try {
-                if (\Illuminate\Support\Facades\Schema::hasTable('blocked_ips')) {
-                    $blockedIps = \Leazycms\Web\Models\BlockedIp::query()
-                        ->whereNull('unblocked_at')
-                        ->pluck('ip')
-                        ->filter()
-                        ->values()
-                        ->all();
-                }
-            } catch (\Throwable $e) {
-            }
-
-            $path = storage_path('app/security/ip-blacklist.json');
-            if (file_exists($path)) {
-                $content = file_get_contents($path);
-                $json = json_decode($content, true);
-                if (is_array($json)) {
-                    $blockedIps = array_merge($blockedIps, $json);
-                }
-            }
-
-            return array_values(array_unique(array_filter($blockedIps)));
-        });
+if (!function_exists('getBlacklistUserAgents')) {
+    function getBlacklistUserAgents(): array
+    {
+        return blocklist_service()->getBlacklistUserAgents();
     }
 }
 
 if (!function_exists('detectClientDevice')) {
     function detectClientDevice(?string $userAgent = null): string
     {
-        $agent = strtolower((string) $userAgent);
-
-        if ($agent === '') {
-            return 'Unknown';
-        }
-
-        if (str_contains($agent, 'bot') || str_contains($agent, 'crawler') || str_contains($agent, 'spider')) {
-            return 'Bot';
-        }
-
-        if (str_contains($agent, 'tablet') || str_contains($agent, 'ipad')) {
-            return 'Tablet';
-        }
-
-        if (
-            str_contains($agent, 'mobile') ||
-            str_contains($agent, 'android') ||
-            str_contains($agent, 'iphone')
-        ) {
-            return 'Mobile';
-        }
-
-        return 'Desktop';
+        return blocklist_service()->detectClientDevice($userAgent);
     }
 }
 
@@ -1052,239 +1013,42 @@ if (!function_exists('addIpToBlacklist')) {
 
     function addIpToBlacklist(string $ip, ?string $reason = null, ?string $userAgent = null): void
     {
-        $path = storage_path('app/security/ip-blacklist.json');
+        blocklist_service()->addIpToBlacklist($ip, $reason, $userAgent);
+    }
+}
 
-        if (!file_exists(dirname($path))) {
-            mkdir(dirname($path), 0777, true);
-        }
+if (!function_exists('sessionBlacklistCacheKey')) {
+    function sessionBlacklistCacheKey(?string $sessionId): ?string
+    {
+        return blocklist_service()->sessionBlacklistCacheKey($sessionId);
+    }
+}
 
-        if (!file_exists($path)) {
-            file_put_contents($path, json_encode([]));
-        }
+if (!function_exists('addSessionToBlacklist')) {
+    function addSessionToBlacklist(?string $sessionId): void
+    {
+        blocklist_service()->addSessionToBlacklist($sessionId);
+    }
+}
 
-        $ips = json_decode(file_get_contents($path), true);
-
-        if (!is_array($ips)) {
-            $ips = [];
-        }
-
-        if (!in_array($ip, $ips, true)) {
-            $ips[] = $ip;
-            file_put_contents(
-                $path,
-                json_encode(array_values(array_unique($ips)), JSON_PRETTY_PRINT)
-            );
-        }
-
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('blocked_ips')) {
-                $location = get_ip_info($ip);
-                $record = \Leazycms\Web\Models\BlockedIp::firstOrNew(['ip' => $ip]);
-                $record->country = $location['country'] ?? null;
-                $record->region = $location['region'] ?? null;
-                $record->device = detectClientDevice($userAgent);
-                $record->user_agent = $userAgent;
-                $record->reason = $reason ?: 'Auto blacklist';
-                $record->blocked_at = now();
-                $record->unblocked_at = null;
-                $record->unblocked_by = null;
-                $record->save();
-            }
-        } catch (\Throwable $e) {
-        }
-
-        Cache::forget('ip_blacklist_cache');
+if (!function_exists('isSessionBlacklisted')) {
+    function isSessionBlacklisted(?string $sessionId): bool
+    {
+        return blocklist_service()->isSessionBlacklisted($sessionId);
     }
 }
 
 if (!function_exists('forbidden')) {
     function forbidden($request)
     {
-
-        $ip = get_client_ip();
-
-        $rawKeywords = get_option('forbidden_keyword') ?? '';
-        $cleanedKeywords = str_replace(' ', '', $rawKeywords);
-        $keywords = explode(',', $cleanedKeywords);
-
-            if (Str::contains(strtolower($request->fullUrl()), array_unique(
-array_merge($keywords,forbidden_keyword())))) {
-                $redirect = get_option('forbidden_redirect');
-                    $cacheKey = 'attack_attempt_' . $ip;
-
-                    $count = Cache::increment($cacheKey);
-
-                    if ($count === 1) {
-                        Cache::put($cacheKey, 1, now()->addMinutes(30));
-                    }
-                    if ($count >= 3) {
-                        addIpToBlacklist(
-                            $ip,
-                            'Forbidden keyword terdeteksi 3x pada URL: ' . $request->fullUrl(),
-                            $request->userAgent()
-                        );
-                            $message = "
-<b>⛔ IP AUTO BLACKLISTED</b>
-
-<b>📍 IP:</b> <code>{$ip}</code>
-<b>🔁 Total Attempt:</b> <code>{$count}x</code>
-
-<b>Status:</b> 🚫 Permanently Blocked
-";
-
-
-
-                    } else {
-
-
-                            $url = e($request->fullUrl());
-                            $method = e($request->method());
-                            $userAgent = e($request->userAgent());
-                            $time = now()->format('Y-m-d H:i:s');
-
-                            $message = "
-<b>🚨 SECURITY ALERT - TERDETEKSI SERANGAN</b>
-
-<b>📍 IP Address:</b> <code>{$ip}</code>
-<b>🕒 Waktu:</b> <code>{$time}</code>
-<b>🌐 Method:</b> <code>{$method}</code>
-
-<b>🔎 Keyword:</b>
-<code>" . $request->fullUrl() . "</code>
-
-<b>🔁 Total Attempt:</b>
-<code>{$count}x</code>
-
-<b>🔗 URL:</b>
-<code>{$url}</code>
-
-<b>🖥 User Agent:</b>
-<code>{$userAgent}</code>
-
-<b>Status:</b> ❌ Request Diblokir (403)
-";
-
-
-                    }
-                    if($message){
-                        dispatch(function () use ($message) {
-                            sendTelegramBotMessage($message);
-
-                        })->afterResponse();
-                    }
-
-                        abort(403);
-            }
-
-            $clientIp = $ip;
-
-
-
-            $allowOption = trim((string) get_option('allow_ip'));
-
-            $allowIpsRaw = $allowOption !== ''
-                ? array_map('trim', explode(',', $allowOption))
-                : [];
-
-            $allowIps = array_values(array_filter(
-                $allowIpsRaw,
-                fn($ip) => filter_var($ip, FILTER_VALIDATE_IP)
-            ));
-
-
-
-            $blockIps = getBlacklistIps();
-
-                if (in_array($clientIp, $blockIps, true)) {
-
-                    abort(403, 'Access Denied (Blocked IP)');
-                }
-
+        blocklist_service()->handleForbidden($request);
     }
 }
 if (!function_exists('removeIpFromBlacklist')) {
 
     function removeIpFromBlacklist(string $ip): bool
     {
-        $path = storage_path('app/security/ip-blacklist.json');
-        $changed = false;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Jika file tidak ada
-        |--------------------------------------------------------------------------
-        */
-
-        if (file_exists($path)) {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Ambil isi blacklist
-        |--------------------------------------------------------------------------
-        */
-
-            $ips = json_decode(file_get_contents($path), true);
-
-            if (!is_array($ips)) {
-                $ips = [];
-            }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cari IP
-        |--------------------------------------------------------------------------
-        */
-
-            $originalCount = count($ips);
-
-            $ips = array_values(array_filter(
-                $ips,
-                fn($blockedIp) => $blockedIp !== $ip
-            ));
-
-        /*
-        |--------------------------------------------------------------------------
-        | Jika tidak ada perubahan
-        |--------------------------------------------------------------------------
-        */
-
-            $changed = $originalCount !== count($ips);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Simpan ulang JSON
-        |--------------------------------------------------------------------------
-        */
-
-            file_put_contents(
-                $path,
-                json_encode($ips, JSON_PRETTY_PRINT)
-            );
-        }
-
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('blocked_ips')) {
-                $updated = \Leazycms\Web\Models\BlockedIp::query()
-                    ->where('ip', $ip)
-                    ->whereNull('unblocked_at')
-                    ->update([
-                        'unblocked_at' => now(),
-                        'unblocked_by' => auth()->id(),
-                    ]);
-                $changed = $changed || $updated > 0;
-            }
-        } catch (\Throwable $e) {
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Reset cache blacklist
-        |--------------------------------------------------------------------------
-        */
-
-        cache()->forget('ip_blacklist_cache');
-
-        return $changed;
+        return blocklist_service()->removeIpFromBlacklist($ip, auth()->id());
     }
 }
 if (!function_exists('is_ip')) {
