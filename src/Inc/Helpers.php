@@ -1048,7 +1048,7 @@ if (!function_exists('removeIpFromBlacklist')) {
 
     function removeIpFromBlacklist(string $ip): bool
     {
-        return blocklist_service()->removeIpFromBlacklist($ip, auth()->id());
+        return blocklist_service()->removeIpFromBlacklist($ip, Auth::user()->id);
     }
 }
 if (!function_exists('is_ip')) {
@@ -1494,22 +1494,147 @@ if (!function_exists('is_admin')) {
 }
 
 if (!function_exists('use_module')) {
+    if (!function_exists('merge_module_config')) {
+        function merge_module_config($base, $override)
+        {
+            if (!is_array($override)) {
+                return $override;
+            }
+
+            if (!is_array($base)) {
+                return $override;
+            }
+
+            $isList = function (array $arr): bool {
+                return $arr === [] || array_keys($arr) === range(0, count($arr) - 1);
+            };
+
+            $baseIsList = $isList($base);
+            $overrideIsList = $isList($override);
+
+            if ($baseIsList && $overrideIsList) {
+                $shouldUseRowDirective = false;
+                foreach ($override as $row) {
+                    if (is_array($row) && isset($row[0]) && is_string($row[0])) {
+                        $shouldUseRowDirective = true;
+                        break;
+                    }
+                }
+
+                if (!$shouldUseRowDirective) {
+                    return array_merge($base, $override);
+                }
+
+                $result = array_values($base);
+                $indexByLabel = [];
+                foreach ($result as $i => $row) {
+                    if (is_array($row) && isset($row[0]) && is_string($row[0])) {
+                        $indexByLabel[strtolower(trim($row[0]))] = $i;
+                    }
+                }
+
+                foreach ($override as $row) {
+                    if (is_array($row) && isset($row[0]) && is_string($row[0])) {
+                        $labelKey = strtolower(trim($row[0]));
+
+                        if (array_key_exists(1, $row) && $row[1] === false) {
+                            if (isset($indexByLabel[$labelKey])) {
+                                $removeIndex = $indexByLabel[$labelKey];
+                                unset($result[$removeIndex]);
+                                $result = array_values($result);
+                                $indexByLabel = [];
+                                foreach ($result as $i => $r) {
+                                    if (is_array($r) && isset($r[0]) && is_string($r[0])) {
+                                        $indexByLabel[strtolower(trim($r[0]))] = $i;
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+
+                        if (isset($indexByLabel[$labelKey])) {
+                            $result[$indexByLabel[$labelKey]] = $row;
+                            continue;
+                        }
+
+                        $result[] = $row;
+                        $indexByLabel[$labelKey] = count($result) - 1;
+                        continue;
+                    }
+
+                    $result[] = $row;
+                }
+
+                return array_values($result);
+            }
+
+            if (!$baseIsList && !$overrideIsList) {
+                if (isset($override['__unset']) && is_array($override['__unset'])) {
+                    foreach ($override['__unset'] as $unsetKey) {
+                        if (is_string($unsetKey) && array_key_exists($unsetKey, $base)) {
+                            unset($base[$unsetKey]);
+                        }
+                    }
+                    unset($override['__unset']);
+                }
+                foreach ($override as $key => $value) {
+                    if (array_key_exists($key, $base)) {
+                        $base[$key] = merge_module_config($base[$key], $value);
+                    } else {
+                        $base[$key] = $value;
+                    }
+                }
+                return $base;
+            }
+
+            if ($baseIsList && !$overrideIsList) {
+                $result = $base;
+
+                if (isset($override['__remove']) && is_array($override['__remove'])) {
+                    $remove = array_values(array_filter($override['__remove'], fn ($v) => is_string($v)));
+                    if (count($remove)) {
+                        $removeIndex = [];
+                        foreach ($remove as $label) {
+                            $removeIndex[strtolower(trim($label))] = true;
+                        }
+
+                        $result = array_values(array_filter($result, function ($row) use ($removeIndex) {
+                            if (!is_array($row) || !isset($row[0]) || !is_string($row[0])) {
+                                return true;
+                            }
+                            return !isset($removeIndex[strtolower(trim($row[0]))]);
+                        }));
+                    }
+                }
+
+                if (isset($override['__prepend']) && is_array($override['__prepend'])) {
+                    $prepend = $override['__prepend'];
+                    if ($isList($prepend)) {
+                        $result = array_merge($prepend, $result);
+                    }
+                }
+
+                if (isset($override['__append']) && is_array($override['__append'])) {
+                    $append = $override['__append'];
+                    if ($isList($append)) {
+                        $result = array_merge($result, $append);
+                    }
+                }
+
+                return $result;
+            }
+
+            return $override;
+        }
+    }
     function use_module(array $module_selected)
     {
         if (!configIsCached()) {
             foreach ($module_selected as $module => $attr) {
                 if (config('modules.menu.' . $module) !== null) {
                     $module_config = config('modules.menu.' . $module);
-                    if (is_array($attr)) { // Add this check
-                        foreach ($attr as $attr_key => $attr_value) {
-                            if (is_array($attr_value)) {
-                                foreach ($attr_value as $sub_attr_key => $sub_attr_value) {
-                                    $module_config[$attr_key][$sub_attr_key] = $sub_attr_value;
-                                }
-                            } else {
-                                $module_config[$attr_key] = $attr_value;
-                            }
-                        }
+                    if (is_array($attr)) {
+                        $module_config = merge_module_config($module_config, $attr);
                     }
                     config(['modules.menu.' . $module => $module_config]);
                     add_module($module_config);

@@ -622,7 +622,7 @@ class PanelController extends Controller implements HasMiddleware
                         );
                 }
             }
-            if (is_main_domain()) {
+            if (is_main_domain() && config('modules.multisite_enabled')) {
                 if ($request->favicon_for_all) {
                     $match = ['name' => 'favicon_for_all'];
                     if (app()->has('tenant')) {
