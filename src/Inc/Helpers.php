@@ -2465,9 +2465,38 @@ if (!function_exists('get_menu')) {
     function get_menu($name)
     {
         static $menus = [];
+        static $recached = [];
         $cacheKey = 'menu';
         if (config('modules.multisite_enabled')) {
             $cacheKey .= ':' . tenant()->id;
+        }
+
+        $needsRecache = !Cache::has($cacheKey);
+
+        if (!$needsRecache && !isset($menus[$cacheKey])) {
+            $menus[$cacheKey] = Cache::get($cacheKey, []);
+        }
+
+        if (
+            !$needsRecache &&
+            !array_key_exists($name, $menus[$cacheKey] ?? [])
+        ) {
+            $menuQuery = \Leazycms\Web\Models\Post::query()
+                ->whereType('menu')
+                ->whereStatus('publish')
+                ->where('slug', $name);
+
+            if (config('modules.multisite_enabled')) {
+                $menuQuery->where('tenant_id', tenant()->id);
+            }
+
+            $needsRecache = $menuQuery->exists();
+        }
+
+        if ($needsRecache && empty($recached[$cacheKey])) {
+            recache_menu();
+            unset($menus[$cacheKey]);
+            $recached[$cacheKey] = true;
         }
 
         if (!isset($menus[$cacheKey])) {
@@ -2491,7 +2520,7 @@ if (!function_exists('get_menu')) {
         foreach ($menuIndex as $id => &$item) {
             if ($item['parent'] == 0) {
                 $menuTree[] = &$item;
-            } else {
+            } elseif (isset($menuIndex[$item['parent']])) {
                 $menuIndex[$item['parent']]['sub'][] = &$item;
             }
         }
@@ -2692,7 +2721,38 @@ if (!function_exists('get_banner')) {
     function get_banner($name, $limit = 1)
     {
         static $requestCache = [];
+        static $recached = [];
         $cacheKey = 'banner' . (config('modules.multisite_enabled') ? ':' . tenant()->id : '');
+
+        $needsRecache = !cache()->has($cacheKey);
+
+        if (!$needsRecache && !isset($requestCache[$cacheKey])) {
+            $requestCache[$cacheKey] = cache()->get($cacheKey) ?? [];
+        }
+
+        if (
+            !$needsRecache &&
+            !array_key_exists($name, $requestCache[$cacheKey] ?? [])
+        ) {
+            $bannerQuery = \Leazycms\Web\Models\Post::query()
+                ->whereType('banner')
+                ->whereStatus('publish')
+                ->whereHas('category', function ($query) use ($name) {
+                    $query->where('slug', $name);
+                });
+
+            if (config('modules.multisite_enabled')) {
+                $bannerQuery->where('tenant_id', tenant()->id);
+            }
+
+            $needsRecache = $bannerQuery->exists();
+        }
+
+        if ($needsRecache && empty($recached[$cacheKey])) {
+            recache_banner();
+            unset($requestCache[$cacheKey]);
+            $recached[$cacheKey] = true;
+        }
 
         if (!isset($requestCache[$cacheKey])) {
             $requestCache[$cacheKey] = cache()->get($cacheKey) ?? [];
