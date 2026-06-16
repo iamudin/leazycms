@@ -70,7 +70,7 @@ class Post extends BaseModel
             }
 
             try {
-                self::flushCacheTags(["type_{$post->type}", 'categories', 'tags', 'authors']);
+                self::flushCacheTags(self::postCacheTags($post));
             } catch (\Exception $e) {
                 Log::warning('Cache flush error on delete: ' . $e->getMessage());
             }
@@ -93,9 +93,17 @@ class Post extends BaseModel
                 }
             }
             try {
-                self::flushCacheTags(["type_{$post->type}", 'categories', 'tags', 'authors']);
+                self::flushCacheTags(self::postCacheTags($post));
             } catch (\Exception $e) {
                 Log::warning('Cache flush error on save: ' . $e->getMessage());
+            }
+        });
+
+        static::created(function ($post) {
+            try {
+                self::flushCacheTags(self::postCacheTags($post));
+            } catch (\Exception $e) {
+                Log::warning('Cache flush error on create: ' . $e->getMessage());
             }
         });
 
@@ -104,7 +112,26 @@ class Post extends BaseModel
                 // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
                 Cache::forget('thumbnail:' . $post->id);
             }
+
+            try {
+                self::flushCacheTags(self::postCacheTags($post));
+            } catch (\Exception $e) {
+                Log::warning('Cache flush error on saved: ' . $e->getMessage());
+            }
         });
+
+        static::deleted(function ($post) {
+            try {
+                self::flushCacheTags(self::postCacheTags($post));
+            } catch (\Exception $e) {
+                Log::warning('Cache flush error on deleted: ' . $e->getMessage());
+            }
+        });
+    }
+
+    private static function postCacheTags(self $post): array
+    {
+        return ['posts', "type_{$post->type}", 'categories', 'tags', 'authors'];
     }
     public function user()
     {
@@ -343,6 +370,8 @@ class Post extends BaseModel
      */
     private static function flushCacheTags(array $tags): void
     {
+        self::$requestCache = [];
+
         if (self::cacheSupportsTag()) {
             Cache::tags($tags)->flush();
             return;
@@ -360,9 +389,6 @@ class Post extends BaseModel
         foreach (array_unique($allKeys) as $key) {
             Cache::forget($key);
         }
-
-        // Also clear request cache
-        self::$requestCache = [];
     }
 
     /**
