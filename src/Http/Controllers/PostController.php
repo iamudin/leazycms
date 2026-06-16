@@ -542,6 +542,11 @@ $post_field = [
                                     });
                                 });
                             }
+                            if(current_module()->form->category){
+                                $q->orWhereHas('category', function ($q) use ($search) {
+                                    $q->where('name', 'like', $search . '%');
+                                });
+                            }
                         });
                 }
                 if ($status = $req->status) {
