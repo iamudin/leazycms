@@ -747,6 +747,16 @@ if (!function_exists('realtime_timer')) {
     }
 }
 
+if (!function_exists('get_current_host')) {
+    function get_current_host()
+    {
+        if (app()->runningInConsole()) {
+            return config('app.url') ? parse_url(config('app.url'), PHP_URL_HOST) : 'localhost';
+        }
+        return request()->getHost();
+    }
+}
+
 if (!function_exists('is_main_domain')) {
     function is_main_domain()
     {
@@ -2466,17 +2476,22 @@ if (!function_exists('get_menu')) {
     {
         static $menus = [];
         static $recached = [];
-        $cacheKey = 'menu';
-        if (config('modules.multisite_enabled')) {
-            $cacheKey .= ':' . tenant()->id;
+        $cacheKey = get_current_host() . ':menu';
+           // Hanya ambil dari cache jika belum ada di static
+        if (!isset($menus[$cacheKey])) {
+            // Cek apakah cache ada dan ambil sekaligus
+            $cachedData = Cache::get($cacheKey);
+            if ($cachedData !== null) {
+                $menus[$cacheKey] = $cachedData;
+                $needsRecache = false;
+            } else {
+                $needsRecache = true;
+            }
+        } else {
+            $needsRecache = false;
         }
 
-        $needsRecache = !Cache::has($cacheKey);
-
-        if (!$needsRecache && !isset($menus[$cacheKey])) {
-            $menus[$cacheKey] = Cache::get($cacheKey, []);
-        }
-
+        // Cek apakah menu dengan nama $name ada
         if (
             !$needsRecache &&
             !array_key_exists($name, $menus[$cacheKey] ?? [])
@@ -2485,11 +2500,6 @@ if (!function_exists('get_menu')) {
                 ->whereType('menu')
                 ->whereStatus('publish')
                 ->where('slug', $name);
-
-            if (config('modules.multisite_enabled')) {
-                $menuQuery->where('tenant_id', tenant()->id);
-            }
-
             $needsRecache = $menuQuery->exists();
         }
 
@@ -2497,8 +2507,11 @@ if (!function_exists('get_menu')) {
             recache_menu();
             unset($menus[$cacheKey]);
             $recached[$cacheKey] = true;
+            // Ambil lagi dari cache setelah recache
+            $menus[$cacheKey] = Cache::get($cacheKey, []);
         }
 
+        // Pastikan static $menus sudah diisi
         if (!isset($menus[$cacheKey])) {
             $menus[$cacheKey] = Cache::get($cacheKey, []);
         }
@@ -2637,13 +2650,7 @@ if (!function_exists('recache_banner')) {
         $posts = \Leazycms\Web\Models\Post::with('category')
             ->onType('banner')
             ->published()
-            ->select('media', 'redirect_to', 'title', 'category_id', 'data_field'); // Pastikan 'category_id' dipilih untuk relasi
-
-        if (config('modules.multisite_enabled')) {
-            $posts = $posts->where('tenant_id', tenant()->id);
-        }
-
-        $posts = $posts->get();
+            ->select('media', 'redirect_to', 'title', 'category_id', 'data_field')->get();
         // Group by category name and map the results
         $result = $posts->groupBy('category.slug') // Asumsikan 'name' adalah atribut pada model kategori
             ->mapWithKeys(function ($items, $categoryName) {
@@ -2658,10 +2665,7 @@ if (!function_exists('recache_banner')) {
                     })->toArray()
                 ];
             })->toArray();
-            $cacheKey = 'banner';
-        if (config('modules.multisite_enabled')) {
-            $cacheKey .= ':' . tenant()->id;
-        }
+            $cacheKey = get_current_host() . ':banner';
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () use ($result) {
             return $result;
@@ -2671,17 +2675,10 @@ if (!function_exists('recache_banner')) {
 if (!function_exists('recache_menu')) {
     function recache_menu()
     {
-        $cacheKey = 'menu';
-        if (config('modules.multisite_enabled')) {
-            $cacheKey .= ':' . tenant()->id;
-        }
+        $cacheKey = get_current_host() . ':menu';
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () {
-            if (config('modules.multisite_enabled')) {
-                $menu = \Leazycms\Web\Models\Post::where('tenant_id', tenant()->id)->whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
-            } else {
                 $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
-            }
             return $menu;
         });
     }
@@ -2722,14 +2719,23 @@ if (!function_exists('get_banner')) {
     {
         static $requestCache = [];
         static $recached = [];
-        $cacheKey = 'banner' . (config('modules.multisite_enabled') ? ':' . tenant()->id : '');
+        $cacheKey = get_current_host() . ':banner';
 
-        $needsRecache = !cache()->has($cacheKey);
-
-        if (!$needsRecache && !isset($requestCache[$cacheKey])) {
-            $requestCache[$cacheKey] = cache()->get($cacheKey) ?? [];
+        // Hanya ambil dari cache jika belum ada di static
+        if (!isset($requestCache[$cacheKey])) {
+            // Cek dan ambil dari cache sekaligus
+            $cachedData = cache()->get($cacheKey);
+            if ($cachedData !== null) {
+                $requestCache[$cacheKey] = $cachedData;
+                $needsRecache = false;
+            } else {
+                $needsRecache = true;
+            }
+        } else {
+            $needsRecache = false;
         }
 
+        // Cek apakah banner dengan nama $name ada
         if (
             !$needsRecache &&
             !array_key_exists($name, $requestCache[$cacheKey] ?? [])
@@ -2741,10 +2747,6 @@ if (!function_exists('get_banner')) {
                     $query->where('slug', $name);
                 });
 
-            if (config('modules.multisite_enabled')) {
-                $bannerQuery->where('tenant_id', tenant()->id);
-            }
-
             $needsRecache = $bannerQuery->exists();
         }
 
@@ -2752,8 +2754,11 @@ if (!function_exists('get_banner')) {
             recache_banner();
             unset($requestCache[$cacheKey]);
             $recached[$cacheKey] = true;
+            // Ambil lagi dari cache setelah recache
+            $requestCache[$cacheKey] = cache()->get($cacheKey) ?? [];
         }
 
+        // Pastikan static $requestCache sudah diisi
         if (!isset($requestCache[$cacheKey])) {
             $requestCache[$cacheKey] = cache()->get($cacheKey) ?? [];
         }

@@ -375,7 +375,7 @@ HTML;
         }
             app()->singleton('default.options', function ()  {
             return Cache::rememberForever(
-            "default:options",
+            "tenant:master:".parse_url(config('app.url'), PHP_URL_HOST).":options",
             fn() => Option::withoutGlobalScope('tenant')->WhereNull('tenant_id')->pluck('value', 'name')->toArray()
         );
     });
@@ -383,7 +383,7 @@ HTML;
         URL::forceRootUrl($request->getSchemeAndHttpHost());
         app()->singleton('tenant.options', function () use ($tenant) {
             return Cache::rememberForever(
-                "tenant:{$tenant->id}:options",
+                "tenant:{$tenant->domain}:options",
                 fn() =>Option::pluck('value', 'name')
                     ->toArray()
             );

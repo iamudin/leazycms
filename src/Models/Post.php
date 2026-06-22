@@ -87,7 +87,7 @@ class Post extends BaseModel
                     $src = $img->getAttribute('src');
                     if (strpos($src, 'data:image') !== 0) {
                         // Simpan ke dalam cache langsung saat saving
-                        Cache::put('thumbnail:' . $post->id, $src);
+                        Cache::put(self::getCurrentHost() . ':thumbnail:' . $post->id, $src);
                         break;
                     }
                 }
@@ -110,7 +110,7 @@ class Post extends BaseModel
         static::saved(function ($post) {
             if (!empty($post->media) && media_exists($post->media)) {
                 // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
-                Cache::forget('thumbnail:' . $post->id);
+                Cache::forget(self::getCurrentHost() . ':thumbnail:' . $post->id);
             }
 
             try {
@@ -127,6 +127,14 @@ class Post extends BaseModel
                 Log::warning('Cache flush error on deleted: ' . $e->getMessage());
             }
         });
+    }
+
+    private static function getCurrentHost(): string
+    {
+        if (app()->runningInConsole()) {
+            return config('app.url') ? parse_url(config('app.url'), PHP_URL_HOST) : 'localhost';
+        }
+        return request()->getHost();
     }
 
     private static function postCacheTags(self $post): array
@@ -169,7 +177,7 @@ class Post extends BaseModel
             return media($this->media)->url();
         }
         // Cek cache
-        $cacheKey = 'thumbnail:' . $this->id;
+        $cacheKey = config('modules.multisite_enabled') ? tenant()->domain . ':' . ':thumbnail:' . $this->id : self::getCurrentHost() . ':thumbnail:' . $this->id;
         return Cache::get($cacheKey, noimage());
     }
     public function getThumbnailTextAttribute()
@@ -256,20 +264,20 @@ class Post extends BaseModel
     function cachedpost($type = null)
     {
         if (!$type) return collect([]);
-        $cacheKey = "cachedpost:{$type}";
+        $cacheKey = self::getCurrentHost() . ":cachedpost:{$type}";
         if (app()->has('tenant')) {
             $cacheKey .= ':tenant:' . tenant()->id;
         }
         if (isset(self::$requestCache[$cacheKey])) {
             return self::$requestCache[$cacheKey];
         }
-        $data = Cache::get($type, []);
+        $data = Cache::get($cacheKey, []);
         return self::$requestCache[$cacheKey] = collect($data);
     }
 
     public function categories($type)
     {
-        $cacheKey = "categories_list:{$type}";
+        $cacheKey = self::getCurrentHost() . ":categories_list:{$type}";
         $tags = ['categories', "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type) {
@@ -287,7 +295,7 @@ class Post extends BaseModel
     {
         $module = get_module($type);
         $category = $module?->form?->category ? ['category'] : [];
-        $cacheKey = "posts:{$type}:limit:{$limit}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:limit:{$limit}";
         $tags = $this->cacheTag($type);
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $limit, $category) {
@@ -304,7 +312,7 @@ class Post extends BaseModel
     function index_author($type = false)
     {
         $typeKey = $type ?: 'all';
-        $cacheKey = "authors:{$typeKey}";
+        $cacheKey = self::getCurrentHost() . ":authors:{$typeKey}";
         $tags = $type ? ['authors', "type_{$type}"] : ['authors'];
 
         return $this->getCached($cacheKey, $tags, function () use ($type) {
@@ -326,7 +334,7 @@ class Post extends BaseModel
     function index_sort_by_category($type, $sortby = 'sort', $sort = 'ASC')
     {
         $sort = strtoupper($sort) === 'DESC' ? 'DESC' : 'ASC';
-        $cacheKey = "categories:{$type}:sortby:{$sortby}:order:{$sort}";
+        $cacheKey = self::getCurrentHost() . ":categories:{$type}:sortby:{$sortby}:order:{$sort}";
         $tags = ['categories', "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $sortby, $sort) {
@@ -535,7 +543,7 @@ class Post extends BaseModel
     function index_category($type, $justIndex = false)
     {
         $mode = $justIndex ? 'justIndex' : 'withCount';
-        $cacheKey = "categories:{$type}:{$mode}";
+        $cacheKey = self::getCurrentHost() . ":categories:{$type}:{$mode}";
         $tags = ['categories', "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $justIndex) {
@@ -558,7 +566,7 @@ class Post extends BaseModel
     {
         $module = get_module($type);
         $category = $module?->form?->category ? ['category'] : [];
-        $cacheKey = "posts:{$type}:skip:{$skip}:limit:{$limit}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:skip:{$skip}:limit:{$limit}";
         $tags = ["posts", "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $skip, $limit, $category) {
@@ -577,7 +585,7 @@ class Post extends BaseModel
     function index_tags($type = false)
     {
         $typeKey = $type ? $type : 'all';
-        $cacheKey = "tags:{$typeKey}";
+        $cacheKey = self::getCurrentHost() . ":tags:{$typeKey}";
         $tags = ['tags'];
         if ($type) {
             $tags[] = "type_{$type}";
@@ -614,7 +622,7 @@ class Post extends BaseModel
     {
         $order = $order !== 'asc' ? 'desc' : 'asc';
         $limitKey = $limit ? "limit:{$limit}" : "all";
-        $cacheKey = "posts:{$type}:sort:{$order}:{$limitKey}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:sort:{$order}:{$limitKey}";
         $tags = ["posts", "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $order, $limit) {
@@ -632,7 +640,7 @@ class Post extends BaseModel
     function index_sort_by_parent($type, $order = 'asc')
     {
         $order = $order !== 'asc' ? 'desc' : 'asc';
-        $cacheKey = "posts:{$type}:parent_sort:{$order}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:parent_sort:{$order}";
         $tags = ["posts", "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $order) {
@@ -658,7 +666,7 @@ class Post extends BaseModel
                 ->paginate($paginate);
         }
 
-        $cacheKey = "posts:{$type}:index:all";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:index:all";
         $tags = $this->cacheTag($type);
 
         return $this->getCached($cacheKey, $tags, function () use ($type) {
@@ -674,7 +682,7 @@ class Post extends BaseModel
 
     public function index_popular($type, $limit)
     {
-        $cacheKey = "posts:{$type}:popular:limit:{$limit}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:popular:limit:{$limit}";
         $tags = ["posts", "type_{$type}"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $limit) {
@@ -693,7 +701,7 @@ class Post extends BaseModel
     function index_pinned($limit, $type = false)
     {
         $typeKey = $type ? $type : 'all';
-        $cacheKey = "posts:pinned:{$typeKey}:limit:{$limit}";
+        $cacheKey = self::getCurrentHost() . ":posts:pinned:{$typeKey}:limit:{$limit}";
         $tags = $type ? ["posts", "type_{$type}"] : ["posts"];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $limit) {
@@ -724,7 +732,7 @@ class Post extends BaseModel
         }
 
         $limitKey = $limit ? "limit:{$limit}" : 'all';
-        $cacheKey = "posts:{$type}:tag:{$tag}:{$limitKey}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:tag:{$tag}:{$limitKey}";
         $tags = ['posts', "type_{$type}", 'tags'];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $tag, $limit) {
@@ -754,7 +762,7 @@ class Post extends BaseModel
                 ->paginate($paginate);
         }
 
-        $cacheKey = "posts:{$type}:category:{$slug}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:category:{$slug}";
         $tags = ['posts', "type_{$type}", 'categories'];
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $slug) {
@@ -774,7 +782,7 @@ class Post extends BaseModel
     function index_recent($type, $except = null)
     {
         $exceptKey = $except ? "except:{$except}" : 'noexcept';
-        $cacheKey = "posts:{$type}:recent:{$exceptKey}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:recent:{$exceptKey}";
         $tags = $this->cacheTag($type);
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $except) {
@@ -807,7 +815,7 @@ class Post extends BaseModel
                 ->paginate(get_option('post_perpage'));
         }
 
-        $cacheKey = "posts:{$type}:child:{$id}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:child:{$id}";
         $tags = $this->cacheTag($type);
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $id) {
@@ -823,7 +831,7 @@ class Post extends BaseModel
     }
     function detail_by_title($type, $title)
     {
-        $cacheKey = "posts:{$type}:detail_title:" . md5($title);
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:detail_title:" . md5($title);
         $tags = $this->cacheTag($type);
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $title) {
@@ -847,7 +855,7 @@ class Post extends BaseModel
         }
 
         $nameKey = $name ? "slug:{$name}" : 'first';
-        $cacheKey = "posts:{$type}:detail:{$nameKey}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:detail:{$nameKey}";
         $tags = $this->cacheTag($type);
 
         return $this->getCached($cacheKey, $tags, function () use ($type, $name, $with) {
@@ -911,7 +919,7 @@ class Post extends BaseModel
             return null;
         }
 
-        $cacheKey = "posts:{$this->type}:history:{$this->id}";
+        $cacheKey = self::getCurrentHost() . ":posts:{$this->type}:history:{$this->id}";
         $tags = $this->cacheTag($this->type);
 
         return $this->getCached($cacheKey, $tags, function () {

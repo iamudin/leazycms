@@ -20,14 +20,14 @@ class VisitorStatsController extends Controller
         */
 
         $title = strtoupper(
-            get_option('singkatan_organisasi') ?? 'JUDULWEB'
+            get_option('logo_title') ?? 'JUDULWEB'
         );
 
-        $slogan = get_option('keterangan_organisasi')
+        $slogan = get_option('logo_description')
             ?? 'DESKRIPSIWEB';
 
-        $logoPath = get_option('logo_organisasi')
-            ? media(get_option('logo_organisasi'))->path()
+        $logoPath = get_option('logo_image') && media_exists(get_option('logo_image'))
+            ? media(get_option('logo_image'))->path()
             : public_path('noimage.png');
 
         /*

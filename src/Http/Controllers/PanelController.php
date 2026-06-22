@@ -125,7 +125,37 @@ class PanelController extends Controller implements HasMiddleware
         }
 
         if ($request->isMethod('post')) {
-            $data = Comment::with('user')->latest();
+            // Handle reply
+            if ($request->input('action') === 'reply') {
+                $validated = $request->validate([
+                    'parent_id' => 'required|exists:comments,id',
+                    'content' => 'required|string|max:500',
+                ]);
+                $parent = Comment::findOrFail($request->parent_id);
+                $parent->childs()->create([
+                    'user_id' => auth()->id(),
+                    'content' => $validated['content'],
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'reference' => $parent->reference,
+                    'status' => 'publish',
+                    'ip' => $request->ip(),
+                    'commentable_type' => $parent->commentable_type,
+                    'commentable_id' => $parent->commentable_id,
+                ]);
+                return response()->json(['success' => true]);
+            }
+            // Handle toggle status
+            if ($request->input('action') === 'toggle-status') {
+                $validated = $request->validate([
+                    'comment_id' => 'required|exists:comments,id',
+                ]);
+                $target = Comment::findOrFail($validated['comment_id']);
+                $target->status = $target->status === 'publish' ? 'draft' : 'publish';
+                $target->save();
+                return response()->json(['success' => true, 'new_status' => $target->status]);
+            }
+            $data = Comment::with('user', 'childs')->whereNull('parent_id')->latest();
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
                 ->filter(
@@ -135,7 +165,25 @@ class PanelController extends Controller implements HasMiddleware
                     return '<code>' . Carbon::parse($row->created_at)->diffForHumans() . '</code>';
                 })
                 ->addColumn('content', function ($row) {
-                    return '<p>' . $row->content . '</p>';
+                    $html = '<p>' . $row->content . '</p>';
+                    if ($row->childs->count()) {
+                        foreach ($row->childs as $child) {
+                            $statusBadge = $child->status === 'publish' ? 'badge-success' : 'badge-warning';
+                            $html .= '<div class="ml-2 mt-2 pl-1 border-l-2 border-info" id="reply-' . $child->id . '">';
+                            $html .= '<div class="d-flex align-items-center mb-1">';
+                            $html .= '<small class="text-info mr-2"><i class="fa fa-reply"></i> Admin</small>';
+                            $html .= '<span class="badge ' . $statusBadge . '">' . strtoupper($child->status) . '</span>';
+                            $html .= '</div>';
+                            $html .= '<p class="mb-1 small">' . $child->content . '</p>';
+                            $html .= '<div class="small">';
+                            $html .= '<i onclick="toggleCommentStatus(' . $child->id . ')" class="pointer fa ' . ($child->status === 'publish' ? 'text-danger fa-save' : 'text-success fa-globe') . ' mr-1">';
+                            $html .= '</i>';
+                            $html .= '<i onclick="deleteAlert(\'' . route('comments', $child->id) . '\')" class="fa fa-trash-alt text-danger pointer"></i>';
+                            $html .= '</div>';
+                            $html .= '</div>';
+                        }
+                    }
+                    return $html;
                 })
                 ->addColumn('reference', function ($row) {
                     return '<a target="_blank" href="' . $row->reference . '">' . $row->reference . '</a>';
@@ -150,13 +198,20 @@ class PanelController extends Controller implements HasMiddleware
 
                     return $sender;
                 })
+                ->addColumn('status', function ($row) {
+                    return '<span class="badge badge-' . ($row->status === 'publish' ? 'success' : 'warning') . '">' . strtoupper($row->status) . '</span>';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
+                    $btn .= '<button onclick="openReplyModal(' . $row->id . ')" class="btn btn-sm btn-info fa fa-reply"></button>';
+                    $btn .= '<button onclick="toggleCommentStatus(' . $row->id . ')" class="btn btn-sm btn-' . ($row->status === 'publish' ? 'warning' : 'success') . '">';
+                    $btn .= $row->status === 'publish' ? 'Draft' : 'Publish';
+                    $btn .= '</button>';
                     $btn .= '<button onclick="deleteAlert(\'' . route('comments', $row->id) . '\')" class="btn btn-sm btn-danger fa fa-trash-alt"></button>';
                     $btn .= '</div>';
                     return $btn;
                 })
-                ->rawColumns(['created_at', 'sender', 'action', 'content', 'DT_RowIndex', 'reference'])
+                ->rawColumns(['created_at', 'sender', 'action', 'content', 'DT_RowIndex', 'reference', 'status'])
                 ->toJson();
         }
 
@@ -972,7 +1027,7 @@ class PanelController extends Controller implements HasMiddleware
                                         'file' => $request->file(_us($field[0])),
                                         'purpose' => _us($field[0]),
                                         'width' => 1700,
-                                        'mime_type' => explode(',', $field[2]),
+                                        'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif','image/jpeg','image/png','image/webp'],
                                         'self_upload' => true,
                                     ]);
 
