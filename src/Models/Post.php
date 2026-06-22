@@ -419,9 +419,7 @@ class Post extends BaseModel
 
     private function getCached($cacheKey, array $tags, \Closure $callback)
     {
-        if (app()->has('tenant')) {
-            $cacheKey .= ":tenant:" . tenant()->id;
-        }
+
 
         if (array_key_exists($cacheKey, self::$requestCache)) {
             return self::$requestCache[$cacheKey];
