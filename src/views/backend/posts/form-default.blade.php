@@ -196,7 +196,6 @@
                     @if ($module->form->thumbnail)
                         <div class="card">
                             <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Gambar</p>
-
                             <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}"/>
                             <input accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="compress-image form-control-file form-control-sm"
                                 name="media" value="">

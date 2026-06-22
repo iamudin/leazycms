@@ -134,7 +134,7 @@ class Post extends BaseModel
         if (app()->runningInConsole()) {
             return config('app.url') ? parse_url(config('app.url'), PHP_URL_HOST) : 'localhost';
         }
-        return request()->getHost();
+        return config('modules.multisite_enabled')  && app()->has('tenant') ? tenant()->domain : request()->getHost();
     }
 
     private static function postCacheTags(self $post): array
@@ -174,7 +174,10 @@ class Post extends BaseModel
     public function getThumbnailAttribute()
     {
         if ($this->media) {
-            return media($this->media)->url();
+            if(config('modules.multisite_enabled') && app()->has('tenant')){
+                return media($this->media,$this->tenant?->domain ?? null)->url();
+            }
+                return media($this->media)->url();
         }
         // Cek cache
         $cacheKey = config('modules.multisite_enabled') ? tenant()->domain . ':' . ':thumbnail:' . $this->id : self::getCurrentHost() . ':thumbnail:' . $this->id;
