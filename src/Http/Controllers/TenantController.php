@@ -294,7 +294,7 @@ class TenantController extends Controller implements HasMiddleware
 
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
-        Cache::forget("tenant:{$tenant->id}:options");
+        Cache::forget("tenant:{$tenant->domain}:options");
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil diupdate');
     }
@@ -358,8 +358,9 @@ class TenantController extends Controller implements HasMiddleware
         $domain = $tenant->domain;
         $tenantId = $tenant->id;
         query()->where('tenant_id', $tenantId)->forceDelete();
+        Option::whereTenantId($tenantId)->delete();
         Cache::forget("tenant:{$domain}");
-        Cache::forget("tenant:{$tenantId}:options");
+        Cache::forget("tenant:{$domain}:options");
         $tenant->delete();
         return response()->json(['success' => 'Tenant berhasil dihapus']);
     }
