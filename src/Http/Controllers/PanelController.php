@@ -481,7 +481,7 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 }
             }
-            Cache::forget('tenant:' . tenant()->id . ':options');
+            Cache::forget('tenant:' . tenant()->domain . ':options');
 
             return back()->with('success', 'Berhasil Diupdate');
         }
@@ -537,7 +537,7 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
             if (app()->has('tenant')) {
-                cache()->forget('tenant:' . tenant()->id . ':options');
+                cache()->forget('tenant:' . tenant()->domain . ':options');
             }
 
             return back()->with('success', 'Profile berhasil diupdate!');
@@ -898,9 +898,10 @@ class PanelController extends Controller implements HasMiddleware
             }
             if (config('modules.multisite_enabled')) {
                 if (is_main_domain()) {
-                    cache()->forget('default:options');
+                    cache()->forget("tenant:master:".parse_url(config('app.url'), PHP_URL_HOST).":options");
+                }else{
+                cache()->forget('tenant:' . tenant()->domain . ':options');
                 }
-                cache()->forget('tenant:' . tenant()->id . ':options');
             }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
@@ -1052,7 +1053,7 @@ class PanelController extends Controller implements HasMiddleware
                     $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
                 }
                 if (app()->has('tenant')) {
-                    cache()->forget('tenant:' . tenant()->id . ':options');
+                    cache()->forget('tenant:' . tenant()->domain . ':options');
                 }
 
                 return back()->with('success', 'Berhasil diupdate');
