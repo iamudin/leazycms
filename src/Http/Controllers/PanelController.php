@@ -898,10 +898,11 @@ class PanelController extends Controller implements HasMiddleware
             }
             if (config('modules.multisite_enabled')) {
                 if (is_main_domain()) {
-                    cache()->forget("tenant:master:".parse_url(config('app.url'), PHP_URL_HOST).":options");
-                }else{
-                cache()->forget('tenant:' . tenant()->domain . ':options');
+
+                        Cache::forget("tenant:master:".parse_url(config('app.url'), PHP_URL_HOST).":options");
                 }
+                        Cache::forget('tenant:' . tenant()->domain . ':options');
+
             }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
