@@ -232,7 +232,7 @@ class RateLimit
     }
         $this->logging_request($request);
         $this->dangerous_request($request);
-        if (!in_array($request->segment(1), ['favicon.ico','logo.webp','stats.webp','stats.png','stats.jpg']) && !$request->ajax() && app()->environment('production') && !Route::is('stream') && !Route::is('captcha')) {
+        if (!in_array($request->segment(1), ['favicon.ico','logo.webp','stats.webp','stats.png','stats.jpg',admin_path()]) && !$request->ajax() && app()->environment('production') && !Route::is('stream') && !Route::is('captcha')) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request);
