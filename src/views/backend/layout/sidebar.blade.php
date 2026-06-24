@@ -166,10 +166,13 @@
                     @endforeach
                 @endif
         @endif
-        @if(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled') && is_main_domain())
+        
+        @if(get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled'))
+       
         @if ($ext = config('modules.extension_module'))
 
         @if(Auth::user()->level == 'admin')
+
         <li
             class="text-muted"
             style="padding: 12px 10px; font-size: small; background: #000"
@@ -210,6 +213,7 @@
             </ul>
         </li>
         @else
+
         @foreach (collect($row->module)->where('only_admin', false) as $module)
         <li title="{{ $module->name }}">
             <a
