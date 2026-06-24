@@ -191,13 +191,22 @@ if (!function_exists('_ignoreThis')) {
         $options = config('modules.config.option', []);
 
         // cek apakah sudah ada key tersebut
-        if (!array_key_exists($key, $options)) {
+        if (array_key_exists($key, $options)) {
+            // jika sudah ada, pastikan nilai yang ada adalah array sebelum merge
+            if (is_array($options[$key])) {
+                // merge dengan array baru (recursive untuk nested structure)
+                $options[$key] = array_merge_recursive($options[$key], $array);
+            } else {
+                // jika bukan array, ganti dengan array baru
+                $options[$key] = $array;
+            }
+        } else {
             // jika belum ada, tambahkan
             $options[$key] = $array;
-
-            // set ulang config (runtime saja, tidak menulis file)
-            config(['modules.config.option' => $options]);
         }
+
+        // set ulang config (runtime saja, tidak menulis file)
+        config(['modules.config.option' => $options]);
 
         return config('modules.config.option');
     }
@@ -842,6 +851,20 @@ if (!function_exists('getThumbUrl')) {
         }
 
         return null; // Jika gambar dengan class 'lz-thumbnail' tidak ditemukan
+    }
+}
+
+if (!function_exists('map_by_coordinate')) {
+    function map_by_coordinate($long, $lat, $zoom = 15)
+    {
+        if (empty($lat) || empty($long)) {
+            return null;
+        }
+        
+        // Using Google Maps embed without API key (works for basic use)
+        $embedUrl = "https://www.google.com/maps?q={$lat},{$long}&z={$zoom}&output=embed";
+        
+        return $embedUrl;
     }
 }
 

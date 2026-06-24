@@ -928,7 +928,11 @@ return [
     ],
     'config' => [
         'web_type' => null,
-        'option' => array(),
+        'option' => array('template'=>[
+        ['Logo Title','text'],
+        ['Logo Description','text'],
+        ['Logo Image','file']
+    ]),
         'template' => array(),
         'template_info' => array(),
     ],

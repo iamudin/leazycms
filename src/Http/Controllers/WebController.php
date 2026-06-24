@@ -64,7 +64,7 @@ class WebController extends Controller
 
         $modul = current_module();
         config(['modules.page_name' =>  $modul->title]);
-        $perPage = $modul->web->post_perpage ?? get_option('post_perpage');
+        $perPage = $modul->web->post_perpage ?? get_option('post_perpage')  ?? 10;
         $data = array(
             'index' => $modul->web->auto_query ? $post->index($modul->name, $perPage) : [],
             'module' => $modul,

@@ -88,6 +88,7 @@
                                 @endforeach
                             </select>
                   </div>
+       
                          @if($template_asset && is_array($template_asset))
                  @foreach ($template_asset as $field)
                   <div class="col-lg-12">
