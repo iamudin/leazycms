@@ -228,8 +228,7 @@ class WebController extends Controller
     public function category($slug = null)
     {
         $modul = get_module(get_post_type());
-        $category = Category::select('id', 'name', 'slug', 'url', 'icon', 'description', 'type')
-            ->where('slug', 'like', $slug . '%')
+        $category = Category::where('slug', 'like', $slug . '%')
             ->whereType($modul->name)
             ->whereStatus('publish')
             ->whereHas('posts')

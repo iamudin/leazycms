@@ -70,7 +70,6 @@ trait BelongsToTenant
 
             // ambil tenant asli dari database (bukan dari request)
             $originalTenantId = $model->tenant_id;
-
             if ($originalTenantId !== tenant()->id) {
                 abort(403, 'Forbidden: Anda tidak memiliki akses ke data ini');
             }
