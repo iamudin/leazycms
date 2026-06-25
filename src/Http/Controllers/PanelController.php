@@ -21,6 +21,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Leazycms\Web\Jobs\BackupExportJob;
 use Leazycms\Web\Jobs\BackupImportJob;
+use Illuminate\Support\Facades\Auth;
 
 class PanelController extends Controller implements HasMiddleware
 {
@@ -133,10 +134,10 @@ class PanelController extends Controller implements HasMiddleware
                 ]);
                 $parent = Comment::findOrFail($request->parent_id);
                 $parent->childs()->create([
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                     'content' => $validated['content'],
-                    'name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
+                    'name' => Auth::user()->name,
+                    'email' => Auth::user()->email,
                     'reference' => $parent->reference,
                     'status' => 'publish',
                     'ip' => $request->ip(),
@@ -580,6 +581,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Right Click', 'right_click'],
             ['Frame Embed', 'frame_embed'],
             ['Preloader Effect', 'preload'],
+            ['Cache Web Pages', 'cache_web'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
             ['Accesibility Widget', 'accessibility_widget'],
@@ -705,9 +707,9 @@ class PanelController extends Controller implements HasMiddleware
 
                         );
 
-                        if(file_exists(public_path('favicon.ico'))){
-                            unlink(public_path('favicon.ico'));
-                        }
+                    if (file_exists(public_path('favicon.ico'))) {
+                        unlink(public_path('favicon.ico'));
+                    }
                 }
             }
             foreach ($data['site_attribute'] as $row) {
@@ -899,10 +901,9 @@ class PanelController extends Controller implements HasMiddleware
             if (config('modules.multisite_enabled')) {
                 if (is_main_domain()) {
 
-                        Cache::forget("tenant:master:".parse_url(config('app.url'), PHP_URL_HOST).":options");
+                    Cache::forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
                 }
-                        Cache::forget('tenant:' . tenant()->domain . ':options');
-
+                Cache::forget('tenant:' . tenant()->domain . ':options');
             }
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
@@ -1029,7 +1030,7 @@ class PanelController extends Controller implements HasMiddleware
                                         'file' => $request->file(_us($field[0])),
                                         'purpose' => _us($field[0]),
                                         'width' => 1700,
-                                        'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif','image/jpeg','image/png','image/webp'],
+                                        'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
                                         'self_upload' => true,
                                     ]);
 
@@ -1043,13 +1044,13 @@ class PanelController extends Controller implements HasMiddleware
                 }
 
                 if ($request->home_page) {
-                     if (app()->has('tenant')) {
-                         $cekdefault = DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->first();
-                         if($cekdefault){
-                             DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->delete();
-                             cache()->forget('default:options');
-                         }
-                     }
+                    if (app()->has('tenant')) {
+                        $cekdefault = DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->first();
+                        if ($cekdefault) {
+                            DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->delete();
+                            cache()->forget('default:options');
+                        }
+                    }
 
                     $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
                 }
@@ -1126,7 +1127,19 @@ class PanelController extends Controller implements HasMiddleware
             ];
 
             $scanExt = [
-                'php', 'blade.php', 'js', 'css', 'json', 'html', 'htm', 'xml', 'txt', 'md', 'yml', 'yaml', 'env',
+                'php',
+                'blade.php',
+                'js',
+                'css',
+                'json',
+                'html',
+                'htm',
+                'xml',
+                'txt',
+                'md',
+                'yml',
+                'yaml',
+                'env',
             ];
 
             $baseLen = strlen($sourcePath) + 1;
@@ -1209,13 +1222,12 @@ class PanelController extends Controller implements HasMiddleware
         $file = $request->edit ? dec64($request->edit) : dec64($defaultfile);
         if (config('modules.multisite_enabled') && is_main_domain() && str($file)->contains('modules')) {
             $path = resource_path('views/template');
-            if (!file_exists($path .$file)) {
-                        $myfile = fopen($path . $file, "w") or die("Unable to open file!");
-                        fwrite($myfile, '<h1>You Script Here</h1>');
-                        fclose($myfile);
-                        File::put($path . '/' . $file, 'You Script Here');
-
-                    }
+            if (!file_exists($path . $file)) {
+                $myfile = fopen($path . $file, "w") or die("Unable to open file!");
+                fwrite($myfile, '<h1>You Script Here</h1>');
+                fclose($myfile);
+                File::put($path . '/' . $file, 'You Script Here');
+            }
         }
 
         if ($file == '/styles.css') {
