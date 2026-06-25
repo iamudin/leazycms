@@ -243,8 +243,8 @@ class BlocklistService
         $keywords = explode(',', $cleanedKeywords);
 
         if (Str::contains(strtolower($request->fullUrl()), array_unique(array_merge($keywords, forbidden_keyword())))) {
-            $cacheKey = 'attack_attempt_ip_' . $ip;
-            $sessionCacheKey = $sessionId ? 'attack_attempt_session_' . sha1($sessionId) : null;
+            $cacheKey = get_current_host() . ':attack_attempt_ip_' . $ip;
+            $sessionCacheKey = $sessionId ? get_current_host() . ':attack_attempt_session_' . sha1($sessionId) : null;
 
             $countIp = Cache::increment($cacheKey);
             $countSession = 0;

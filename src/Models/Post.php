@@ -174,10 +174,10 @@ class Post extends BaseModel
     public function getThumbnailAttribute()
     {
         if ($this->media) {
-            if(config('modules.multisite_enabled') && app()->has('tenant')){
-                return media($this->media,$this->tenant?->domain ?? null)->url();
+            if (config('modules.multisite_enabled') && app()->has('tenant')) {
+                return media($this->media, $this->tenant?->domain ?? null)->url();
             }
-                return media($this->media)->url();
+            return media($this->media)->url();
         }
         // Cek cache
         $cacheKey = config('modules.multisite_enabled') ? tenant()->domain . ':' . ':thumbnail:' . $this->id : self::getCurrentHost() . ':thumbnail:' . $this->id;
@@ -210,8 +210,7 @@ class Post extends BaseModel
     }
     public function getMonthAttribute()
     {
-        return $this->created_at->format('F');
-        ;
+        return $this->created_at->format('F');;
     }
     public function getFieldAttribute()
     {
@@ -269,7 +268,7 @@ class Post extends BaseModel
         if (!$type) return collect([]);
         $cacheKey = self::getCurrentHost() . ":cachedpost:{$type}";
         if (app()->has('tenant')) {
-            $cacheKey .= ':tenant:' . tenant()->id;
+            $cacheKey .= ':tenant';
         }
         if (isset(self::$requestCache[$cacheKey])) {
             return self::$requestCache[$cacheKey];
@@ -888,7 +887,6 @@ class Post extends BaseModel
                         if (strlen($name) === 6) {
                             $q->orWhere('shortcut', $name);
                         }
-
                     })
                     ->published()
                     ->first();
