@@ -12,7 +12,7 @@ class BlocklistService
 {
     public function getBlacklistIps(): array
     {
-        return Cache::rememberForever(get_current_host().':ip_blacklist_cache', function () {
+        return Cache::rememberForever(get_current_host() . ':ip_blacklist_cache', function () {
             $blockedIps = [];
 
             try {
@@ -42,7 +42,7 @@ class BlocklistService
 
     public function getBlacklistUserAgents(): array
     {
-        return Cache::rememberForever('user_agent_blacklist_cache', function () {
+        return Cache::rememberForever(get_current_host() . ':user_agent_blacklist_cache', function () {
             try {
                 if (Schema::hasTable('blocked_ips')) {
                     return BlockedIp::query()
@@ -337,7 +337,7 @@ class BlocklistService
 
     private function flushCaches(): void
     {
-        Cache::forget(get_current_host().':ip_blacklist_cache');
-        Cache::forget(get_current_host().':user_agent_blacklist_cache');
+        Cache::forget(get_current_host() . ':ip_blacklist_cache');
+        Cache::forget(get_current_host() . ':user_agent_blacklist_cache');
     }
 }
