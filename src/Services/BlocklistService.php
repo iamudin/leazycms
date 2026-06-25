@@ -110,7 +110,7 @@ class BlocklistService
 
     private function ipSessionEscalationKey(string $ip): string
     {
-        return 'blocked_ip_sessions_' . sha1($ip);
+        return get_current_host() . ':blocked_ip_sessions_' . sha1($ip);
     }
 
     public function trackBlockedSessionForIp(string $ip, ?string $sessionId): int
