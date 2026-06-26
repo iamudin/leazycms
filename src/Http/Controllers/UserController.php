@@ -9,6 +9,7 @@ use Leazycms\Web\Models\User;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -46,7 +47,7 @@ class UserController extends Controller implements HasMiddleware
             $request['media'] =  $user->photo;
 
             if ($request->hasFile('photo')) {
-                $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg','image/webp']]);
+                $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg', 'image/webp']]);
             }
             if ($pass = $request->password) {
                 $data['password'] = bcrypt($pass);
@@ -64,10 +65,10 @@ class UserController extends Controller implements HasMiddleware
     }
     public function datatable(Request $request)
     {
-        $data = User::withTenant()->withCount('posts')->where('id', '!=', auth()->id())->whereNotNull('host')->whereIn('level',array_merge($this->all_role()->toArray(), ['admin']))->latest();
-        if(app()->has('tenant') && !is_main_domain()){
-            $data->where(function($q){
-                $q->whereNull('tenant_id')->orWhere('tenant_id',tenant()->id);
+        $data = User::withTenant()->withCount('posts')->where('id', '!=', Auth::user()->id)->whereNotNull('host')->whereIn('level', array_merge($this->all_role()->toArray(), ['admin']))->latest();
+        if (app()->has('tenant') && !is_main_domain()) {
+            $data->where(function ($q) {
+                $q->whereNull('tenant_id')->orWhere('tenant_id', tenant()->id);
             });
         }
         return DataTables::of($data)
@@ -76,20 +77,20 @@ class UserController extends Controller implements HasMiddleware
                 $btn = '<div class="btn-group">';
                 $btn .= '<a target="_blank" href="' . url($row->url ?? '/') . '"  class="btn btn-info btn-sm fa fa-globe"></a>';
 
-                $btn .= '<a href="' . route('user.edit',$row->id) . '"  class="btn btn-warning btn-sm fa fa-edit"></a>';
-                $btn.= $row->posts->count() == 0 ? '<button onclick="deleteAlert(\'' . route('user.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash"></button>' : '';
+                $btn .= '<a href="' . route('user.edit', $row->id) . '"  class="btn btn-warning btn-sm fa fa-edit"></a>';
+                $btn .= $row->posts->count() == 0 ? '<button onclick="deleteAlert(\'' . route('user.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash"></button>' : '';
                 $btn .= '</div>';
                 return $btn;
             })
             ->addColumn('name', function ($row) {
                 return '<span class="text-primary">' . $row->name . '</span><br><small class="text-muted">' . $row->email . '</small>';
             })
-               ->addColumn('last_login_data', function ($row) {
-                return '<small><code>Waktu :'. $row->last_login_at?->diffForHumans() . '<br>IP : '.$row?->last_login_ip.'</code></small>';
+            ->addColumn('last_login_data', function ($row) {
+                return '<small><code>Waktu :' . $row->last_login_at?->diffForHumans() . '<br>IP : ' . $row?->last_login_ip . '</code></small>';
             })
             ->addColumn('role', function ($row) {
                 $dom = get_domain_extension($row->level);
-                return str($row->level)->upper() .($dom ? '<br><span class="badge badge-warning">'.$dom.'/login</span>' : null);
+                return str($row->level)->upper() . ($dom ? '<br><span class="badge badge-warning">' . $dom . '/login</span>' : null);
             })
             ->addColumn('username', function ($row) {
                 return $row->username;
@@ -105,7 +106,7 @@ class UserController extends Controller implements HasMiddleware
             ->addColumn('tenant', function ($row) {
                 return config('modules.multisite_enabled') ? $row->tenant->domain ?? 'Main Domain' : 'Main Domain';
             })
-            ->rawColumns(['action', 'last_login_data','name', 'status', 'photo', 'role', 'username','tenant'])
+            ->rawColumns(['action', 'last_login_data', 'name', 'status', 'photo', 'role', 'username', 'tenant'])
             ->toJson();
     }
     public function create()
@@ -121,7 +122,7 @@ class UserController extends Controller implements HasMiddleware
             'email' => 'required|email|max:50|' . Rule::unique('users'),
             'username' => 'required|string|min:5|regex:/^[a-zA-Z\p{P}]+$/u|max:20|' . Rule::unique('users'),
             'status' => 'required|string|in:active,blocked',
-            'level' => 'required|string|in:' . implode(',',$this->all_role()->toArray()),
+            'level' => 'required|string|in:' . implode(',', $this->all_role()->toArray()),
             'password' => 'required|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ]);
         $data['slug'] = $slug = str($request->name)->slug();
@@ -136,8 +137,9 @@ class UserController extends Controller implements HasMiddleware
         }
         return to_route('user.edit', $data->id)->with('success', 'User berhasil ditambah');
     }
-    function all_role() : object{
-         $role = collect(explode(",", get_option('roles')))
+    function all_role(): object
+    {
+        $role = collect(explode(",", get_option('roles')))
             ->map(fn($r) => trim($r)) // buang spasi ekstra
             ->filter()                // hapus nilai kosong
             ->values();              // reset index
@@ -148,27 +150,25 @@ class UserController extends Controller implements HasMiddleware
             $role->push('operator');
         }
         return $role;
-
     }
 
     public function edit($id)
     {
 
         $user = User::find($id);
-        if(is_null($user)){
-            return to_route('user')->with('danger','User tidak ditemukan');
+        if (is_null($user)) {
+            return to_route('user')->with('danger', 'User tidak ditemukan');
         }
 
-        if(config('modules.multisite_enabled')){
-            if(!is_main_domain()){
-if(is_null($user->host) || $user->host != tenant()->domain || $user->level == 'admin'){
-                return to_route('user')->with('danger','User tidak ditemukan');
+        if (config('modules.multisite_enabled')) {
+            if (!is_main_domain()) {
+                if (is_null($user->host) || $user->host != tenant()->domain || $user->level == 'admin') {
+                    return to_route('user')->with('danger', 'User tidak ditemukan');
+                }
             }
-            }
-        }
-        else{
-             if(is_null($user->host) || $user->host != parse_url(main_domain(), PHP_URL_HOST) || $user->level =='admin'){
-                return to_route('user')->with('danger','User tidak ditemukan');
+        } else {
+            if (is_null($user->host) || $user->host != parse_url(main_domain(), PHP_URL_HOST) || $user->level == 'admin') {
+                return to_route('user')->with('danger', 'User tidak ditemukan');
             }
         }
         return view('cms::backend.users.form', ['user' => $user, 'roles' => $this->all_role()]);
@@ -181,7 +181,7 @@ if(is_null($user->host) || $user->host != tenant()->domain || $user->level == 'a
             'email' => 'required|email|max:50|' . Rule::unique('users')->ignore($user->id),
             'username' => 'required|string|min:5|max:20|regex:/^[a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
             'status' => 'required|string|in:active,blocked',
-            'level' => 'required|string|in:' . implode(',',$this->all_role()->toArray()),
+            'level' => 'required|string|in:' . implode(',', $this->all_role()->toArray()),
             'password' => 'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ]);
         $data['slug'] = $slug = str($request->name)->slug();
@@ -192,8 +192,8 @@ if(is_null($user->host) || $user->host != tenant()->domain || $user->level == 'a
             $data['password'] = bcrypt($request->password);
         }
         $request['media'] = $user->photo;
-        if(empty($user->host)){
-            return back()->with('danger','User tidak valid');
+        if (empty($user->host)) {
+            return back()->with('danger', 'User tidak valid');
         }
         $user->update($data);
         if ($request->hasFile('photo')) {
