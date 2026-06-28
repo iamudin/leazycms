@@ -35,6 +35,20 @@
                                 @endforeach
                             </select>
                         </div>
+                        
+                        @if(isset($availablePlugins) && count($availablePlugins) > 0)
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-2 d-block">Akses Plugin</label>
+                            @foreach($availablePlugins as $pluginName)
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="plugins[]" id="plugin_{{ $pluginName }}" value="{{ $pluginName }}" {{ in_array($pluginName, $tenant->plugins ?? []) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="plugin_{{ $pluginName }}">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</label>
+                                </div>
+                            @endforeach
+                            <br><small class="text-muted">Pilih plugin mana saja yang aktif untuk tenant ini.</small>
+                        </div>
+                        @endif
+
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Pilih Tema</label>
                             <select class="form-control form-control-sm" name="theme" id="theme-select" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? '' : 'required' }}>

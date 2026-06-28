@@ -10,7 +10,7 @@ use Leazycms\Web\Models\Trait\BelongsToTenant;
 
 class User extends BaseUser
 {
-    use SoftDeletes, Fileable,BelongsToTenant;
+    use SoftDeletes, Fileable, BelongsToTenant;
 
     /**
      * The attributes that are mass assignable.
@@ -64,10 +64,7 @@ class User extends BaseUser
         }
         return noimage();
     }
-   function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
+
     public function notifications()
     {
         return $this->hasMany(Notification::class);

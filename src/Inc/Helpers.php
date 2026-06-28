@@ -15,175 +15,180 @@ if (!function_exists('query')) {
     }
 }
 if (!function_exists('forbidden_keyword')) {
-function forbidden_keyword(){
-   return [
-    '.env',
-    '.php',
-    '.git',
-    '.svn',
-    '.hg',
-    'DS_Store',
-    'phpmyadmin',
-    'pma',
-    'adminer',
-    'mysqladmin',
-    'wp-admin',
-    'wp-login',
-    'xmlrpc',
-    'wp-json',
-    'wordpress',
-    'joomla',
-    'drupal',
-    'magento',
-    'cgi-bin',
-    'server-status',
-    'server-info',
-    'phpinfo',
-    'info.php',
-    'test.php',
-    'shell',
-    'webshell',
-    'c99',
-    'r57',
-    'b374k',
-    'wso',
-    'upload.php',
-    'backdoor',
-    'cmd',
-    'exec',
-    'passthru',
-    'system',
-    'eval',
-    'assert',
-    'base64',
-    'decode',
-    '/etc/passwd',
-    '/etc/shadow',
-    'proc/self',
-    'boot.ini',
-    'win.ini',
-    'system32',
-    'config.php',
-    'wp-config',
-    'configuration.php',
-    'local.xml',
-    'database.sql',
-    'backup.sql',
-    'dump.sql',
-    'backup.zip',
-    'backup.tar',
-    'backup.rar',
-    'composer.json',
-    'composer.lock',
-    'package.json',
-    'package-lock.json',
-    'yarn.lock',
-    'vendor',
-    'storage/logs',
-    'laravel.log',
-    'telescope',
-    'ignition',
-    'horizon',
-    'debugbar',
-    'actuator',
-    'swagger',
-    'openapi',
-    'graphql',
-    'jenkins',
-    'gitlab',
-    'sonarqube',
-    'kibana',
-    'elasticsearch',
-    'prometheus',
-    'grafana',
-    'docker',
-    'docker-compose',
-    'kubernetes',
-    'k8s',
-    'redis',
-    'memcached',
-    'mongodb',
-    'sqlmap',
-    'nuclei',
-    'nikto',
-    'acunetix',
-    'nessus',
-    'masscan',
-    'zgrab',
-    'wpscan',
-    'metasploit',
-    'burpsuite',
-    '../',
-    '..\\',
-    '%2e%2e',
-    '%252e%252e',
-    'union select',
-    'information_schema',
-    'sleep(',
-    'benchmark(',
-    'load_file(',
-    'into outfile',
-    '<script',
-    'javascript:',
-    'document.cookie',
-    'onerror=',
-    'onload=',
-    'slot',
-    'judi',
-    'casino',
-    'bet',
-    'togel',
-    'gacor',
-    'maxwin',
-    'pragmatic',
-    'slot88',
-    'slot777',
-    'slot-online',
-    'situs-judi',
-    'agen-judi',
-    'judi-online'
-];
-}}
-if (!function_exists('ignoreEnc')) {
-function ignoreEnc($io) {
-    $s = base64_decode(dec64(config('modules.labusiam')));
-    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($s));
-    $love = openssl_encrypt(
-        $io,
-        $s,
-        _ignoreThis(),
-        OPENSSL_RAW_DATA,
-        $iv
-    );
-    return base64_encode($iv . $love);
+    function forbidden_keyword()
+    {
+        return [
+            '.env',
+            '.php',
+            '.git',
+            '.svn',
+            '.hg',
+            'DS_Store',
+            'phpmyadmin',
+            'pma',
+            'adminer',
+            'mysqladmin',
+            'wp-admin',
+            'wp-login',
+            'xmlrpc',
+            'wp-json',
+            'wordpress',
+            'joomla',
+            'drupal',
+            'magento',
+            'cgi-bin',
+            'server-status',
+            'server-info',
+            'phpinfo',
+            'info.php',
+            'test.php',
+            'shell',
+            'webshell',
+            'c99',
+            'r57',
+            'b374k',
+            'wso',
+            'upload.php',
+            'backdoor',
+            'cmd',
+            'exec',
+            'passthru',
+            'system',
+            'eval',
+            'assert',
+            'base64',
+            'decode',
+            '/etc/passwd',
+            '/etc/shadow',
+            'proc/self',
+            'boot.ini',
+            'win.ini',
+            'system32',
+            'config.php',
+            'wp-config',
+            'configuration.php',
+            'local.xml',
+            'database.sql',
+            'backup.sql',
+            'dump.sql',
+            'backup.zip',
+            'backup.tar',
+            'backup.rar',
+            'composer.json',
+            'composer.lock',
+            'package.json',
+            'package-lock.json',
+            'yarn.lock',
+            'vendor',
+            'storage/logs',
+            'laravel.log',
+            'telescope',
+            'ignition',
+            'horizon',
+            'debugbar',
+            'actuator',
+            'swagger',
+            'openapi',
+            'graphql',
+            'jenkins',
+            'gitlab',
+            'sonarqube',
+            'kibana',
+            'elasticsearch',
+            'prometheus',
+            'grafana',
+            'docker',
+            'docker-compose',
+            'kubernetes',
+            'k8s',
+            'redis',
+            'memcached',
+            'mongodb',
+            'sqlmap',
+            'nuclei',
+            'nikto',
+            'acunetix',
+            'nessus',
+            'masscan',
+            'zgrab',
+            'wpscan',
+            'metasploit',
+            'burpsuite',
+            '../',
+            '..\\',
+            '%2e%2e',
+            '%252e%252e',
+            'union select',
+            'information_schema',
+            'sleep(',
+            'benchmark(',
+            'load_file(',
+            'into outfile',
+            '<script',
+            'javascript:',
+            'document.cookie',
+            'onerror=',
+            'onload=',
+            'slot',
+            'judi',
+            'casino',
+            'bet',
+            'togel',
+            'gacor',
+            'maxwin',
+            'pragmatic',
+            'slot88',
+            'slot777',
+            'slot-online',
+            'situs-judi',
+            'agen-judi',
+            'judi-online'
+        ];
+    }
 }
+if (!function_exists('ignoreEnc')) {
+    function ignoreEnc($io)
+    {
+        $s = base64_decode(dec64(config('modules.labusiam')));
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($s));
+        $love = openssl_encrypt(
+            $io,
+            $s,
+            _ignoreThis(),
+            OPENSSL_RAW_DATA,
+            $iv
+        );
+        return base64_encode($iv . $love);
+    }
 }
 
 if (!function_exists('ignoreDec')) {
-function ignoreDec($io) {
-    $s = base64_decode(dec64(config('modules.labusiam')));
-    $data = base64_decode($io);
-    $iv_length = openssl_cipher_iv_length($s);
-    $iv = substr($data, 0, $iv_length);
-    $love = substr($data, $iv_length);
+    function ignoreDec($io)
+    {
+        $s = base64_decode(dec64(config('modules.labusiam')));
+        $data = base64_decode($io);
+        $iv_length = openssl_cipher_iv_length($s);
+        $iv = substr($data, 0, $iv_length);
+        $love = substr($data, $iv_length);
 
-    return openssl_decrypt(
-        $love,
-        $s,
-        _ignoreThis(),
-        OPENSSL_RAW_DATA,
-        $iv
-    );
-}
+        return openssl_decrypt(
+            $love,
+            $s,
+            _ignoreThis(),
+            OPENSSL_RAW_DATA,
+            $iv
+        );
+    }
 }
 
 if (!function_exists('_ignoreThis')) {
-    function _ignoreThis(){
+    function _ignoreThis()
+    {
         return base64_decode(dec64(config('modules.sampleignore')));
     }
 }
 
-  if (!function_exists('add_option')) {
+if (!function_exists('add_option')) {
     function add_option($key, $array)
     {
         // ambil config saat ini
@@ -233,12 +238,13 @@ if (!function_exists('get_domain_routes')) {
 if (!function_exists('add_view_stats')) {
     function add_view_stats(string $view)
     {
-        config(['modules.view_stats'=>$view]);
+        config(['modules.view_stats' => $view]);
 
     }
 }
-  function error500Msg($requestId){
-        return "<!DOCTYPE html>
+function error500Msg($requestId)
+{
+    return "<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
@@ -298,8 +304,8 @@ if (!function_exists('add_view_stats')) {
     </div>
 </body>
 </html>";
-    }
- function error404Msg($requestId = null)
+}
+function error404Msg($requestId = null)
 {
     $requestBlock = $requestId
         ? "<div class='request-id'>Request ID: {$requestId}</div>"
@@ -591,7 +597,7 @@ function protectedContentView($slug, $requestId = null, $error = null)
         {$errorBlock}
 
         <form method='POST' class='form-inline'>
-        <input type='hidden' name='_token' value='".csrf_token()."'>
+        <input type='hidden' name='_token' value='" . csrf_token() . "'>
             <input
                 type='password'
                 name='secret_key'
@@ -609,6 +615,16 @@ function protectedContentView($slug, $requestId = null, $error = null)
 </body>
 </html>";
 }
+
+if (!function_exists('get_disabled_plugins')) {
+    function get_disabled_plugins()
+    {
+        $str = get_option('disabled_plugins');
+        $arr = $str ? json_decode($str, true) : [];
+        return is_array($arr) ? $arr : [];
+    }
+}
+
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {
@@ -665,9 +681,9 @@ if (!function_exists('add_route')) {
     }
 }
 if (!function_exists('add_logo')) {
-    function add_logo($image,$brand_name,$brand_tagline,$url=null,$class=null)
+    function add_logo($image, $brand_name, $brand_tagline, $url = null, $class = null)
     {
-        return view()->make('cms::backend.layout.logo', ['image'=>$image,'brand_name'=>$brand_name,'brand_tagline'=>$brand_tagline,'url'=>$url,'class'=>$class]);
+        return view()->make('cms::backend.layout.logo', ['image' => $image, 'brand_name' => $brand_name, 'brand_tagline' => $brand_tagline, 'url' => $url, 'class' => $class]);
     }
 }
 if (!function_exists('is_custom_web_route_matched')) {
@@ -743,10 +759,10 @@ if (!function_exists('get_path_domain')) {
     }
 }
 
-if(!function_exists('realtime_clock')){
-    function realtime_clock($elementId=null, $showDate = false)
+if (!function_exists('realtime_clock')) {
+    function realtime_clock($elementId = null, $showDate = false)
     {
-        return view()->make('cms::backend.layout.realtime_clock', ['tag'=>$elementId, 'show_date' => $showDate]);
+        return view()->make('cms::backend.layout.realtime_clock', ['tag' => $elementId, 'show_date' => $showDate]);
     }
 }
 if (!function_exists('realtime_timer')) {
@@ -800,10 +816,10 @@ if (!function_exists('web_header')) {
 if (!function_exists('datatable_asset')) {
     function datatable_asset(string $type)
     {
-        if($type=='style'){
+        if ($type == 'style') {
             return View::make('cms::backend.layout.dtstyle');
 
-        }elseif($type=='js'){
+        } elseif ($type == 'js') {
             return View::make('cms::backend.layout.dtjs');
 
         }
@@ -860,23 +876,24 @@ if (!function_exists('map_by_coordinate')) {
         if (empty($lat) || empty($long)) {
             return null;
         }
-        
+
         // Using Google Maps embed without API key (works for basic use)
         $embedUrl = "https://www.google.com/maps?q={$lat},{$long}&z={$zoom}&output=embed";
-        
+
         return $embedUrl;
     }
 }
 
 if (!function_exists('this_agent')) {
-    function this_agent(){
+    function this_agent()
+    {
         return md5(enc64(no_http_url(config('app.url'))));
     }
 }
 if (!function_exists('latest_theme_version')) {
     function latest_theme_version()
     {
-        $themePath = resource_path("views/template/".template()."/theme.json");
+        $themePath = resource_path("views/template/" . template() . "/theme.json");
 
         if (!File::exists($themePath)) {
             return null;
@@ -964,16 +981,16 @@ if (!function_exists('current_theme_version')) {
         if (file_exists($themePath)) {
             $theme = json_decode(file_get_contents($themePath), true);
 
-            return isset($theme['version']) ? $theme['name']." ".ltrim($theme['version'], 'v') : null;
+            return isset($theme['version']) ? $theme['name'] . " " . ltrim($theme['version'], 'v') : null;
         }
     }
 }
 
 if (!function_exists('current_cms_version')) {
 
-    function current_cms_version($key='version')
+    function current_cms_version($key = 'version')
     {
-        return  json_decode(file_get_contents(__DIR__.'/../version'),true)[$key] ?? null;
+        return json_decode(file_get_contents(__DIR__ . '/../version'), true)[$key] ?? null;
     }
 }
 
@@ -991,22 +1008,22 @@ if (!function_exists('isNotInSession')) {
 
 if (!function_exists('sendTelegramBotMessage')) {
 
- function sendTelegramBotMessage($message)
-{
+    function sendTelegramBotMessage($message)
+    {
 
-if(config('modules.telechatid')&& config('modules.teletoken')){
+        if (config('modules.telechatid') && config('modules.teletoken')) {
 
-     return Http::post(
-        "https://api.telegram.org/".dec64(config('modules.teletoken'))."/sendMessage",
-        [
-            'chat_id' => dec64(config('modules.telechatid')),
-            'text' => $message,
-            'parse_mode'=>'HTML'
-        ]
-    );
-}
+            return Http::post(
+                "https://api.telegram.org/" . dec64(config('modules.teletoken')) . "/sendMessage",
+                [
+                    'chat_id' => dec64(config('modules.telechatid')),
+                    'text' => $message,
+                    'parse_mode' => 'HTML'
+                ]
+            );
+        }
 
-}
+    }
 }
 if (!function_exists('blocklist_service')) {
     function blocklist_service(): \Leazycms\Web\Services\BlocklistService
@@ -1113,7 +1130,7 @@ if (!function_exists('ratelimiter')) {
         }
 
         $maxAttempts = $limittime > 0 ? $limittime : 10;
-        $decayMinutes = $limitduration > 0 ? $limitduration :1;
+        $decayMinutes = $limitduration > 0 ? $limitduration : 1;
 
         $attempts = Cache::get($key, 0);
         if ($attempts >= $maxAttempts) {
@@ -1304,9 +1321,17 @@ if (!function_exists('active_item')) {
                 }
             }
         } else {
-            $firstSegment = explode('/', trim($val, '/'))[0];
-            if (request()->is(admin_path() . '/' . $firstSegment) || request()->is(admin_path() . '/' . $firstSegment . '/*') || request()->is(admin_path() . '/' . $firstSegment . '/*/*'))
-                return 'active';
+            $trimmed = trim($val, '/');
+            if (str_contains($trimmed, '/')) {
+                if (request()->is(admin_path() . '/' . $trimmed) || request()->is(admin_path() . '/' . $trimmed . '/*')) {
+                    return 'active';
+                }
+            } else {
+                $firstSegment = explode('/', $trimmed)[0];
+                if (request()->is(admin_path() . '/' . $firstSegment) || request()->is(admin_path() . '/' . $firstSegment . '/*') || request()->is(admin_path() . '/' . $firstSegment . '/*/*')) {
+                    return 'active';
+                }
+            }
         }
     }
 }
@@ -1439,7 +1464,7 @@ if (!function_exists('add_module')) {
 if (!function_exists('no_cache_for_route')) {
     function no_cache_for_route(array $array)
     {
-        if(is_array($array)){
+        if (is_array($array)) {
             config(['modules.no_cache_for_route' => $array]);
         }
     }
@@ -1470,7 +1495,7 @@ if (!function_exists('_field')) {
 }
 
 if (!function_exists('getlistmenu')) {
-    function getlistmenu( $menu,  $menulist)
+    function getlistmenu($menu, $menulist)
     {
         $me = $menu;
         $m = '';
@@ -1505,7 +1530,7 @@ if (!function_exists('rnd')) {
     }
 }
 if (!function_exists('ceksubmenu')) {
-    function ceksubmenu( $menu,  $id)
+    function ceksubmenu($menu, $id)
     {
         $cek = $menu->where('menu_parent', $id);
         if (count($cek) > 0) {
@@ -1624,7 +1649,7 @@ if (!function_exists('use_module')) {
                 $result = $base;
 
                 if (isset($override['__remove']) && is_array($override['__remove'])) {
-                    $remove = array_values(array_filter($override['__remove'], fn ($v) => is_string($v)));
+                    $remove = array_values(array_filter($override['__remove'], fn($v) => is_string($v)));
                     if (count($remove)) {
                         $removeIndex = [];
                         foreach ($remove as $label) {
@@ -1677,7 +1702,7 @@ if (!function_exists('use_module')) {
     }
 }
 if (!function_exists('processMenu')) {
-    function processMenu( $menu,  $datanya, &$mnews, $parent = 0)
+    function processMenu($menu, $datanya, &$mnews, $parent = 0)
     {
         foreach ($menu as $value) {
             $b = collect($datanya)->where('menu_id', $value['id'])->first();
@@ -1755,7 +1780,7 @@ if (!function_exists('get_view')) {
 }
 
 if (!function_exists('blade_path')) {
-    function blade_path( $blade)
+    function blade_path($blade)
     {
         $blades = 'template.' . template() . '.' . $blade;
         if (View::exists($blades)) {
@@ -1766,17 +1791,17 @@ if (!function_exists('blade_path')) {
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
             } else {
-            response(
+                response(
                     error503Msg(),
                     503
-            );
-            exit;
+                );
+                exit;
 
             }
         }
     }
 }
- function undermaintenance($requestId = null)
+function undermaintenance($requestId = null)
 {
     $requestBlock = $requestId
         ? "<div class='request-id'>Request ID: {$requestId}</div>"
@@ -1886,13 +1911,13 @@ if (!function_exists('blade_path')) {
 </body>
 </html>";
 }
- function error503Msg($requestId = null)
+function error503Msg($requestId = null)
 {
     $requestBlock = $requestId
         ? "<div class='request-id'>Request ID: {$requestId}</div>"
         : "";
 
-   exit(preg_replace("/\s+/", " ","<!DOCTYPE html>
+    exit(preg_replace("/\s+/", " ", "<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
@@ -1990,18 +2015,18 @@ if (!function_exists('custom_field_filter')) {
         return collect($data)->filter(function ($item) use ($key, $value, $exclude) {
 
             $match = isset($item[1]->$key) &&
-                     $item[1]->$key == $value;
+                $item[1]->$key == $value;
 
             return $exclude ? !$match : $match;
         });
     }
 }
 if (!function_exists('custom_field_without_break')) {
-function custom_field_without_break($data)
-{
-    return collect($data)
-        ->reject(fn($item) => ($item[1]->type ?? null) === 'break');
-}
+    function custom_field_without_break($data)
+    {
+        return collect($data)
+            ->reject(fn($item) => ($item[1]->type ?? null) === 'break');
+    }
 }
 function error403Msg($requestId = null)
 {
@@ -2168,19 +2193,20 @@ if (!function_exists('is_day')) {
 }
 
 if (!function_exists('minify_all_one_line')) {
-function minify_all_one_line($html) {
-    $html = preg_replace_callback(
-        '/<script\b[^>]*>.*?<\/script>/is',
-        function ($matches) {
-            $script = $matches[0];
-            $script = preg_replace('/(^|\s)\/\/(?!\/)(.*)/m', '/*$2*/', $script);
-            return $script;
-        },
-        $html
-    );
-    $html = preg_replace('/\s+/', ' ', $html);
-    return trim($html);
-}
+    function minify_all_one_line($html)
+    {
+        $html = preg_replace_callback(
+            '/<script\b[^>]*>.*?<\/script>/is',
+            function ($matches) {
+                $script = $matches[0];
+                $script = preg_replace('/(^|\s)\/\/(?!\/)(.*)/m', '/*$2*/', $script);
+                return $script;
+            },
+            $html
+        );
+        $html = preg_replace('/\s+/', ' ', $html);
+        return trim($html);
+    }
 }
 if (!function_exists('isPrePanel')) {
 
@@ -2246,7 +2272,7 @@ if (!function_exists('set_header_seo')) {
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,
-            'thumbnail' => (function () use ($data,$current_module) {
+            'thumbnail' => (function () use ($data, $current_module) {
                 libxml_use_internal_errors(true);
                 $dom = new \DOMDocument();
                 $dom->loadHTML('<?xml encoding="utf-8" ?>' . $data->content);
@@ -2303,7 +2329,7 @@ if (!function_exists('dec64')) {
     }
 }
 if (!function_exists('cms_update_checker')) {
- function cms_update_checker()
+    function cms_update_checker()
     {
         $current = current_cms_version();
 
@@ -2321,7 +2347,7 @@ if (!function_exists('cms_update_checker')) {
 
         return $status;
     }
-    }
+}
 if (!function_exists('template_info')) {
     function template_info()
     {
@@ -2381,7 +2407,7 @@ if (!function_exists('init_goup')) {
     function init_goup()
     {
 
-            return view()->make('cms::layouts.goup');
+        return view()->make('cms::layouts.goup');
 
     }
 }
@@ -2426,16 +2452,17 @@ if (!function_exists('init_wabutton')) {
     }
 }
 if (!function_exists('page_name')) {
-function page_name($name){
-    config(['modules.page_name'=>$name]);
-}
+    function page_name($name)
+    {
+        config(['modules.page_name' => $name]);
+    }
 }
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
     {
         $get_page_name = config('modules.page_name');
         $data = config('modules.data') ?? false;
-        $site_title = get_option('site_title') && strlen(get_option('site_title'))>0 ? get_option('site_title') : 'You Website Title';
+        $site_title = get_option('site_title') && strlen(get_option('site_title')) > 0 ? get_option('site_title') : 'You Website Title';
         $site_desc = get_option('site_description');
         $site_meta_keyword = get_option('site_meta_keyword');
         $site_meta_description = get_option('site_meta_description');
@@ -2500,7 +2527,7 @@ if (!function_exists('get_menu')) {
         static $menus = [];
         static $recached = [];
         $cacheKey = get_current_host() . ':menu';
-           // Hanya ambil dari cache jika belum ada di static
+        // Hanya ambil dari cache jika belum ada di static
         if (!isset($menus[$cacheKey])) {
             // Cek apakah cache ada dan ambil sekaligus
             $cachedData = Cache::get($cacheKey);
@@ -2564,7 +2591,8 @@ if (!function_exists('get_menu')) {
     }
 }
 if (!function_exists('api_key')) {
-    function api_key(){
+    function api_key()
+    {
         return config('modules.env_key') ? md5(enc64(config('modules.env_key'))) : null;
     }
 }
@@ -2578,7 +2606,7 @@ if (!function_exists('load_default_module')) {
             'banner' => ['active' => true],
             'page' => ['active' => true],
         ];
-        if(config('modules.app_master')){
+        if (config('modules.app_master')) {
             $default['sites'] = ['active' => true];
         }
         use_module($default);
@@ -2608,7 +2636,7 @@ if (!function_exists('_loop')) {
 if (!function_exists('_us')) {
     function _us($val)
     {
-        return str_replace('-','_',str($val)->slug());
+        return str_replace('-', '_', str($val)->slug());
     }
 }
 if (!function_exists('time_to_path')) {
@@ -2688,7 +2716,7 @@ if (!function_exists('recache_banner')) {
                     })->toArray()
                 ];
             })->toArray();
-            $cacheKey = get_current_host() . ':banner';
+        $cacheKey = get_current_host() . ':banner';
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () use ($result) {
             return $result;
@@ -2701,7 +2729,7 @@ if (!function_exists('recache_menu')) {
         $cacheKey = get_current_host() . ':menu';
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () {
-                $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
+            $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
             return $menu;
         });
     }
@@ -2733,7 +2761,7 @@ if (!function_exists('_tohref')) {
 if (!function_exists('banner_here')) {
     function banner_here($name, $data)
     {
-        return Auth::user()?->level=='admin' ? View::make('cms::layouts.banner', ['banner' => $name, 'data' => $data]) : null;
+        return Auth::user()?->level == 'admin' ? View::make('cms::layouts.banner', ['banner' => $name, 'data' => $data]) : null;
     }
 }
 
@@ -2793,9 +2821,9 @@ if (!function_exists('get_banner')) {
         }
 
         $result = collect($banners)->map(fn($r) => (object) [
-            'image'       => $r['image'] ?? $r->image ?? noimage(),
-            'link'        => $r['link'] ?? $r->link ?? null,
-            'name'        => $r['name'] ?? $r->name ?? null,
+            'image' => $r['image'] ?? $r->image ?? noimage(),
+            'link' => $r['link'] ?? $r->link ?? null,
+            'name' => $r['name'] ?? $r->name ?? null,
             'description' => $r['description'] ?? $r->description ?? null,
         ]);
 
@@ -2818,7 +2846,7 @@ if (!function_exists('get_client_ip')) {
 if (!function_exists('get_ip_info')) {
     function get_ip_info($ip)
     {
-        if (!is_local()){
+        if (!is_local()) {
             $data = \Stevebauman\Location\Facades\Location::get($ip);
             return $data ? ['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName] : [];
         } else {
@@ -2833,18 +2861,18 @@ if (!function_exists('renderTemplateFile')) {
         foreach ($items as $item) {
 
             $currentPath = $parentPath . '/' . $item['name'];
-                if (str($currentPath)->contains(['.git','assets','dummy'])) {
+            if (str($currentPath)->contains(['.git', 'assets', 'dummy'])) {
                 continue;
             }
             if (isset($item['children']) && !empty($item['children'])) {
-                    echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
-                    renderTemplateFile($item['children'], $currentPath);
-                    echo '</li>';
+                echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
+                renderTemplateFile($item['children'], $currentPath);
+                echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
-                if(str($item['name'])->contains('json')){
+                if (str($item['name'])->contains('json')) {
                     continue;
                 }
-                if(!is_main_domain() && str($currentPath)->contains('modules')){
+                if (!is_main_domain() && str($currentPath)->contains('modules')) {
                     continue;
                 }
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
@@ -2859,7 +2887,7 @@ if (!function_exists('renderTemplateFile')) {
 
 if (!function_exists('browser')) {
 
-  function browser()
+    function browser()
     {
         $userAgent = request()->header('User-Agent');
 
@@ -2883,7 +2911,7 @@ if (!function_exists('browser')) {
     }
 }
 if (!function_exists('os')) {
-     function os()
+    function os()
     {
         $userAgent = request()->header('User-Agent');
 
@@ -2902,9 +2930,9 @@ if (!function_exists('os')) {
         }
         return $os;
     }
-    }
+}
 if (!function_exists('device')) {
-     function device()
+    function device()
     {
         $userAgent = request()->header('User-Agent');
 
@@ -2916,11 +2944,11 @@ if (!function_exists('device')) {
 
         return $deviceType;
     }
-    }
+}
 if (!function_exists('is_local')) {
     function is_local()
     {
-        return request()->ip() == '127.0.0.1' || request()->ip() == '::1' || config('app.env')=='local' ? true : false;
+        return request()->ip() == '127.0.0.1' || request()->ip() == '::1' || config('app.env') == 'local' ? true : false;
     }
 }
 if (!function_exists('getDirectoryContents')) {

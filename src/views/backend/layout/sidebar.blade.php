@@ -118,12 +118,72 @@
             @endif
             @if (Auth::user()->level == 'admin')
                 @if ($custom = config('modules.custom_menu'))
-                    @foreach (collect($custom)->where('show_in_sidebar', true) as $cs)
+                    @php
+                        $customMenus = collect($custom)->where('show_in_sidebar', true);
+                        $groupedPlugins = [];
+                        $standaloneMenus = [];
+
+                        $tenantPlugins = [];
+                        if (config('modules.multisite_enabled')) {
+                            $tenantPlugins = app('tenant')->plugins ?? [];
+                            $tenantPlugins = is_string($tenantPlugins) ? json_decode($tenantPlugins, true) : $tenantPlugins;
+                        }
+
+                        foreach ($customMenus as $cs) {
+                            $segments = explode('/', $cs['path']);
+                            $potentialPlugin = $segments[0] ?? null;
+
+                            if ($potentialPlugin && (is_dir(resource_path('plugins/' . $potentialPlugin)) || is_dir(resource_path('plugins/' . $potentialPlugin)))) {                                $disabledPlugins = get_disabled_plugins();
+                                if (in_array($potentialPlugin, $disabledPlugins)) {
+                                    continue;
+                                }
+
+                                if (config('modules.multisite_enabled') ) {
+                                    if (!is_array($tenantPlugins) || !in_array($potentialPlugin, $tenantPlugins)) {
+                                        continue;
+                                    }
+                                }
+                                $groupedPlugins[$potentialPlugin][] = $cs;
+                            } else {
+                                $standaloneMenus[] = $cs;
+                            }
+                        }
+                    @endphp
+
+                    @foreach ($standaloneMenus as $cs)
                         <li title="{{ $cs['title'] }}">
                             <a class="app-menu__item {{ active_item($cs['path']) }}"
                                 href="{{ admin_url($cs['path']) }}"><i
                                     class="app-menu__icon fa {{ $cs['icon'] }} text-primary"></i>
                                 <span class="app-menu__label">{{ $cs['title'] }}</span></a>
+                        </li>
+                    @endforeach
+
+                    @foreach ($groupedPlugins as $pluginName => $menus)
+                        @php
+                            $isActive = false;
+                            foreach ($menus as $m) {
+                                if (request()->is(admin_path() . '/' . $m['path'] . '*')) {
+                                    $isActive = true;
+                                    break;
+                                }
+                            }
+                        @endphp
+                        <li class="treeview {{ $isActive ? 'is-expanded' : '' }}">
+                            <a class="app-menu__item" href="#" data-toggle="treeview">
+                                <i class="app-menu__icon fa fa-plug text-primary"></i>
+                                <span class="app-menu__label">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</span>
+                                <i class="treeview-indicator fa fa-angle-right"></i>
+                            </a>
+                            <ul class="treeview-menu">
+                                @foreach ($menus as $cs)
+                                    <li>
+                                        <a class="treeview-item {{ active_item($cs['path']) }}"
+                                            href="{{ admin_url($cs['path']) }}"><i
+                                                class="icon fa {{ $cs['icon'] }}"></i> {{ $cs['title'] }}</a>
+                                    </li>
+                                @endforeach
+                            </ul>
                         </li>
                     @endforeach
                 @endif
@@ -192,6 +252,7 @@
                             <span class="app-menu__label">Monitor Web</span></a>
                     </li>
                 @endif
+        
                 {{-- <li title="Webmail">
                 <a
                     class="app-menu__item {{ active_item(['email']) }}"
@@ -200,7 +261,7 @@
         <span class="app-menu__label">Webmail</span></a>
         </li> --}}
                 <li
-                    class="treeview {{ active_item(['setting', 'appearance', 'cache', 'profile']) ? 'is-expanded' : '' }}">
+                    class="treeview {{ active_item(['setting', 'appearance', 'cache', 'profile','plugins']) ? 'is-expanded' : '' }}">
                     <a class="app-menu__item" href="#" data-toggle="treeview"><i
                             class="app-menu__icon fa fa-gear text-danger"></i><span
                             class="app-menu__label">Setting</span><i class="treeview-indicator fa fa-chevron-right"></i>
@@ -222,6 +283,11 @@
                                     class="icon fa fa-globe text-success"></i> Website</a>
                         </li>
                         @if (is_main_domain())
+                           <li>
+                                <a class="treeview-item {{ active_item(val: 'plugins') }}"
+                                    href="{{ route('admin.plugins') }}"><i class="icon fa fa-plug text-info"></i>
+                                    Plugins</a>
+                            </li>
                             <li>
                                 <a class="treeview-item {{ active_item(val: 'cache') }}"
                                     href="{{ route('cache-manager') }}"><i class="icon fa fa-flash text-warning"></i>

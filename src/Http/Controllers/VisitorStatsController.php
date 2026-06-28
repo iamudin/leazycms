@@ -11,7 +11,7 @@ use Intervention\Image\Facades\Image;
 class VisitorStatsController extends Controller
 {
 
-        public function logoGenerator()
+    public function logoGenerator()
     {
         /*
         |--------------------------------------------------------------------------
@@ -59,11 +59,39 @@ class VisitorStatsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | CALCULATE CANVAS WIDTH
+        |--------------------------------------------------------------------------
+        */
+
+        $fontBold = public_path('fonts/Poppins-Bold.ttf');
+        $fontRegular = public_path('fonts/Poppins-Regular.ttf');
+
+        $titleWidth = 0;
+        if (function_exists('imagettfbbox') && File::exists($fontBold)) {
+            $bbox = @imagettfbbox(50, 0, $fontBold, $title);
+            $titleWidth = $bbox ? abs($bbox[2] - $bbox[0]) : (strlen($title) * 32);
+        } else {
+            $titleWidth = strlen($title) * 32;
+        }
+
+        $sloganWidth = 0;
+        if (function_exists('imagettfbbox') && File::exists($fontRegular)) {
+            $bbox = @imagettfbbox(30, 0, $fontRegular, $slogan);
+            $sloganWidth = $bbox ? abs($bbox[2] - $bbox[0]) : (strlen($slogan) * 18);
+        } else {
+            $sloganWidth = strlen($slogan) * 18;
+        }
+
+        // 100 is the X coordinate of the title, 102 for slogan, plus 30px right margin
+        $canvasWidth = max($titleWidth + 50, $sloganWidth);
+
+        /*
+        |--------------------------------------------------------------------------
         | CREATE TRANSPARENT CANVAS (Intervention Image v2)
         |--------------------------------------------------------------------------
         */
 
-        $img = Image::canvas(650, 110); // Default is transparent
+        $img = Image::canvas($canvasWidth, 110); // Default is transparent
 
         /*
         |--------------------------------------------------------------------------
@@ -103,7 +131,7 @@ class VisitorStatsController extends Controller
             if (File::exists($fontBold)) {
                 $font->file($fontBold);
             }
-            $font->size(65);
+            $font->size(55);
             $font->color('#00843D');
         });
 

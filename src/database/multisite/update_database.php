@@ -16,8 +16,9 @@ return new class extends Migration {
             $table->string('domain')->unique();
             $table->string('theme')->nullable();
             $table->json('modules')->nullable();
+            $table->json('plugins')->nullable();
             $table->boolean('custom_theme')->default(false);
-            $table->enum('status',['active','inactive','suspended','maintenance'])->default('active');
+            $table->enum('status', ['active', 'inactive', 'suspended', 'maintenance'])->default('active');
             $table->timestamps();
         });
 
@@ -28,10 +29,10 @@ return new class extends Migration {
             $table->string('name')->nullable();
             $table->string('preview')->nullable();
             $table->string('git')->nullable();
-            $table->enum('status',['active','inactive'])->default('active');
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
-        foreach(['posts','categories','tags','analytics_visitors','analytics_daily','options','polling_topics','roles','users','one_time_tokens'] as $tableName) {
+        foreach (['posts', 'categories', 'tags', 'analytics_visitors', 'analytics_daily', 'options', 'polling_topics', 'roles', 'users', 'one_time_tokens'] as $tableName) {
             if (!Schema::hasColumn($tableName, 'tenant_id')) {
                 Schema::table($tableName, function (Blueprint $table) {
                     $table->unsignedBigInteger('tenant_id')->nullable()->index();
@@ -63,7 +64,7 @@ return new class extends Migration {
         }
 
         \Leazycms\Web\Http\Controllers\TenantController::deleteOptionsDefault();
-        rewrite_env(['MULTITENANT_INSTALLED'=>true]);
+        rewrite_env(['MULTITENANT_INSTALLED' => true]);
 
     }
 

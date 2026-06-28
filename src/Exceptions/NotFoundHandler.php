@@ -18,7 +18,7 @@ class NotFoundHandler extends ExceptionHandler
     public function render($request, Throwable $exception): \Symfony\Component\HttpFoundation\Response
     {
        
-        if ($exception instanceof NotFoundHttpException) {
+        if ($exception instanceof NotFoundHttpException || $exception instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
             return (new NotFoundController)->error404();
         }
 

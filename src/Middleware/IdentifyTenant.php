@@ -15,7 +15,7 @@ class IdentifyTenant
     public function handle(Request $request, Closure $next)
     {
 
-        if(!config('modules.multitenant_installed')){
+        if (!config('modules.multitenant_installed')) {
             $view = view('cms::backend.multisite-active')->render();
             return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
         }
@@ -45,7 +45,7 @@ class IdentifyTenant
 
         if (!$tenant) {
             $portal = config('app.url');
-$html = <<<HTML
+            $html = <<<HTML
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -369,25 +369,64 @@ HTML;
                 ->header('X-Content-Type-Options', 'nosniff');
         }
 
-                if(config('modules.multitenant_installed') && !is_main_domain() && $tenant->status == 'suspended'){
+        if (config('modules.multitenant_installed') && !is_main_domain() && $tenant->status == 'suspended') {
             $view = view('cms::backend.suspended')->render();
             return response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html');
         }
-            app()->singleton('default.options', function ()  {
+        app()->singleton('default.options', function () {
             return Cache::rememberForever(
-            "tenant:master:".parse_url(config('app.url'), PHP_URL_HOST).":options",
-            fn() => Option::withoutGlobalScope('tenant')->WhereNull('tenant_id')->pluck('value', 'name')->toArray()
-        );
-    });
+                "tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options",
+                fn() => Option::withoutGlobalScope('tenant')->WhereNull('tenant_id')->pluck('value', 'name')->toArray()
+            );
+        });
         app()->instance('tenant', $tenant);
         URL::forceRootUrl($request->getSchemeAndHttpHost());
         app()->singleton('tenant.options', function () use ($tenant) {
             return Cache::rememberForever(
                 "tenant:{$tenant->domain}:options",
-                fn() =>Option::pluck('value', 'name')
+                fn() => Option::pluck('value', 'name')
                     ->toArray()
             );
         });
+
+        // Plugin Access Check
+        if (config('modules.multisite_enabled')) {
+            $path = $request->path();
+            $adminPrefix = admin_path();
+            $pluginName = null;
+            $isAdminRoute = false;
+
+            if (str_starts_with($path, $adminPrefix . '/')) {
+                $segments = explode('/', $path);
+                if (isset($segments[1])) {
+                    $pluginName = $segments[1];
+                    $isAdminRoute = true;
+                }
+            } else {
+                $segments = explode('/', $path);
+                if (isset($segments[0])) {
+                    $pluginName = $segments[0];
+                }
+            }
+
+            if ($pluginName) {
+                $pluginPath = resource_path('plugins/' . $pluginName);
+
+                if (is_dir($pluginPath)) {
+                    if (is_main_domain()) {
+                        if (!$isAdminRoute) {
+                            abort(404);
+                        }
+                    } else {
+                        $allowedPlugins = is_string($tenant->plugins) ? json_decode($tenant->plugins, true) : ($tenant->plugins ?? []);
+                        if (!is_array($allowedPlugins) || !in_array($pluginName, $allowedPlugins)) {
+                            abort(404);
+                        }
+                    }
+                }
+            }
+        }
+
         $response = $next($request);
         return $response;
     }

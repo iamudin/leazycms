@@ -100,6 +100,66 @@ class PanelController extends Controller implements HasMiddleware
     }
 
 
+    function plugins(Request $request)
+    {
+        abort_if(!is_main_domain(), 404);
+
+        if ($request->isMethod('post')) {
+            $pluginName = $request->plugin_name;
+            $action = $request->action; // 'enable' or 'disable'
+
+            $disabledPlugins = get_disabled_plugins();
+
+            if ($action == 'disable') {
+                if (!in_array($pluginName, $disabledPlugins)) {
+                    $disabledPlugins[] = $pluginName;
+                }
+            } else {
+                $disabledPlugins = array_diff($disabledPlugins, [$pluginName]);
+            }
+
+            DB::table('options')->updateOrInsert(
+                ['name' => 'disabled_plugins', 'tenant_id' => null],
+                ['value' => json_encode(array_values($disabledPlugins)), 'autoload' => 1]
+            );
+
+            return back()->with('success', 'Status plugin berhasil diubah.');
+        }
+
+        $plugins = [];
+        $disabledPlugins = get_disabled_plugins();
+
+        if (File::exists(resource_path('plugins'))) {
+            $pluginDirs = array_map('basename', File::directories(resource_path('plugins')));
+            foreach ($pluginDirs as $dir) {
+                $description = '-';
+                $title = Str::title(str_replace('-', ' ', $dir));
+
+                $jsonPath = resource_path('plugins/' . $dir . '/plugin.json');
+                if (File::exists($jsonPath)) {
+                    $jsonString = File::get($jsonPath);
+                    $jsonString = preg_replace('/^\xEF\xBB\xBF/', '', $jsonString);
+                    $json = json_decode($jsonString, true);
+
+                    if ($json) {
+                        $title = $json['title'] ?? $title;
+                        $description = $json['description'] ?? $description;
+                    }
+                }
+
+                $plugins[] = [
+                    'name' => $dir,
+                    'title' => $title,
+                    'description' => $description,
+                    'status' => !in_array($dir, $disabledPlugins)
+                ];
+            }
+        }
+
+
+        return view('cms::backend.plugins.index', compact('plugins'));
+    }
+
     function menu_target(Request $request)
     {
         $search = $request->q ? strip_tags($request->q) : null;
@@ -639,8 +699,8 @@ class PanelController extends Controller implements HasMiddleware
                             ->updateOrInsert(
                                 $match,
                                 app()->has('tenant')
-                                    ? ['value' => strip_tags($value), 'tenant_id' => null]
-                                    : ['value' => strip_tags($value)]
+                                ? ['value' => strip_tags($value), 'tenant_id' => null]
+                                : ['value' => strip_tags($value)]
                             );
                     }
                 }
@@ -660,8 +720,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => true, 'tenant_id' => null]
-                                : ['value' => true]
+                            ? ['value' => true, 'tenant_id' => null]
+                            : ['value' => true]
 
                         );
                 } else {
@@ -673,8 +733,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => false, 'tenant_id' => null]
-                                : ['value' => false]
+                            ? ['value' => false, 'tenant_id' => null]
+                            : ['value' => false]
 
                         );
                 }
@@ -689,8 +749,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => true, 'tenant_id' => null]
-                                : ['value' => true]
+                            ? ['value' => true, 'tenant_id' => null]
+                            : ['value' => true]
 
                         );
                 } else {
@@ -702,8 +762,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => false, 'tenant_id' => null]
-                                : ['value' => false]
+                            ? ['value' => false, 'tenant_id' => null]
+                            : ['value' => false]
 
                         );
 
@@ -817,8 +877,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => $value, 'tenant_id' => null]
-                                : ['value' => $value]
+                            ? ['value' => $value, 'tenant_id' => null]
+                            : ['value' => $value]
 
                         );
                 }
@@ -831,8 +891,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => 'Y', 'tenant_id' => null]
-                                : ['value' => 'Y']
+                            ? ['value' => 'Y', 'tenant_id' => null]
+                            : ['value' => 'Y']
 
                         );
                     rewrite_env(['APP_DEBUG' => 'true']);
@@ -845,8 +905,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => 'N', 'tenant_id' => null]
-                                : ['value' => 'N']
+                            ? ['value' => 'N', 'tenant_id' => null]
+                            : ['value' => 'N']
                         );
                     rewrite_env(['APP_DEBUG' => 'false']);
                 }
@@ -861,8 +921,8 @@ class PanelController extends Controller implements HasMiddleware
                                 ->updateOrInsert(
                                     $match,
                                     app()->has('tenant')
-                                        ? ['value' => 'production', 'tenant_id' => null]
-                                        : ['value' => 'production']
+                                    ? ['value' => 'production', 'tenant_id' => null]
+                                    : ['value' => 'production']
                                 );
                             rewrite_env(['APP_ENV' => 'production']);
                         }
@@ -876,8 +936,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                                ? ['value' => 'local', 'tenant_id' => null]
-                                : ['value' => 'local']
+                            ? ['value' => 'local', 'tenant_id' => null]
+                            : ['value' => 'local']
                         );
                     rewrite_env(['APP_ENV' => 'local']);
                 }
@@ -1048,13 +1108,22 @@ class PanelController extends Controller implements HasMiddleware
                         $cekdefault = DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->first();
                         if ($cekdefault) {
                             DB::table('options')->whereNull('tenant_id')->where('name', 'home_page')->delete();
-                            cache()->forget('default:options');
+                            cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
                         }
                     }
 
                     $option->updateOrCreate(['name' => 'home_page'], ['value' => $request->home_page, 'autoload' => 1]);
                 }
                 if (app()->has('tenant')) {
+                    if ($request->logo_description && $request->logo_title) {
+                        $logo = DB::table('options')->whereNull('tenant_id')->where('name', 'like', 'logo_%')->get();
+                        if ($logo->count() > 0) {
+                            DB::table('options')->whereNull('tenant_id')->where('name', 'like', 'logo_%')->delete();
+                            cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+
+                        }
+
+                    }
                     cache()->forget('tenant:' . tenant()->domain . ':options');
                 }
 
@@ -1333,16 +1402,16 @@ class PanelController extends Controller implements HasMiddleware
                 case 'change_file':
                     if ($content = $request->file_src) {
                         $data = $content;
-                        $file = $path  . $file;
+                        $file = $path . $file;
                         $ext = pathinfo($file, PATHINFO_EXTENSION);
                         if ($ext == 'php') {
                             if (basename($file) == 'modules.blade.php') {
                                 Cache::put('tempmodules', file_get_contents($file));
-                                if (File::put($file,  $content)) {
+                                if (File::put($file, $content)) {
                                     $phpCode = File::get($file);
                                     try {
                                         ob_start();
-                                        eval('?>' . $phpCode);
+                                        eval ('?>' . $phpCode);
                                         ob_end_clean();
                                     } catch (\ParseError $e) {
                                         File::put($file, Cache::get('tempmodules'));
@@ -1591,5 +1660,51 @@ class PanelController extends Controller implements HasMiddleware
 
         Cache::put($statusKey, $updated, now()->addHours(6));
         return $updated;
+    }
+
+
+    public function uploadPlugin(Request $request)
+    {
+        abort_if(!is_main_domain(), 403);
+
+        $request->validate([
+            'plugin_file' => 'required|file|mimes:zip|max:50000',
+        ]);
+
+        $file = $request->file('plugin_file');
+        $zip = new ZipArchive;
+        if ($zip->open($file->getRealPath()) === true) {
+            $extractPath = storage_path('app/temp_plugins/' . time());
+            if (!File::exists($extractPath)) {
+                File::makeDirectory($extractPath, 0755, true);
+            }
+            $zip->extractTo($extractPath);
+            $zip->close();
+
+            // Validate that the ZIP has exactly one root folder
+            $extractedDirs = File::directories($extractPath);
+            if (count($extractedDirs) !== 1) {
+                File::deleteDirectory($extractPath);
+                return back()->with('danger', 'Format ZIP tidak valid. ZIP harus berisi tepat satu folder utama plugin.');
+            }
+
+            $pluginName = basename($extractedDirs[0]);
+            $targetPath = resource_path('plugins/' . $pluginName);
+
+            // Jika plugin sudah ada, timpa
+            if (File::exists($targetPath)) {
+                File::deleteDirectory($targetPath);
+            }
+
+            File::moveDirectory($extractedDirs[0], $targetPath);
+            File::deleteDirectory($extractPath);
+
+            // Run migration if any new ones were added
+            Artisan::call('migrate', ['--force' => true]);
+
+            return back()->with('success', 'Plugin berhasil diinstal.');
+        }
+
+        return back()->with('danger', 'Gagal mengekstrak file plugin.');
     }
 }

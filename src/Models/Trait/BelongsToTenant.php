@@ -6,16 +6,23 @@ trait BelongsToTenant
     public function scopeWithTenant($query)
     {
         if (config('modules.multisite_enabled')) {
-            $query->with(['tenant' => function ($q) {
-                $q->select('id', 'domain')->whereIn('status', ['active','maintenance','suspended']);
-            }])->where(function ($q) {
+            $query->with([
+                'tenant' => function ($q) {
+                    $q->select('id', 'domain')->whereIn('status', ['active', 'maintenance', 'suspended']);
+                }
+            ])->where(function ($q) {
                 $q->whereHas('tenant', function ($sub) {
-                    $sub->whereIn('status', ['active','maintenance','suspended']);
-                })->orWhereNull('tenant_id');
+                    $sub->whereIn('status', ['active', 'maintenance', 'suspended']);
+                })->orWhereNull($this->getTable() . '.tenant_id');
             });
         }
 
         return $query;
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(\Leazycms\Web\Models\Tenant::class, 'tenant_id');
     }
     protected static function bootBelongsToTenant()
     {
@@ -30,12 +37,12 @@ trait BelongsToTenant
             $model = $builder->getModel();
 
             // hanya untuk tabel options
-            if ($model->getTable() !== 'options'  && is_main_domain()) {
+            if ($model->getTable() !== 'options' && is_main_domain()) {
                 return;
             }
 
             if (app()->has('tenant')) {
-                $builder->where('tenant_id', tenant()->id);
+                $builder->where($model->getTable() . '.tenant_id', tenant()->id);
             }
         });
 
@@ -49,7 +56,7 @@ trait BelongsToTenant
         // 🔹 Save (anti manipulasi tenant_id)
         static::saving(function ($model) {
             if (app()->has('tenant')) {
-                if(is_main_domain()) {
+                if (is_main_domain()) {
                     return;
                 }
                 $model->tenant_id = tenant()->id;
@@ -78,8 +85,8 @@ trait BelongsToTenant
         // 🔹 Delete validation
         static::deleting(function ($model) {
             if (app()->has('tenant')) {
-                if(is_null($model->tenant_id) || !is_null($model->tenant_id) && is_main_domain()) {
-                  return;
+                if (is_null($model->tenant_id) || !is_null($model->tenant_id) && is_main_domain()) {
+                    return;
                 }
                 if ($model->tenant_id !== tenant()->id) {
                     abort(403, 'Tidak diizinkan');

@@ -31,10 +31,4 @@ class BaseModel extends Model
     /**
      * Optional: proteksi field tenant_id
      */
-
-    function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
 }

@@ -37,7 +37,8 @@ use Throwable;
 class CmsServiceProvider extends ServiceProvider
 {
 
-protected function handle403(){
+    protected function handle403()
+    {
         $handler = $this->app->make(ExceptionHandler::class);
 
         $handler->renderable(function (Throwable $e, $request) {
@@ -52,7 +53,7 @@ protected function handle403(){
 
             return null;
         });
-}
+    }
     protected function handle500()
     {
         $this->app->afterResolving(ExceptionHandler::class, function ($handler) {
@@ -124,9 +125,9 @@ protected function handle403(){
 
         });
     }
-protected function registerRoutes()
+    protected function registerRoutes()
     {
-        if(config('modules.multisite_enabled')) {
+        if (config('modules.multisite_enabled')) {
             Route::prefix(admin_path())
                 ->middleware(['web', 'admin'])
                 ->group(function () {
@@ -199,6 +200,17 @@ protected function registerRoutes()
         if (config('modules.multisite_enabled')) {
             $this->loadMigrationsFrom(__DIR__ . "/database/multisite");
         }
+
+        // Load plugin migrations
+        $pluginsPaths = glob(resource_path('plugins/*'), GLOB_ONLYDIR);
+        if ($pluginsPaths) {
+            foreach ($pluginsPaths as $pluginPath) {
+                $migrationPath = $pluginPath . '/migrations';
+                if (is_dir($migrationPath)) {
+                    $this->loadMigrationsFrom($migrationPath);
+                }
+            }
+        }
     }
     protected function registerServices()
     {
@@ -222,6 +234,7 @@ protected function registerRoutes()
         if (config('modules.multisite_enabled')) {
             $kernel->prependMiddlewareToGroup('web', IdentifyTenant::class);
         }
+        $kernel->appendMiddlewareToGroup('web', \Leazycms\Web\Middleware\CheckPluginAccess::class);
         require_once(__DIR__ . "/Inc/Option.php");
         $kernel->appendMiddlewareToGroup('web', RateLimit::class);
 
@@ -231,7 +244,12 @@ protected function registerRoutes()
         $this->cmsHandler();
         $this->registerRoutes();
         $this->commands([
-            InstallCommand::class,RouteListBlock::class,ResetPassword::class,UpdateCMS::class,ThemeUpdateCommand::class,AssetLink::class
+            InstallCommand::class,
+            RouteListBlock::class,
+            ResetPassword::class,
+            UpdateCMS::class,
+            ThemeUpdateCommand::class,
+            AssetLink::class
         ]);
         $this->log_viewer();
         $this->handle500();
@@ -268,7 +286,8 @@ protected function registerRoutes()
             ->header('Content-Type', 'text/html')
             ->header('X-Request-ID', $requestId);
     }
-  function log_viewer(){
+    function log_viewer()
+    {
         LogViewer::auth(function ($request) {
             return $request->user()
                 && in_array($request->user()->level, [
@@ -276,9 +295,34 @@ protected function registerRoutes()
                 ]);
         });
 
-  }
+    }
     public function register()
     {
+        // Custom Autoloader for Plugins in resources/plugins/
+        spl_autoload_register(function ($class) {
+            if (\Illuminate\Support\Str::startsWith($class, 'App\\Http\\Controllers\\Plugins\\')) {
+                $relative = substr($class, strlen('App\\Http\\Controllers\\Plugins\\'));
+                $parts = explode('\\', $relative);
+                $pluginNamespace = array_shift($parts);
+                $pluginDir = \Illuminate\Support\Str::kebab($pluginNamespace);
+                $path = resource_path('plugins/' . $pluginDir . '/Controllers/' . implode('/', $parts) . '.php');
+
+                if (file_exists($path)) {
+                    require_once $path;
+                }
+            }
+
+            if (\Illuminate\Support\Str::startsWith($class, 'App\\Models\\Plugins\\')) {
+                $relative = substr($class, strlen('App\\Models\\Plugins\\'));
+                $parts = explode('\\', $relative);
+                $pluginNamespace = array_shift($parts);
+                $pluginDir = \Illuminate\Support\Str::kebab($pluginNamespace);
+                $path = resource_path('plugins/' . $pluginDir . '/Models/' . implode('/', $parts) . '.php');
+                if (file_exists($path)) {
+                    require_once $path;
+                }
+            }
+        });
 
         $this->configure();
         $this->registerServices();
@@ -293,16 +337,16 @@ protected function registerRoutes()
     {
 
 
-         if (!config('modules.installed') && !$this->app->runningInConsole()) {
+        if (!config('modules.installed') && !$this->app->runningInConsole()) {
             $view = view('cms::backend.pre-install')->render();
-             response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html')->send();
+            response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html')->send();
             exit;
         }
 
         Carbon::setLocale('ID');
         date_default_timezone_set(config('modules.timezone'));
-        if(config('log-viewer.route_path')){
-        config(['log-viewer.timezone' => config('modules.timezone')]);
+        if (config('log-viewer.route_path')) {
+            config(['log-viewer.timezone' => config('modules.timezone')]);
         }
         Config::set('auth.providers.users.model', 'Leazycms\Web\Models\User');
 
@@ -320,7 +364,7 @@ protected function registerRoutes()
             }
 
         }
-            $this->loadTemplateConfig();
+        $this->loadTemplateConfig();
 
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
@@ -342,7 +386,40 @@ protected function registerRoutes()
                 ob_end_clean();
             } catch (\Throwable $e) {
                 // kalau ada error, jangan lakukan apa-apa
-                Log::warning("Template config gagal diload: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::warning("Template config gagal diload: " . $e->getMessage());
+            }
+        }
+
+        // Auto-load plugin routes and views
+        $disabledPlugins = get_disabled_plugins();
+
+        $pluginsPaths = [
+            resource_path('plugins')
+        ];
+
+        foreach ($pluginsPaths as $pluginsPath) {
+            if (file_exists($pluginsPath)) {
+                $pluginDirs = array_map('basename', \Illuminate\Support\Facades\File::directories($pluginsPath));
+                foreach ($pluginDirs as $pluginName) {
+                    if (!in_array($pluginName, $disabledPlugins)) {
+                        // Register Views
+                        $viewPath = $pluginsPath . '/' . $pluginName . '/views';
+                        if (is_dir($viewPath)) {
+                            $this->loadViewsFrom($viewPath, $pluginName);
+                        }
+
+                        $pluginRouteFile = $pluginsPath . '/' . $pluginName . '/routes/web.php';
+                        if (file_exists($pluginRouteFile)) {
+                            try {
+                                ob_start();
+                                @include $pluginRouteFile;
+                                ob_end_clean();
+                            } catch (\Throwable $e) {
+                                \Illuminate\Support\Facades\Log::warning("Plugin route config gagal diload [{$pluginName}]: " . $e->getMessage());
+                            }
+                        }
+                    }
+                }
             }
         }
     }

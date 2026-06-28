@@ -5,8 +5,9 @@ class Tenant extends Model
 {
    protected $casts = [
         'modules' => 'array',
+        'plugins' => 'array',
    ];
-    protected $fillable = ['name', 'domain', 'status','theme','modules','custom_theme'];
+    protected $fillable = ['name', 'domain', 'status','theme','modules','plugins','custom_theme'];
     function themeSelected(){
         return $this->belongsTo(Theme::class,'theme','path');
     }

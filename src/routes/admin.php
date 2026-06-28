@@ -13,7 +13,7 @@ use Leazycms\Web\Http\Controllers\UserController;
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
 Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileSummernote'])->name('upload_file_summernote');
-Route::match(['get','post','delete'],'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
+Route::match(['get', 'post', 'delete'], 'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
 Route::get('files', [PanelController::class, 'files'])->name('files');
 Route::match(['get', 'post'], 'security/blocked-ip', [PanelController::class, 'blockedIps'])->name('blocked-ip');
@@ -22,7 +22,7 @@ Route::post('print/posts', [PostController::class, 'printPosts'])->name('print.p
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {
-           Route::get($value->name, 'index')->name($value->name);
+            Route::get($value->name, 'index')->name($value->name);
             Route::post($value->name, 'datatable')->name($value->name . '.datatable');
         }
         if (in_array('create', $value->route)) {
@@ -40,7 +40,7 @@ foreach (get_module() as $value) {
         if (in_array('delete', $value->route)) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
             Route::post($value->name . '/bulkaction', 'bulkaction')->name($value->name . '.bulkaction');
-            Route::match(['get','post'],$value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');
+            Route::match(['get', 'post'], $value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');
         }
 
         Route::post('/post/status', [PostController::class, 'updateStatus'])->name('post.status');
@@ -73,7 +73,7 @@ Route::controller(EmailController::class)->group(function () {
 Route::controller(PanelController::class)->group(function () {
     Route::get('dashboard', 'index')->name('panel.dashboard');
     Route::get('logs', 'logs')->name('panel.logs');
-    Route::match(['post','get'],'apikey', 'apikey')->name('apikey');
+    Route::match(['post', 'get'], 'apikey', 'apikey')->name('apikey');
     Route::post('dashboard', 'visitor')->name('visitor.data');
     Route::get('admin_path/{path}', 'admin_path')->name('admin_path_changer');
     Route::match(['get', 'post'], 'appearance', 'appearance')->name('appearance');
@@ -85,6 +85,8 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'backup', 'backup_restore')->name('backup');
     Route::match(['get', 'post'], 'menu-target', 'menu_target')->name('menu-target');
     Route::match(['get', 'put'], 'profile', 'profile')->name('profile');
+    Route::match(['get', 'post'], 'plugins', 'plugins')->name('admin.plugins');
+    Route::match(['post'], 'plugins/upload', 'uploadPlugin')->name('admin.plugins.upload');
 });
 Route::controller(UserController::class)->group(function () {
     Route::get('role', 'roleIndex')->name('role');
@@ -110,7 +112,7 @@ Route::controller(TenantController::class)->group(function () {
     Route::delete('tenant/{tenant}/edit', 'destroy')->name('tenant.destroy');
 });
 
-if(config('modules.app_master')){
+if (config('modules.app_master')) {
     Route::controller(AppMasterController::class)->group(function () {
         Route::get('site-monitor', 'index')->name('app.master.index');
         Route::get('site-monitor/update', 'update')->name('app.master.update');
@@ -129,17 +131,17 @@ Route::controller(TagController::class)->group(function () {
     Route::delete('tags/{tag}/edit', 'destroy')->name('tag.destroy');
 });
 
-if(config('modules.multisite_enabled')){
-Route::controller(ThemeController::class)->group(function () {
-    Route::get('theme', 'index')->name('theme.index');
-    Route::post('theme', 'datatable')->name('theme.datatable');
-    Route::get('theme/create', 'create')->name('theme.create');
-    Route::post('theme/create', 'store')->name('theme.store');
-    Route::get('theme/{theme}/edit', 'edit')->name('theme.edit');
-    Route::put('theme/{theme}/edit', 'update')->name('theme.update');
-    Route::delete('theme/{theme}/edit', 'destroy')->name('theme.destroy');
-    Route::post('theme/{theme}/update-git', 'updateFromGit')->name('theme.update_git');
-});
+if (config('modules.multisite_enabled')) {
+    Route::controller(ThemeController::class)->group(function () {
+        Route::get('theme', 'index')->name('theme.index');
+        Route::post('theme', 'datatable')->name('theme.datatable');
+        Route::get('theme/create', 'create')->name('theme.create');
+        Route::post('theme/create', 'store')->name('theme.store');
+        Route::get('theme/{theme}/edit', 'edit')->name('theme.edit');
+        Route::put('theme/{theme}/edit', 'update')->name('theme.update');
+        Route::delete('theme/{theme}/edit', 'destroy')->name('theme.destroy');
+        Route::post('theme/{theme}/update-git', 'updateFromGit')->name('theme.update_git');
+    });
 }
 Route::controller(PollingController::class)->group(function () {
     Route::get('polling', 'index')->name('polling');
@@ -155,11 +157,11 @@ Route::controller(PollingController::class)->group(function () {
     Route::put('polling/{polling}/update', 'update')->name('polling.update');
     Route::delete('polling/{polling}/edit', 'destroy')->name('polling.destroy');
 });
-if($custom = config('modules.custom_menu')){
-    foreach($custom as $menu){
-        if($menu['method']=='resource'){
+if ($custom = config('modules.custom_menu')) {
+    foreach ($custom as $menu) {
+        if ($menu['method'] == 'resource') {
             Route::resource($menu['path'], $menu['controller'])->middleware('auth');
-        }else{
+        } else {
             Route::match(is_array($menu['method']) ? $menu['method'] : [$menu['method']], $menu['path'], [$menu['controller'], $menu['function']])->name($menu['name'])->middleware('auth');
 
         }
