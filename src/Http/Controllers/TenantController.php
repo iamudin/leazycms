@@ -108,8 +108,8 @@ class TenantController extends Controller implements HasMiddleware
         $themes = Theme::where('status', 'active')->get();
         $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
         $availablePlugins = [];
-        if (File::exists(resource_path('views/plugins'))) {
-            $availablePlugins = array_map('basename', File::directories(resource_path('views/plugins')));
+        if (File::exists(resource_path('plugins'))) {
+            $availablePlugins = array_map('basename', File::directories(resource_path('plugins')));
         }
         return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules, 'availablePlugins' => $availablePlugins]);
     }
@@ -202,8 +202,8 @@ class TenantController extends Controller implements HasMiddleware
         $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
         $options = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->pluck('value', 'name')->toArray();
         $availablePlugins = [];
-        if (File::exists(resource_path('views/plugins'))) {
-            $availablePlugins = array_map('basename', File::directories(resource_path('views/plugins')));
+        if (File::exists(resource_path('plugins'))) {
+            $availablePlugins = array_map('basename', File::directories(resource_path('plugins')));
         }
         return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules', 'availablePlugins'));
     }

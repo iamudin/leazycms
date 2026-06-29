@@ -71,7 +71,6 @@
                                             <form action="{{ route('admin.plugins.update') }}" method="POST" class="d-inline form-update-plugin" id="form-update-{{ $plugin['name'] }}">
                                                 @csrf
                                                 <input type="hidden" name="plugin_name" value="{{ $plugin['name'] }}">
-                                                <input type="hidden" name="download_url" class="input-download-url" value="">
                                                 <button type="submit" class="btn btn-sm btn-info btn-do-update" style="display: none;"
                                                     onclick="return confirm('Update plugin ini? File lama akan tertimpa.')">
                                                     <i class="fa fa-refresh"></i> Update
@@ -125,6 +124,22 @@
         document.addEventListener('DOMContentLoaded', function() {
             const rows = document.querySelectorAll('.plugin-row');
             
+            // Fungsi membandingkan versi (misal v1.0.1 > v1.0.0)
+            function compareVersions(v1, v2) {
+                const cleanV1 = v1.replace(/^v/, '');
+                const cleanV2 = v2.replace(/^v/, '');
+                const parts1 = cleanV1.split('.').map(Number);
+                const parts2 = cleanV2.split('.').map(Number);
+                
+                for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+                    const num1 = parts1[i] || 0;
+                    const num2 = parts2[i] || 0;
+                    if (num1 > num2) return 1;
+                    if (num1 < num2) return -1;
+                }
+                return 0;
+            }
+
             rows.forEach(row => {
                 const plugin = row.getAttribute('data-plugin');
                 const repo = row.getAttribute('data-repository');
@@ -133,32 +148,24 @@
                 if (repo && currentVersion) {
                     fetch(`https://api.github.com/repos/${repo}/tags`)
                         .then(response => {
-                            if (!response.ok) throw new Error('Network response was not ok');
+                            if (!response.ok) throw new Error('Cannot fetch tags');
                             return response.json();
                         })
                         .then(tags => {
                             if (tags && tags.length > 0) {
-                                const latestTag = tags[0];
-                                const latestVersion = latestTag.name;
-                                
-                                if (latestVersion !== currentVersion) {
-                                    // Asumsi tag terbaru (index 0) adalah rilis terbaru
+                                const latestTag = tags[0].name;
+                                if (compareVersions(latestTag, currentVersion) > 0) {
                                     const updateInfo = row.querySelector('.update-info');
-                                    updateInfo.innerHTML = `Update tersedia: <strong>${latestVersion}</strong>`;
+                                    updateInfo.innerHTML = `Update tersedia: <strong>${latestTag}</strong>`;
                                     updateInfo.style.display = 'block';
                                     
                                     const updateBtn = row.querySelector('.btn-do-update');
                                     updateBtn.style.display = 'inline-block';
-                                    updateBtn.innerHTML = `<i class="fa fa-refresh"></i> Update ke ${latestVersion}`;
-                                    
-                                    const downloadUrlInput = row.querySelector('.input-download-url');
-                                    downloadUrlInput.value = latestTag.zipball_url;
+                                    updateBtn.innerHTML = `<i class="fa fa-refresh"></i> Update ke ${latestTag}`;
                                 }
                             }
                         })
-                        .catch(error => {
-                            console.error('Error fetching github tags for plugin ' + plugin + ':', error);
-                        });
+                        .catch(error => console.error('Error fetching github tags for ' + plugin + ':', error));
                 }
             });
         });

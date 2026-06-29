@@ -1732,66 +1732,20 @@ class PanelController extends Controller implements HasMiddleware
     {
         $request->validate([
             'plugin_name' => 'required|string',
-            'download_url' => 'required|url',
         ]);
 
         $pluginName = $request->plugin_name;
-        $downloadUrl = $request->download_url;
-        $targetPath = resource_path('plugins/' . $pluginName);
-
-        if (!File::exists($targetPath)) {
-            return back()->with('danger', 'Plugin tidak ditemukan.');
-        }
 
         try {
-            // Kita pakai CURL atau file_get_contents dengan header User-Agent karena GitHub memblokir req tanpa User-Agent
-            $opts = [
-                "http" => [
-                    "method" => "GET",
-                    "header" => "User-Agent: PHP\r\n"
-                ]
-            ];
-            $context = stream_context_create($opts);
-            $zipContent = file_get_contents($downloadUrl, false, $context);
-
-            $tempZipPath = storage_path('app/temp_plugins/' . time() . '.zip');
-
-            if (!File::exists(storage_path('app/temp_plugins'))) {
-                File::makeDirectory(storage_path('app/temp_plugins'), 0755, true);
-            }
-
-            File::put($tempZipPath, $zipContent);
-
-            $zip = new \ZipArchive;
-            if ($zip->open($tempZipPath) === true) {
-                $extractPath = storage_path('app/temp_plugins/ext_' . time());
-                if (!File::exists($extractPath)) {
-                    File::makeDirectory($extractPath, 0755, true);
-                }
-                $zip->extractTo($extractPath);
-                $zip->close();
-
-                $extractedDirs = \Illuminate\Support\Facades\File::directories($extractPath);
-                if (count($extractedDirs) !== 1) {
-                    \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
-                    \Illuminate\Support\Facades\File::delete($tempZipPath);
-                    return back()->with('danger', 'Format ZIP dari GitHub tidak valid.');
-                }
-
-                \Illuminate\Support\Facades\File::deleteDirectory($targetPath);
-                \Illuminate\Support\Facades\File::moveDirectory($extractedDirs[0], $targetPath);
-                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
-                \Illuminate\Support\Facades\File::delete($tempZipPath);
-
-                \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-
-                return back()->with('success', 'Plugin berhasil diupdate.');
-            } else {
-                \Illuminate\Support\Facades\File::delete($tempZipPath);
-                return back()->with('danger', 'Gagal membuka file ZIP hasil unduhan.');
-            }
+            $exit = \Illuminate\Support\Facades\Artisan::call('cms:update-plugin', ['slug' => $pluginName]);
+            $out = trim((string) \Illuminate\Support\Facades\Artisan::output());
+            
+            // Run migration just in case the plugin has new migrations
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            
+            return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Plugin berhasil diupdate' : 'Gagal mengupdate plugin'));
         } catch (\Exception $e) {
-            return back()->with('danger', 'Gagal mengunduh atau mengupdate plugin: ' . $e->getMessage());
+            return back()->with('danger', 'Gagal mengupdate plugin: ' . $e->getMessage());
         }
     }
 }

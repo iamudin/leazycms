@@ -22,6 +22,7 @@ use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Commands\ResetPassword;
 use Leazycms\Web\Commands\RouteListBlock;
 use Leazycms\Web\Commands\ThemeUpdateCommand;
+use Leazycms\Web\Commands\PluginUpdateCommand;
 use Leazycms\Web\Commands\UpdateCMS;
 use Leazycms\Web\Exceptions\NotFoundHandler;
 use Leazycms\Web\Http\Controllers\VisitorStatsController;
@@ -253,6 +254,7 @@ class CmsServiceProvider extends ServiceProvider
             ResetPassword::class,
             UpdateCMS::class,
             ThemeUpdateCommand::class,
+            PluginUpdateCommand::class,
             AssetLink::class
         ]);
         $this->log_viewer();

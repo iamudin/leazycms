@@ -29,8 +29,7 @@ class IdentifyTenant
             );
 
             if ($tenantData) {
-                // Safeguard: Jika cache lama masih menyimpan array, konversi balik ke string JSON
-                // agar Eloquent Casting tidak error saat memproses setRawAttributes
+
                 if (isset($tenantData['modules']) && is_array($tenantData['modules'])) {
                     $tenantData['modules'] = json_encode($tenantData['modules']);
                 }
