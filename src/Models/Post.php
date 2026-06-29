@@ -134,7 +134,7 @@ class Post extends BaseModel
         if (app()->runningInConsole()) {
             return config('app.url') ? parse_url(config('app.url'), PHP_URL_HOST) : 'localhost';
         }
-        return config('modules.multisite_enabled')  && app()->has('tenant') ? tenant()->domain : request()->getHost();
+        return config('modules.multisite_enabled') && app()->has('tenant') ? tenant()->domain : request()->getHost();
     }
 
     private static function postCacheTags(self $post): array
@@ -210,15 +210,16 @@ class Post extends BaseModel
     }
     public function getMonthAttribute()
     {
-        return $this->created_at->format('F');;
+        return $this->created_at->format('F');
+        ;
     }
     public function getFieldAttribute()
     {
-        return json_decode(json_encode($this->data_field));
+        return is_array($this->data_field) ? (object) $this->data_field : $this->data_field;
     }
     public function getDataAttribute()
     {
-        return collect(json_decode(json_encode($this->data_loop)));
+        return collect($this->data_loop)->map(fn($item) => is_array($item) ? (object) $item : $item);
     }
     public function getThumbnailDescriptionAttribute()
     {
@@ -265,7 +266,8 @@ class Post extends BaseModel
     }
     function cachedpost($type = null)
     {
-        if (!$type) return collect([]);
+        if (!$type)
+            return collect([]);
         $cacheKey = self::getCurrentHost() . ":cachedpost:{$type}";
         if (app()->has('tenant')) {
             $cacheKey .= ':tenant';

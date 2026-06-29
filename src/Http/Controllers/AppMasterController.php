@@ -110,7 +110,7 @@ class AppMasterController extends Controller implements HasMiddleware
             return $this->status($request);
         }
         // Cache biar tidak terlalu sering hit API
-        $data = Cache::remember('site_status', 15, fn() => $service->fetchAll());
+        $data = Cache::remember(get_current_host() . ':site_status', 15, fn() => $service->fetchAll());
 
         return response()->json($data);
     }
@@ -145,10 +145,10 @@ class AppMasterController extends Controller implements HasMiddleware
             } elseif ($request->type == 'editor') {
                 if ($request->status == '0') {
                     // Aktifkan mode editor
-                    Cache::put('enablededitortemplate', true, 60 * 60 * 24 * 30); // Simpan 30 hari
+                    Cache::put(get_current_host() . ':enablededitortemplate', true, 60 * 60 * 24 * 30); // Simpan 30 hari
                 } else {
                     // Nonaktifkan mode editor
-                    Cache::forget('enablededitortemplate');
+                    Cache::forget(get_current_host() . ':enablededitortemplate');
                 }
                 return response()->json(['success' => true]);
             } elseif ($request->type == 'auth') {
@@ -170,7 +170,7 @@ class AppMasterController extends Controller implements HasMiddleware
 
             $data = [
                 'user_count' => \Leazycms\Web\Models\User::count(),
-                'editor_template_enabled' => Cache::has('enablededitortemplate') ? true : false,
+                'editor_template_enabled' => Cache::has(get_current_host() . ':enablededitortemplate') ? true : false,
                 'maintenance' => get_option('site_maintenance') == 'Y' ? true : false,
                 'api_key' => md5(enc64(config('app.key'))),
                 'cms_version' => current_cms_version(),
@@ -243,7 +243,7 @@ class AppMasterController extends Controller implements HasMiddleware
             return to_route('panel.dashboard');
         }
         $data = $service->fetchAll();
-        Cache::put('site_status', $data, 15);
+        Cache::put(get_current_host() . ':site_status', $data, 15);
 
         return response()->json($data);
     }

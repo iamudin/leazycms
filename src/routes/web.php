@@ -46,6 +46,7 @@ $modules = collect(get_module())->where('name','!=','page')->where('active', tru
     Route::match(['get', 'post'], 'sitemap_{part}.xml', [ExtController::class, 'sitemap_part'])->whereNumber('part')->name('sitemap.part');
     Route::match(['get', 'post'],'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
     Route::match(['get', 'post'],'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
+    // AJAX validation route removed, now handled by WebController
 
     if($webroute = get_non_domain_routes()){
         foreach($webroute as $wr){

@@ -423,8 +423,8 @@ $post_field = [
         }
         $data['password'] = $request->password ? (!empty($post->password) ? $post->password : rtrim(enc64(rand(0000,9999)),'=')) : null;
         $post->update($data);
-        Cache::forget($post->type);
-        Cache::forget($post->id);
+        Cache::forget(get_current_host() . ':' . $post->type);
+        Cache::forget(get_current_host() . ':' . $post->id);
         $this->recache(get_post_type());
         return back()->with('success', $module->title . ' Berhasil diperbarui');
     }

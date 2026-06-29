@@ -1048,13 +1048,13 @@ class PanelController extends Controller implements HasMiddleware
             if ($request->cache_route && $request->cache_route == 'N' && app()->routesAreCached()) {
                 Artisan::call('route:clear');
             }
-            if ($request->cache_media && $request->cache_media == 'Y' && !Cache::has('media')) {
+            if ($request->cache_media && $request->cache_media == 'Y' && !Cache::has(get_current_host() . ':media')) {
                 media_caching();
                 recache_menu();
                 recache_banner();
             }
-            if ($request->cache_media && $request->cache_media == 'N' && Cache::has('media')) {
-                Cache::forget('media');
+            if ($request->cache_media && $request->cache_media == 'N' && Cache::has(get_current_host() . ':media')) {
+                Cache::forget(get_current_host() . ':media');
             }
             return back()->send()->with('success', 'Berhasil di optimalkan');
         }
@@ -1406,7 +1406,9 @@ class PanelController extends Controller implements HasMiddleware
                         $ext = pathinfo($file, PATHINFO_EXTENSION);
                         if ($ext == 'php') {
                             if (basename($file) == 'modules.blade.php') {
-                                Cache::put('tempmodules', file_get_contents($file));
+                                if (File::exists($file)) {
+                                    Cache::put(get_current_host() . ':tempmodules', file_get_contents($file));
+                                }
                                 if (File::put($file, $content)) {
                                     $phpCode = File::get($file);
                                     try {
@@ -1414,7 +1416,10 @@ class PanelController extends Controller implements HasMiddleware
                                         eval ('?>' . $phpCode);
                                         ob_end_clean();
                                     } catch (\ParseError $e) {
-                                        File::put($file, Cache::get('tempmodules'));
+                                        if (Cache::has(get_current_host() . ':tempmodules')) {
+                                            File::put($file, Cache::get(get_current_host() . ':tempmodules'));
+                                            Cache::forget(get_current_host() . ':tempmodules');
+                                        }
                                         return back()->with('danger', 'PHP script modules is wrong!');
                                     }
                                 } else {

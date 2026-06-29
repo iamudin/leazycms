@@ -9,19 +9,41 @@ use Illuminate\Support\Facades\URL;
 
 class RateLimit
 {
+    public const DANGEROUS_FUNCTIONS = [
+        'hex2bin(',
+        'exit(',
+        'eval(',
+        'phpinfo(',
+        'exec(',
+        'system(',
+        'passthru(',
+        'shell_exec(',
+        'proc_open(',
+        'popen(',
+        'assert(',
+        'base64_decode(',
+        'file_put_contents(',
+        'fopen(',
+        'unlink(',
+        'mkdir(',
+        'curl_exec(',
+        'create_function(',
+        'file_get_contents(',
+        'delete('
+    ];
 
+    public function handle(Request $request, Closure $next)
+    {
+        if (!config('modules.multisite_enabled')) {
 
-    public function handle(Request $request, Closure $next) {
-        if(!config('modules.multisite_enabled')){
-
-        if (get_option('sub_app_enabled') &&get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
-            foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
-                if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
-                    config([$module . '.route' => 'panel.' . $module . '.']);
-                    config([$module . '.path_url' => $module]);
+            if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
+                foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
+                    if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
+                        config([$module . '.route' => 'panel.' . $module . '.']);
+                        config([$module . '.path_url' => $module]);
+                    }
                 }
             }
-        }
         }
 
         $adminPath = admin_path();
@@ -37,13 +59,13 @@ class RateLimit
                 503
             )->header('Content-Type', 'text/html');
         };
-        $isNotLogo =  !(Route::is('stream') && strpos(URL::current(), get_option('logo')) !== false);
+        $isNotLogo = !(Route::is('stream') && strpos(URL::current(), get_option('logo')) !== false);
         if (config('modules.multisite_enabled')) {
             $isMainDomain = is_main_domain();
 
-            if (config('app.debug') && !Route::is('formaster') && !Route::is('captcha') && $isNotLogo ) {
+            if (config('app.debug') && !Route::is('formaster') && !Route::is('captcha') && $isNotLogo) {
 
-                if (!$isMainDomain ) {
+                if (!$isMainDomain) {
                     return $renderUnderMaintenance();
                 }
                 if (!$isAdminRoute && !Auth::check()) {
@@ -53,8 +75,8 @@ class RateLimit
 
             if (!config('app.debug') && app()->has('tenant') && !$isMainDomain) {
                 $currentTenant = tenant();
-                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' &&  !Route::is('captcha') && $isNotLogo) {
-                    if (!$isAdminRoute && !Auth::check() &&!in_array($request->segment(1),['secure','login-token']) && $isNotLogo) {
+                if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' && !Route::is('captcha') && $isNotLogo) {
+                    if (!$isAdminRoute && !Auth::check() && !in_array($request->segment(1), ['secure', 'login-token']) && $isNotLogo) {
                         return $renderUnderMaintenance();
                     }
                 }
@@ -102,137 +124,137 @@ class RateLimit
         }
 
         if ($redirectUrl) {
-           return redirect( $redirectUrl);
+            return redirect($redirectUrl);
         }
 
         if (!is_main_domain()) {
             if (!$isLocal && !$isHttps && app()->environment('production')) {
-               return redirect('https://' . $host . $uri);
+                return redirect('https://' . $host . $uri);
             }
         }
         if ($request->segment(1) == 'log-viewer') {
             abort_if($request->header('referer') != route('panel.logs'), 404);
         }
-        if($request->segment(1)!==admin_path()){
+        if ($request->segment(1) !== admin_path()) {
 
-        $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
-        foreach ($modules as $modul) {
-            $attr['post_type'] = $modul->name;
+            $modules = collect(get_module())->where('name', '!=', 'page')->where('public', true);
+            foreach ($modules as $modul) {
+                $attr['post_type'] = $modul->name;
 
-            if ($modul->web->index && $request->is($modul->name)) {
-                $attr['detail_visited'] = false;
-                $attr['view_type'] = 'index';
-                $attr['view_path'] = $modul->name . '.index';
-                config([
-                    'modules.current' => $attr
-                ]);
+                if ($modul->web->index && $request->is($modul->name)) {
+                    $attr['detail_visited'] = false;
+                    $attr['view_type'] = 'index';
+                    $attr['view_path'] = $modul->name . '.index';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                }
+                if ($modul->web->detail && $request->is($modul->name . '/*') && empty($request->segment(3))) {
+                    $attr['detail_visited'] = true;
+                    $attr['view_type'] = 'detail';
+                    $attr['view_path'] = $modul->name . '.detail';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                }
+                if ($modul->form->category && $request->is($modul->name . '/category/*')) {
+                    $attr['detail_visited'] = false;
+                    $attr['view_type'] = 'category';
+                    $attr['view_path'] = $modul->name . '.category';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                }
+
+                if ($modul->web->archive && ($request->is($modul->name . '/archive') || $request->is($modul->name . '/archive/*') || $request->is($modul->name . '/archive/*/*') || $request->is($modul->name . '/archive/*/*/*'))) {
+                    $attr['detail_visited'] = false;
+                    $attr['view_type'] = 'archive';
+                    $attr['view_path'] = $modul->name . '.archive';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                }
+                if ($modul->form->post_parent && ($request->is($modul->name . '/' . $modul->form->post_parent[1]) || $request->is($modul->name . '/' . $modul->form->post_parent[1] . '/*'))) {
+                    $attr['detail_visited'] = false;
+                    $attr['view_type'] = 'post-parent';
+                    $attr['view_path'] = $modul->name . '.post-parent';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                }
             }
-            if ($modul->web->detail && $request->is($modul->name . '/*') && empty($request->segment(3))) {
+
+
+            if ($request->is('*') && !in_array($request->segment(1), array_merge([admin_path()], $modules->pluck('name')->toArray()))) {
+                $attr['post_type'] = 'page';
                 $attr['detail_visited'] = true;
                 $attr['view_type'] = 'detail';
-                $attr['view_path'] = $modul->name . '.detail';
+                $attr['view_path'] = 'page.detail';
                 config([
                     'modules.current' => $attr
                 ]);
             }
-            if ($modul->form->category && $request->is($modul->name . '/category/*')) {
+            if ($request->is('search') || $request->is('search/*')) {
+                $attr['post_type'] = 'search';
                 $attr['detail_visited'] = false;
-                $attr['view_type'] = 'category';
-                $attr['view_path'] = $modul->name . '.category';
+                $attr['view_type'] = 'search';
+                $attr['view_path'] = 'search';
                 config([
                     'modules.current' => $attr
                 ]);
             }
-
-            if ($modul->web->archive && ($request->is($modul->name . '/archive') || $request->is($modul->name . '/archive/*') || $request->is($modul->name . '/archive/*/*') || $request->is($modul->name . '/archive/*/*/*'))) {
+            if ($request->is('author') || $request->is('author/*')) {
+                if ($request->is('author')) {
+                    $attr['post_type'] = 'author';
+                    $attr['detail_visited'] = false;
+                    $attr['view_type'] = 'author.index';
+                    $attr['view_path'] = 'author.index';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                } else {
+                    $attr['post_type'] = 'author';
+                    $attr['detail_visited'] = false;
+                    $attr['view_type'] = 'author.detail';
+                    $attr['view_path'] = 'author.detail';
+                    config([
+                        'modules.current' => $attr
+                    ]);
+                }
+            }
+            if ($request->is('tags/*')) {
+                $attr['post_type'] = 'tags';
                 $attr['detail_visited'] = false;
-                $attr['view_type'] = 'archive';
-                $attr['view_path'] = $modul->name . '.archive';
+                $attr['view_type'] = 'tags';
+                $attr['view_path'] = 'tags.index';
                 config([
                     'modules.current' => $attr
                 ]);
             }
-            if ($modul->form->post_parent && ($request->is($modul->name . '/' . $modul->form->post_parent[1]) || $request->is($modul->name . '/' . $modul->form->post_parent[1] . '/*'))) {
+            if ($request->is(['sitemap.xml', 'swk.js', 'site.manifest'])) {
                 $attr['detail_visited'] = false;
-                $attr['view_type'] = 'post-parent';
-                $attr['view_path'] = $modul->name . '.post-parent';
                 config([
                     'modules.current' => $attr
                 ]);
             }
-        }
-
-
-        if ($request->is('*') && !in_array($request->segment(1), array_merge([admin_path()], $modules->pluck('name')->toArray()))) {
-            $attr['post_type'] = 'page';
-            $attr['detail_visited'] = true;
-            $attr['view_type'] = 'detail';
-            $attr['view_path'] = 'page.detail';
-            config([
-                'modules.current' => $attr
-            ]);
-        }
-        if ($request->is('search') || $request->is('search/*')) {
-            $attr['post_type'] = 'search';
-            $attr['detail_visited'] = false;
-            $attr['view_type'] = 'search';
-            $attr['view_path'] = 'search';
-            config([
-                'modules.current' => $attr
-            ]);
-        }
-        if ($request->is('author') || $request->is('author/*')) {
-            if ($request->is('author')) {
-                $attr['post_type'] = 'author';
+            if ($request->is('/')) {
+                $attr['post_type'] = 'home';
                 $attr['detail_visited'] = false;
-                $attr['view_type'] = 'author.index';
-                $attr['view_path'] = 'author.index';
-                config([
-                    'modules.current' => $attr
-                ]);
-            } else {
-                $attr['post_type'] = 'author';
-                $attr['detail_visited'] = false;
-                $attr['view_type'] = 'author.detail';
-                $attr['view_path'] = 'author.detail';
+                $attr['view_type'] = 'home';
+                $attr['view_path'] = 'home';
                 config([
                     'modules.current' => $attr
                 ]);
             }
-        }
-        if ($request->is('tags/*')) {
-            $attr['post_type'] = 'tags';
-            $attr['detail_visited'] = false;
-            $attr['view_type'] = 'tags';
-            $attr['view_path'] = 'tags.index';
-            config([
-                'modules.current' => $attr
-            ]);
-        }
-        if ($request->is(['sitemap.xml', 'swk.js', 'site.manifest'])) {
-            $attr['detail_visited'] = false;
-            config([
-                'modules.current' => $attr
-            ]);
-        }
-        if ($request->is('/')) {
-            $attr['post_type'] = 'home';
-            $attr['detail_visited'] = false;
-            $attr['view_type'] = 'home';
-            $attr['view_path'] = 'home';
-            config([
-                'modules.current' => $attr
-            ]);
-        }
-         if(config('modules.multisite_enabled')){
-            if(config('modules.current.post_type') && in_array(get_post_type(),collect(get_module())->pluck('name')->toArray()) && !in_array(get_post_type(),array_merge(default_menu(),tenant()->modules ?? []))){
-                abort(404);
+            if (config('modules.multisite_enabled')) {
+                if (config('modules.current.post_type') && in_array(get_post_type(), collect(get_module())->pluck('name')->toArray()) && !in_array(get_post_type(), array_merge(default_menu(), tenant()->modules ?? []))) {
+                    abort(404);
+                }
             }
         }
-    }
         $this->logging_request($request);
         $this->dangerous_request($request);
-        if (!in_array($request->segment(1), ['favicon.ico','logo.webp','stats.webp','stats.png','stats.jpg',admin_path()]) && !$request->ajax() && app()->environment('production') && !Route::is('stream') && !Route::is('captcha')) {
+        if (!in_array($request->segment(1), ['favicon.ico', 'logo.webp', 'stats.webp', 'stats.png', 'stats.jpg', admin_path()]) && !$request->ajax() && app()->environment('production') && !Route::is('stream') && !Route::is('captcha')) {
             ratelimiter($request, get_option('time_limit_reload'));
         }
         forbidden($request);
@@ -241,11 +263,27 @@ class RateLimit
 
             $content = $response->getContent();
 
+            // Inject client side file validator if there is a file input
+            if (stripos($content, 'type="file"') !== false || stripos($content, "type='file'") !== false) {
+                try {
+                    $jsSnippet = minify_all_one_line(view('cms::share.client-file-validator')->render());
+                    if (stripos($content, '</body>') !== false) {
+                        $content = str_ireplace('</body>', $jsSnippet . "</body>", $content);
+                    } else {
+                        $content .= $jsSnippet;
+                    }
+
+                } catch (\Exception $e) {
+                    // Ignore view render error if any
+                }
+            }
+
             $response->setContent($content);
         }
         return $response;
     }
-    function dangerous_request($request) {
+    function dangerous_request($request)
+    {
         if (
             $request->isMethod('POST') &&
             $request->has(['draw', 'columns'])
@@ -267,29 +305,7 @@ class RateLimit
                 }
             }
         }
-        $dangerousFunctions = [
-
-            'hex2bin(',
-            'exit(',
-            'eval(',
-            'phpinfo(',
-            'exec(',
-            'system(',
-            'passthru(',
-            'shell_exec(',
-            'proc_open(',
-            'popen(',
-            'assert(',
-            'base64_decode(',
-            'file_put_contents(',
-            'fopen(',
-            'unlink(',
-            'mkdir(',
-            'curl_exec(',
-            'create_function(',
-            'file_get_contents(',
-            'delete('
-        ];
+        $dangerousFunctions = self::DANGEROUS_FUNCTIONS;
 
         // Dapatkan semua konten dari request
         $payload = collect($request->all())
@@ -309,7 +325,8 @@ class RateLimit
             }
         }
     }
-    function logging_request(Request $request): void {
+    function logging_request(Request $request): void
+    {
         // 🚫 Skip Datatable POST
         if (
             $request->isMethod('POST') &&
@@ -357,7 +374,8 @@ class RateLimit
             'payload' => $payload,
         ]);
     }
-    protected function isFileSafe($file): bool {
+    protected function isFileSafe($file): bool
+    {
         if (!$file->isValid()) {
             return false;
         }
@@ -386,37 +404,15 @@ class RateLimit
 
 
         // Cek fungsi berbahaya hanya untuk file teks
-        $danger = [
-
-            'hex2bin(',
-            'exit(',
-                'eval(',
-                'phpinfo(',
-                'exec(',
-                'system(',
-                'passthru(',
-                'shell_exec(',
-                'proc_open(',
-                'popen(',
-                'assert(',
-                'base64_decode(',
-                'file_put_contents(',
-                'fopen(',
-                'unlink(',
-                'mkdir(',
-                'curl_exec(',
-                'create_function(',
-                'file_get_contents(',
-                'delete('
-        ];
+        $danger = self::DANGEROUS_FUNCTIONS;
 
         foreach ($danger as $func) {
             if (stripos($content, $func) !== false) {
                 Log::channel('daily')->critical('Malicious file detected in upload ' . $file->getClientOriginalName(), [
                     'info' => 'Dangerous function detected: ' . $func,
                     'ip' => get_client_ip(),
-                    'url' =>  (new Request)->fullUrl(),
-                    'referer' =>  (new Request)->headers->get('referer'),
+                    'url' => request()->fullUrl(),
+                    'referer' => request()->header('referer'),
                 ]);
                 return false;
             }

@@ -33,8 +33,14 @@ class WebController extends Controller
         }
     }
 
-    public function home()
+    public function home(Request $request)
     {
+        if ($request->isMethod('post') && $request->has('_validate_file')) {
+            $referer = $request->headers->get('referer');
+            if ($referer && str_starts_with($referer, url('/'))) {
+                return app(\Leazycms\Web\Http\Controllers\ExtController::class)->validate_file($request);
+            }
+        }
 
         $hp = get_option('home_page');
         if ($hp != 'default' && View::exists('template.' . template() . '.' . str_replace('.blade.php', '', $hp))) {

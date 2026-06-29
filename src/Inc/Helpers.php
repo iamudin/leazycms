@@ -1134,11 +1134,9 @@ if (!function_exists('ratelimiter')) {
 
         $attempts = Cache::get($key, 0);
         if ($attempts >= $maxAttempts) {
-            response(
-                minify_all_one_line(tooManyRequestsMsg()),
-                429
-            )->header('Content-Type', 'text/html')->send();
-            exit;
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                response(minify_all_one_line(tooManyRequestsMsg()), 429)->header('Content-Type', 'text/html')
+            );
         }
 
         Cache::increment($key);
@@ -1791,12 +1789,7 @@ if (!function_exists('blade_path')) {
                 View::share('blade', $path);
                 return 'cms::layouts.warning';
             } else {
-                response(
-                    error503Msg(),
-                    503
-                );
-                exit;
-
+                abort(503, minify_all_one_line(error503Msg()));
             }
         }
     }
@@ -3127,7 +3120,7 @@ if (!function_exists('share_button')) {
 if (!function_exists('webnotfound')) {
     function webnotfound()
     {
-        echo '<!doctype html>
+        $html = '<!doctype html>
     <html>
     <head>
     <title>Web Not Found</title>
@@ -3151,9 +3144,10 @@ if (!function_exists('webnotfound')) {
         </div>
     </article>
     </body>
-    </html>
-    ';
-        exit;
+    </html>';
+        throw new \Illuminate\Http\Exceptions\HttpResponseException(
+            response($html, 404)->header('Content-Type', 'text/html')
+        );
     }
 }
 if (!function_exists('getRateLimiterKey')) {

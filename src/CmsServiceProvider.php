@@ -63,7 +63,11 @@ class CmsServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                if ($e instanceof AuthenticationException) {
+                if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    return null;
+                }
+
+                if ($e instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
                     return null;
                 }
 
@@ -339,8 +343,9 @@ class CmsServiceProvider extends ServiceProvider
 
         if (!config('modules.installed') && !$this->app->runningInConsole()) {
             $view = view('cms::backend.pre-install')->render();
-            response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html')->send();
-            exit;
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                response(minify_all_one_line($view), 503)->header('Content-Type', 'text/html')
+            );
         }
 
         Carbon::setLocale('ID');
@@ -436,7 +441,9 @@ class CmsServiceProvider extends ServiceProvider
 
     protected function checkAllTables()
     {
-        return (Schema::hasTable('users') && Schema::hasTable('files') && Schema::hasTable('posts') && Schema::hasTable('categories') && Schema::hasTable('visitors') && Schema::hasTable('comments') && Schema::hasTable('tags') && Schema::hasTable('roles') && Schema::hasTable('logs') && Schema::hasTable('options')) ? true : false;
+        $existingTables = Schema::getTableListing();
+        $requiredTables = ['users', 'files', 'posts', 'categories', 'visitors', 'comments', 'tags', 'roles', 'logs', 'options'];
+        return count(array_intersect($requiredTables, $existingTables)) === count($requiredTables);
     }
 
 

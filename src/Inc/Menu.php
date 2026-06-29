@@ -12,7 +12,7 @@ class Menu
     public function __construct($name,$take=false)
     {   $this->take = $take;
         if (self::$requestCache === null) {
-            self::$requestCache = Cache::get('menu', []);
+            self::$requestCache = Cache::get(get_current_host() . ':menu', []);
         }
         $this->dataloop = collect(self::$requestCache)->where('slug', $name)->first()?->data_loop;
     }

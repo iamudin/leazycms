@@ -12,7 +12,7 @@ return [
             'datatable' => [
                 'custom_column' => ['Tanggal Berangkat'],
                 'data_title' => 'Nama Hitung Mundur',
-                'child_count'=> ['jadwal','cinta'],
+                'child_count' => ['jadwal', 'cinta'],
             ],
             'form' => [
                 'unique_title' => false,
@@ -37,7 +37,7 @@ return [
             'public' => true,
             'active' => true,
         ],
-         'docs' => [
+        'docs' => [
             'position' => 7,
             'name' => 'docs',
             'title' => 'Docs',
@@ -95,7 +95,7 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => array(
-                    ['Lampiran',['type'=>'file']]
+                    ['Lampiran', ['type' => 'file']]
                 )
             ],
             'web' => [
@@ -130,8 +130,8 @@ return [
                 'category' => true,
                 'tag' => true,
                 'looping_name' => 'Daftar Gambar',
-                'looping_data' => [['caption','text','required'],['Gambar','file']],
-                'custom_field' => array(['Link Video', ['type'=>'text']]),
+                'looping_data' => [['caption', 'text', 'required'], ['Gambar', 'file']],
+                'custom_field' => array(['Link Video', ['type' => 'text']]),
             ],
             'web' => [
                 'api' => true,
@@ -168,10 +168,10 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Pemberi Sambutan',['type'=>'break']],
-                    ['Nama',['type'=>'text','required'=>true]],
-                    ['Jabatan',['type'=>'text','required']],
-                    ['Visi Misi',['type'=>'textarea']],
+                    ['Pemberi Sambutan', ['type' => 'break']],
+                    ['Nama', ['type' => 'text', 'required' => true]],
+                    ['Jabatan', ['type' => 'text', 'required']],
+                    ['Visi Misi', ['type' => 'textarea']],
 
                 ],
             ],
@@ -210,13 +210,13 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['NIP',['type'=>'text','required'=>true]],
-                    ['Kelahiran',['type'=>'text','required'=>true]],
-                    ['Jabatan',['type'=>'text','required'=>true]],
-                    ['Pangkat/Golongan',['type'=>'text','required'=>true]],
-                    ['Pendidikan',['type'=>'text','required'=>true]],
-                    ['Tahun Mulai',['type'=>'text','required'=>true]],
-                    ['Motivasi',['type'=>'textarea']],
+                    ['NIP', ['type' => 'text', 'required' => true]],
+                    ['Kelahiran', ['type' => 'text', 'required' => true]],
+                    ['Jabatan', ['type' => 'text', 'required' => true]],
+                    ['Pangkat/Golongan', ['type' => 'text', 'required' => true]],
+                    ['Pendidikan', ['type' => 'text', 'required' => true]],
+                    ['Tahun Mulai', ['type' => 'text', 'required' => true]],
+                    ['Motivasi', ['type' => 'textarea']],
                 ],
             ],
             'web' => [
@@ -246,7 +246,7 @@ return [
             ],
             'form' => [
                 'unique_title' => false,
-                'post_parent' => ['Unit Induk','unit-kerja'],
+                'post_parent' => ['Unit Induk', 'unit-kerja'],
                 'thumbnail' => true,
                 'editor' => true,
                 'category' => true,
@@ -254,18 +254,18 @@ return [
                 'looping_name' => 'Arsip',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Pemerintahan',['type'=>'break']],
-                    ['Kepala',['type'=>'text']],
-                    ['Sekretaris',['type'=>'text']],
-                    ['Kantor',['type'=>'break']],
-                    ['Alamat',['type'=>'text']],
-                    ['Email',['type'=>'text']],
-                    ['Telp',['type'=>'text']],
-                    ['Link SIPPN',['type'=>'text']],
-                    ['Google Maps',['type'=>'text']],
-                    ['Instagram',['type'=>'text']],
-                    ['Facebook',['type'=>'text']],
-                    ['Website',['type'=>'text']],
+                    ['Pemerintahan', ['type' => 'break']],
+                    ['Kepala', ['type' => 'text']],
+                    ['Sekretaris', ['type' => 'text']],
+                    ['Kantor', ['type' => 'break']],
+                    ['Alamat', ['type' => 'text']],
+                    ['Email', ['type' => 'text']],
+                    ['Telp', ['type' => 'text']],
+                    ['Link SIPPN', ['type' => 'text']],
+                    ['Google Maps', ['type' => 'text']],
+                    ['Instagram', ['type' => 'text']],
+                    ['Facebook', ['type' => 'text']],
+                    ['Website', ['type' => 'text']],
                 ],
             ],
             'web' => [
@@ -394,7 +394,7 @@ return [
             'cache' => false,
             'active' => true,
         ],
-           'document' => [
+        'document' => [
             'position' => 3,
             'name' => 'document',
             'title' => 'Dokumen',
@@ -606,7 +606,7 @@ return [
             ],
             'form' => [
                 'unique_title' => true,
-                'post_parent' => ['Lokasi','kelurahan-desa'],
+                'post_parent' => ['Lokasi', 'kelurahan-desa'],
                 'thumbnail' => true,
                 'editor' => true,
                 'category' => true,
@@ -696,7 +696,7 @@ return [
                     ['Info', ['type' => 'break']],
                     ['Nama', ['type' => 'text', 'required' => 'required']],
                     ['Deskripsi', ['type' => 'text']],
-                    ['Status', ['type' => ['Aktif','Tidak Aktif']]],
+                    ['Status', ['type' => ['Aktif', 'Tidak Aktif']]],
                     ['Status Maintenance', ['type' => ['Aktif', 'Tidak Aktif']]],
                     ['Hosting', ['type' => 'break']],
                     ['Provider', ['type' => 'text']],
@@ -827,7 +827,7 @@ return [
                 'tag' => true,
                 'looping_name' => 'Periode',
                 'looping_data' => array(
-                    ['Tahun', ['type' =>  range(2000, 2025)]],
+                    ['Tahun', ['type' => range(2000, 2025)]],
                     ['Data Excel', ['type' => 'file']]
                 ),
                 'custom_field' => false
@@ -928,17 +928,19 @@ return [
     ],
     'config' => [
         'web_type' => null,
-        'option' => array('template'=>[
-        ['Logo Title','text'],
-        ['Logo Description','text'],
-        ['Logo Image','file']
-    ]),
+        'option' => array(
+            'template' => [
+                ['Logo Title', 'text'],
+                ['Logo Description', 'text'],
+                ['Logo Image', 'file']
+            ]
+        ),
         'template' => array(),
         'template_info' => array(),
     ],
     'option' => array(),
     'used' => array(),
-    'admin_path'=>env('ADMIN_PATH','WVdSdGFXND0'),
+    'admin_path' => env('ADMIN_PATH', 'WVdSdGFXND0'),
     'current' => null,
     'extension_module' => array(),
     'detail_visited' => false,
@@ -946,21 +948,21 @@ return [
     'app_master' => env('APP_MASTER', false),
     'installed' => env('APP_INSTALLED', 0),
     'public_path' => env('PUBLIC_PATH', null),
-    'timezone' => env('APP_TIMEZONE','Asia/Jakarta'),
+    'timezone' => env('APP_TIMEZONE', 'Asia/Jakarta'),
     'template' => env('TEMPLATE_PATH', null),
-    'env_key'=>env('ENV_KEY',null),
+    'env_key' => env('ENV_KEY', null),
     'custom_menu' => array(),
-    'custom_web_route'=>array(),
-    'no_cache_for_route'=>array(),
-    'custom_controllers'=>array(),
-    'sidebar'=>array(),
-    'multisite_enabled'=>env('MULTISITE_ENABLED', false),
-    'view_stats'=>null,
-    'static_menu_profile'=>array(),
-    'sampleignore'=>env('READABLESAMPLE', false),
-    'teletoken'=>env('TELETOKEN',false),
-    'telechatid'=>env('TELECHATID',false),
-    'labusiam'=>env('LOG', false),
-    'sub_app_enabled'=>env('SUB_APP_ENABLED', false),
-    'multitenant_installed'=>env('MULTITENANT_INSTALLED', false)
+    'custom_web_route' => array(),
+    'no_cache_for_route' => array(),
+    'custom_controllers' => array(),
+    'sidebar' => array(),
+    'multisite_enabled' => env('MULTISITE_ENABLED', false),
+    'view_stats' => null,
+    'static_menu_profile' => array(),
+    'sampleignore' => env('READABLESAMPLE', false),
+    'teletoken' => env('TELETOKEN', false),
+    'telechatid' => env('TELECHATID', false),
+    'labusiam' => env('LOG', false),
+    'sub_app_enabled' => env('SUB_APP_ENABLED', false),
+    'multitenant_installed' => env('MULTITENANT_INSTALLED', false)
 ];
