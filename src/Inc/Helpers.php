@@ -2457,7 +2457,7 @@ if (!function_exists('init_meta_header')) {
         $data = config('modules.data') ?? false;
         $site_title = get_option('site_title') && strlen(get_option('site_title')) > 0 ? get_option('site_title') : 'You Website Title';
         $site_desc = get_option('site_description');
-        $site_meta_keyword = get_option('site_meta_keyword');
+        $site_meta_keyword = get_option('site_meta_keyword') ?? 'Stus Resmi, Cara Buat, Buat Website';
         $site_meta_description = get_option('site_meta_description');
         if ($data) {
             $data['site_keyword'] = $site_meta_keyword;

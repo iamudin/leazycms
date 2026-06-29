@@ -52,7 +52,9 @@ class WebController extends Controller
     public function api(Request $req, Post $post, $id = null)
     {
         $allowIp = get_option('allow_ip');
-        abort_if(empty($allowIp) || ($allowIp && !in_array(get_client_ip(), explode(",", $allowIp))), 404);
+        if (empty($allowIp) || ($allowIp && !in_array(get_client_ip(), explode(",", $allowIp)))) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
         if ($id) {
             return response([
                 'code' => 200,
@@ -82,7 +84,9 @@ class WebController extends Controller
     public function tags($slug)
     {
         $tag = Tag::select('name', 'visited', 'id', 'slug', 'url')->whereSlug(str($slug)->lower())->first();
-        abort_if(empty($tag), 404);
+        if (empty($tag)) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
 
         if ($tag->name != $slug) {
             return redirect($tag->url);
@@ -109,7 +113,9 @@ class WebController extends Controller
     {
         if ($u) {
             $user = User::select('id', 'name', 'url', 'photo', 'slug')->whereSlug($u)->first();
-            abort_if(empty($user), 404);
+            if (empty($user)) {
+                return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+            }
             config(['modules.page_name' => 'Author: ' . $user->name]);
             $data = [
                 'index' => $user->posts()->paginate(10)
@@ -134,11 +140,15 @@ class WebController extends Controller
         $slug = Str::of($name)
             ->replaceMatches('/[^\p{L}\p{N}-]/u', '')
             ->toString();
-        abort_if(strlen($slug) < 5, '404');
+        if (strlen($slug) < 5) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
         $postType = get_post_type() ?? 'page';
         $modul = get_module($postType);
         $detail = $post->detail($postType, $slug);
-        abort_if(empty($detail), '404');
+        if (empty($detail)) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
 
         if ($request->ajax() && $request->isMethod('post')) {
             $request->validate([
@@ -241,7 +251,9 @@ class WebController extends Controller
             ->whereHas('posts')
             ->first();
 
-        abort_if(!$category, '404');
+        if (!$category) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
         if ($category->slug != $slug) {
             return redirect($category->url);
         }
@@ -294,10 +306,14 @@ class WebController extends Controller
     public function post_parent(Request $request, $slug = null)
     {
         $modul = get_module(get_post_type());
-        abort_if(empty($slug), '404');
+        if (empty($slug)) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
         $post_parent = query()->onType($modul->form->post_parent[1])->where('slug', 'like', $slug . '%')
             ->select('id', 'title', 'slug')->published()->first();
-        abort_if(empty($post_parent), '404');
+        if (empty($post_parent)) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
         if ($post_parent->slug != $slug) {
             return redirect($modul->name . '/' . $request->segment(2) . '/' . $post_parent->slug);
         }
@@ -317,7 +333,9 @@ class WebController extends Controller
     {
         $type = get_post_type();
         $module = get_module($type);
-        abort_if($year > date('Y'), 404);
+        if ($year > date('Y')) {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
 
         $perPage = $module->web?->post_perpage ?? get_option('post_perpage');
 

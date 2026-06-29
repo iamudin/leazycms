@@ -12,7 +12,7 @@ class BlocklistService
 {
     public function getBlacklistIps(): array
     {
-        return Cache::rememberForever(main_domain() . ':ip_blacklist_cache', function () {
+        return Cache::rememberForever(parse_url(config('app.url'), PHP_URL_HOST) . ':ip_blacklist_cache', function () {
             $blockedIps = [];
 
             try {
@@ -42,7 +42,7 @@ class BlocklistService
 
     public function getBlacklistUserAgents(): array
     {
-        return Cache::rememberForever(main_domain() . ':user_agent_blacklist_cache', function () {
+        return Cache::rememberForever(parse_url(config('app.url'), PHP_URL_HOST) . ':user_agent_blacklist_cache', function () {
             try {
                 if (Schema::hasTable('blocked_ips')) {
                     return BlockedIp::query()
@@ -89,7 +89,7 @@ class BlocklistService
             return null;
         }
 
-        return main_domain() . ':session_blacklist_' . sha1($sessionId);
+        return parse_url(config('app.url'), PHP_URL_HOST) . ':session_blacklist_' . sha1($sessionId);
     }
 
     public function addSessionToBlacklist(?string $sessionId): void
@@ -110,7 +110,7 @@ class BlocklistService
 
     private function ipSessionEscalationKey(string $ip): string
     {
-        return main_domain() . ':blocked_ip_sessions_' . sha1($ip);
+        return parse_url(config('app.url'), PHP_URL_HOST) . ':blocked_ip_sessions_' . sha1($ip);
     }
 
     public function trackBlockedSessionForIp(string $ip, ?string $sessionId): int
@@ -243,8 +243,8 @@ class BlocklistService
         $keywords = explode(',', $cleanedKeywords);
 
         if (Str::contains(strtolower($request->fullUrl()), array_unique(array_merge($keywords, forbidden_keyword())))) {
-            $cacheKey = main_domain() . ':attack_attempt_ip_' . $ip;
-            $sessionCacheKey = $sessionId ? main_domain() . ':attack_attempt_session_' . sha1($sessionId) : null;
+            $cacheKey = parse_url(config('app.url'), PHP_URL_HOST) . ':attack_attempt_ip_' . $ip;
+            $sessionCacheKey = $sessionId ? parse_url(config('app.url'), PHP_URL_HOST) . ':attack_attempt_session_' . sha1($sessionId) : null;
 
             $countIp = Cache::increment($cacheKey);
             $countSession = 0;
@@ -337,7 +337,7 @@ class BlocklistService
 
     private function flushCaches(): void
     {
-        Cache::forget(main_domain() . ':ip_blacklist_cache');
-        Cache::forget(main_domain() . ':user_agent_blacklist_cache');
+        Cache::forget(parse_url(config('app.url'), PHP_URL_HOST) . ':ip_blacklist_cache');
+        Cache::forget(parse_url(config('app.url'), PHP_URL_HOST) . ':user_agent_blacklist_cache');
     }
 }

@@ -9,6 +9,7 @@ class NotFoundController extends Controller
     public function error404()
     {
 
+
         $request = request();
         $renderUnderMaintenance = function () {
             return response(
@@ -47,7 +48,7 @@ class NotFoundController extends Controller
                 $showspin = true;
                 $view = 'cms::layouts.master';
             } else {
-                return response(preg_replace('/\s+/', ' ',error404Msg()), 404)
+                return response(preg_replace('/\s+/', ' ', error404Msg()), 404)
                     ->header('Content-Type', 'text/html;charset=UTF-8');
 
             }
@@ -62,7 +63,8 @@ class NotFoundController extends Controller
 
 
 
-            if (is_main_domain() && $showspin &&
+            if (
+                is_main_domain() && $showspin &&
                 strpos($content, '<body') !== false &&
                 strpos($content, 'circular-spinner') === false
             ) {
@@ -74,7 +76,7 @@ class NotFoundController extends Controller
                 );
             }
 
-              $minifiedContent =  minify_all_one_line($content);
+            $minifiedContent = minify_all_one_line($content);
             return response($minifiedContent, 404)->header('Content-Type', 'text/html; charset=UTF-8');
         }
     }

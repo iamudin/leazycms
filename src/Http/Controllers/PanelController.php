@@ -677,12 +677,7 @@ class PanelController extends Controller implements HasMiddleware
                     }
 
 
-                    if ($key == 'block_ip' && $value) {
-                        $ips = array_map('trim', explode(',', $value));
-                        foreach ($ips as $ip) {
-                            addIpToBlacklist($ip);
-                        }
-                    }
+
                     if ($key == 'allow_ip' && $value) {
                         $ips = array_map('trim', explode(',', $value));
                         foreach ($ips as $ip) {
