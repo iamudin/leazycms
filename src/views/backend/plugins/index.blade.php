@@ -27,9 +27,18 @@
                             </thead>
                             <tbody>
                                 @forelse($plugins as $index => $plugin)
-                                    <tr>
+                                    <tr class="plugin-row" 
+                                        data-plugin="{{ $plugin['name'] }}" 
+                                        data-repository="{{ $plugin['repository'] ?? '' }}" 
+                                        data-version="{{ $plugin['version'] ?? '' }}">
                                         <td>{{ $index + 1 }}</td>
-                                        <td><strong>{{ $plugin['title'] }}</strong></td>
+                                        <td>
+                                            <strong>{{ $plugin['title'] }}</strong>
+                                            @if(!empty($plugin['version']))
+                                                <br><small class="text-muted">Versi: {{ $plugin['version'] }}</small>
+                                            @endif
+                                            <div class="update-info mt-1 text-info" style="display:none; font-size: 12px;"></div>
+                                        </td>
                                         <td>{{  $plugin['description'] }}</td>
                                         <td><code>{{ $plugin['name'] }}</code></td>
                                         <td class="text-center">
@@ -56,6 +65,17 @@
                                                         <i class="fa fa-check"></i> Aktifkan
                                                     </button>
                                                 @endif
+                                            </form>
+                                            
+                                            <!-- Form update tersembunyi -->
+                                            <form action="{{ route('admin.plugins.update') }}" method="POST" class="d-inline form-update-plugin" id="form-update-{{ $plugin['name'] }}">
+                                                @csrf
+                                                <input type="hidden" name="plugin_name" value="{{ $plugin['name'] }}">
+                                                <input type="hidden" name="download_url" class="input-download-url" value="">
+                                                <button type="submit" class="btn btn-sm btn-info btn-do-update" style="display: none;"
+                                                    onclick="return confirm('Update plugin ini? File lama akan tertimpa.')">
+                                                    <i class="fa fa-refresh"></i> Update
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>
@@ -100,4 +120,47 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('.plugin-row');
+            
+            rows.forEach(row => {
+                const plugin = row.getAttribute('data-plugin');
+                const repo = row.getAttribute('data-repository');
+                const currentVersion = row.getAttribute('data-version');
+                
+                if (repo && currentVersion) {
+                    fetch(`https://api.github.com/repos/${repo}/tags`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(tags => {
+                            if (tags && tags.length > 0) {
+                                const latestTag = tags[0];
+                                const latestVersion = latestTag.name;
+                                
+                                if (latestVersion !== currentVersion) {
+                                    // Asumsi tag terbaru (index 0) adalah rilis terbaru
+                                    const updateInfo = row.querySelector('.update-info');
+                                    updateInfo.innerHTML = `Update tersedia: <strong>${latestVersion}</strong>`;
+                                    updateInfo.style.display = 'block';
+                                    
+                                    const updateBtn = row.querySelector('.btn-do-update');
+                                    updateBtn.style.display = 'inline-block';
+                                    updateBtn.innerHTML = `<i class="fa fa-refresh"></i> Update ke ${latestVersion}`;
+                                    
+                                    const downloadUrlInput = row.querySelector('.input-download-url');
+                                    downloadUrlInput.value = latestTag.zipball_url;
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching github tags for plugin ' + plugin + ':', error);
+                        });
+                }
+            });
+        });
+    </script>
 @endsection

@@ -87,6 +87,7 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'put'], 'profile', 'profile')->name('profile');
     Route::match(['get', 'post'], 'plugins', 'plugins')->name('admin.plugins');
     Route::match(['post'], 'plugins/upload', 'uploadPlugin')->name('admin.plugins.upload');
+    Route::post('plugins/update', 'updatePlugin')->name('admin.plugins.update');
 });
 Route::controller(UserController::class)->group(function () {
     Route::get('role', 'roleIndex')->name('role');

@@ -135,6 +135,9 @@ class PanelController extends Controller implements HasMiddleware
                 $description = '-';
                 $title = Str::title(str_replace('-', ' ', $dir));
 
+                $version = null;
+                $repository = null;
+
                 $jsonPath = resource_path('plugins/' . $dir . '/plugin.json');
                 if (File::exists($jsonPath)) {
                     $jsonString = File::get($jsonPath);
@@ -144,6 +147,8 @@ class PanelController extends Controller implements HasMiddleware
                     if ($json) {
                         $title = $json['title'] ?? $title;
                         $description = $json['description'] ?? $description;
+                        $version = $json['version'] ?? null;
+                        $repository = $json['repository'] ?? null;
                     }
                 }
 
@@ -151,6 +156,8 @@ class PanelController extends Controller implements HasMiddleware
                     'name' => $dir,
                     'title' => $title,
                     'description' => $description,
+                    'version' => $version,
+                    'repository' => $repository,
                     'status' => !in_array($dir, $disabledPlugins)
                 ];
             }
@@ -1688,7 +1695,20 @@ class PanelController extends Controller implements HasMiddleware
                 return back()->with('danger', 'Format ZIP tidak valid. ZIP harus berisi tepat satu folder utama plugin.');
             }
 
-            $pluginName = basename($extractedDirs[0]);
+            $pluginFolder = $extractedDirs[0];
+            $pluginName = basename($pluginFolder);
+
+            // Deteksi nama asli dari plugin.json jika tersedia
+            $jsonPath = $pluginFolder . '/plugin.json';
+            if (File::exists($jsonPath)) {
+                $jsonString = File::get($jsonPath);
+                $jsonString = preg_replace('/^\xEF\xBB\xBF/', '', $jsonString);
+                $json = json_decode($jsonString, true);
+                if ($json && isset($json['name'])) {
+                    $pluginName = $json['name'];
+                }
+            }
+
             $targetPath = resource_path('plugins/' . $pluginName);
 
             // Jika plugin sudah ada, timpa
@@ -1706,5 +1726,72 @@ class PanelController extends Controller implements HasMiddleware
         }
 
         return back()->with('danger', 'Gagal mengekstrak file plugin.');
+    }
+
+    public function updatePlugin(Request $request)
+    {
+        $request->validate([
+            'plugin_name' => 'required|string',
+            'download_url' => 'required|url',
+        ]);
+
+        $pluginName = $request->plugin_name;
+        $downloadUrl = $request->download_url;
+        $targetPath = resource_path('plugins/' . $pluginName);
+
+        if (!File::exists($targetPath)) {
+            return back()->with('danger', 'Plugin tidak ditemukan.');
+        }
+
+        try {
+            // Kita pakai CURL atau file_get_contents dengan header User-Agent karena GitHub memblokir req tanpa User-Agent
+            $opts = [
+                "http" => [
+                    "method" => "GET",
+                    "header" => "User-Agent: PHP\r\n"
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $zipContent = file_get_contents($downloadUrl, false, $context);
+
+            $tempZipPath = storage_path('app/temp_plugins/' . time() . '.zip');
+
+            if (!File::exists(storage_path('app/temp_plugins'))) {
+                File::makeDirectory(storage_path('app/temp_plugins'), 0755, true);
+            }
+
+            File::put($tempZipPath, $zipContent);
+
+            $zip = new \ZipArchive;
+            if ($zip->open($tempZipPath) === true) {
+                $extractPath = storage_path('app/temp_plugins/ext_' . time());
+                if (!File::exists($extractPath)) {
+                    File::makeDirectory($extractPath, 0755, true);
+                }
+                $zip->extractTo($extractPath);
+                $zip->close();
+
+                $extractedDirs = \Illuminate\Support\Facades\File::directories($extractPath);
+                if (count($extractedDirs) !== 1) {
+                    \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+                    \Illuminate\Support\Facades\File::delete($tempZipPath);
+                    return back()->with('danger', 'Format ZIP dari GitHub tidak valid.');
+                }
+
+                \Illuminate\Support\Facades\File::deleteDirectory($targetPath);
+                \Illuminate\Support\Facades\File::moveDirectory($extractedDirs[0], $targetPath);
+                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
+                \Illuminate\Support\Facades\File::delete($tempZipPath);
+
+                \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+
+                return back()->with('success', 'Plugin berhasil diupdate.');
+            } else {
+                \Illuminate\Support\Facades\File::delete($tempZipPath);
+                return back()->with('danger', 'Gagal membuka file ZIP hasil unduhan.');
+            }
+        } catch (\Exception $e) {
+            return back()->with('danger', 'Gagal mengunduh atau mengupdate plugin: ' . $e->getMessage());
+        }
     }
 }
