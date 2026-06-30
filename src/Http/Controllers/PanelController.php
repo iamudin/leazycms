@@ -123,6 +123,7 @@ class PanelController extends Controller implements HasMiddleware
                 ['value' => json_encode(array_values($disabledPlugins)), 'autoload' => 1]
             );
 
+            cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
             return back()->with('success', 'Status plugin berhasil diubah.');
         }
 
@@ -1708,6 +1709,9 @@ class PanelController extends Controller implements HasMiddleware
                     $pluginName = $json['name'];
                 }
             }
+            if (!File::isDirectory(resource_path('plugins'))) {
+                File::makeDirectory(resource_path('plugins'), 0755, true);
+            }
 
             $targetPath = resource_path('plugins/' . $pluginName);
 
@@ -1739,10 +1743,10 @@ class PanelController extends Controller implements HasMiddleware
         try {
             $exit = \Illuminate\Support\Facades\Artisan::call('cms:update-plugin', ['slug' => $pluginName]);
             $out = trim((string) \Illuminate\Support\Facades\Artisan::output());
-            
+
             // Run migration just in case the plugin has new migrations
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            
+
             return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Plugin berhasil diupdate' : 'Gagal mengupdate plugin'));
         } catch (\Exception $e) {
             return back()->with('danger', 'Gagal mengupdate plugin: ' . $e->getMessage());
