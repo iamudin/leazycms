@@ -2,7 +2,6 @@
 use Illuminate\Support\Facades\Route;
 use Leazycms\Web\Http\Controllers\AppMasterController;
 use Leazycms\Web\Http\Controllers\CategoryController;
-use Leazycms\Web\Http\Controllers\EmailController;
 use Leazycms\Web\Http\Controllers\PanelController;
 use Leazycms\Web\Http\Controllers\PollingController;
 use Leazycms\Web\Http\Controllers\PostController;
@@ -60,16 +59,6 @@ foreach (get_module() as $value) {
         });
     }
 }
-Route::controller(EmailController::class)->group(function () {
-    Route::get('email', 'index')->name('email.index');
-    Route::post('email', 'data')->name('email.data');
-    Route::get('email/create', 'create')->name('email.create');
-    Route::get('email/{email}/edit', 'edit')->name('email.edit');
-    Route::put('email/{email}/edit', 'update')->name('email.update');
-    Route::post('email/create', 'store')->name('email.store');
-    Route::delete('email/{email}/edit', 'destroy')->name('email.destroy');
-
-});
 Route::controller(PanelController::class)->group(function () {
     Route::get('dashboard', 'index')->name('panel.dashboard');
     Route::get('logs', 'logs')->name('panel.logs');
