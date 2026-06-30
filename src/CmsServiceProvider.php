@@ -238,6 +238,8 @@ class CmsServiceProvider extends ServiceProvider
         load_default_module();
         if (config('modules.multisite_enabled')) {
             $kernel->prependMiddlewareToGroup('web', IdentifyTenant::class);
+        } else {
+            $kernel->prependMiddlewareToGroup('web', \Leazycms\Web\Middleware\PluginDomainMiddleware::class);
         }
         $kernel->appendMiddlewareToGroup('web', \Leazycms\Web\Middleware\CheckPluginAccess::class);
         require_once(__DIR__ . "/Inc/Option.php");

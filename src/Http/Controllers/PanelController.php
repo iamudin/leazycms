@@ -114,6 +114,11 @@ class PanelController extends Controller implements HasMiddleware
                 if (!in_array($pluginName, $disabledPlugins)) {
                     $disabledPlugins[] = $pluginName;
                 }
+                
+                // Hapus opsi custom domain secara dinamis (fleksibel untuk semua plugin)
+                DB::table('options')
+                    ->where('name', "{$pluginName}-domain")
+                    ->delete();
             } else {
                 $disabledPlugins = array_diff($disabledPlugins, [$pluginName]);
             }

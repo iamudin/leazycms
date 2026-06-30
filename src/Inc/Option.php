@@ -2,7 +2,7 @@
 if (!function_exists('tenant')) {
     function tenant($default = null)
     {
-        return app('tenant');
+        return app()->bound('tenant') ? app('tenant') : $default;
     }
 }
 if (!function_exists('default_menu')) {

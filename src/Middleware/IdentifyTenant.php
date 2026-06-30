@@ -25,7 +25,31 @@ class IdentifyTenant
         if (self::$currentTenant === null) {
             $tenantData = Cache::rememberForever(
                 "tenant:$host",
-                fn() => ($t = Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended', 'maintenance'])->first()) ? $t->getRawOriginal() : null
+                function() use ($host) {
+                    $t = Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
+                    if ($t) {
+                        return $t->getRawOriginal();
+                    }
+
+                    // Fallback: Cek custom domain plugin
+                    if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                        $option = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                            ->where('value', $host)
+                            ->where('name', 'like', '%-domain')
+                            ->whereNotNull('tenant_id')
+                            ->first();
+
+                        if ($option) {
+                            $t = Tenant::where('id', $option->tenant_id)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
+                            if ($t) {
+                                $data = $t->getRawOriginal();
+                                $data['is_plugin_custom_domain'] = true;
+                                return $data;
+                            }
+                        }
+                    }
+                    return null;
+                }
             );
 
             if ($tenantData) {
@@ -42,6 +66,25 @@ class IdentifyTenant
         }
         $tenant = self::$currentTenant;
 
+        // Jika ini adalah domain khusus plugin, blokir akses ke rute utama CMS
+        if ($tenant && $tenant->getAttribute('is_plugin_custom_domain')) {
+            if (function_exists('is_custom_web_route_matched') && !is_custom_web_route_matched()) {
+                app()->instance('tenant', $tenant);
+                abort(404);
+            }
+
+            // Intercept rute '/' karena bentrok dengan rute CMS WebController@home
+            if (request()->path() === '/') {
+                app()->instance('tenant', $tenant);
+                $routes = config('modules.custom_web_route', []);
+                foreach ($routes as $r) {
+                    if (isset($r['path']) && ltrim($r['path'], '/') === '') {
+                        $controller = app($r['controller']);
+                        return $controller->{$r['function']}(request());
+                    }
+                }
+            }
+        }
         if (!$tenant) {
             $portal = config('app.url');
             $html = <<<HTML

@@ -330,10 +330,7 @@ function error404Msg($requestId = null)
             text-align:center;
         }
         .card {
-            background:#1e293b;
             padding:40px;
-            border-radius:16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             max-width:500px;
             width:90%;
         }
@@ -691,6 +688,10 @@ if (!function_exists('is_custom_web_route_matched')) {
     {
         $routes = config('modules.custom_web_route', []);
 
+        // Pastikan host saat ini benar-benar terdaftar sebagai custom domain (kecuali untuk rute yang diakses via domain utama)
+        $host = request()->getHost();
+        $isPluginDomain = class_exists(\Leazycms\Web\Models\Option::class) && \Leazycms\Web\Models\Option::where('value', $host)->where('name', 'like', '%-domain')->exists();
+
         // Ambil URL saat ini TANPA query string
         $currentUrl = strtok(request()->fullUrl(), '?');
         $currentPath = '/' . ltrim(request()->path(), '/');
@@ -711,7 +712,17 @@ if (!function_exists('is_custom_web_route_matched')) {
                     return true;
                 }
             } else {
-                if (rtrim($currentPath, '/') === rtrim($cleanPath, '/')) {
+                if (!$isPluginDomain) {
+                    continue; // Jika bukan custom domain, abaikan rute non-domain (rute pendek)
+                }
+                
+                $cPath = '/' . ltrim($cleanPath, '/');
+                if (rtrim($currentPath, '/') === rtrim($cPath, '/')) {
+                    return true;
+                }
+                // Cek regex untuk route dengan parameter (seperti {id} atau {slug})
+                $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '[a-zA-Z0-9-_]+', $cPath);
+                if (preg_match('#^' . $pattern . '$#i', $currentPath)) {
                     return true;
                 }
             }
@@ -2477,7 +2488,7 @@ if (!function_exists('init_meta_header')) {
             } elseif (request()->is('author') || request()->is('author/*')) {
                 $pn = $get_page_name . $page;
             } else {
-                $pn = null;
+                $pn = $get_page_name ? $get_page_name . $page : null;
             }
             $data = [
                 'description' => $pn ? 'Lihat ' . $pn . ' di ' . $site_title : (!request()->is('/') ? 'Halaman tidak ditemukan' : ($site_meta_description ?? $site_desc)),

@@ -242,6 +242,11 @@ class TenantController extends Controller implements HasMiddleware
         $theme = $request->theme;
         $oldTheme = $tenant->theme;
 
+        $oldPlugins = $tenant->plugins ?? [];
+        if (is_string($oldPlugins)) {
+            $oldPlugins = json_decode($oldPlugins, true) ?? [];
+        }
+
         $tenant->update([
             'name' => $request->name,
             'domain' => $domain,
@@ -251,6 +256,17 @@ class TenantController extends Controller implements HasMiddleware
             'plugins' => $request->plugins,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
+
+        // Hapus opsi custom domain secara dinamis jika tenant dikecualikan dari suatu plugin
+        $newPlugins = $request->plugins ?? [];
+        $removedPlugins = array_diff($oldPlugins, $newPlugins);
+
+        foreach ($removedPlugins as $pluginName) {
+            DB::table('options')
+                ->where('tenant_id', $tenant->id)
+                ->where('name', "{$pluginName}-domain")
+                ->delete();
+        }
 
         if ($request->custom_theme && $theme && !Str::endsWith($theme, '-' . $tenant->id)) {
             $sourcePath = resource_path('views/template/' . $theme);

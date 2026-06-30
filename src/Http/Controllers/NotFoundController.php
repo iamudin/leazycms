@@ -44,7 +44,9 @@ class NotFoundController extends Controller
             $attr['view_type'] = '404';
             $attr['view_path'] = '404';
             config(['modules.current' => $attr]);
-            if (View::exists(get_view(get_view())) && (is_main_domain() || config('modules.multisite_enabled'))) {
+            $isPluginCustomDomain = app()->has('tenant') && tenant() && tenant()->getAttribute('is_plugin_custom_domain');
+
+            if (!$isPluginCustomDomain && View::exists(get_view(get_view())) && (is_main_domain() || config('modules.multisite_enabled'))) {
                 $showspin = true;
                 $view = 'cms::layouts.master';
             } else {

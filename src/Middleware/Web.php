@@ -104,7 +104,7 @@ class Web
             if ($request->segment(1) == 'docs') {
                 $content = isPre($content);
             } else {
-                $content =  minify_all_one_line($content);
+                $content = minify_all_one_line($content);
             }
 
             $response->setContent($content);

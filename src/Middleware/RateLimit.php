@@ -119,8 +119,16 @@ class RateLimit
             if (!in_array($host, $allowedHosts, true)) {
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
-        } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled') && !is_custom_web_route_matched()) {
-            $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
+        } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
+            // Jika host bukan domain utama, cek apakah ini adalah domain khusus plugin yang valid
+            $isPluginDomain = false;
+            if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                $isPluginDomain = \Leazycms\Web\Models\Option::where('value', $host)->where('name', 'like', '%-domain')->exists();
+            }
+            
+            if (!$isPluginDomain) {
+                $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
+            }
         }
 
         if ($redirectUrl) {
