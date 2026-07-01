@@ -56,9 +56,11 @@ if (config('modules.multisite_enabled')) {
 }
 
 if ($webroute = get_non_domain_routes()) {
-    foreach ($webroute as $wr) {
-        Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name'])->middleware(['public', TrackVisitor::class]);
-    }
+    Route::middleware(['public', TrackVisitor::class])->group(function () use ($webroute) {
+        foreach ($webroute as $wr) {
+            Route::match(is_array($wr['method']) ? $wr['method'] : [$wr['method']], $wr['path'], [$wr['controller'], $wr['function']])->name($wr['name']);
+        }
+    });
 }
 
 Route::match(['get', 'post'], '/', [WebController::class, 'home'])->name('home')->middleware(['public', TrackVisitor::class]);

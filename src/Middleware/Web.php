@@ -19,6 +19,48 @@ class Web
 
     public function handle(Request $request, Closure $next)
     {
+        $host = $request->getHost();
+        $isPluginDomain = is_plugin_domain($host);
+
+        // Intercept rute '/' untuk custom domain plugin sebelum masuk ke WebController CMS utama
+        if ($isPluginDomain && $request->path() === '/') {
+            $routes = config('modules.custom_web_route', []);
+            foreach ($routes as $r) {
+                if (isset($r['path']) && ltrim($r['path'], '/') === '') {
+                    $controller = app($r['controller']);
+                    $response = $controller->{$r['function']}(request());
+
+                    if (!$response instanceof \Symfony\Component\HttpFoundation\Response) {
+
+                        $response = response($response);
+                        $content = $response->getContent();
+
+                        if (strpos($content, '<head>') !== false) {
+                            $content = str_replace(
+                                '<head>',
+                                '<head>' . init_plugin_meta_header(),
+                                $content
+                            );
+                        }
+                        $response->setContent(minify_all_one_line($content));
+                    }
+
+                    // Injeksi SEO khusus halaman plugin
+                    if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
+                        $content = $response->getContent();
+                        if (strpos($content, '<head>') !== false) {
+                            $content = str_replace(
+                                '<head>',
+                                '<head>' . init_plugin_meta_header(),
+                                $content
+                            );
+                        }
+                        $response->setContent($content);
+                    }
+                    return $response;
+                }
+            }
+        }
 
         $response = $next($request);
         $path = $request->path();
@@ -27,16 +69,23 @@ class Web
         }
 
 
-
         if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
             $content = $response->getContent();
 
-            if (strpos($content, '<head>') !== false && !is_custom_web_route_matched()) {
-                $content = str_replace(
-                    '<head>',
-                    '<head>' . init_meta_header(),
-                    $content
-                );
+            if (strpos($content, '<head>') !== false) {
+                if (!is_custom_web_route_matched()) {
+                    $content = str_replace(
+                        '<head>',
+                        '<head>' . init_meta_header(),
+                        $content
+                    );
+                } else {
+                    $content = str_replace(
+                        '<head>',
+                        '<head>' . init_plugin_meta_header(),
+                        $content
+                    );
+                }
             }
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use ($request) {
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
@@ -110,6 +159,7 @@ class Web
             $response->setContent($content);
         }
         $this->securityHeaders($response, $request);
+
         return $response;
     }
 

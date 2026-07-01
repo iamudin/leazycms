@@ -121,11 +121,8 @@ class RateLimit
             }
         } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
             // Jika host bukan domain utama, cek apakah ini adalah domain khusus plugin yang valid
-            $isPluginDomain = false;
-            if (class_exists(\Leazycms\Web\Models\Option::class)) {
-                $isPluginDomain = \Leazycms\Web\Models\Option::where('value', $host)->where('name', 'like', '%-domain')->exists();
-            }
-            
+            $isPluginDomain = is_plugin_domain($host);
+
             if (!$isPluginDomain) {
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }

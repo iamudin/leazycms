@@ -25,7 +25,7 @@ class IdentifyTenant
         if (self::$currentTenant === null) {
             $tenantData = Cache::rememberForever(
                 "tenant:$host",
-                function() use ($host) {
+                function () use ($host) {
                     $t = Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
                     if ($t) {
                         return $t->getRawOriginal();
@@ -73,17 +73,6 @@ class IdentifyTenant
                 abort(404);
             }
 
-            // Intercept rute '/' karena bentrok dengan rute CMS WebController@home
-            if (request()->path() === '/') {
-                app()->instance('tenant', $tenant);
-                $routes = config('modules.custom_web_route', []);
-                foreach ($routes as $r) {
-                    if (isset($r['path']) && ltrim($r['path'], '/') === '') {
-                        $controller = app($r['controller']);
-                        return $controller->{$r['function']}(request());
-                    }
-                }
-            }
         }
         if (!$tenant) {
             $portal = config('app.url');
@@ -470,6 +459,7 @@ HTML;
         }
 
         $response = $next($request);
+
         return $response;
     }
 }

@@ -683,6 +683,53 @@ if (!function_exists('add_logo')) {
         return view()->make('cms::backend.layout.logo', ['image' => $image, 'brand_name' => $brand_name, 'brand_tagline' => $brand_tagline, 'url' => $url, 'class' => $class]);
     }
 }
+
+if (!function_exists('is_plugin_domain')) {
+    function is_plugin_domain($host = null)
+    {
+        $host = $host ?: request()->getHost();
+
+        static $pluginDomains = [];
+
+        if (array_key_exists($host, $pluginDomains)) {
+            return $pluginDomains[$host];
+        }
+
+        $pluginDir = resource_path('plugins');
+        if (!is_dir($pluginDir)) {
+            return $pluginDomains[$host] = false;
+        }
+
+        $plugins = array_diff(scandir($pluginDir), ['.', '..']);
+        if (empty($plugins)) {
+            return $pluginDomains[$host] = false;
+        }
+
+        $disabledPlugins = get_disabled_plugins();
+        $hasActivePlugin = false;
+        foreach ($plugins as $plugin) {
+            if (is_dir($pluginDir . '/' . $plugin) && !in_array($plugin, $disabledPlugins)) {
+                $hasActivePlugin = true;
+                break;
+            }
+        }
+
+        if (!$hasActivePlugin) {
+            return $pluginDomains[$host] = false;
+        }
+
+        if (class_exists(\Leazycms\Web\Models\Option::class)) {
+            $pluginDomains[$host] = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                ->where('value', $host)
+                ->where('name', 'like', '%-domain')
+                ->exists();
+        } else {
+            $pluginDomains[$host] = false;
+        }
+
+        return $pluginDomains[$host];
+    }
+}
 if (!function_exists('is_custom_web_route_matched')) {
     function is_custom_web_route_matched(): bool
     {
@@ -690,7 +737,7 @@ if (!function_exists('is_custom_web_route_matched')) {
 
         // Pastikan host saat ini benar-benar terdaftar sebagai custom domain (kecuali untuk rute yang diakses via domain utama)
         $host = request()->getHost();
-        $isPluginDomain = class_exists(\Leazycms\Web\Models\Option::class) && \Leazycms\Web\Models\Option::where('value', $host)->where('name', 'like', '%-domain')->exists();
+        $isPluginDomain = is_plugin_domain($host);
 
         // Ambil URL saat ini TANPA query string
         $currentUrl = strtok(request()->fullUrl(), '?');
@@ -715,7 +762,7 @@ if (!function_exists('is_custom_web_route_matched')) {
                 if (!$isPluginDomain) {
                     continue; // Jika bukan custom domain, abaikan rute non-domain (rute pendek)
                 }
-                
+
                 $cPath = '/' . ltrim($cleanPath, '/');
                 if (rtrim($currentPath, '/') === rtrim($cPath, '/')) {
                     return true;
@@ -2461,6 +2508,47 @@ if (!function_exists('page_name')) {
         config(['modules.page_name' => $name]);
     }
 }
+if (!function_exists('plugin_page_name')) {
+    function plugin_page_name($title, $description = null, $thumbnail = null)
+    {
+        config([
+            'modules.plugin_seo' => [
+                'title' => $title,
+                'description' => $description,
+                'thumbnail' => $thumbnail
+            ]
+        ]);
+    }
+}
+if (!function_exists('init_plugin_meta_header')) {
+    function init_plugin_meta_header()
+    {
+        $seo = config('modules.plugin_seo');
+        $site_title = get_option('site_title') && strlen(get_option('site_title')) > 0 ? get_option('site_title') : 'Your Website Title';
+        $site_desc = get_option('site_description');
+        $site_meta_keyword = get_option('site_meta_keyword') ?? 'Situs Resmi, Cara Buat, Buat Website';
+
+        if ($seo) {
+            $title = $seo['title'] ? $seo['title'] . ' - ' . $site_title : $site_title;
+            $description = $seo['description'] ?: $site_desc;
+            $thumbnail = $seo['thumbnail'] ?: url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage());
+        } else {
+            $title = $site_title;
+            $description = $site_desc;
+            $thumbnail = url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage());
+        }
+
+        $data = [
+            'title' => $title,
+            'description' => $description,
+            'keywords' => $site_meta_keyword,
+            'thumbnail' => $thumbnail,
+            'url' => request()->fullUrl(),
+        ];
+
+        return \Illuminate\Support\Facades\View::make('cms::layouts.plugin_seo', $data)->render();
+    }
+}
 if (!function_exists('init_meta_header')) {
     function init_meta_header()
     {
@@ -3181,5 +3269,25 @@ if (!function_exists('add_extension')) {
         config(['modules.extension_module' => $exist_extension]);
 
         // Mengembalikan array yang sudah diperbarui jika diperlukan
+    }
+}
+
+if (!function_exists('plugin_route')) {
+    function plugin_route($name, $parameters = [], $absolute = true)
+    {
+        $host = request()->getHost();
+
+        // Cek apakah host saat ini adalah custom domain milik plugin apa pun
+        $isCustom = is_plugin_domain($host);
+
+        // Jika ada custom domain dan diakses melalui custom domain tersebut, gunakan rute .custom
+        $routeName = $name . ($isCustom ? '.custom' : '.main');
+
+        if (\Illuminate\Support\Facades\Route::has($routeName)) {
+            return route($routeName, $parameters, $absolute);
+        }
+
+        // Fallback ke rute asli jika tidak ditemukan
+        return route($name, $parameters, $absolute);
     }
 }
