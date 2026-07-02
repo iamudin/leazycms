@@ -419,7 +419,6 @@ HTML;
                     ->toArray()
             );
         });
-
         // Plugin Access Check
         if (config('modules.multisite_enabled')) {
             $path = $request->path();
@@ -451,6 +450,7 @@ HTML;
                     } else {
                         $allowedPlugins = is_string($tenant->plugins) ? json_decode($tenant->plugins, true) : ($tenant->plugins ?? []);
                         if (!is_array($allowedPlugins) || !in_array($pluginName, $allowedPlugins)) {
+
                             abort(404);
                         }
                     }

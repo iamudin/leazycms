@@ -18,6 +18,7 @@ class NotFoundController extends Controller
             )->header('Content-Type', 'text/html');
         };
 
+
         if (config('modules.multisite_enabled')) {
             $isMainDomain = is_main_domain();
 

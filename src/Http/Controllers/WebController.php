@@ -70,7 +70,6 @@ class WebController extends Controller
     }
     public function index(Post $post)
     {
-
         $modul = current_module();
         config(['modules.page_name' => $modul->title]);
         $perPage = $modul->web->post_perpage ?? get_option('post_perpage') ?? 10;
@@ -137,6 +136,7 @@ class WebController extends Controller
     }
     public function detail(Request $request, Post $post, $name = null)
     {
+
         $slug = Str::of($name)
             ->replaceMatches('/[^\p{L}\p{N}-]/u', '')
             ->toString();

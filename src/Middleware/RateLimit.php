@@ -34,8 +34,8 @@ class RateLimit
 
     public function handle(Request $request, Closure $next)
     {
-        if (!config('modules.multisite_enabled')) {
 
+        if (!config('modules.multisite_enabled')) {
             if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
                 foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
                     if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
@@ -43,6 +43,7 @@ class RateLimit
                         config([$module . '.path_url' => $module]);
                     }
                 }
+
             }
         }
 
