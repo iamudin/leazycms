@@ -29,12 +29,13 @@ class PostController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $request->user()->hasRole(get_post_type(), __FUNCTION__);
-        return view('cms::backend.posts.index');
+        $module = current_module();
+        return view('cms::backend.posts.index', compact('module'));
     }
 
     public function printPosts(Request $request)
     {
-       $module = get_module($request->type);
+        $module = get_module($request->type);
         $query = Post::query()->whereType($request->type);
         if ($request->status) {
             $query->where('status', $request->status);
@@ -62,16 +63,16 @@ class PostController extends Controller implements HasMiddleware
         $pdf = PDF::loadHTML($html)->setOption('page-width', '330')->setPaper('a4', 'landscape');
         return $pdf->stream('laporan-posts-' . date('Y-m-d-His') . '.pdf');
     }
-        public function uploadFileSummernote(Request $request)
+    public function uploadFileSummernote(Request $request)
     {
         $post = Post::findOrFail($request->post);
         $result = $post->addFile([
             'file' => $request->file('file'),
             'purpose' => 'file from summernote',
             'child_id' => Str::random(6),
-            'mime_type' => explode(",",allow_mime())
+            'mime_type' => explode(",", allow_mime())
         ]);
-        return response()->json(['status' => 'success', 'url' => $result,'name'=>str($request->file('file')->getClientOriginalName())->headline()]);
+        return response()->json(['status' => 'success', 'url' => $result, 'name' => str($request->file('file')->getClientOriginalName())->headline()]);
     }
     public function uploadImageSummernote(Request $request)
     {
@@ -80,7 +81,7 @@ class PostController extends Controller implements HasMiddleware
             'file' => $request->file('file'),
             'purpose' => 'image from summernote',
             'child_id' => Str::random(6),
-            'mime_type' => ['image/jpeg', 'image/png','image/gif','image/webp']
+            'mime_type' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
         ]);
         return response()->json(['status' => 'success', 'url' => $result]);
     }
@@ -144,11 +145,12 @@ class PostController extends Controller implements HasMiddleware
         abort_if(!is_numeric($id), '403');
         $module = current_module();
 
-        if(Route::is($module->name.'.edit')){
+        if (Route::is($module->name . '.edit')) {
             $request->user()->hasRole(get_post_type(), 'update');
-        }elseif(Route::is($module->name.'.show')){
- $request->user()->hasRole(get_post_type(), 'show');
-        }else{}
+        } elseif (Route::is($module->name . '.show')) {
+            $request->user()->hasRole(get_post_type(), 'show');
+        } else {
+        }
 
 
         $data = $request->user()->isAdmin() || !$request->user()->hasRole(get_post_type(), 'admin', true) ? $post->with('category', 'user', 'tags')->whereType(get_post_type())->find($id) : $post->whereBelongsTo($request->user())->with('category', 'user', 'tags')->whereType(get_post_type())->find($id);
@@ -223,7 +225,7 @@ class PostController extends Controller implements HasMiddleware
 
         if ($module->form->unique_title) {
             $uniq = 'unique:posts,title,' . $post->id . ',id,type,' . $post->type . ',deleted_at,NULL';
-                 if(config('modules.multisite_enabled')){
+            if (config('modules.multisite_enabled')) {
                 $uniq = 'unique:posts,title,' . $post->id . ',id,type,' . $post->type . ',deleted_at,NULL,tenant_id,' . $request->user()->tenant_id;
             }
         }
@@ -249,31 +251,31 @@ class PostController extends Controller implements HasMiddleware
 
         $forbiddenWords = array_unique(array_filter($forbiddenWords));
 
-$post_field = [
-    'title' => [
-        'required',
-        'string',
-        'regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u',
-        'min:5',
-        'max:200',
-        function ($attribute, $value, $fail) use ($forbiddenWords) {
+        $post_field = [
+            'title' => [
+                'required',
+                'string',
+                'regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u',
+                'min:5',
+                'max:200',
+                function ($attribute, $value, $fail) use ($forbiddenWords) {
 
-            // cek jumlah kata
-            if (str_word_count($value) === 1) {
+                    // cek jumlah kata
+                    if (str_word_count($value) === 1) {
 
-                $valueLower = strtolower($value);
+                        $valueLower = strtolower($value);
 
-                foreach ($forbiddenWords as $word) {
-                    if (str_contains($valueLower, strtolower($word))) {
-                        $fail("Judul tidak boleh mengandung kata '{$word}'.");
+                        foreach ($forbiddenWords as $word) {
+                            if (str_contains($valueLower, strtolower($word))) {
+                                $fail("Judul tidak boleh mengandung kata '{$word}'.");
+                            }
+                        }
+
                     }
-                }
 
-            }
-
-        },
-        $uniq
-    ],
+                },
+                $uniq
+            ],
             'media' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif',
             'content' => [
                 'nullable',
@@ -421,7 +423,7 @@ $post_field = [
                 $data['data_loop'] = $mnews;
             }
         }
-        $data['password'] = $request->password ? (!empty($post->password) ? $post->password : rtrim(enc64(rand(0000,9999)),'=')) : null;
+        $data['password'] = $request->password ? (!empty($post->password) ? $post->password : rtrim(enc64(rand(0000, 9999)), '=')) : null;
         $post->update($data);
         Cache::forget(get_current_host() . ':' . $post->type);
         Cache::forget(get_current_host() . ':' . $post->id);
@@ -443,7 +445,7 @@ $post_field = [
     public function datatable(Request $req)
     {
         $maindomain = is_main_domain();
-        $data = $req->user()->isAdmin() || !$req->user()->hasRole(get_post_type(), 'admin',true)
+        $data = $req->user()->isAdmin() || !$req->user()->hasRole(get_post_type(), 'admin', true)
             ? Post::selectedColumn()
                 ->with([
 
@@ -542,7 +544,7 @@ $post_field = [
                                     });
                                 });
                             }
-                            if(current_module()->form->category){
+                            if (current_module()->form->category) {
                                 $q->orWhereHas('category', function ($q) use ($search) {
                                     $q->where('name', 'like', $search . '%');
                                 });
@@ -616,16 +618,16 @@ $post_field = [
 
             $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
             $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
-            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ?'<a title="Klik untuk melihat di tampilan web" href="' . $row->link  . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . $row->link . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
 
 
             $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
-            $locked =  (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\''.dec64($row->password).'\')" title="Akses '.$current_module->title.' ini  dibatasi. Klik untuk menyalin kode akses"></i>': '');
+            $locked = (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\'' . dec64($row->password) . '\')" title="Akses ' . $current_module->title . ' ini  dibatasi. Klik untuk menyalin kode akses"></i>' : '');
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
-            $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> '.$row->tenant?->domain : null;
+            $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . $row->tenant?->domain : null;
             $b = '<b class="text-primary">' . $tit . '</b><br>';
-            $b .= '<small class="text-muted">'.$locked.' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
+            $b .= '<small class="text-muted">' . $locked . ' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
             return $b;
         });
 
@@ -675,7 +677,7 @@ $post_field = [
         data-ext="' . e($ext) . '"
         class="badge badge-pill py-1 btn-view-media text-primary"
         style="border:1px solid green; cursor:pointer;">
-        <i class="fa fa-eye "></i> Lihat : '.str($ext)->upper().'
+        <i class="fa fa-eye "></i> Lihat : ' . str($ext)->upper() . '
     </span>';
                             }
                         }
@@ -687,7 +689,8 @@ $post_field = [
 
                     if (
                         filter_var($value, FILTER_VALIDATE_URL)
-                        || Str::startsWith($value, ['http://', 'https://', 'www.'])) {
+                        || Str::startsWith($value, ['http://', 'https://', 'www.'])
+                    ) {
                         // pastikan ada skema supaya klik bisa jalan
                         $url = Str::startsWith($value, ['http://', 'https://'])
                             ? $value
@@ -695,7 +698,7 @@ $post_field = [
 
                         return '<span class="badge badge-pill py-1" style="border:1px solid #006347;">
                 <a title="' . e($url) . '" href="' . e($url) . '" target="_blank" rel="noopener noreferrer">
-                    <i>' . e(Str::limit($value,40)) . ' </i>
+                    <i>' . e(Str::limit($value, 40)) . ' </i>
                     <i class="fa fa-link ms-1"></i>
                 </a>
             </span>';
@@ -769,14 +772,14 @@ $post_field = [
                 ->pluck('title')
                 ->implode(' - ');
 
-            return '<a href="' . admin_url($lastParent->type . '/'. $lastParent->id.'/show').'">'
+            return '<a href="' . admin_url($lastParent->type . '/' . $lastParent->id . '/show') . '">'
                 . $titles .
                 '</a>';
         });
         $dt->addColumn('action', function ($row) use ($current_module) {
 
             $btn = '<div style="text-align:right"><div class="btn-group ">';
-            $btn .= in_array('show',$current_module->route) ? '<a title="Lihat data" href="' . route($row->type.'.show', $row->id ) . '"  class=" btn-outline-primary btn-sm fa fa-eye"></a>' : '';
+            $btn .= in_array('show', $current_module->route) ? '<a title="Lihat data" href="' . route($row->type . '.show', $row->id) . '"  class=" btn-outline-primary btn-sm fa fa-eye"></a>' : '';
             if (empty($row->deleted_at)) {
                 $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class=" btn-outline-warning btn-sm fa fa-edit"></a>' : '';
             } else {
@@ -847,7 +850,7 @@ $post_field = [
         $dt->orderColumn('visited', '-visited $1');
         $dt->orderColumn('updated_at', '-updated_at $1');
         $dt->orderColumn('created_at', '-created_at $1');
-        $dt->only( $rawColumns );
+        $dt->only($rawColumns);
         return $dt
             ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')

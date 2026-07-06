@@ -240,7 +240,7 @@ class CmsServiceProvider extends ServiceProvider
             $kernel->prependMiddlewareToGroup('web', IdentifyTenant::class);
         }
         $kernel->appendMiddlewareToGroup('web', \Leazycms\Web\Middleware\CheckPluginAccess::class);
-        require_once(__DIR__ . "/Inc/Option.php");
+        @include(__DIR__ . "/Inc/Option.php");
         $kernel->appendMiddlewareToGroup('web', RateLimit::class);
 
         $this->registerResources();
@@ -381,18 +381,89 @@ class CmsServiceProvider extends ServiceProvider
     protected function loadTemplateConfig()
     {
         $templateName = template();
-        $configFile = config('modules.multisite_enabled')
-            ? resource_path("views/template/modules.blade.php")
-            : resource_path("views/template/{$templateName}/modules.blade.php");
+        $globalConfigFile = resource_path("views/template/modules.blade.php");
 
-        if (file_exists($configFile)) {
+        // Di multisite, saat boot(), middleware belum jalan sehingga template() bernilai null.
+        // Kita selesaikan pencarian tenant di sini, dan cache ke IdentifyTenant::$currentTenant
+        // agar middleware nanti tinggal pakai (menghindari duplikasi cache hit).
+        if (empty($templateName) && config('modules.multisite_enabled') && !app()->runningInConsole()) {
+            $host = request()->getHost();
+
+            if (\Leazycms\Web\Middleware\IdentifyTenant::$currentTenant === null) {
+                $tenantData = \Illuminate\Support\Facades\Cache::rememberForever(
+                    "tenant:$host",
+                    function () use ($host) {
+                        $t = \Leazycms\Web\Models\Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
+                        if ($t) {
+                            return $t->getRawOriginal();
+                        }
+
+                        // Fallback custom domain plugin
+                        if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                            $option = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')->where('value', $host)->where('name', 'like', '%-domain')->whereNotNull('tenant_id')->first();
+                            if ($option) {
+                                $t = \Leazycms\Web\Models\Tenant::where('id', $option->tenant_id)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
+                                if ($t) {
+                                    $data = $t->getRawOriginal();
+                                    $data['is_plugin_custom_domain'] = true;
+                                    return $data;
+                                }
+                            }
+                        }
+                        return null;
+                    }
+                );
+
+                if ($tenantData) {
+                    if (isset($tenantData['modules']) && is_array($tenantData['modules'])) {
+                        $tenantData['modules'] = json_encode($tenantData['modules']);
+                    }
+                    $tenant = new \Leazycms\Web\Models\Tenant();
+                    $tenant->setRawAttributes($tenantData, true);
+                    $tenant->exists = true;
+                    \Leazycms\Web\Middleware\IdentifyTenant::$currentTenant = $tenant;
+                }
+            }
+
+            $currentTenant = \Leazycms\Web\Middleware\IdentifyTenant::$currentTenant;
+
+            if ($currentTenant) {
+                $options = \Illuminate\Support\Facades\Cache::rememberForever("tenant:{$currentTenant->domain}:options", function () use ($currentTenant) {
+                    return \Leazycms\Web\Models\Option::where('tenant_id', $currentTenant->id)->pluck('value', 'name')->toArray();
+                });
+
+                // Bind options ke container agar middleware IdentifyTenant 
+                // tidak perlu me-resolve ulang dan hit Cache yang kedua kalinya.
+                app()->instance('tenant.options', $options);
+
+                $templateName = $options['template'] ?? null;
+            }
+        }
+
+        if (empty($templateName)) {
+            $templateName = 'default';
+        }
+
+        $templateConfigFile = resource_path("views/template/{$templateName}/modules.blade.php");
+        if (config('modules.multisite_enabled') && file_exists($globalConfigFile)) {
             try {
                 ob_start();
-                // suppress error pakai @ agar tidak fatal
-                @include $configFile;
+                @include $globalConfigFile;
                 ob_end_clean();
             } catch (\Throwable $e) {
-                // kalau ada error, jangan lakukan apa-apa
+                \Illuminate\Support\Facades\Log::warning("Global template config gagal diload: " . $e->getMessage());
+            }
+        }
+
+        // Muat modules.blade.php spesifik untuk template aktif (override / config template)
+        if (file_exists($templateConfigFile)) {
+            try {
+
+                ob_start();
+                @include $templateConfigFile;
+                ob_end_clean();
+            } catch (\Throwable $e) {
+
                 \Illuminate\Support\Facades\Log::warning("Template config gagal diload: " . $e->getMessage());
             }
         }

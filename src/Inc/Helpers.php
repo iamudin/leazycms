@@ -3272,6 +3272,64 @@ if (!function_exists('add_extension')) {
     }
 }
 
+if (!function_exists('add_plugin_admin_route')) {
+    function add_plugin_admin_route($config) {
+        $pluginSlug = '';
+        if (isset($config['plugin'])) {
+            $pluginSlug = $config['plugin'];
+            unset($config['plugin']);
+        } else {
+            $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+            $caller = $bt[0]['file'] ?? '';
+            if (preg_match('/plugins[\\\\\/]([^\\\\\/]+)[\\\\\/]/i', $caller, $matches)) {
+                $pluginSlug = $matches[1];
+            }
+        }
+
+        if ($pluginSlug) {
+            $config['path'] = $pluginSlug . ($config['path'] == '/' ? '' : '/' . ltrim($config['path'], '/'));
+        }
+
+        add_route('admin', $config);
+    }
+}
+
+if (!function_exists('add_plugin_public_route')) {
+    function add_plugin_public_route($config) {
+        $pluginSlug = '';
+        if (isset($config['plugin'])) {
+            $pluginSlug = $config['plugin'];
+            unset($config['plugin']);
+        } else {
+            $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+            $caller = $bt[0]['file'] ?? '';
+            if (preg_match('/plugins[\\\\\/]([^\\\\\/]+)[\\\\\/]/i', $caller, $matches)) {
+                $pluginSlug = $matches[1];
+            }
+        }
+
+        if (!$pluginSlug) {
+            add_route('public', $config);
+            return;
+        }
+
+        // Main domain route
+        $mainConfig = $config;
+        $mainConfig['name'] = $config['name'] . '.main';
+        $mainConfig['path'] = $pluginSlug . ($config['path'] == '/' ? '' : '/' . ltrim($config['path'], '/'));
+        add_route('public', $mainConfig);
+
+        // Custom domain route
+        $customConfig = $config;
+        $customConfig['name'] = $config['name'] . '.custom';
+        $customConfig['path'] = ltrim($config['path'], '/');
+        if ($customConfig['path'] == '') {
+            $customConfig['path'] = '/';
+        }
+        add_route('public', $customConfig);
+    }
+}
+
 if (!function_exists('plugin_route')) {
     function plugin_route($name, $parameters = [], $absolute = true)
     {

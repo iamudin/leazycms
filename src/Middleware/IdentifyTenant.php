@@ -10,7 +10,7 @@ use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Tenant;
 class IdentifyTenant
 {
-    protected static $currentTenant = null;
+    public static $currentTenant = null;
 
     public function handle(Request $request, Closure $next)
     {
@@ -412,13 +412,15 @@ HTML;
         });
         app()->instance('tenant', $tenant);
         URL::forceRootUrl($request->getSchemeAndHttpHost());
-        app()->singleton('tenant.options', function () use ($tenant) {
-            return Cache::rememberForever(
-                "tenant:{$tenant->domain}:options",
-                fn() => Option::pluck('value', 'name')
-                    ->toArray()
-            );
-        });
+        if (!app()->bound('tenant.options')) {
+            app()->singleton('tenant.options', function () use ($tenant) {
+                return Cache::rememberForever(
+                    "tenant:{$tenant->domain}:options",
+                    fn() => Option::pluck('value', 'name')
+                        ->toArray()
+                );
+            });
+        }
         // Plugin Access Check
         if (config('modules.multisite_enabled')) {
             $path = $request->path();
