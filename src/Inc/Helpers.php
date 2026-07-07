@@ -2642,6 +2642,9 @@ if (!function_exists('get_menu')) {
                 ->whereType('menu')
                 ->whereStatus('publish')
                 ->where('slug', $name);
+            if (config('modules.multisite_enabled')) {
+                $menuQuery->whereTenantId(tenant()->id);
+            }
             $needsRecache = $menuQuery->exists();
         }
 
@@ -2792,8 +2795,11 @@ if (!function_exists('recache_banner')) {
     {
         $posts = \Leazycms\Web\Models\Post::with('category')
             ->onType('banner')
-            ->published()
-            ->select('media', 'redirect_to', 'title', 'category_id', 'data_field')->get();
+            ->published();
+        if (config('modules.multisite_enabled')) {
+            $posts->whereTenantId(tenant()->id);
+        }
+        $posts = $posts->select('media', 'redirect_to', 'title', 'category_id', 'data_field')->get();
         // Group by category name and map the results
         $result = $posts->groupBy('category.slug') // Asumsikan 'name' adalah atribut pada model kategori
             ->mapWithKeys(function ($items, $categoryName) {
@@ -2821,7 +2827,12 @@ if (!function_exists('recache_menu')) {
         $cacheKey = get_current_host() . ':menu';
         cache()->forget($cacheKey);
         cache()->rememberForever($cacheKey, function () {
-            $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop')->pluck('data_loop', 'slug')->toArray();
+            $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop');
+
+            if (config('modules.multisite_enabled')) {
+                $menu->whereTenantId(tenant()->id);
+            }
+            $menu = $menu->pluck('data_loop', 'slug')->toArray();
             return $menu;
         });
     }
@@ -2884,12 +2895,15 @@ if (!function_exists('get_banner')) {
             !array_key_exists($name, $requestCache[$cacheKey] ?? [])
         ) {
             $bannerQuery = \Leazycms\Web\Models\Post::query()
+                ->select('id')
                 ->whereType('banner')
                 ->whereStatus('publish')
                 ->whereHas('category', function ($query) use ($name) {
                     $query->where('slug', $name);
                 });
-
+            if (config('modules.multisite_enabled')) {
+                $bannerQuery->whereTenantId(tenant()->id);
+            }
             $needsRecache = $bannerQuery->exists();
         }
 
@@ -3273,7 +3287,8 @@ if (!function_exists('add_extension')) {
 }
 
 if (!function_exists('add_plugin_admin_route')) {
-    function add_plugin_admin_route($config) {
+    function add_plugin_admin_route($config)
+    {
         $pluginSlug = '';
         if (isset($config['plugin'])) {
             $pluginSlug = $config['plugin'];
@@ -3295,7 +3310,8 @@ if (!function_exists('add_plugin_admin_route')) {
 }
 
 if (!function_exists('add_plugin_public_route')) {
-    function add_plugin_public_route($config) {
+    function add_plugin_public_route($config)
+    {
         $pluginSlug = '';
         if (isset($config['plugin'])) {
             $pluginSlug = $config['plugin'];
