@@ -52,21 +52,23 @@
                                             <br><img height="60" src="/favicon.ico" onerror="{{ noimage() }}">
                                             <br>
                                             <input accept="image/x-icon,image/vnd.microsoft.icon" type="file"
-                                                class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                                                class="form-control-sm form-control-file compress-image" name="{{ $r[1] }}">
                                         @endif
                                     @else
                                         <small for="" class="text-muted">{{ $r[0] }}</small>
                                         @if (get_option($r[1]) && media_exists(get_option($r[1])))
-                                            <br><img height="60" src="{{ get_option($r[1]) }}"
-                                                onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
-                                                href="javascript:void(0)" onclick="media_destroy('{{ get_option($r[1]) }}')"
-                                                class=" btn-sm text-danger"> <i class="fa fa-trash"></i> </a>
-                                            <br>
-                                        @else
-                                            <input accept="image/png,imgage/jpeg,image/gif,image/webp" type="file"
+                                            <div class="media-preview-wrapper">
+                                                <br><img height="60" src="{{ get_option($r[1]) }}"
+                                                    onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
+                                                    href="javascript:void(0)" class="btn-sm text-danger btn-remove-media" data-field="{{ $r[1] }}"> <i class="fa fa-trash"></i> </a>
+                                                <br>
+                                            </div>
+                                        @endif
+                                        <div class="media-input-wrapper" style="{{ (get_option($r[1]) && media_exists(get_option($r[1]))) ? 'display:none;' : '' }}">
+                                            <input accept="image/png,image/jpeg,image/gif,image/webp" type="file"
                                                 class="form-control-sm form-control-file compress-image"
                                                 name="{{ $r[1] }}">
-                                        @endif
+                                        </div>
                                     @endif
                                 @else
                                     <small for="" class="text-muted">{{ $r[0] }}
@@ -214,16 +216,18 @@
                                 @if ($r[2] == 'file')
                                     <small for="" class="text-muted">{{ $r[0] }}</small>
                                     @if (get_option($r[1]) && media_exists(get_option($r[1])))
-                                        <br><img height="60" src="{{ url(get_option($r[1])) }}"
-                                            onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
-                                            href="javascript:void(0)" onclick="media_destroy('{{ get_option($r[1]) }}')"
-                                            class=" btn-sm text-danger"> <i class="fa fa-trash"></i> </a>
-                                        <br>
-                                    @else
-                                        <input accept="image/png,imgage/jpeg" type="file"
+                                        <div class="media-preview-wrapper">
+                                            <br><img height="60" src="{{ url(get_option($r[1])) }}"
+                                                onerror="{{ url('backend/images/noimage.png') }}"> &nbsp;<a
+                                                href="javascript:void(0)" class="btn-sm text-danger btn-remove-media" data-field="{{ $r[1] }}"> <i class="fa fa-trash"></i> </a>
+                                            <br>
+                                        </div>
+                                    @endif
+                                    <div class="media-input-wrapper" style="{{ (get_option($r[1]) && media_exists(get_option($r[1]))) ? 'display:none;' : '' }}">
+                                        <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
                                             class="form-control-sm form-control-file compress-image"
                                             name="{{ $r[1] }}">
-                                    @endif
+                                    </div>
                                 @else
                                     <small for="" class="text-muted">{{ $r[0] }}</small>
                                     <input type="{{ $r[2] }}"

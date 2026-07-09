@@ -15,6 +15,7 @@ Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileS
 Route::match(['get', 'post', 'delete'], 'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
 Route::get('files', [PanelController::class, 'files'])->name('files');
+Route::get('global-media-list', [PanelController::class, 'globalMediaList'])->name('global.media.list');
 Route::match(['get', 'post'], 'security/blocked-ip', [PanelController::class, 'blockedIps'])->name('blocked-ip');
 Route::delete('security/blocked-ip/{blockedIp}', [PanelController::class, 'blockedIps'])->name('blocked-ip.destroy');
 Route::post('print/posts', [PostController::class, 'printPosts'])->name('print.posts');
@@ -66,6 +67,10 @@ Route::controller(PanelController::class)->group(function () {
     Route::post('dashboard', 'visitor')->name('visitor.data');
     Route::get('admin_path/{path}', 'admin_path')->name('admin_path_changer');
     Route::match(['get', 'post'], 'appearance', 'appearance')->name('appearance');
+    Route::get('appearance/template-store', 'templateStore')->name('appearance.template_store');
+    Route::get('appearance/template-store/{id}', 'templateDetail')->name('appearance.template_detail');
+    Route::post('appearance/install-cloud', 'installCloudTemplate')->name('appearance.install_cloud');
+    Route::post('appearance/activate', 'activateTemplate')->name('appearance.activate_template');
     Route::match(['get', 'post'], 'cache', 'cache')->name('cache-manager');
     Route::match(['get', 'post'], 'appearance/editor', 'editorTemplate')->name('appearance.editor');
     Route::match(['get', 'put'], 'setting', 'setting')->name('setting');
@@ -77,6 +82,9 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'plugins', 'plugins')->name('admin.plugins');
     Route::match(['post'], 'plugins/upload', 'uploadPlugin')->name('admin.plugins.upload');
     Route::post('plugins/update', 'updatePlugin')->name('admin.plugins.update');
+    Route::get('plugins/cloud-store', 'pluginStore')->name('admin.plugins.store');
+    Route::get('plugins/cloud-store/{id}', 'pluginDetail')->name('admin.plugins.detail');
+    Route::post('plugins/install-cloud', 'installCloudPlugin')->name('admin.plugins.install_cloud');
 });
 Route::controller(UserController::class)->group(function () {
     Route::get('role', 'roleIndex')->name('role');

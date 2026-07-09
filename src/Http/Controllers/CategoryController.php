@@ -126,7 +126,8 @@ class CategoryController extends Controller implements HasMiddleware
                 'mime_type' => ['image/jpeg', 'image/png']
             ]);
             $data['icon'] = $fname;
-
+        } elseif ($request->has('icon') && is_string($request->icon)) {
+            $data['icon'] = strip_tags($request->icon);
         }
         $category->update($data);
 

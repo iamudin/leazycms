@@ -250,6 +250,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->commands([
             InstallCommand::class,
+            \Leazycms\Web\Commands\RegisterCloudCommand::class,
             RouteListBlock::class,
             ResetPassword::class,
             UpdateCMS::class,

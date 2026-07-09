@@ -5,10 +5,10 @@
         const ext = ($(this).data('ext') || '').toLowerCase();
         const baseUrl = "{{ url('/') }}";
 
-        // Absolute URL safety
+        /* Absolute URL safety */
         const url = file.startsWith('http') ? file : baseUrl + file;
 
-        // Extract filename
+        /* Extract filename */
         const fileName = url.split('/').pop();
 
         const extensions = {
@@ -25,9 +25,9 @@
         let viewerUrl = '';
         let showDownloadBtn = false;
 
-        // =========================
-        // TYPE HANDLER
-        // =========================
+        /* ========================= */
+        /* TYPE HANDLER */
+        /* ========================= */
 
         if (extensions.image.includes(ext)) {
 
@@ -37,7 +37,11 @@
 
         } else if (extensions.pdf.includes(ext)) {
 
-            viewerUrl = url;
+            content = `
+            <div class="position-relative" style="height:600px; width:100%;">
+                <embed id="dynamicPdfEmbed" data-src="${url}" type="application/pdf" width="100%" height="100%" style="border:none;">
+            </div>
+            `;
             showDownloadBtn = true;
 
         } else if (extensions.office.includes(ext)) {
@@ -46,9 +50,9 @@
             showDownloadBtn = true;
         }
 
-        // =========================
-        // IFRAME VIEWER HANDLER
-        // =========================
+        /* ========================= */
+        /* IFRAME VIEWER HANDLER */
+        /* ========================= */
 
         if (viewerUrl) {
             content = `
@@ -59,20 +63,21 @@
                 </div>
 
                 <iframe
-                    src="${viewerUrl}"
+                    data-src="${viewerUrl}"
+                    id="dynamicPdfIframe"
                     width="100%"
                     height="600px"
                     style="border:none; display:none;"
-                    onload="document.getElementById('mediaLoader').remove(); this.style.display='block';"
-                    onerror="document.getElementById('mediaLoader').innerHTML='<p class=\\'text-danger\\'>Gagal memuat file.</p>';">
+                    onload="var el = document.getElementById('mediaLoader'); if(el) el.style.display='none'; this.style.display='block';"
+                    onerror="var el = document.getElementById('mediaLoader'); if(el) el.innerHTML='<p class=\\'text-danger\\'>Gagal memuat file.</p>';">
                 </iframe>
             </div>
         `;
         }
 
-        // =========================
-        // FALLBACK
-        // =========================
+        /* ========================= */
+        /* FALLBACK */
+        /* ========================= */
 
         if (!content) {
             content = `
@@ -85,9 +90,9 @@
         `;
         }
 
-        // =========================
-        // DOWNLOAD BUTTON HEADER
-        // =========================
+        /* ========================= */
+        /* DOWNLOAD BUTTON HEADER */
+        /* ========================= */
 
         const downloadButton = showDownloadBtn ? `
         <a href="${url}" class="btn btn-sm btn-outline-primary mr-2" download>
@@ -95,9 +100,9 @@
         </a>
     ` : '';
 
-        // =========================
-        // BUILD MODAL
-        // =========================
+        /* ========================= */
+        /* BUILD MODAL */
+        /* ========================= */
 
         $('#dynamicMediaModal').remove();
 
@@ -122,7 +127,7 @@
 
                     </div>
 
-                    <div class="modal-body text-center">
+                    <div class="modal-body text-center p-0">
                         ${content}
                     </div>
 
@@ -135,6 +140,13 @@
 
         const modal = $('#dynamicMediaModal');
         modal.modal('show');
+
+        modal.on('shown.bs.modal', function () {
+            var embed = document.getElementById('dynamicPdfEmbed');
+            if (embed && embed.getAttribute('data-src')) {
+                embed.src = embed.getAttribute('data-src');
+            }
+        });
 
         modal.on('hidden.bs.modal', function () {
             modal.remove();

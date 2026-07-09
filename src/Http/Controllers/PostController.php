@@ -276,7 +276,7 @@ class PostController extends Controller implements HasMiddleware
                 },
                 $uniq
             ],
-            'media' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif',
+            'media' => $request->hasFile('media') ? 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif' : 'nullable|string',
             'content' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
@@ -380,6 +380,8 @@ class PostController extends Controller implements HasMiddleware
                 'width' => $module->name == 'banner' ? 1700 : 1200,
                 'mime_type' => ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
             ]);
+        } elseif ($request->has('media') && is_string($request->media)) {
+            $data['media'] = strip_tags($request->media);
         }
         if ($request->tanggal_entry) {
             $timedate = $request->tanggal_entry ?? date('Y-m-d H:i:s');

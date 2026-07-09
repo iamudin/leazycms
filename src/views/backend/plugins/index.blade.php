@@ -6,6 +6,9 @@
                 <div class="tile-title-w-btn">
                     <h3 class="title">Manajemen Plugin</h3>
                     <p>
+                        <a href="{{ route('admin.plugins.store') }}" class="btn btn-info icon-btn mr-2">
+                            <i class="fa fa-shopping-cart"></i> Plugin Store
+                        </a>
                         <button class="btn btn-primary icon-btn" type="button" data-toggle="modal"
                             data-target="#uploadPluginModal">
                             <i class="fa fa-upload"></i>Upload Plugin

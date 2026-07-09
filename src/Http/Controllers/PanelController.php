@@ -38,6 +38,12 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.files.index');
     }
 
+    function globalMediaList(Request $request)
+    {
+        abort_if(!is_main_domain(), 404);
+        return \Leazycms\FLC\Models\File::where('host', $request->getHost())->latest()->paginate(40);
+    }
+
     function blockedIps(Request $request, BlockedIp $blockedIp = null)
     {
         abort_if(!is_main_domain() || !$request->user()?->isAdmin(), 404);
@@ -549,6 +555,8 @@ class PanelController extends Controller implements HasMiddleware
                                 'self_upload' => true,
                             ]);
                             $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                        } elseif ($request->has(_us($field[0])) && is_string($request->$key)) {
+                            $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
                         }
                     } else {
                         $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
@@ -598,6 +606,10 @@ class PanelController extends Controller implements HasMiddleware
                                 'purpose' => $key,
                                 'mime_type' => ['image/png', 'image/jpeg'],
                             ])
+                        ]);
+                    } elseif ($request->has($key) && is_string($request->$key)) {
+                        $fid->update([
+                            'value' => strip_tags($request->$key)
                         ]);
                     }
                 } else {
@@ -783,14 +795,11 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
-                    $request->validate([$key => 'nullable|file']);
-                    if ($value = $request->hasFile($key)) {
+                    $request->validate([$key => $request->hasFile($key) ? 'nullable|file' : 'nullable|string']);
+                    if ($request->hasFile($key)) {
                         $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
 
                         if ($key == 'favicon') {
-
-
-
                             $file = $request->file('favicon');
                             // Validasi MIME dan ekstensi
                             $allowedMime = ['image/x-icon', 'image/vnd.microsoft.icon'];
@@ -842,6 +851,8 @@ class PanelController extends Controller implements HasMiddleware
                                 ])
                             ]);
                         }
+                    } elseif ($request->has($key) && is_string($request->$key)) {
+                        $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
                     }
                 } else {
                     $value = $request->$key;
@@ -852,7 +863,7 @@ class PanelController extends Controller implements HasMiddleware
             foreach ($data['pwa'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {
-                    $request->validate([$key => 'nullable|file|mimetypes:image/png,image/webp']);
+                    $request->validate([$key => $request->hasFile($key) ? 'nullable|file|mimetypes:image/png,image/webp' : 'nullable|string']);
 
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
@@ -866,6 +877,10 @@ class PanelController extends Controller implements HasMiddleware
                         ]);
                         $fid->update([
                             'value' => $filename
+                        ]);
+                    } elseif ($request->has($key) && is_string($request->$key)) {
+                        $fid->update([
+                            'value' => strip_tags($request->$key)
                         ]);
                     }
                 } else {
@@ -1091,7 +1106,7 @@ class PanelController extends Controller implements HasMiddleware
 
                     foreach ($ar_ta as $field) {
                         $key = _us($field[0]);
-                        if ($request->$key) {
+                        if ($request->has($key) || $request->hasFile($key)) {
                             if ($field[1] == 'file') {
                                 if ($request->hasFile(_us($field[0]))) {
                                     $value = (new Flc)->addFile([
@@ -1103,6 +1118,8 @@ class PanelController extends Controller implements HasMiddleware
                                     ]);
 
                                     $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                                } elseif ($request->has(_us($field[0])) && is_string($request->$key)) {
+                                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
                                 }
                             } else {
                                 $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
@@ -1140,6 +1157,119 @@ class PanelController extends Controller implements HasMiddleware
         }
         view()->share('home', array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php'))));
         return view('cms::backend.appearance');
+    }
+
+    public function templateStore(Request $request)
+    {
+        admin_only();
+        
+        $cloudKey = config('modules.cloud_key');
+        if (!$cloudKey) {
+            return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
+        }
+
+        $cloudHost = "https://newlara.test";
+        $apiUrl = $cloudHost . "/api/fetch-template.json?api_key=" . $cloudKey;
+
+        if ($request->has('search') && $request->search) {
+            $apiUrl .= "&search=" . urlencode($request->search);
+        }
+        if ($request->has('category') && $request->category) {
+            $apiUrl .= "&category=" . urlencode($request->category);
+        }
+
+        // Fetch templates
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
+            
+            if ($response->successful()) {
+                $templates = $response->json();
+            } else {
+                $templates = [];
+                session()->flash('danger', 'Gagal terhubung ke Cloud Template Host.');
+            }
+        } catch (\Exception $e) {
+            $templates = [];
+            session()->flash('danger', 'Error memuat template dari cloud: ' . $e->getMessage());
+        }
+
+        // Fetch categories
+        $categoriesUrl = $cloudHost . "/api/fetch-categories.json?api_key=" . $cloudKey . "&type=template";
+        try {
+            $catResponse = \Illuminate\Support\Facades\Http::withoutVerifying()->get($categoriesUrl);
+            $categories = $catResponse->successful() ? $catResponse->json() : [];
+        } catch (\Exception $e) {
+            $categories = [];
+        }
+
+        // Pagination manual untuk array
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 6;
+        $currentItems = array_slice($templates, ($currentPage - 1) * $perPage, $perPage);
+        $paginatedTemplates = new \Illuminate\Pagination\LengthAwarePaginator($currentItems, count($templates), $perPage, $currentPage, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        return view('cms::backend.template_store', compact('paginatedTemplates', 'categories'));
+    }
+
+    public function templateDetail(Request $request, $id)
+    {
+        admin_only();
+        
+        $cloudKey = config('modules.cloud_key');
+        if (!$cloudKey) {
+            return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
+        }
+
+        $cloudHost = "https://newlara.test";
+        $apiUrl = $cloudHost . "/api/template/" . $id . ".json?api_key=" . $cloudKey;
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
+            
+            if ($response->successful()) {
+                $template = $response->json();
+                return view('cms::backend.template_store_detail', compact('template'));
+            } else {
+                return redirect()->route('appearance.template_store')->with('danger', 'Template tidak ditemukan atau API bermasalah.');
+            }
+        } catch (\Exception $e) {
+            return redirect()->route('appearance.template_store')->with('danger', 'Error memuat detail template dari cloud.');
+        }
+    }
+
+    public function installCloudTemplate(Request $request)
+    {
+        admin_only();
+        $request->validate([
+            'url' => 'required|url'
+        ]);
+
+        try {
+            $url = $request->url;
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($url);
+            if (!$response->successful()) {
+                return back()->with('danger', 'Gagal mendownload template dari cloud.');
+            }
+            $contents = $response->body();
+            
+            $tempPath = storage_path('app/temp-cloud-template-' . time() . '.zip');
+            file_put_contents($tempPath, $contents);
+
+            $file = new \Illuminate\Http\File($tempPath);
+            $result = $this->template_uploader($file);
+            
+            if (\Illuminate\Support\Facades\File::exists($tempPath)) {
+                \Illuminate\Support\Facades\File::delete($tempPath);
+            }
+            
+            return $result;
+
+        } catch (\Exception $e) {
+            return back()->with('danger', 'Gagal install template: ' . $e->getMessage());
+        }
     }
     public function template_uploader($file)
     {
@@ -1283,6 +1413,26 @@ class PanelController extends Controller implements HasMiddleware
         } else {
             return back()->with('danger', 'Template Gagal Diupload');
         }
+    }
+
+    public function activateTemplate(Request $request)
+    {
+        admin_only();
+        $slug = $request->input('slug');
+        if (!$slug) {
+            return back()->with('danger', 'Slug template tidak valid.');
+        }
+
+        $templatePath = resource_path('views/template/' . $slug);
+        if (!\Illuminate\Support\Facades\File::isDirectory($templatePath)) {
+            return back()->with('danger', 'Template belum terinstall.');
+        }
+
+        \Leazycms\Web\Models\Option::updateOrCreate(['name' => 'template'], [
+            'value' => $slug
+        ]);
+
+        return back()->with('success', 'Template ' . $slug . ' berhasil diaktifkan.');
     }
 
     public function editorTemplate(Request $request)
@@ -1756,5 +1906,168 @@ class PanelController extends Controller implements HasMiddleware
         } catch (\Exception $e) {
             return back()->with('danger', 'Gagal mengupdate plugin: ' . $e->getMessage());
         }
+    }
+    public function pluginStore(Request $request)
+    {
+        admin_only();
+        
+        $cloudKey = config('modules.cloud_key');
+        if (!$cloudKey) {
+            return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
+        }
+
+        $cloudHost = "https://newlara.test";
+        $apiUrl = $cloudHost . "/api/fetch-template.json?api_key=" . $cloudKey . "&type=plugin";
+
+        if ($request->has('search') && $request->search) {
+            $apiUrl .= "&search=" . urlencode($request->search);
+        }
+        if ($request->has('category') && $request->category) {
+            $apiUrl .= "&category=" . urlencode($request->category);
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
+            
+            if ($response->successful()) {
+                $templates = $response->json();
+            } else {
+                $templates = [];
+                session()->flash('danger', 'Gagal terhubung ke Cloud Plugin Store.');
+            }
+        } catch (\Exception $e) {
+            $templates = [];
+            session()->flash('danger', 'Error memuat plugin dari cloud: ' . $e->getMessage());
+        }
+
+        // Fetch categories
+        $categoriesUrl = $cloudHost . "/api/fetch-categories.json?api_key=" . $cloudKey . "&type=plugin";
+        try {
+            $catResponse = \Illuminate\Support\Facades\Http::withoutVerifying()->get($categoriesUrl);
+            $categories = $catResponse->successful() ? $catResponse->json() : [];
+        } catch (\Exception $e) {
+            $categories = [];
+        }
+
+        // Pagination manual untuk array
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 6;
+        $currentItems = array_slice($templates, ($currentPage - 1) * $perPage, $perPage);
+        $paginatedTemplates = new \Illuminate\Pagination\LengthAwarePaginator($currentItems, count($templates), $perPage, $currentPage, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        return view('cms::backend.plugin_store', compact('paginatedTemplates', 'categories'));
+    }
+
+    public function pluginDetail(Request $request, $id)
+    {
+        admin_only();
+        
+        $cloudKey = config('modules.cloud_key');
+        if (!$cloudKey) {
+            return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
+        }
+
+        $cloudHost = "https://newlara.test";
+        $apiUrl = $cloudHost . "/api/template/" . $id . ".json?api_key=" . $cloudKey;
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
+            
+            if ($response->successful()) {
+                $template = $response->json();
+                return view('cms::backend.plugin_store_detail', compact('template'));
+            } else {
+                return redirect()->route('admin.plugins.store')->with('danger', 'Plugin tidak ditemukan atau API bermasalah.');
+            }
+        } catch (\Exception $e) {
+            return redirect()->route('admin.plugins.store')->with('danger', 'Error memuat detail plugin dari cloud.');
+        }
+    }
+
+    public function installCloudPlugin(Request $request)
+    {
+        admin_only();
+        $request->validate([
+            'url' => 'required|url'
+        ]);
+
+        try {
+            $url = $request->url;
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($url);
+            if (!$response->successful()) {
+                return back()->with('danger', 'Gagal mendownload plugin dari cloud.');
+            }
+            $contents = $response->body();
+            
+            $tempPath = storage_path('app/temp-cloud-plugin-' . time() . '.zip');
+            file_put_contents($tempPath, $contents);
+
+            $file = new \Illuminate\Http\File($tempPath);
+            $result = $this->plugin_uploader($file);
+            
+            if (\Illuminate\Support\Facades\File::exists($tempPath)) {
+                \Illuminate\Support\Facades\File::delete($tempPath);
+            }
+            
+            return $result;
+
+        } catch (\Exception $e) {
+            return back()->with('danger', 'Gagal install plugin: ' . $e->getMessage());
+        }
+    }
+    
+    public function plugin_uploader($file)
+    {
+        $zipFilePath = $file->getRealPath();
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipFilePath) === TRUE) {
+            $extractPath = storage_path('app/temp_plugins/' . time());
+            if (!File::exists($extractPath)) {
+                File::makeDirectory($extractPath, 0755, true);
+            }
+            $zip->extractTo($extractPath);
+            $zip->close();
+
+            $extractedDirs = File::directories($extractPath);
+            if (count($extractedDirs) !== 1) {
+                File::deleteDirectory($extractPath);
+                return back()->with('danger', 'Format ZIP tidak valid. ZIP harus berisi tepat satu folder utama plugin.');
+            }
+
+            $pluginFolder = $extractedDirs[0];
+            $pluginName = basename($pluginFolder);
+
+            $jsonPath = $pluginFolder . '/plugin.json';
+            if (File::exists($jsonPath)) {
+                $jsonString = File::get($jsonPath);
+                $jsonString = preg_replace('/^\xEF\xBB\xBF/', '', $jsonString);
+                $json = json_decode($jsonString, true);
+                if ($json && isset($json['name'])) {
+                    $pluginName = $json['name'];
+                }
+            }
+            if (!File::isDirectory(resource_path('plugins'))) {
+                File::makeDirectory(resource_path('plugins'), 0755, true);
+            }
+
+            $targetPath = resource_path('plugins/' . $pluginName);
+
+            if (File::exists($targetPath)) {
+                File::deleteDirectory($targetPath);
+            }
+
+            File::moveDirectory($extractedDirs[0], $targetPath);
+            File::deleteDirectory($extractPath);
+
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+
+            return back()->with('success', 'Plugin berhasil diinstal.');
+        }
+
+        return back()->with('danger', 'Gagal mengekstrak file plugin.');
     }
 }

@@ -2861,6 +2861,12 @@ if (!function_exists('_tohref')) {
         return '<a target="_blank" href="' . strip_tags($href) . '">' . $val . '</a>';
     }
 }
+if (!function_exists('init_modal_upload')) {
+    function init_modal_upload()
+    {
+        return view('cms::backend.layout.upload_modal')->render();
+    }
+}
 if (!function_exists('banner_here')) {
     function banner_here($name, $data)
     {

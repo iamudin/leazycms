@@ -24,14 +24,17 @@
                                 <small>{{ str($field[0])->headline() }}</small><br>
 
                                     @if (media_exists(get_option(_us($field[0]))))
+                                        <div class="media-preview-wrapper">
                                         <a href="{{get_option(_us($field[0])) }}"
                                             class="btn btn-sm btn-outline-primary mb-2">{{ basename(get_option(_us($field[0]))) }}</a> <i
-                                            title="Hapus ?" class="fa fa-trash text-danger pointer"
-                                            onclick="media_destroy('{{ get_option(_us($field[0])) }}')"></i><br>
-                                    @else
+                                            title="Hapus ?" class="fa fa-trash text-danger pointer btn-remove-media"
+                                            data-field="{{ _us($field[0]) }}"></i><br>
+                                        </div>
+                                    @endif
+                                        <div class="media-input-wrapper" style="{{ (media_exists(get_option(_us($field[0])))) ? 'display:none;' : '' }}">
                                         <input @if (isset($field[3])) required @endif type="file" accept="{{ $field[2] ?? null }}"
                                             class="compress-image form-control-sm form-control-file mb-2" name="{{ _us($field[0]) }}">
-                                    @endif
+                                        </div>
                             @elseif($field[1] == 'textarea')
                                 <small>{{ str($field[0])->headline() }}</small><br>
 

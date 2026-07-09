@@ -101,6 +101,8 @@ class PollingController extends Controller implements HasMiddleware
             $option->update([
                 'image'=>$image
             ]);
+        } elseif ($request->has('image') && is_string($request->image)) {
+            $option->update(['image' => strip_tags($request->image)]);
         }
         return back()->with('success','Berhasil Update Opsi');
 
@@ -122,6 +124,8 @@ class PollingController extends Controller implements HasMiddleware
             $result->update([
                 'image'=>$image
             ]);
+        } elseif ($request->has('image') && is_string($request->image)) {
+            $result->update(['image' => strip_tags($request->image)]);
         }
         return back()->with('success','Berhasil Menambah Opsi');
 

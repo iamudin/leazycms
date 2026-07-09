@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="utf-8">
     <meta name="description" content="">
@@ -14,7 +15,9 @@
     <meta property="og:url" content="">
     <meta property="og:image" content="">
     <meta property="og:description" content="">
-    <title>{{ isset($title) ? $title . ' › Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '') : ('Admin Panel '.(get_option('site_title')? ' › '.get_option('site_title'):'')) }} </title>
+    <title>
+        {{ isset($title) ? $title . ' › Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '') : ('Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '')) }}
+    </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="yes" name="apple-mobile-web-app-capable">
@@ -26,8 +29,11 @@
     <!-- Main CSS-->
     <link rel="stylesheet" type="text/css" href="{{ url('backend/css/main.css') }}">
     <!-- Font-icon css-->
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" >
+    <link rel="stylesheet" type="text/css"
+        href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>
 
@@ -35,6 +41,7 @@
         .pointer {
             cursor: pointer;
         }
+
         .clock-fixed-bottom {
             position: fixed;
             bottom: 20px;
@@ -44,28 +51,32 @@
             color: white;
             padding: 8px 20px;
             border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             z-index: 9999;
             font-size: 14px;
             font-weight: 500;
             backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             gap: 10px;
             white-space: nowrap;
         }
+
         .clock-fixed-bottom .clock-separator {
             opacity: 0.5;
             margin: 0 2px;
         }
+
         .clock-fixed-bottom .session-duration {
             opacity: 0.85;
             font-size: 12px;
         }
+
         .clock-fixed-bottom i {
             font-size: 16px;
         }
+
         @media (max-width: 768px) {
             .clock-fixed-bottom {
                 bottom: 10px;
@@ -76,7 +87,7 @@
     </style>
     @if (\Session::has('success'))
         <script>
-            window.onload = function() {
+            window.onload = function () {
                 notif("{{ Session::get('success') }}", "success");
             };
         </script>
@@ -84,14 +95,14 @@
 
     @if (\Session::has('warning'))
         <script>
-            window.onload = function() {
+            window.onload = function () {
                 notif("{{ Session::get('warning') }}", "warning");
             };
         </script>
     @endif
     @if (\Session::has('danger'))
         <script>
-            window.onload = function() {
+            window.onload = function () {
                 notif("{{ Session::get('danger') }}", "danger");
             };
         </script>
@@ -99,81 +110,81 @@
 
     @stack('styles')
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-      <style>
-            body {
-                font-family: sans-serif;
-            }
+    <style>
+        body {
+            font-family: sans-serif;
+        }
 
-            .text-stroke {
-                text-decoration: line-through;
-            }
+        .text-stroke {
+            text-decoration: line-through;
+        }
 
-            a:hover {
-                text-decoration: none;
-            }
+        a:hover {
+            text-decoration: none;
+        }
 
-            .btop {
-                margin-top: -80px;
-                right: 0;
-                position: absolute;
-            }
+        .btop {
+            margin-top: -80px;
+            right: 0;
+            position: absolute;
+        }
 
-            input[type=text] {
-                background-color: rgb(255, 255, 255, .8);
-            }
+        input[type=text] {
+            background-color: rgb(255, 255, 255, .8);
+        }
 
-            #editor {
-                background-color: rgb(255, 255, 255, .8);
+        #editor {
+            background-color: rgb(255, 255, 255, .8);
 
-            }
+        }
 
-            label.myLabel input[type="file"] {
-                position: absolute;
-                top: -1000px;
-            }
+        label.myLabel input[type="file"] {
+            position: absolute;
+            top: -1000px;
+        }
 
 
-            /***** Example custom styling *****/
+        /***** Example custom styling *****/
 
-            .myLabel {
-                border: 1px solid #000;
-                padding: 2px 5px;
-                margin: 2px;
-                background: #fff;
-                font-size: 9px;
-                cursor: pointer;
-                display: inline-block;
-            }
+        .myLabel {
+            border: 1px solid #000;
+            padding: 2px 5px;
+            margin: 2px;
+            background: #fff;
+            font-size: 9px;
+            cursor: pointer;
+            display: inline-block;
+        }
 
-            .myLabel:hover {
-                background: red;
-            }
+        .myLabel:hover {
+            background: red;
+        }
 
-            .myLabel:active {
-                background: #CCF;
-            }
+        .myLabel:active {
+            background: #CCF;
+        }
 
-            .myLabel:invalid+span {
-                color: #fff;
-            }
+        .myLabel:invalid+span {
+            color: #fff;
+        }
 
-            .myLabel:valid+span {
-                color: #fff;
-            }
+        .myLabel:valid+span {
+            color: #fff;
+        }
 
-            .card-list {
-                position: relative;
-                background: #ffffff;
-                border-radius: 3px;
-                padding: 10px;
-                -webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-                margin-bottom: 10px;
-                -webkit-transition: all 0.3s ease-in-out;
-                -o-transition: all 0.3s ease-in-out;
-                transition: all 0.3s ease-in-out;
-            }
-        </style>
+        .card-list {
+            position: relative;
+            background: #ffffff;
+            border-radius: 3px;
+            padding: 10px;
+            -webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+            -webkit-transition: all 0.3s ease-in-out;
+            -o-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
 </head>
 
 <body id="body" class="app sidebar-mini">
@@ -190,7 +201,7 @@
     </main>
 
     <script>
-        $('.copy').click(function() {
+        $('.copy').click(function () {
             var $temp = $("<input>");
             $("body").append($temp);
             $temp.val($(this).attr('data-copy')).select();
@@ -210,47 +221,33 @@
     </script>
 
     <!-- Essential javascripts for application to work-->
-    <script  src="{{ url('backend/js/popper.min.js') }}"></script>
-    <script  src="{{ url('backend/js/bootstrap.min.js') }}"></script>
-    <script  src="{{ url('backend/js/main.js') }}"></script>
+    <script src="{{ url('backend/js/popper.min.js') }}"></script>
+    <script src="{{ url('backend/js/bootstrap.min.js') }}"></script>
+    <script src="{{ url('backend/js/main.js') }}"></script>
     <!-- The javascript plugin to display page loading on top-->
-    <script  src="{{ url('backend/js/plugins/pace.min.js') }}"></script>
+    <script src="{{ url('backend/js/plugins/pace.min.js') }}"></script>
     <!-- Page specific javascripts-->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
-    <script  src="{{ url('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
+    <script src="{{ url('backend/js/plugins/bootstrap-notify.min.js') }}"></script>
 
-    <script  src="{{ url('backend/js/plugins/sweetalert.min.js') }}"></script>
+    <script src="{{ url('backend/js/plugins/sweetalert.min.js') }}"></script>
     @stack('scripts')
     <div class="clock-fixed-bottom">
         <i class="fa fa-clock"></i> <span id="clock-global"></span>
         @auth
-        <span class="clock-separator">|</span>
-        <span class="session-duration" title="Durasi sesi aktif">
-            <i class="fa fa-user-clock"></i> Sesi Aktif : <span id="session-duration">00:00:00</span> | IP : {{ get_client_ip() ?? 'N/A' }}
+            <span class="clock-separator">|</span>
+            <span class="session-duration" title="Durasi sesi aktif">
+                <i class="fa fa-user-clock"></i> Sesi Aktif : <span id="session-duration">00:00:00</span> | IP :
+                {{ get_client_ip() ?? 'N/A' }}
 
-        </span>
+            </span>
         @endauth
     </div>
     {{ realtime_clock('clock-global', true) }}
-    @auth
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const loginAt = new Date("{{ auth()->user()->last_login_at?->toIso8601String() }}");
-            const durationEl = document.getElementById('session-duration');
-            if (durationEl && !isNaN(loginAt.getTime())) {
-                setInterval(() => {
-                    const diff = Math.floor((Date.now() - loginAt.getTime()) / 1000);
-                    const h = String(Math.floor(diff / 3600)).padStart(2, '0');
-                    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                    const s = String(diff % 60).padStart(2, '0');
-                    durationEl.textContent = h + ':' + m + ':' + s;
-                }, 1000);
-            }
-        });
-    </script>
-    @endauth
+    <!-- Global Media Modal -->
+
 </body>
 
 </html>

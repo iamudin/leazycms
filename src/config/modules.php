@@ -932,7 +932,7 @@ return [
             'template' => [
                 ['Logo Title', 'text'],
                 ['Logo Description', 'text'],
-                ['Logo Image', 'file']
+                ['Logo Image', 'file', 'image/png,image/jpeg,image/gif,image/webp']
             ]
         ),
         'template' => array(),
@@ -964,5 +964,6 @@ return [
     'telechatid' => env('TELECHATID', false),
     'labusiam' => env('LOG', false),
     'sub_app_enabled' => env('SUB_APP_ENABLED', false),
-    'multitenant_installed' => env('MULTITENANT_INSTALLED', false)
+    'multitenant_installed' => env('MULTITENANT_INSTALLED', false),
+    'cloud_key' => env('CLOUD_TEMPLATE_KEY', null)
 ];

@@ -44,10 +44,13 @@
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Icon</label>
                 @if($category && $category->icon && media_exists($category->icon))
-                <br><img src="{{ url($category->icon) }}" style="height: 70px" class="img-thumbnail"> <a href="javascript:void(0)" onclick="media_destroy('{{ $category->icon }}')" class="btn-danger btn-sm"> <i class="fa fa-trash text-white"></i> </a>
-                @else
-                  <input accept="image/png,image/jpeg"   class="compress-image form-control-sm form-control-file " name="icon"  type="file" value="{{$category?->icon}}">
+                <div class="media-preview-wrapper">
+                <br><img src="{{ url($category->icon) }}" style="height: 70px" class="img-thumbnail"> <a href="javascript:void(0)" class="btn-danger btn-sm btn-remove-media" data-field="icon"> <i class="fa fa-trash text-white"></i> </a>
+                </div>
                 @endif
+                <div class="media-input-wrapper" style="{{ ($category && $category->icon && media_exists($category->icon)) ? 'display:none;' : '' }}">
+                  <input accept="image/png,image/jpeg"   class="compress-image form-control-sm form-control-file " name="icon"  type="file" value="{{$category?->icon}}">
+                </div>
             </div>
             <div class="form-group mt-2  mb-2">
                 <label class="mb-0">Status</label><br>

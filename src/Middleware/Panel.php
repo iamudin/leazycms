@@ -17,8 +17,8 @@ class Panel
      */
     public function handle(Request $request, Closure $next)
     {
-        if(strpos($request->fullUrl(),'notifreader') === false  && in_array($request->user()->level,collect(config('modules.extension_module'))->pluck('path')->toArray())){
-            return to_route($request->user()->level.'.dashboard');
+        if (strpos($request->fullUrl(), 'notifreader') === false && in_array($request->user()->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
+            return to_route($request->user()->level . '.dashboard');
         }
 
         $admin_path = admin_path();
@@ -74,7 +74,7 @@ class Panel
                 config([
                     'modules.current' => [
                         'post_type' => $modul->name,
-                        'title_crud' =>  $title,
+                        'title_crud' => $title,
                     ]
                 ]);
             }
@@ -99,8 +99,8 @@ class Panel
             }
 
         }
-        if(config('modules.multisite_enabled')){
-            if(config('modules.current.post_type') && !in_array(config('modules.current.post_type'),array_merge(default_menu(),tenant()->modules ?? []))){
+        if (config('modules.multisite_enabled')) {
+            if (config('modules.current.post_type') && !in_array(config('modules.current.post_type'), array_merge(default_menu(), tenant()->modules ?? []))) {
                 abort(404);
             }
         }
@@ -110,22 +110,35 @@ class Panel
         if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
 
             $content = $response->getContent();
-            if(strpos($request->fullUrl(),'edit')===false){
-            $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) {
-                $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
-                if (strpos($attributes, 'class="') !== false) {
-                    $attributes = preg_replace('/class=["\']([^"\']*?)["\']/', 'class="$1 lazyload" ', $attributes);
-                } else {
-                    $attributes .= ' class="lazyload"';
+            if (strpos($request->fullUrl(), 'edit') === false) {
+                $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) {
+                    $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
+                    if (strpos($attributes, 'class="') !== false) {
+                        $attributes = preg_replace('/class=["\']([^"\']*?)["\']/', 'class="$1 lazyload" ', $attributes);
+                    } else {
+                        $attributes .= ' class="lazyload"';
+                    }
+                    return '<img ' . $attributes . ' src="/shimmer.gif">';
+                }, $content);
+            }
+            if (in_array($request->segment(2), ['docs', 'appearance'])) {
+                $content = isPrePanel($content);
+            } else {
+                $content = minify_all_one_line($content);
+            }
+            if (preg_match('/<input\b[^>]*type\s*=\s*(["\'])file\1/i', $content)) {
+                try {
+                    $jsSnippet = minify_all_one_line(init_modal_upload());
+                    if (stripos($content, '</body>') !== false) {
+                        $content = str_ireplace('</body>', $jsSnippet . "</body>", $content);
+                    } else {
+                        $content .= $jsSnippet;
+                    }
+
+                } catch (\Exception $e) {
+                    // Ignore view render error if any
                 }
-                return '<img ' . $attributes . ' src="/shimmer.gif">';
-            }, $content);
-        }
-                if (in_array($request->segment(2),['docs','appearance'])) {
-                    $content = isPrePanel($content);
-                } else {
-                    $content = minify_all_one_line( $content);
-                }
+            }
             $response->setContent($content);
         }
 

@@ -104,14 +104,17 @@
                           <small>{{ str($field[0])->headline() }}</small><br>
 
                               @if (media_exists(get_option(_us($field[0]))))
+                                  <div class="media-preview-wrapper">
                                   <a href="{{get_option(_us($field[0])) }}" target="_blank"
                                       class="btn btn-sm btn-outline-primary mb-2">{{ basename(get_option(_us($field[0]))) }}</a> <i
-                                      title="Hapus File" class="fa fa-trash text-danger pointer"
-                                      onclick="media_destroy('{{ get_option(_us($field[0])) }}')"></i><br>
-                              @else
+                                      title="Hapus File" class="fa fa-trash text-danger pointer btn-remove-media"
+                                      data-field="{{ _us($field[0]) }}"></i><br>
+                                  </div>
+                              @endif
+                                  <div class="media-input-wrapper" style="{{ (media_exists(get_option(_us($field[0])))) ? 'display:none;' : '' }}">
                                   <input @if (isset($field[3])) required @endif type="file" accept="{{ $field[2] ?? null }}"
                                       class="compress-image form-control-sm form-control-file mb-2" name="{{ _us($field[0]) }}">
-                              @endif
+                                  </div>
                       @elseif($field[1 ]=='color')
                  <small>{{ str($field[0])->headline() }}</small><br>
                   <input type="color" name="{{_us($field[0])}}" class="form-control form-control-sm" value="{{ get_option(_us($field[0])) }}">
@@ -144,17 +147,20 @@
 
           <ul class="list-group mb-3">
             {{template_info()}}
-                <div class="mb-5 text-right">
-    <form  class="list-group-item py-0 px-1 m-0" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
+                <div class="mb-5">
+    <form  class="list-group-item" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
       @csrf
+      <label>Upload Template :</label>
       <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
-        accept="application/zip,x-zip-compressed" class="template" name="template" style="display: none">
-        <button type="button" onclick="$('.template').click()" class="btn btn-warning btn-sm w-100 my-1"> <i class="fa fa-upload"></i>
-          Upload Template</button>
+        accept="application/zip,x-zip-compressed" class="template" name="template" >
+       
  
 
     </form>
-
+    
+    <a href="{{ route('appearance.template_store') }}" class="btn btn-info btn-sm w-100 my-1">
+        <i class="fa fa-cloud-download-alt"></i> Pilih dari Cloud
+    </a>
   </div>
       </ul>
       @endif
@@ -169,6 +175,20 @@
     </div>
 
     </div>
-    @include('cms::backend.layout.js')
 
+
+    <!-- Hidden form for installing cloud template -->
+    <form id="install-cloud-form" action="{{ route('appearance.install_cloud') }}" method="POST" style="display: none;">
+        @csrf
+        <input type="hidden" name="url" id="install-cloud-url">
+    </form>
+
+  @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        /* Scripts removed, handled by template_store view */
+    });
+    </script>
+    @include('cms::backend.layout.js')
+  @endpush
 @endsection
