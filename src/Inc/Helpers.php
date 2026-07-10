@@ -755,8 +755,18 @@ if (!function_exists('is_custom_web_route_matched')) {
 
             // Deteksi domain/subdomain
             if (preg_match('/^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $cleanPath)) {
-                if (rtrim($currentUrl, '/') === rtrim($cleanPath, '/')) {
-                    return true;
+                $parsedRoute = parse_url($cleanPath);
+                $routeHost = $parsedRoute['host'] ?? '';
+                $routePath = '/' . ltrim($parsedRoute['path'] ?? '', '/');
+                
+                if ($host === $routeHost) {
+                    if (rtrim($currentPath, '/') === rtrim($routePath, '/')) {
+                        return true;
+                    }
+                    $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '[a-zA-Z0-9-_]+', rtrim($routePath, '/'));
+                    if (preg_match('#^' . $pattern . '$#i', rtrim($currentPath, '/'))) {
+                        return true;
+                    }
                 }
             } else {
                 if (!$isPluginDomain) {

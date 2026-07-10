@@ -123,8 +123,9 @@ class RateLimit
         } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
             // Jika host bukan domain utama, cek apakah ini adalah domain khusus plugin yang valid
             $isPluginDomain = is_plugin_domain($host);
+            $isCustomRoute = function_exists('is_custom_web_route_matched') ? is_custom_web_route_matched() : false;
 
-            if (!$isPluginDomain) {
+            if (!$isPluginDomain && !$isCustomRoute) {
                 $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
             }
         }

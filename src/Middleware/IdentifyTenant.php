@@ -75,6 +75,11 @@ class IdentifyTenant
 
         }
         if (!$tenant) {
+            $isCustomRoute = function_exists('is_custom_web_route_matched') ? is_custom_web_route_matched() : false;
+            if ($isCustomRoute) {
+                return $next($request);
+            }
+
             $portal = config('app.url');
             $html = <<<HTML
 <!DOCTYPE html>
