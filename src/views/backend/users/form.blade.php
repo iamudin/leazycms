@@ -71,9 +71,14 @@
                 </div>
                 <div class="form-group mt-2  mb-2">
                     <label class="mb-0">Username [ <i class="text-danger">Tanpa spasi</i> ]</label>
-                    <input onkeyup="this.value = this.value.replace(/\s+/g, '').toLowerCase();"
-                        class="form-control form-control-sm " name="username" type="text" placeholder="Masukkan username"
-                        value="{{$user ? $user->username : old('username')}}">
+                    <div class="input-group">
+                        <input onkeyup="this.value = this.value.replace(/\s+/g, '').toLowerCase();"
+                            class="form-control form-control-sm " name="username" id="username" type="text" placeholder="Masukkan username"
+                            value="{{$user ? $user->username : old('username')}}">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="generateUsername()">Generate</button>
+                        </div>
+                    </div>
                 </div>
                 @if($user)<br>
                     <div class="alert alert-warning" style="font-size:small;border-left:4px solid brown;min-width:100%"><b
@@ -124,18 +129,34 @@
     </div>
     @push('scripts')
         <script>
+            function generateUsername() {
+                const length = 6;
+                const charset = "abcdefghijklmnopqrstuvwxyz";
+                let retVal = "";
+                for (let i = 0; i < length; ++i) {
+                    retVal += charset.charAt(Math.floor(Math.random() * charset.length));
+                }
+                document.getElementById("username").value = retVal;
+            }
+
             function generatePassword() {
-                let length = 12;
+                const length = 12;
+                const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$@!%*?&";
+                let retVal = "";
 
-                let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-                let password = "";
+                retVal += "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(Math.floor(Math.random() * 26));
+                retVal += "abcdefghijklmnopqrstuvwxyz".charAt(Math.floor(Math.random() * 26));
+                retVal += "0123456789".charAt(Math.floor(Math.random() * 10));
+                retVal += "$@!%*?&".charAt(Math.floor(Math.random() * 7));
 
-                for (let i = 0; i < length; i++) {
-                    password += chars.charAt(Math.floor(Math.random() * chars.length));
+                for (let i = 4; i < length; ++i) {
+                    retVal += charset.charAt(Math.floor(Math.random() * charset.length));
                 }
 
-                document.getElementById('password').value = password;
-                document.getElementById('confirm_password').value = password;
+                retVal = retVal.split('').sort(function () { return 0.5 - Math.random() }).join('');
+
+                document.getElementById('password').value = retVal;
+                document.getElementById('confirm_password').value = retVal;
             }
 
             function togglePassword() {

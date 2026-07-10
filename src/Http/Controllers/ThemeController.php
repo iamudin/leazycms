@@ -43,9 +43,9 @@ class ThemeController extends Controller implements HasMiddleware
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                $btn .= '<a href="' . route('theme.edit', $row->id) . '" class="btn btn-warning btn-sm fa fa-edit" title="Edit"></a>';
-                $btn .= '<button onclick="updateTheme(' . $row->id . ')" class="btn btn-info btn-sm fa fa-refresh" title="Update dari Git"></button>';
-                $btn .= '<button onclick="deleteAlert(\'' . route('theme.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash" title="Hapus"></button>';
+                $btn .= '<a href="' . route('theme.edit', $row->id) . '" class="btn btn-warning btn-sm " title="Edit"><i class="fa  fa-edit"></i></a>';
+                $btn .= '<button onclick="updateTheme(' . $row->id . ')" class="btn btn-info btn-sm " title="Update dari Git"><i class="fa fa-refresh"></i></button>';
+                $btn .= '<button onclick="deleteAlert(\'' . route('theme.destroy', $row->id) . '\')" class="btn btn-danger btn-sm " title="Hapus"><i class="fa fa-trash"></i></button>';
                 $btn .= '</div>';
                 return $btn;
             })
@@ -55,7 +55,7 @@ class ThemeController extends Controller implements HasMiddleware
             ->addColumn('status', function ($row) {
                 return $row->status == 'active' ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>';
             })
-            ->rawColumns(['action', 'status','tenants'])
+            ->rawColumns(['action', 'status', 'tenants'])
             ->toJson();
     }
 

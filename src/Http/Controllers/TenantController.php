@@ -82,10 +82,10 @@ class TenantController extends Controller implements HasMiddleware
             })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                $btn .= '<a target="_blank" href="http://' . $row->domain . '" class="btn btn-info btn-sm fa fa-globe" title="Kunjungi Website"></a>';
-                $btn .= $row->id !== 1 ? '<a target="_blank" href="' . route('tenant.login', $row->id) . '" class="btn btn-primary btn-sm fa fa-sign-in" title="Auto Login ke Admin"></a>' : '';
+                $btn .= '<a target="_blank" href="http://' . $row->domain . '" class="btn btn-info btn-sm" title="Kunjungi Website"><i class="fa fa-globe"></i></a>';
+                $btn .= $row->id !== 1 ? '<a target="_blank" href="' . route('tenant.login', $row->id) . '" class="btn btn-primary btn-sm " title="Auto Login ke Admin"> <i class="fa fa-sign-in"></i> </a>' : '';
                 $btn .= '<a href="' . route('tenant.edit', $row->id) . '" class="btn btn-warning btn-sm fa fa-edit" title="Edit Tenant"></a>';
-                $btn .= $row->id !== 1 ? '<button onclick="deleteAlert(\'' . route('tenant.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash" title="Hapus Tenant"></button>' : '';
+                $btn .= $row->id !== 1 ? '<button onclick="deleteAlert(\'' . route('tenant.destroy', $row->id) . '\')" class="btn btn-danger btn-sm " title="Hapus Tenant"><i class="fa fa-trash-o"></i></button>' : '';
                 $btn .= '</div>';
                 return $btn;
             })
@@ -107,11 +107,7 @@ class TenantController extends Controller implements HasMiddleware
     {
         $themes = Theme::where('status', 'active')->get();
         $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
-        $availablePlugins = [];
-        if (File::exists(resource_path('plugins'))) {
-            $availablePlugins = array_map('basename', File::directories(resource_path('plugins')));
-        }
-        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules, 'availablePlugins' => $availablePlugins]);
+        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules]);
     }
 
     public function store(Request $request)
@@ -125,7 +121,6 @@ class TenantController extends Controller implements HasMiddleware
             'admin_email' => 'required|email|unique:users,email',
             'admin_username' => 'required|string|min:5|unique:users,username',
             'modules' => 'nullable|array',
-            'plugins' => 'nullable|array',
             'admin_password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ], [
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
@@ -144,7 +139,6 @@ class TenantController extends Controller implements HasMiddleware
             'status' => $request->status,
             'theme' => $theme ?? '',
             'modules' => $request->modules,
-            'plugins' => $request->plugins,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
 
@@ -201,11 +195,7 @@ class TenantController extends Controller implements HasMiddleware
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
         $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
         $options = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->pluck('value', 'name')->toArray();
-        $availablePlugins = [];
-        if (File::exists(resource_path('plugins'))) {
-            $availablePlugins = array_map('basename', File::directories(resource_path('plugins')));
-        }
-        return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules', 'availablePlugins'));
+        return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules'));
     }
 
     public function update(Request $request, Tenant $tenant)
@@ -218,7 +208,6 @@ class TenantController extends Controller implements HasMiddleware
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
             'theme' => 'required_unless:custom_theme,1',
             'modules' => 'nullable|array',
-            'plugins' => 'nullable|array',
         ];
 
         if (!$isMainDomain) {
@@ -242,31 +231,14 @@ class TenantController extends Controller implements HasMiddleware
         $theme = $request->theme;
         $oldTheme = $tenant->theme;
 
-        $oldPlugins = $tenant->plugins ?? [];
-        if (is_string($oldPlugins)) {
-            $oldPlugins = json_decode($oldPlugins, true) ?? [];
-        }
-
         $tenant->update([
             'name' => $request->name,
             'domain' => $domain,
             'status' => $isMainDomain ? $tenant->status : $request->status,
             'theme' => $theme ?: $oldTheme,
             'modules' => $request->modules,
-            'plugins' => $request->plugins,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
-
-        // Hapus opsi custom domain secara dinamis jika tenant dikecualikan dari suatu plugin
-        $newPlugins = $request->plugins ?? [];
-        $removedPlugins = array_diff($oldPlugins, $newPlugins);
-
-        foreach ($removedPlugins as $pluginName) {
-            DB::table('options')
-                ->where('tenant_id', $tenant->id)
-                ->where('name', "{$pluginName}-domain")
-                ->delete();
-        }
 
         if ($request->custom_theme && $theme && !Str::endsWith($theme, '-' . $tenant->id)) {
             $sourcePath = resource_path('views/template/' . $theme);
@@ -322,7 +294,7 @@ class TenantController extends Controller implements HasMiddleware
 
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
-        Cache::forget("tenant:{$tenant->domain}:options");
+        Cache::forget("tenant:{$tenant->id}:options");
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil diupdate');
     }
@@ -386,9 +358,8 @@ class TenantController extends Controller implements HasMiddleware
         $domain = $tenant->domain;
         $tenantId = $tenant->id;
         query()->where('tenant_id', $tenantId)->forceDelete();
-        Option::whereTenantId($tenantId)->delete();
         Cache::forget("tenant:{$domain}");
-        Cache::forget("tenant:{$domain}:options");
+        Cache::forget("tenant:{$tenantId}:options");
         $tenant->delete();
         return response()->json(['success' => 'Tenant berhasil dihapus']);
     }

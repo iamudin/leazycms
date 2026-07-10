@@ -28,7 +28,12 @@
       <input required type="email" class="form-control form-control-sm email" name="email" placeholder="Masukkan Email" value="{{$user->email}}">
 
       <small  for="">Username</small>
-      <input required type="text" class="form-control form-control-sm username" name="username" placeholder="Masukkan Username" value="{{$user->username}}">
+      <div class="input-group">
+        <input onkeyup="this.value = this.value.replace(/\s+/g, '').toLowerCase();" required type="text" class="form-control form-control-sm username" id="username" name="username" placeholder="Masukkan Username" value="{{$user->username}}">
+        <div class="input-group-append">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="generateUsername()">Generate</button>
+        </div>
+      </div>
             <div class="form-group">
               <small>Password</small>
 
@@ -65,18 +70,34 @@
   </form>
   @push('scripts')
       <script>
+        function generateUsername() {
+          const length = 6;
+          const charset = "abcdefghijklmnopqrstuvwxyz";
+          let retVal = "";
+          for (let i = 0; i < length; ++i) {
+            retVal += charset.charAt(Math.floor(Math.random() * charset.length));
+          }
+          document.getElementById("username").value = retVal;
+        }
+
         function generatePassword() {
-          let length = 12;
+          const length = 12;
+          const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$@!%*?&";
+          let retVal = "";
 
-          let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-          let password = "";
+          retVal += "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(Math.floor(Math.random() * 26));
+          retVal += "abcdefghijklmnopqrstuvwxyz".charAt(Math.floor(Math.random() * 26));
+          retVal += "0123456789".charAt(Math.floor(Math.random() * 10));
+          retVal += "$@!%*?&".charAt(Math.floor(Math.random() * 7));
 
-          for (let i = 0; i < length; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
+          for (let i = 4; i < length; ++i) {
+            retVal += charset.charAt(Math.floor(Math.random() * charset.length));
           }
 
-          document.getElementById('password').value = password;
-          document.getElementById('confirm_password').value = password;
+          retVal = retVal.split('').sort(function () { return 0.5 - Math.random() }).join('');
+
+          document.getElementById('password').value = retVal;
+          document.getElementById('confirm_password').value = retVal;
         }
 
         function togglePassword() {

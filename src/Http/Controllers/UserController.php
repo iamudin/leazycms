@@ -37,24 +37,26 @@ class UserController extends Controller implements HasMiddleware
         $user = $request->user();
         if ($request->isMethod('post')) {
             $photoRule = $request->hasFile('photo') ? 'nullable|file|mimetypes:image/jpeg,image/png,image/webp' : 'nullable|string';
-            
+
             $data = $request->validate([
                 'photo' => $photoRule,
                 'name' => 'required|string',
                 'username' => 'required|string|min:5|regex:/^[0-9a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
                 'email' => 'required|string|regex:/^[0-9a-zA-Z\p{P}]+$/u|' . Rule::unique('users')->ignore($user->id),
                 'password' => 'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
+            ], [
+                'password.regex' => 'Password harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol ($@!%*?&).'
             ]);
-            
+
             $data['photo'] = $user->photo;
-            $request['media'] =  $user->photo;
+            $request['media'] = $user->photo;
 
             if ($request->hasFile('photo')) {
                 $data['photo'] = $user->addFile(['file' => $request->file('photo'), 'purpose' => 'author_photo', 'mime_type' => ['image/png', 'image/jpeg', 'image/webp']]);
             } elseif ($request->has('photo') && is_string($request->photo)) {
                 $data['photo'] = strip_tags($request->photo);
             }
-            
+
             if ($pass = $request->password) {
                 $data['password'] = bcrypt($pass);
             } else {
@@ -81,10 +83,10 @@ class UserController extends Controller implements HasMiddleware
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                $btn .= '<a target="_blank" href="' . url($row->url ?? '/') . '"  class="btn btn-info btn-sm fa fa-globe"></a>';
+                $btn .= '<a target="_blank" href="' . url($row->url ?? '/') . '"  class="btn btn-info btn-sm"><i class="fa fa-globe"></i></a>';
 
-                $btn .= '<a href="' . route('user.edit', $row->id) . '"  class="btn btn-warning btn-sm fa fa-edit"></a>';
-                $btn .= $row->posts->count() == 0 ? '<button onclick="deleteAlert(\'' . route('user.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash"></button>' : '';
+                $btn .= '<a href="' . route('user.edit', $row->id) . '"  class="btn btn-warning btn-sm"><i class="fa fa-pencil"></i></a>';
+                $btn .= $row->posts->count() == 0 ? '<button onclick="deleteAlert(\'' . route('user.destroy', $row->id) . '\')" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>' : '';
                 $btn .= '</div>';
                 return $btn;
             })
@@ -118,7 +120,7 @@ class UserController extends Controller implements HasMiddleware
     public function create()
     {
 
-        return view('cms::backend.users.form', ['roles' =>  $this->all_role(), 'user' => null]);
+        return view('cms::backend.users.form', ['roles' => $this->all_role(), 'user' => null]);
     }
     public function store(Request $request)
     {
@@ -130,6 +132,8 @@ class UserController extends Controller implements HasMiddleware
             'status' => 'required|string|in:active,blocked',
             'level' => 'required|string|in:' . implode(',', $this->all_role()->toArray()),
             'password' => 'required|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
+        ], [
+            'password.regex' => 'Password harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol ($@!%*?&).'
         ]);
         $data['slug'] = $slug = str($request->name)->slug();
         $data['url'] = 'author/' . $slug;
@@ -189,6 +193,8 @@ class UserController extends Controller implements HasMiddleware
             'status' => 'required|string|in:active,blocked',
             'level' => 'required|string|in:' . implode(',', $this->all_role()->toArray()),
             'password' => 'nullable|string|confirmed|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
+        ], [
+            'password.regex' => 'Password harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol ($@!%*?&).'
         ]);
         $data['slug'] = $slug = str($request->name)->slug();
         $data['url'] = 'author/' . $slug;

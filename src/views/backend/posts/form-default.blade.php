@@ -23,7 +23,7 @@
                     @if (!empty($post && $module->web->detail && $post->title && $post->status == 'publish') && $module->public)
                         <div style="border-left:3px solid green" class="alert alert-success"><b>URL : </b><a
                                 title="Kunjungi URL" data-toggle="tooltip" href="{{ url($post->url) }}"
-                                target="_blank"><i class="url"><u>{{ url($post->url) }}</u></i>  </a><span class="custom-url"></span> <i class="fa fa-edit ml-2 pointer"  data-post-url="{{ url($post->url) }}"
+                                target="_blank"><i class="url"><u>{{ str(url($post->url))->limit(150, ' ...') }}</u></i>  </a><span class="custom-url"></span> <i class="fa fa-edit ml-2 pointer"  data-post-url="{{ url($post->url) }}"
                                     data-slug="{{ $post->slug }}"></i><span
                                 title="Klik Untuk Menyalin alamat URL {{ $module->title }}" data-toggle="tooltip"
                                 class="pointer copy pull-right badge badge-primary" data-copy="{{ url($post->url) }}"><i
