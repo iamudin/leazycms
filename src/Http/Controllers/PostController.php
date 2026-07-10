@@ -256,7 +256,7 @@ class PostController extends Controller implements HasMiddleware
             'title' => [
                 'required',
                 'string',
-                'regex:/^[0-9a-zA-Z\s\p{P}\,\(\)]+$/u',
+                'regex:/^([0-9a-zA-Z]{5}|[0-9a-zA-Z\s\p{P}\,\(\)]{6,})$/u',
                 'min:5',
                 'max:200',
                 function ($attribute, $value, $fail) use ($forbiddenWords) {
@@ -302,6 +302,7 @@ class PostController extends Controller implements HasMiddleware
             'title.unique' => $module->datatable->data_title . ' Sudah digunakan',
             'title.min' => $module->datatable->data_title . ' minimal 5 karakter',
             'title.max' => $module->datatable->data_title . ' maksimal 200 karakter',
+            'title.regex' => 'Jika ' . $module->datatable->data_title . ' hanya 5 karakter, tidak boleh mengandung spasi atau simbol.',
         ];
         $request->validate(array_merge($post_field, $custom_f ?? []), array_merge($custommsg, $msg ?? []));
         if (strlen($post->slug) == 0 || $post->type == 'docs') {
