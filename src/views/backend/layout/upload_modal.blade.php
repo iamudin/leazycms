@@ -352,7 +352,7 @@
                 let field = $(this).data('field');
                 let wrapper = $(this).closest('.media-preview-wrapper');
                 wrapper.hide();
-                let inputWrapper = wrapper.siblings('.media-input-wrapper');
+                let inputWrapper = wrapper.nextAll('.media-input-wrapper').first();
                 inputWrapper.show();
                 /* Add hidden input to clear the field in database when saved */
                 /* We use prepend so it's first in the DOM, allowing any newly selected media hidden input to override it. */

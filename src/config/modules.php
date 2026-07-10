@@ -119,7 +119,7 @@ return [
             'icon' => 'fa-camera',
             'route' => ['index', 'create', 'show', 'update', 'delete'],
             'datatable' => [
-                'custom_column' => false,
+                'custom_column' => ['Link Video'],
                 'data_title' => 'Nama Galeri',
             ],
             'form' => [
@@ -364,7 +364,7 @@ return [
             'icon' => 'fa-download',
             'route' => ['index', 'create', 'show', 'update', 'delete'],
             'datatable' => [
-                'custom_column' => false,
+                'custom_column' => ['File'],
                 'data_title' => 'Nama Dokumen',
             ],
             'form' => [

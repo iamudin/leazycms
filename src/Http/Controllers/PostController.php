@@ -14,6 +14,7 @@ use Leazycms\Web\Models\Category;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Tag;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Leazycms\Web\Services\DummyGenerator;
 
 use Yajra\DataTables\Facades\DataTables;
 
@@ -780,16 +781,16 @@ class PostController extends Controller implements HasMiddleware
         });
         $dt->addColumn('action', function ($row) use ($current_module) {
 
-            $btn = '<div style="text-align:right"><div class="btn-group ">';
-            $btn .= in_array('show', $current_module->route) ? '<a title="Lihat data" href="' . route($row->type . '.show', $row->id) . '"  class=" btn-outline-primary btn-sm fa fa-eye"></a>' : '';
+            $btn = '<div class="btn-group">';
+            $btn .= in_array('show', $current_module->route) ? '<a title="Lihat data" href="' . route($row->type . '.show', $row->id) . '"  class="btn btn-primary btn-sm"> <i class="fa fa-eye"></i></a>' : '';
             if (empty($row->deleted_at)) {
-                $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class=" btn-outline-warning btn-sm fa fa-edit"></a>' : '';
+                $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> </a>' : '';
             } else {
-                $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class=" btn-outline-info btn-sm fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></a>';
+                $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm"> <i class="fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></i></a>';
             }
             $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
-            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="pointer btn-outline-danger btn-sm fa fa-trash-o"></span>') : '';
-            $btn .= '</div></div>';
+            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-danger btn-sm pointer"> <i class="fa fa-trash"></i></span>') : '';
+            $btn .= '</div>';
             return $btn;
         });
         $dt->addColumn('checkbox', function ($row) {
@@ -853,6 +854,27 @@ class PostController extends Controller implements HasMiddleware
         $dt->orderColumn('updated_at', '-updated_at $1');
         $dt->orderColumn('created_at', '-created_at $1');
         $dt->only($rawColumns);
+
+        // Add real-time counts
+        $user = $req->user();
+        $postType = get_post_type();
+        $canSeeAll = $user->isAdmin() || !$user->hasRole($postType, 'admin', true);
+        $counts = \Leazycms\Web\Models\Post::whereType($postType)->withTenant()
+            ->when(!$canSeeAll, fn($q) => $q->whereBelongsTo($user))
+            ->withTrashed()
+            ->selectRaw("
+                SUM(deleted_at IS NULL AND status = 'publish') as publish,
+                SUM(deleted_at IS NULL AND status = 'draft') as draft,
+                SUM(deleted_at IS NOT NULL) as trash
+            ")->first();
+
+        $dt->with('counts', [
+            'publish' => $counts->publish ?? 0,
+            'draft' => $counts->draft ?? 0,
+            'trash' => $counts->trash ?? 0,
+            'category' => \Leazycms\Web\Models\Category::whereType($postType)->count()
+        ]);
+
         return $dt
             ->orderColumn('visited', '-visited $1')
             ->orderColumn('updated_at', '-updated_at $1')
@@ -907,5 +929,27 @@ class PostController extends Controller implements HasMiddleware
             return response()->json(['message' => 'No files selected.'], 400);
         }
 
+    }
+    public function syncDummy(Request $request)
+    {
+        $dummyFile = resource_path('views/template/' . template() . '/dummy.json');
+
+
+        $typesProcessed = DummyGenerator::syncFromJson($dummyFile, $request->user()->id ?? 1);
+
+        // Smart Dummy Generator (Fallback)
+        $currentType = get_post_type();
+        if ($currentType && !Post::onType($currentType)->exists()) {
+            $module = current_module();
+            DummyGenerator::generateFallback($currentType, $module, $request->user()->id ?? 1);
+
+            $typesProcessed[$currentType] = true;
+        }
+
+        foreach (array_keys($typesProcessed) as $typeProcessed) {
+            $this->recache($typeProcessed);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Data dummy berhasil disinkronisasi']);
     }
 }

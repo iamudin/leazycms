@@ -133,6 +133,11 @@ window.addEventListener('DOMContentLoaded', function () {
                 status: status,
                 _token: "{{ csrf_token() }}"
             },
+            success: function () {
+                if (typeof table !== 'undefined') {
+                    table.ajax.reload(null, false);
+                }
+            },
             error: function () {
                 alert("Gagal update status!");
                 $el.bootstrapToggle('toggle');

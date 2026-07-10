@@ -1,7 +1,6 @@
 @extends('cms::backend.layout.app', ['title' => get_post_type('title_crud')])
 @section('content')
 
-
   <div class="row">
     <div class="col-lg-12 mb-3">
       <h3 style="font-weight:normal;float:left;"> <i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i>
@@ -14,8 +13,8 @@
 
 
           @if($module->web->index)
-            <a href="/{{ $module->name }}" target="_blank" class="btn btn-outline-info btn-sm"> <i class="fa fa-globe"
-                aria-hidden title="Lihat di Halaman Web Utama"></i> Lihat di Web</a>
+            <a href="/{{ $module->name }}" target="_blank" class="btn btn-info btn-sm"> <i class="fa fa-globe" aria-hidden
+                title="Lihat di Halaman Web Utama"></i> Lihat di Web</a>
           @endif
           @if(!empty($module->guide))
             <button class="btn btn-outline-danger btn-sm" data-toggle="modal" data-target="#guideModal"> <i
@@ -33,53 +32,78 @@
           $postType = get_post_type();
           $canSeeAll = $user->isAdmin() || !$user->hasRole($postType, 'admin', true);
 
-          $baseQuery = query()->onType($postType)->withTenant();
-          if (!$canSeeAll) {
-            $baseQuery = $baseQuery->whereBelongsTo($user);
-          }
+          $counts = query()->onType($postType)->withTenant()
+            ->when(!$canSeeAll, fn($q) => $q->whereBelongsTo($user))
+            ->withTrashed()
+            ->selectRaw("
+                            SUM(deleted_at IS NULL AND status = 'publish') as publish,
+                            SUM(deleted_at IS NULL AND status = 'draft') as draft,
+                            SUM(deleted_at IS NOT NULL) as trash
+                        ")->first();
 
-          $publish = (clone $baseQuery)->published()->count();
-          $draft = (clone $baseQuery)->whereStatus('draft')->count();
-          $trash = (clone $baseQuery)->onlyTrashed()->count();
+          $publish = $counts->publish ?? 0;
+          $draft = $counts->draft ?? 0;
+          $trash = $counts->trash ?? 0;
         @endphp
         <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya"
-          class="pointer col-12 col-md-6 col-lg-3">
-          <div class="widget-small primary coloured-icon"><i class="icon fa fa-globe fa-3x"></i>
-            <div class="info pl-3">
-              <p class="mt-2 text-muted">Dipublikasi</p>
-              <h2><b>{{ $publish }}</b></h2>
-            </div>
+          class="pointer col-6 col-md-4 col-lg-3 mb-3">
+          <div
+            style="position: relative; overflow: hidden; background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
+            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
+            <h4 id="count-publish" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+              {{ $publish }}</h4>
+            <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
+              Dipublikasi</p>
+            <i class="fa fa-globe"
+              style="position: absolute; right: -5px; bottom: -10px; font-size: 70px; color: rgba(255,255,255,0.2); z-index: 0; transform: rotate(-15deg);"></i>
           </div>
         </div>
 
         <div onclick="$('#status').val('draft').trigger('change');" title="Klik untuk selengkapnya"
-          class="pointer col-12 col-md-6 col-lg-3">
-          <div class="widget-small warning coloured-icon"><i class="icon fa fa-save fa-3x"></i>
-            <div class="info pl-3">
-              <p class="mt-2 text-muted">Draft</p>
-              <h2><b>{{ $draft }}</b></h2>
-            </div>
+          class="pointer col-6 col-md-4 col-lg-3 mb-3">
+          <div
+            style="position: relative; overflow: hidden; background: linear-gradient(135deg, #fd7e14 0%, #e85d04 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
+            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
+            <h4 id="count-draft" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+              {{ $draft }}</h4>
+            <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
+              Draft</p>
+            <i class="fa fa-save"
+              style="position: absolute; right: -5px; bottom: -10px; font-size: 70px; color: rgba(255,255,255,0.2); z-index: 0; transform: rotate(-15deg);"></i>
           </div>
         </div>
         @if(current_module()->form->category)
           @if(auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . current_module()->name, 'index', true))
-            <a href="{{ route(get_post_type() . '.category') }}" class="col-12 col-md-6 col-lg-3">
-              <div class="widget-small info coloured-icon"><i class="icon fa fa-tags fa-3x"></i>
-                <div class="info pl-3">
-                  <p class="mt-2 text-muted">Kategori</p>
-                  <h2><b>{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}</b></h2>
-                </div>
+            <a href="{{ route(get_post_type() . '.category') }}" class="col-6 col-md-4 col-lg-3 mb-3"
+              style="text-decoration: none;">
+              <div
+                style="position: relative; overflow: hidden; background: linear-gradient(135deg, #6f42c1 0%, #59359a 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
+                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
+                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
+                <h4 id="count-category" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+                  {{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}</h4>
+                <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
+                  Kategori</p>
+                <i class="fa fa-tags"
+                  style="position: absolute; right: -5px; bottom: -10px; font-size: 70px; color: rgba(255,255,255,0.2); z-index: 0; transform: rotate(-15deg);"></i>
               </div>
             </a>
           @endif
         @endif
         <div onclick="$('#status').val('sampah').trigger('change');" title="Klik untuk selengkapnya"
-          class="pointer col-12 col-md-6 col-lg-3">
-          <div class="widget-small danger coloured-icon"><i class="icon fa fa-trash-alt fa-3x"></i>
-            <div class="info pl-3">
-              <p class="mt-2 text-muted">Sampah</p>
-              <h2><b>{{ $trash }}</b></h2>
-            </div>
+          class="pointer col-6 col-md-4 col-lg-3 mb-3">
+          <div
+            style="position: relative; overflow: hidden; background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
+            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
+            <h4 id="count-trash" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+              {{ $trash }}</h4>
+            <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
+              Sampah</p>
+            <i class="fa fa-trash-alt"
+              style="position: absolute; right: -5px; bottom: -10px; font-size: 70px; color: rgba(255,255,255,0.2); z-index: 0; transform: rotate(-15deg);"></i>
           </div>
         </div>
       </div>
@@ -98,6 +122,12 @@
         </div>
         <div class="mb-4 text-right ">
           <div class="btn-group">
+            @if(need_sync_dummy())
+              <button type="button" class="btn btn-success btn-sm btn-sync-dummy">
+                <i class="fas fa-sync" aria-hidden="true"></i> Sinkron Data Dummy
+
+              </button>
+            @endif
             @if(Route::has(get_post_type() . '.create'))
               @if(auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'create', true))
                 <a href="{{route(get_post_type() . '.create')}}" class="btn btn-primary btn-sm"> <i class=" fa fa-plus"
@@ -282,13 +312,13 @@
         } else {
 
           content = `
-                                                                                                                                                                                                                                                                                                  <div class="text-center">
-                                                                                                                                                                                                                                                                                                      <p>File tidak dapat dilihat.</p>
-                                                                                                                                                                                                                                                                                                      <a href="${url}" class="btn btn-primary" download>
-                                                                                                                                                                                                                                                                                                          Download File
-                                                                                                                                                                                                                                                                                                      </a>
-                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                              `;
+                                                                                                                                                                                                                                                                                                                          <div class="text-center">
+                                                                                                                                                                                                                                                                                                                              <p>File tidak dapat dilihat.</p>
+                                                                                                                                                                                                                                                                                                                              <a href="${url}" class="btn btn-primary" download>
+                                                                                                                                                                                                                                                                                                                                  Download File
+                                                                                                                                                                                                                                                                                                                              </a>
+                                                                                                                                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                                                                                                                                      `;
         }
 
         $('#mediaContent').html(content);
@@ -316,10 +346,10 @@
             } else {
               comments.forEach(c => {
                 $("#commentList").append(`
-                                                                                                                                                                                                                                                                                                            <li class="list-group-item">
-                                                                                                                                                                                                                                                                                                              <strong>
-                                                                                                                                                                                                                                                                                                                <i class="fa fa-user"></i> ${c.name}
-                                                                                                                                                                                                                                                                                                                <code>${new Date(c.created_at).toLocaleDateString("id-ID", {
+                                                                                                                                                                                                                                                                                                                                    <li class="list-group-item">
+                                                                                                                                                                                                                                                                                                                                      <strong>
+                                                                                                                                                                                                                                                                                                                                        <i class="fa fa-user"></i> ${c.name}
+                                                                                                                                                                                                                                                                                                                                        <code>${new Date(c.created_at).toLocaleDateString("id-ID", {
                   day: "numeric",
                   month: "long",
                   year: "numeric"
@@ -329,11 +359,11 @@
                     minute: "2-digit"
                   })
                   }</code>
-                                                                                                                                                                                                                                                                                                              </strong>
-                                                                                                                                                                                                                                                                                                              <br>
-                                                                                                                                                                                                                                                                                                              <small>${c.content}</small>
-                                                                                                                                                                                                                                                                                                            </li>
-                                                                                                                                                                                                                                                                                                          `);
+                                                                                                                                                                                                                                                                                                                                      </strong>
+                                                                                                                                                                                                                                                                                                                                      <br>
+                                                                                                                                                                                                                                                                                                                                      <small>${c.content}</small>
+                                                                                                                                                                                                                                                                                                                                    </li>
+                                                                                                                                                                                                                                                                                                                                  `);
               });
 
             }
@@ -426,12 +456,56 @@
 
 
       $(document).ready(function () {
+        $('.datatable').on('xhr.dt', function (e, settings, json, xhr) {
+          if (json && json.counts) {
+            $('#count-publish').text(json.counts.publish);
+            $('#count-draft').text(json.counts.draft);
+            $('#count-trash').text(json.counts.trash);
+            if ($('#count-category').length) {
+              $('#count-category').text(json.counts.category);
+            }
+          }
+        });
+
         $('#guideModal').on('hidden.bs.modal', function () {
           var $iframe = $(this).find('iframe');
           if ($iframe.length) {
             var src = $iframe.attr('src');
             $iframe.attr('src', '');
             $iframe.attr('src', src);
+          }
+        });
+      });
+    </script>
+    <script>
+      $(document).on('click', '.btn-sync-dummy', function () {
+        swal({
+          title: "Sinkronisasi Data Dummy?",
+          text: "Data dummy untuk modul ini akan ditambahkan.",
+          type: "info",
+          showCancelButton: true,
+          confirmButtonText: "Ya, Sinkronkan!",
+          cancelButtonText: "Batal",
+          closeOnConfirm: false,
+          showLoaderOnConfirm: true
+        }, function (isConfirm) {
+          if (isConfirm) {
+            $.ajax({
+              url: "{{ route(get_post_type() . '.sync_dummy') }}",
+              type: 'POST',
+              data: {
+                _token: $('meta[name="csrf-token"]').attr('content')
+              },
+              success: function (response) {
+                swal("Berhasil!", response.message, "success");
+                setTimeout(() => {
+                  location.reload();
+                }, 1500);
+              },
+              error: function (xhr) {
+                swal("Gagal!", "Gagal melakukan sinkronisasi data dummy.", "error");
+              }
+            });
           }
         });
       });

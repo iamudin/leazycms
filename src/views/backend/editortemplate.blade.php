@@ -5,23 +5,28 @@
                                             <h3 style="font-weight:normal;float: left;"> <i class="fa fa-paint-brush"></i> Setting › Template › Edit  </h3>
                                             <div class="pull-right">
 
-                                                <div class="btn-group">
+                                                <div class="d-flex" style="gap: 5px;">
                                                     @if(is_main_domain())
-                 <button type="button" class="btn btn-primary"  onclick="$('#generateModuleModal').modal('show')">
-    <i class="fa fa-plus"></i> Tambah Post Type Baru
-</button>
-@endif
-                                                    <form method="post" action="{{ route('appearance.editor') }}" style="display:inline">
+                                                        <button type="button" class="btn btn-primary btn-sm" onclick="$('#generateModuleModal').modal('show')">
+                                                            <i class="fa fa-plus"></i> Tambah Post Type Baru
+                                                        </button>
+                                                    @endif
+                                                    
+                                                    <form method="post" action="{{ route('appearance.editor') }}" style="display:inline; margin: 0;">
                                                         @csrf
                                                         <input type="hidden" name="type" value="export_template">
-                                                        <button type="submit" class="btn btn-success btn-md">
+                                                        <button type="submit" class="btn btn-success btn-sm">
                                                             <i class="fa fa-file-archive-o"></i> Export ZIP
                                                         </button>
                                                     </form>
-                                                    <button type="button" onclick="$('.editorForm').trigger('submit')" class="btn btn-primary btn-sm"> <i
-                                                            class="fa fa-save"></i> <span class="save-text">Simpan</span></button>
-                                                    <a href="{{route('appearance')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i>
-                                                        Kembali</a>
+                                                    
+                                                    <button type="button" onclick="$('.editorForm').trigger('submit')" class="btn btn-primary btn-sm">
+                                                        <i class="fa fa-save"></i> <span class="save-text">Simpan</span>
+                                                    </button>
+                                                    
+                                                    <a href="{{route('appearance')}}" class="btn btn-danger btn-sm">
+                                                        <i class="fa fa-undo" aria-hidden="true"></i> Kembali
+                                                    </a>
                                                 </div>
                                             </div>
 

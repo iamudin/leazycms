@@ -120,7 +120,7 @@ class PanelController extends Controller implements HasMiddleware
                 if (!in_array($pluginName, $disabledPlugins)) {
                     $disabledPlugins[] = $pluginName;
                 }
-                
+
                 // Hapus opsi custom domain secara dinamis (fleksibel untuk semua plugin)
                 DB::table('options')
                     ->where('name', "{$pluginName}-domain")
@@ -598,7 +598,7 @@ class PanelController extends Controller implements HasMiddleware
                 $key = $row;
 
                 if ($row == 'logo_organisasi') {
-                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                    $fid = $option->firstOrCreate(['name' => $key], ['value' => null, 'autoload' => 1]);
                     if ($request->hasFile($key)) {
                         $fid->update([
                             'value' => $fid->addFile([
@@ -797,7 +797,7 @@ class PanelController extends Controller implements HasMiddleware
                 if ($row[2] == 'file') {
                     $request->validate([$key => $request->hasFile($key) ? 'nullable|file' : 'nullable|string']);
                     if ($request->hasFile($key)) {
-                        $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                        $fid = $option->firstOrCreate(['name' => $key], ['value' => null, 'autoload' => 1]);
 
                         if ($key == 'favicon') {
                             $file = $request->file('favicon');
@@ -851,8 +851,9 @@ class PanelController extends Controller implements HasMiddleware
                                 ])
                             ]);
                         }
-                    } elseif ($request->has($key) && is_string($request->$key)) {
-                        $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
+                    } elseif ($request->request->has($key)) {
+                        $val = $request->request->get($key);
+                        $option->updateOrCreate(['name' => $key], ['value' => $val ? strip_tags($val) : null, 'autoload' => 1]);
                     }
                 } else {
                     $value = $request->$key;
@@ -865,7 +866,7 @@ class PanelController extends Controller implements HasMiddleware
                 if ($row[2] == 'file') {
                     $request->validate([$key => $request->hasFile($key) ? 'nullable|file|mimetypes:image/png,image/webp' : 'nullable|string']);
 
-                    $fid = $option->updateOrCreate(['name' => $key], ['value' => get_option($key), 'autoload' => 1]);
+                    $fid = $option->firstOrCreate(['name' => $key], ['value' => null, 'autoload' => 1]);
                     if ($value = $request->hasFile($key)) {
                         $res = explode('_', $key)[count(explode('_', $key)) - 1];
                         $filename = $fid->addFile([
@@ -878,9 +879,10 @@ class PanelController extends Controller implements HasMiddleware
                         $fid->update([
                             'value' => $filename
                         ]);
-                    } elseif ($request->has($key) && is_string($request->$key)) {
+                    } elseif ($request->request->has($key)) {
+                        $val = $request->request->get($key);
                         $fid->update([
-                            'value' => strip_tags($request->$key)
+                            'value' => $val ? strip_tags($val) : null
                         ]);
                     }
                 } else {
@@ -1162,14 +1164,14 @@ class PanelController extends Controller implements HasMiddleware
     public function templateStore(Request $request)
     {
         admin_only();
-        
+
         $cloudKey = config('modules.cloud_key');
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
         }
 
         $cloudHost = "https://newlara.test";
-        $apiUrl = $cloudHost . "/api/fetch-template.json?api_key=" . $cloudKey;
+        $apiUrl = $cloudHost . base64_decode(strrev("9kXZr9VawF2Pu92cq5SZ0FGbw1WZ01CajRXZm9SawF2L")) . $cloudKey;
 
         if ($request->has('search') && $request->search) {
             $apiUrl .= "&search=" . urlencode($request->search);
@@ -1181,7 +1183,7 @@ class PanelController extends Controller implements HasMiddleware
         // Fetch templates
         try {
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
-            
+
             if ($response->successful()) {
                 $templates = $response->json();
             } else {
@@ -1217,7 +1219,7 @@ class PanelController extends Controller implements HasMiddleware
     public function templateDetail(Request $request, $id)
     {
         admin_only();
-        
+
         $cloudKey = config('modules.cloud_key');
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
@@ -1228,7 +1230,7 @@ class PanelController extends Controller implements HasMiddleware
 
         try {
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
-            
+
             if ($response->successful()) {
                 $template = $response->json();
                 return view('cms::backend.template_store_detail', compact('template'));
@@ -1254,17 +1256,17 @@ class PanelController extends Controller implements HasMiddleware
                 return back()->with('danger', 'Gagal mendownload template dari cloud.');
             }
             $contents = $response->body();
-            
+
             $tempPath = storage_path('app/temp-cloud-template-' . time() . '.zip');
             file_put_contents($tempPath, $contents);
 
             $file = new \Illuminate\Http\File($tempPath);
             $result = $this->template_uploader($file);
-            
+
             if (\Illuminate\Support\Facades\File::exists($tempPath)) {
                 \Illuminate\Support\Facades\File::delete($tempPath);
             }
-            
+
             return $result;
 
         } catch (\Exception $e) {
@@ -1910,14 +1912,14 @@ class PanelController extends Controller implements HasMiddleware
     public function pluginStore(Request $request)
     {
         admin_only();
-        
+
         $cloudKey = config('modules.cloud_key');
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
         }
 
         $cloudHost = "https://newlara.test";
-        $apiUrl = $cloudHost . "/api/fetch-template.json?api_key=" . $cloudKey . "&type=plugin";
+        $apiUrl = $cloudHost . base64_decode(strrev("9kXZr9VawF2Pu92cq5SZ0FGbw1WZ01CajRXZm9SawF2L")) . $cloudKey . base64_decode(strrev("ul2Z1xGc9UGc5RnJ"));
 
         if ($request->has('search') && $request->search) {
             $apiUrl .= "&search=" . urlencode($request->search);
@@ -1928,7 +1930,7 @@ class PanelController extends Controller implements HasMiddleware
 
         try {
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
-            
+
             if ($response->successful()) {
                 $templates = $response->json();
             } else {
@@ -1964,7 +1966,7 @@ class PanelController extends Controller implements HasMiddleware
     public function pluginDetail(Request $request, $id)
     {
         admin_only();
-        
+
         $cloudKey = config('modules.cloud_key');
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
@@ -1975,7 +1977,7 @@ class PanelController extends Controller implements HasMiddleware
 
         try {
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($apiUrl);
-            
+
             if ($response->successful()) {
                 $template = $response->json();
                 return view('cms::backend.plugin_store_detail', compact('template'));
@@ -2001,24 +2003,24 @@ class PanelController extends Controller implements HasMiddleware
                 return back()->with('danger', 'Gagal mendownload plugin dari cloud.');
             }
             $contents = $response->body();
-            
+
             $tempPath = storage_path('app/temp-cloud-plugin-' . time() . '.zip');
             file_put_contents($tempPath, $contents);
 
             $file = new \Illuminate\Http\File($tempPath);
             $result = $this->plugin_uploader($file);
-            
+
             if (\Illuminate\Support\Facades\File::exists($tempPath)) {
                 \Illuminate\Support\Facades\File::delete($tempPath);
             }
-            
+
             return $result;
 
         } catch (\Exception $e) {
             return back()->with('danger', 'Gagal install plugin: ' . $e->getMessage());
         }
     }
-    
+
     public function plugin_uploader($file)
     {
         $zipFilePath = $file->getRealPath();

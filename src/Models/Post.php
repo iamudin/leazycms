@@ -174,6 +174,9 @@ class Post extends BaseModel
     public function getThumbnailAttribute()
     {
         if ($this->media) {
+            if (str_starts_with($this->media, 'http')) {
+                return $this->media;
+            }
             if (config('modules.multisite_enabled') && app()->has('tenant')) {
                 return media($this->media, $this->tenant?->domain ?? null)->url();
             }

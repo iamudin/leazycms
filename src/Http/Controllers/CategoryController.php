@@ -46,9 +46,9 @@ class CategoryController extends Controller implements HasMiddleware
             })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                $btn .= '<a target="_blank" href="' . url($row->url) . '"  class="btn btn-info btn-sm fa fa-globe"></a>';
-                $btn .= auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . $row->type, 'update', true) ? '<a href="' . route(get_post_type() . '.category.edit', $row->id) . '"  class="btn btn-warning btn-sm fa fa-edit"></a>' : null;
-                $btn .= !$row->posts()->exists() ? '<button onclick="deleteAlert(\'' . route(get_post_type() . '.category.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash"></button>' : '';
+                $btn .= '<a target="_blank" href="' . url($row->url) . '"  class="btn btn-info btn-sm"><i class="fa fa-globe"></i></a>';
+                $btn .= auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . $row->type, 'update', true) ? '<a href="' . route(get_post_type() . '.category.edit', $row->id) . '"  class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>' : null;
+                $btn .= !$row->posts()->exists() ? '<button onclick="deleteAlert(\'' . route(get_post_type() . '.category.destroy', $row->id) . '\')" class="btn btn-danger btn-sm"> <i class="fa fa-trash"></i> </button>' : '';
                 $btn .= '</div>';
                 return $btn;
             })

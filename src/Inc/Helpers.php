@@ -3371,3 +3371,52 @@ if (!function_exists('plugin_route')) {
         return route($name, $parameters, $absolute);
     }
 }
+
+if (!function_exists('need_sync_dummy')) {
+    function need_sync_dummy()
+    {
+        $currentType = get_post_type();
+        if (!$currentType) return false;
+        
+        $dummyFile = resource_path('views/template/' . template() . '/dummy.json');
+        if (file_exists($dummyFile)) {
+            $dummyData = json_decode(file_get_contents($dummyFile), true);
+            if ($dummyData) {
+                $categories = $dummyData['categories'] ?? null;
+                $posts = $dummyData['posts'] ?? null;
+                
+                if (is_array($categories)) {
+                    foreach ($categories as $cat) {
+                        $type = $cat['type'] ?? null;
+                        if ($type === $currentType) {
+                            $slug = $cat['slug'] ?? \Str::slug($cat['name']);
+                            if (!\Leazycms\Web\Models\Category::onType($type)->where('slug', $slug)->exists()) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                
+                if (is_array($posts)) {
+                    foreach ($posts as $post) {
+                        $type = $post['type'] ?? null;
+                        if ($type === $currentType) {
+                            $slug = $post['slug'] ?? \Str::slug($post['title']);
+                            if (!\Leazycms\Web\Models\Post::onType($type)->where('slug', $slug)->exists()) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Smart Dummy Fallback: Jika tidak ada data sama sekali untuk tipe ini di DB, 
+        // kita selalu bisa menampilkan tombol untuk men-generate data pintar (smart dummy).
+        if (!\Leazycms\Web\Models\Post::onType($currentType)->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+}

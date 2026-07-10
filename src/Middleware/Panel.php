@@ -93,7 +93,16 @@ class Panel
                 config([
                     'modules.current' => [
                         'post_type' => $modul->name,
-                        'title_crud' => 'Tambah ' . $modul->title,
+                        'title_crud' => 'Bulk Action ' . $modul->title,
+                    ]
+                ]);
+            }
+            if ($request->is($admin_path . '/' . $modul->name . '/sync-dummy')) {
+
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Sync ' . $modul->title,
                     ]
                 ]);
             }
