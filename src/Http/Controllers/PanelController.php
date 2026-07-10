@@ -40,7 +40,6 @@ class PanelController extends Controller implements HasMiddleware
 
     function globalMediaList(Request $request)
     {
-        abort_if(!is_main_domain(), 404);
         return \Leazycms\FLC\Models\File::where('host', $request->getHost())->latest()->paginate(40);
     }
 
