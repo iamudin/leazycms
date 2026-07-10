@@ -19,12 +19,12 @@
                 <!-- Mobile Status Toggle (Visible only on small screens) -->
                 <div class="d-block d-lg-none mb-3 mt-3">
                     <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-                        <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();"
+                        <label onclick="handleStatusSubmit(this)"
                             class="btn btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
                             <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required>
                             <i class="fa fa-globe"></i> Publikasikan
                         </label>
-                        <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();"
+                        <label onclick="handleStatusSubmit(this)"
                             class="btn btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
                             <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required>
                             <i class="fa fa-archive"></i> Draft
@@ -53,12 +53,12 @@
                 <!-- Desktop Status Toggle (Visible only on large screens) -->
                 <div class="d-none d-lg-block mb-3">
                     <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-                        <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();"
+                        <label onclick="handleStatusSubmit(this)"
                             class="btn btn-md btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
                             <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required>
                             <i class="fa fa-globe"></i> Publikasikan
                         </label>
-                        <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();"
+                        <label onclick="handleStatusSubmit(this)"
                             class="btn btn-md  btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
                             <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required>
                             <i class="fa fa-archive"></i> Draft
@@ -495,3 +495,29 @@
 
     @endpush
 @endsection
+<script>
+function handleStatusSubmit(btn) {
+    let $btn = $(btn);
+    // Set radio button to checked
+    $btn.find('input').prop('checked', true);
+    let val = $btn.find('input').val();
+    
+    // Change icon to spinner
+    let $icon = $btn.find('i');
+    $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
+    
+    // Change text safely without removing the input
+    // Get all text nodes and replace their content
+    $btn.contents().filter(function() {
+        return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+    }).each(function() {
+        this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
+    });
+    
+    // Disable other buttons
+    $btn.siblings('label').css('pointer-events', 'none').fadeTo(200, 0.5);
+    
+    // Submit form
+    $('.editorForm').submit();
+}
+</script>

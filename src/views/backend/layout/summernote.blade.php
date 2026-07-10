@@ -8,8 +8,7 @@
     }
 </style>
 <input type="file" id="replaceImageInput" accept="image/*" style="display:none;">
-<input type="file" id="fileUploadInput" style="display:none;"
-accept="{{ allow_mime() }}">
+<input type="file" id="fileUploadInput" style="display:none;" accept="{{ allow_mime() }}">
 <div class="modal fade" id="editImageModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -76,7 +75,8 @@ accept="{{ allow_mime() }}">
             </div>
 
             <div class="modal-body">
-                <textarea id="aiPrompt" class="form-control" rows="4" placeholder="Masukkan perintah artikel..."></textarea>
+                <textarea id="aiPrompt" class="form-control" rows="4"
+                    placeholder="Masukkan perintah artikel..."></textarea>
             </div>
 
             <div class="modal-footer">
@@ -92,11 +92,11 @@ accept="{{ allow_mime() }}">
     <script src="https://js.puter.com/v2/"></script>
 @endpush
 <script type="text/javascript">
-        let currentImage = null;
+    let currentImage = null;
 
-    $(document).ready(function() {
+    $(document).ready(function () {
 
-        $(document).on('mousedown', '.note-editable img', function() {
+        $(document).on('mousedown', '.note-editable img', function () {
             $('.note-editable img').removeClass('selected-img');
             $(this).addClass('selected-img');
             currentImage = $(this);
@@ -108,7 +108,7 @@ accept="{{ allow_mime() }}">
             return ui.button({
                 contents: '<i class="note-icon-magic"></i> AI Generate',
                 tooltip: 'Generate Artikel dengan AI',
-                click: function() {
+                click: function () {
                     $('#btnGenerateAI').removeAttr('disabled');
                     $('#btnGenerateAI').text('Generate');
                     var myModal = new bootstrap.Modal(document.getElementById('aiModal'));
@@ -116,7 +116,7 @@ accept="{{ allow_mime() }}">
                 }
             }).render();
         }
-        $('#btnGenerateAI').on('click', async function() {
+        $('#btnGenerateAI').on('click', async function () {
             let prompt = $('#aiPrompt').val().trim();
             if (!prompt) {
                 alert("Masukkan prompt terlebih dahulu!");
@@ -171,7 +171,7 @@ accept="{{ allow_mime() }}">
             codeviewFilter: true,
             codeviewIframeFilter: true,
             callbacks: {
-                onChange: function(contents, $editable) {
+                onChange: function (contents, $editable) {
                     let sanitized = contents
                         .replace(/<script[^>]*>.*?<\/script>/gi, '')
                         .replace(/<style[^>]*>.*?<\/style>/gi, '')
@@ -183,10 +183,10 @@ accept="{{ allow_mime() }}">
                         $('#editor').summernote('code', sanitized);
                     }
                 },
-                onImageUpload: function(files) {
+                onImageUpload: function (files) {
                     uploadImage(files[0]);
                 },
-                onMediaDelete: function(target) {
+                onMediaDelete: function (target) {
                     var img = $(target).is('img') ? $(target) : $(target).find('img');
 
                     if (img.length > 0) {
@@ -198,7 +198,7 @@ accept="{{ allow_mime() }}">
 
                         }
                         removeFigure(target);
-                    } else {}
+                    } else { }
                 },
 
 
@@ -214,7 +214,7 @@ accept="{{ allow_mime() }}">
                 ],
                 link: [
                     ['link', ['linkDialogShow', 'unlink']],
-                     ['custom', ['removeFile']]
+                    ['custom', ['removeFile']]
                 ],
                 table: [
                     ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
@@ -229,7 +229,7 @@ accept="{{ allow_mime() }}">
                 ['height', ['height']],
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['picture', 'link', 'video', 'hr', 'embedUrl', 'uploadFile']],
+                ['insert', ['link', 'video', 'hr', 'embedUrl', 'uploadFile']],
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help', 'codeview']],
                 ['custom', ['aiGenerate']],
@@ -237,76 +237,76 @@ accept="{{ allow_mime() }}">
 
             buttons: {
                 aiGenerate: aiButton,
-                embedUrl: function() {
+                embedUrl: function () {
                     var ui = $.summernote.ui;
                     var button = ui.button({
                         contents: '<i class="fa fa-globe"/></i> Embed URL',
                         tooltip: 'Embed URL',
-                        click: function() {
+                        click: function () {
                             $('#embedModal').modal('show');
                         }
                     });
                     return button.render();
                 },
                 uploadFile: function () {
-    var ui = $.summernote.ui;
+                    var ui = $.summernote.ui;
 
-    return ui.button({
-        contents: '<i class="fa fa-upload"></i>',
-        tooltip: 'Upload File',
+                    return ui.button({
+                        contents: '<i class="fa fa-upload"></i>',
+                        tooltip: 'Upload File',
 
-        click: function () {
-            $('#fileUploadInput').click();
-        }
-    }).render();
-},
-removeFile: function () {
-    var ui = $.summernote.ui;
+                        click: function () {
+                            $('#fileUploadInput').click();
+                        }
+                    }).render();
+                },
+                removeFile: function () {
+                    var ui = $.summernote.ui;
 
-    return ui.button({
-        contents: '<i class="fa fa-trash"></i>',
-        tooltip: 'Hapus File',
+                    return ui.button({
+                        contents: '<i class="fa fa-trash"></i>',
+                        tooltip: 'Hapus File',
 
-        click: function () {
+                        click: function () {
 
-            let link = window.getSelection().anchorNode;
+                            let link = window.getSelection().anchorNode;
 
-            if (!link) return;
+                            if (!link) return;
 
-            let $link = $(link).closest('a');
+                            let $link = $(link).closest('a');
 
-            if (!$link.length) {
-                alert('Bukan link');
-                return;
-            }
+                            if (!$link.length) {
+                                alert('Bukan link');
+                                return;
+                            }
 
-            let href = $link.attr('href');
+                            let href = $link.attr('href');
 
-            let fileExt = href.split('.').pop().toLowerCase();
-            let allowed = @json(flc_ext());
+                            let fileExt = href.split('.').pop().toLowerCase();
+                            let allowed = @json(flc_ext());
 
-            if (!allowed.includes(fileExt)) {
-                alert('Hanya untuk hapus link file');
-                return;
-            }
+                            if (!allowed.includes(fileExt)) {
+                                alert('Hanya untuk hapus link file');
+                                return;
+                            }
 
-            $.post("{{ route('media.destroy') }}", {
-                media: href,
-                _token: "{{ csrf_token() }}"
-            });
+                            $.post("{{ route('media.destroy') }}", {
+                                media: href,
+                                _token: "{{ csrf_token() }}"
+                            });
 
-            $link.remove();
-        }
-    }).render();
-},
-                replaceImage: function() {
+                            $link.remove();
+                        }
+                    }).render();
+                },
+                replaceImage: function () {
                     var ui = $.summernote.ui;
 
                     return ui.button({
                         contents: '<i class="fa fa-image"></i>',
                         tooltip: 'Ganti Gambar',
 
-                        click: function() {
+                        click: function () {
                             if (!currentImage || !currentImage.length) {
                                 alert('Klik gambar dulu');
                                 return;
@@ -316,14 +316,14 @@ removeFile: function () {
                         }
                     }).render();
                 },
-                editImage: function() {
+                editImage: function () {
                     var ui = $.summernote.ui;
 
                     return ui.button({
                         contents: '<i class="fa fa-edit"></i>',
                         tooltip: 'Edit Image',
 
-                        click: function() {
+                        click: function () {
 
                             if (!currentImage || !currentImage.length) {
                                 alert('Klik gambar dulu');
@@ -345,7 +345,7 @@ removeFile: function () {
                     }).render();
                 }
             },
-            tableClassName: function() {
+            tableClassName: function () {
                 $(this).addClass('table table-bordered table-hover')
 
                     .attr('cellpadding', 12)
@@ -358,46 +358,46 @@ removeFile: function () {
                     .css('padding', '5px');
             },
         });
-$('#fileUploadInput').on('change', function () {
+        $('#fileUploadInput').on('change', function () {
 
-    let file = this.files[0];
-    if (!file) return;
-    let data = new FormData();
-    data.append("file", file);
-    data.append("post", "{{ $post->id }}");
-    data.append("_token", "{{ csrf_token() }}");
+            let file = this.files[0];
+            if (!file) return;
+            let data = new FormData();
+            data.append("file", file);
+            data.append("post", "{{ $post->id }}");
+            data.append("_token", "{{ csrf_token() }}");
 
-    $.ajax({
-        url: "{{ route('upload_file_summernote') }}", // 🔥 endpoint upload file
-        type: "POST",
-        data: data,
-        contentType: false,
-        processData: false,
+            $.ajax({
+                url: "{{ route('upload_file_summernote') }}", // 🔥 endpoint upload file
+                type: "POST",
+                data: data,
+                contentType: false,
+                processData: false,
 
-        success: function (res) {
+                success: function (res) {
 
-            let fileUrl = res.url;
-            if(fileUrl!==null){
-            let fileName = file.name;
-            let html = `
+                    let fileUrl = res.url;
+                    if (fileUrl !== null) {
+                        let fileName = file.name;
+                        let html = `
                     📎 <a href="${fileUrl}" >${fileName}</a>
             `;
 
-            $('#editor').summernote('pasteHTML', html);
-            }else{
-                alert('Upload file gagal, bisa jadi format tidak didukung');
-            }
+                        $('#editor').summernote('pasteHTML', html);
+                    } else {
+                        alert('Upload file gagal, bisa jadi format tidak didukung');
+                    }
 
-        },
+                },
 
-        error: function () {
-            alert('Upload file gagal');
-        }
-    });
+                error: function () {
+                    alert('Upload file gagal');
+                }
+            });
 
-    $(this).val('');
-});
-        $('#btnSaveImageEdit').on('click', function() {
+            $(this).val('');
+        });
+        $('#btnSaveImageEdit').on('click', function () {
 
 
             if (!currentImage || !currentImage.length) return;
@@ -428,7 +428,7 @@ $('#fileUploadInput').on('change', function () {
             $('.modal-backdrop').remove();
         });
 
-        $('#replaceImageInput').on('change', function() {
+        $('#replaceImageInput').on('change', function () {
 
             let file = this.files[0];
             if (!file) return;
@@ -482,28 +482,28 @@ $('#fileUploadInput').on('change', function () {
                 contentType: false,
                 processData: false,
 
-                success: function(response) {
+                success: function (response) {
 
                     const actualImageUrl = response.url;
 
-  if (isReplace && currentImage && currentImage.length) {
+                    if (isReplace && currentImage && currentImage.length) {
 
-    let oldSrc = currentImage.attr('src');
+                        let oldSrc = currentImage.attr('src');
 
-    $.post("{{ route('media.destroy') }}", {
-        media: oldSrc,
-        _token: "{{ csrf_token() }}"
-    });
+                        $.post("{{ route('media.destroy') }}", {
+                            media: oldSrc,
+                            _token: "{{ csrf_token() }}"
+                        });
 
-    let content = $('#editor').summernote('code');
+                        let content = $('#editor').summernote('code');
 
-    content = content.replace(oldSrc, actualImageUrl);
+                        content = content.replace(oldSrc, actualImageUrl);
 
-    $('#editor').summernote('code', content);
+                        $('#editor').summernote('code', content);
 
-    return;
-}
-            const figureHTML = `
+                        return;
+                    }
+                    const figureHTML = `
                 <figure style="text-align: center; margin: 10px 0;">
                     <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
                     <figcaption style="font-style: italic; color: #666;">
@@ -514,7 +514,7 @@ $('#fileUploadInput').on('change', function () {
                     $('#editor').summernote("pasteHTML", figureHTML);
                 },
 
-                error: function(jqXHR, textStatus, errorThrown) {
+                error: function (jqXHR, textStatus, errorThrown) {
                     console.error('Error uploading image: ', textStatus, errorThrown);
                 }
             });
@@ -529,7 +529,7 @@ $('#fileUploadInput').on('change', function () {
         var figure = $(target).closest('figure');
         if (figure.length > 0) {
             figure.remove();
-        } else {}
+        } else { }
     }
 
     function deleteImage(src) {
@@ -542,12 +542,12 @@ $('#fileUploadInput').on('change', function () {
             url: "{{ route('media.destroy') }}",
             contentType: false,
             processData: false,
-            success: function(response) {
+            success: function (response) {
                 console.log(response);
             }
         });
     }
-    $('#embedModalSave').click(function() {
+    $('#embedModalSave').click(function () {
         var url = $('#embed-url').val();
         var width = $('#embed-width').val();
         var height = $('#embed-height').val();

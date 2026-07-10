@@ -17,8 +17,8 @@
                 title="Lihat di Halaman Web Utama"></i> Lihat di Web</a>
           @endif
           @if(!empty($module->guide))
-            <button class="btn btn-outline-danger btn-sm" data-toggle="modal" data-target="#guideModal"> <i
-                class="fa fa-question" aria-hidden title="Lihat Panduan"></i> Panduan</button>
+            <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#guideModal"> <i
+                class="fa fa-question" aria-hidden title="Lihat Panduan"></i> Panduan Modul</button>
           @endif
         </div>
       </div>

@@ -49,31 +49,43 @@
                     <div class="tab-pane fade text-center py-5" id="g-upload" role="tabpanel"
                         aria-labelledby="g-upload-tab">
                         <p>Pilih file dari perangkat Anda untuk langsung digunakan pada form ini.</p>
-                        
-                        <input type="file" id="g-ajax-upload-input" class="initialized-gmedia" style="display:none;" multiple>
-                        
-                        <div id="g-upload-alert" class="alert alert-danger" style="display:none; max-width: 500px; margin: 0 auto 15px; text-align: left;"></div>
-                        
+
+                        <input type="file" id="g-ajax-upload-input" class="initialized-gmedia" style="display:none;"
+                            multiple>
+
+                        <div id="g-upload-alert" class="alert alert-danger"
+                            style="display:none; max-width: 500px; margin: 0 auto 15px; text-align: left;"></div>
+
                         <div id="g-upload-ui">
                             <button type="button" class="btn btn-success btn-lg" id="btn-trigger-upload">
                                 <i class="fa fa-folder-open"></i> Buka File Explorer
                             </button>
                         </div>
-                        
-                        <div id="g-pre-upload-preview" class="mt-4" style="display:none; max-width: 500px; margin: 0 auto; text-align: left;">
+
+                        <div id="g-pre-upload-preview" class="mt-4"
+                            style="display:none; max-width: 500px; margin: 0 auto; text-align: left;">
                             <h6 class="mb-2 text-muted">File Terpilih:</h6>
-                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 15px; background: #fafafa;" id="g-pre-upload-list">
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 15px; background: #fafafa;"
+                                id="g-pre-upload-list">
                             </div>
                             <div class="text-center">
-                                <button type="button" class="btn btn-outline-secondary mr-2" id="btn-cancel-upload">Batal</button>
-                                <button type="button" class="btn btn-primary" id="btn-start-upload"><i class="fa fa-upload"></i> Mulai Upload</button>
+                                <button type="button" class="btn btn-outline-secondary mr-2"
+                                    id="btn-cancel-upload">Batal</button>
+                                <button type="button" class="btn btn-primary" id="btn-start-upload"><i
+                                        class="fa fa-upload"></i> Mulai Upload</button>
                             </div>
                         </div>
-                        
-                        <div id="g-upload-progress-container" class="mt-4" style="display:none; max-width: 500px; margin: 0 auto;">
-                            <div class="mb-2 text-left" id="g-upload-filename" style="font-weight: 500; font-size: 14px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Mengunggah...</div>
+
+                        <div id="g-upload-progress-container" class="mt-4"
+                            style="display:none; max-width: 500px; margin: 0 auto;">
+                            <div class="mb-2 text-left" id="g-upload-filename"
+                                style="font-weight: 500; font-size: 14px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                Mengunggah...</div>
                             <div class="progress" style="height: 20px; border-radius: 10px;">
-                                <div id="g-upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                <div id="g-upload-progress-bar"
+                                    class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                    role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0"
+                                    aria-valuemax="100">0%</div>
                             </div>
                         </div>
                     </div>
@@ -96,6 +108,7 @@
         let currentFileInput = null;
         let currentFileWrapper = null;
         let currentTextInput = null;
+        window.currentSummernoteObj = null;
 
         function initGlobalFilePickers() {
             let uninitialized = $('input[type="file"]').not('.initialized-gmedia');
@@ -206,15 +219,15 @@
             });
         }
 
-        $(document).on('click', '.btn-text-gmedia', function(e) {
+        $(document).on('click', '.btn-text-gmedia', function (e) {
             e.preventDefault();
             let target = $($(this).data('target'));
             if (!target.length) return;
-            
+
             currentTextInput = target;
             currentFileInput = null;
             currentFileWrapper = null;
-            
+
             let acceptAttr = target.attr('accept');
             if (acceptAttr) {
                 let acceptedExts = acceptAttr.split(',').map(s => s.trim().toLowerCase());
@@ -244,13 +257,13 @@
             } else {
                 $('#globalMediaModal').removeData('allowedExts');
             }
-            
+
             if (!window.gmediaLoaded) {
                 loadGlobalMedia(1);
             } else {
                 filterMediaGrid();
             }
-            
+
             $('#globalMediaModal').modal('show');
         });
 
@@ -352,8 +365,47 @@
             loadGlobalMedia(currentMediaPage);
         });
 
+        function initSummernotePickers() {
+            setTimeout(function() {
+                $('.note-toolbar').each(function() {
+                    let $toolbar = $(this);
+                    if ($toolbar.find('.btn-summernote-gmedia').length > 0) return;
+
+                    let $btnGroup = $('<div class="note-btn-group btn-group note-insert"></div>');
+                    let $btn = $('<button type="button" class="note-btn btn btn-light btn-sm btn-summernote-gmedia" tabindex="-1" title="Media Library"><i class="fa fa-image"></i></button>');
+                    
+                    $btn.on('click', function (e) {
+                        e.preventDefault();
+                        currentTextInput = null;
+                        currentFileInput = null;
+                        currentFileWrapper = null;
+                        
+                        let context = $toolbar.closest('.note-editor').prev('.custom_html');
+                        if (!context.length) {
+                            context = $toolbar.closest('.note-editor').prev('textarea');
+                        }
+                        window.currentSummernoteObj = { context: context };
+
+                        let allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+                        $('#globalMediaModal').data('allowedExts', allowedExts);
+                        
+                        if (!window.gmediaLoaded) {
+                            loadGlobalMedia(1);
+                        } else {
+                            filterMediaGrid();
+                        }
+                        $('#globalMediaModal').modal('show');
+                    });
+                    
+                    $btnGroup.append($btn);
+                    $toolbar.append($btnGroup);
+                });
+            }, 500);
+        }
+
         /* Run on initial load */
         initGlobalFilePickers();
+        initSummernotePickers();
 
         /* Run when new nodes are added */
         let observer = new MutationObserver(function (mutations) {
@@ -361,19 +413,19 @@
             mutations.forEach(function (mutation) {
                 if (mutation.addedNodes && mutation.addedNodes.length > 0) shouldInit = true;
             });
-            if (shouldInit) initGlobalFilePickers();
+            if (shouldInit) { initGlobalFilePickers(); initSummernotePickers(); }
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
         $('#btn-trigger-upload').on('click', function () {
             let activeInput = currentFileInput || currentTextInput;
-            if (activeInput) {
-                let acceptAttr = activeInput.attr('accept');
-                if (acceptAttr) {
-                    $('#g-ajax-upload-input').attr('accept', acceptAttr);
-                } else {
-                    $('#g-ajax-upload-input').removeAttr('accept');
-                }
+            let allowedExts = $('#globalMediaModal').data('allowedExts');
+            
+            if (activeInput && activeInput.attr('accept')) {
+                $('#g-ajax-upload-input').attr('accept', activeInput.attr('accept'));
+            } else if (allowedExts && allowedExts.length > 0) {
+                let acceptStr = allowedExts.map(ext => '.' + ext).join(',');
+                $('#g-ajax-upload-input').attr('accept', acceptStr);
             } else {
                 $('#g-ajax-upload-input').removeAttr('accept');
             }
@@ -393,21 +445,22 @@
             selectedFilesForUpload = [];
             $('#g-pre-upload-list').empty();
 
+            let validIndex = 0;
             for (let i = 0; i < files.length; i++) {
                 let file = files[i];
                 let ext = file.name.split('.').pop().toLowerCase();
-                
+
                 if (allowedExts && allowedExts.length > 0 && !allowedExts.includes(ext)) {
                     invalidFiles.push(file.name + ' (Ekstensi tidak diizinkan)');
                 } else if (file.size > maxSizeBytes) {
                     invalidFiles.push(file.name + ' (Ukuran ' + (file.size / 1024 / 1024).toFixed(2) + ' MB melebihi batas ' + maxSizeMB + ' MB)');
                 } else {
                     selectedFilesForUpload.push(file);
-                    
+
                     let size = (file.size / 1024).toFixed(2);
                     let sizeStr = size + ' KB';
                     if (size > 1024) sizeStr = (size / 1024).toFixed(2) + ' MB';
-                    
+
                     let previewHtml = '';
                     let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
                     if (isImage) {
@@ -416,16 +469,24 @@
                     } else {
                         previewHtml = '<div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; margin-right: 10px; display: flex; align-items: center; justify-content: center;"><i class="fa fa-file text-secondary"></i></div>';
                     }
-                    
+
                     $('#g-pre-upload-list').append(
-                        '<div class="d-flex align-items-center justify-content-between border-bottom py-2">' +
+                        '<div class="d-flex flex-column border-bottom py-2" id="upload-item-' + validIndex + '">' +
+                        '<div class="d-flex align-items-center justify-content-between">' +
                         '<div class="d-flex align-items-center text-truncate" style="max-width: 60%;">' +
-                        previewHtml + 
-                        '<div class="text-truncate" title="'+file.name+'"><strong>' + file.name + '</strong></div>' +
+                        previewHtml +
+                        '<div class="text-truncate" title="' + file.name + '"><strong>' + file.name + '</strong></div>' +
                         '</div>' +
                         '<div><span class="badge badge-info mr-2">' + ext.toUpperCase() + '</span><span class="text-muted" style="font-size: 12px;">' + sizeStr + '</span></div>' +
+                        '</div>' +
+                        '<div class="progress mt-2" style="height: 10px; display: none;" id="progress-container-' + validIndex + '">' +
+                        '<div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-' + validIndex + '" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>' +
+                        '</div>' +
+                        '<div class="text-danger mt-1" style="font-size: 11px; display: none;" id="error-msg-' + validIndex + '"></div>' +
+                        '<div class="text-success mt-1" style="font-size: 11px; display: none;" id="success-msg-' + validIndex + '"><i class="fa fa-check-circle"></i> Terupload</div>' +
                         '</div>'
                     );
+                    validIndex++;
                 }
             }
 
@@ -446,7 +507,7 @@
             }
         });
 
-        $('#btn-cancel-upload').on('click', function() {
+        $('#btn-cancel-upload').on('click', function () {
             selectedFilesForUpload = [];
             $('#g-ajax-upload-input').val('');
             $('#g-pre-upload-preview').hide();
@@ -454,28 +515,28 @@
             $('#g-upload-ui').show();
         });
 
-        $('#btn-start-upload').on('click', async function() {
+        $('#btn-start-upload').on('click', async function () {
             if (selectedFilesForUpload.length === 0) return;
-            
-            $('#g-pre-upload-preview').hide();
-            $('#g-upload-progress-container').show();
+
+            $('#btn-start-upload').prop('disabled', true);
+            $('#btn-cancel-upload').prop('disabled', true);
             $('#g-upload-alert').hide().html('');
-            
+
             let successCount = 0;
             let lastUploadedCard = null;
             let hasError = false;
-            
+
             for (let i = 0; i < selectedFilesForUpload.length; i++) {
                 let file = selectedFilesForUpload[i];
                 let fileName = file.name;
-                
-                $('#g-upload-filename').text('Mengunggah ' + (i+1) + ' dari ' + selectedFilesForUpload.length + ': ' + fileName);
-                $('#g-upload-progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-                
+
+                $('#progress-container-' + i).show();
+                let $progressBar = $('#progress-bar-' + i);
+
                 let formData = new FormData();
                 formData.append('media', file);
                 formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-                
+
                 try {
                     let response = await $.ajax({
                         url: '{{ route("media.upload") }}',
@@ -483,22 +544,23 @@
                         data: formData,
                         contentType: false,
                         processData: false,
-                        xhr: function() {
+                        xhr: function () {
                             var xhr = new window.XMLHttpRequest();
-                            xhr.upload.addEventListener("progress", function(evt) {
+                            xhr.upload.addEventListener("progress", function (evt) {
                                 if (evt.lengthComputable) {
                                     var percentComplete = Math.round((evt.loaded / evt.total) * 100);
-                                    $('#g-upload-progress-bar').css('width', percentComplete + '%')
-                                        .attr('aria-valuenow', percentComplete)
-                                        .text(percentComplete + '%');
+                                    $progressBar.css('width', percentComplete + '%')
+                                        .attr('aria-valuenow', percentComplete);
                                 }
                             }, false);
                             return xhr;
                         }
                     });
-                    
+
                     if (response.status === 'success' && response.file_name) {
                         successCount++;
+                        $progressBar.removeClass('progress-bar-striped progress-bar-animated').addClass('bg-success');
+                        $('#success-msg-' + i).show();
                         let savedFileName = response.file_name.replace('/media/', '');
                         let savedExt = savedFileName.split('.').pop().toLowerCase();
                         let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(savedExt);
@@ -506,7 +568,7 @@
                         let previewUrl = baseUrl + (isImage ? '?size=small' : '');
                         let scheme = '{{ request()->getScheme() }}';
                         let host = window.location.host;
-                        
+
                         let icon = 'fa-file';
                         if (['pdf'].includes(savedExt)) icon = 'fa-file-pdf text-danger';
                         else if (['doc', 'docx'].includes(savedExt)) icon = 'fa-file-word text-primary';
@@ -533,41 +595,46 @@
 
                         let col = $('<div class="col-4 col-md-3 col-lg-2 mb-3 px-1 media-grid-col" data-ext="' + savedExt + '"></div>');
                         let card = $('<div class="card h-100 border media-grid-item pointer position-relative" data-val="' + savedFileName + '" onclick="selectMediaGridItem(this, event)"></div>');
-                        
+
                         if (viewBtn) card.append(viewBtn);
                         card.append(imgWrapper);
                         card.append('<div class="card-body p-1 text-center" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px;"><span title="' + savedFileName + '">' + savedFileName + '</span><div style="font-size: 10px; color: #888; margin-top: 2px;"><span class="badge badge-info mr-1" style="font-size: 9px; padding: 2px 4px;">' + savedExt.toUpperCase() + '</span>Baru</div></div>');
-                        
+
                         col.append(card);
                         $('#global-media-empty').hide();
                         $('#global-media-grid').prepend(col);
-                        
+
                         lastUploadedCard = card;
                     } else {
                         hasError = true;
-                        $('#g-upload-alert').append('<div>Gagal mengupload ' + fileName + ': ' + (response.message || 'Error') + '</div>');
+                        $progressBar.removeClass('progress-bar-striped progress-bar-animated').addClass('bg-danger');
+                        $('#error-msg-' + i).text('Gagal: ' + (response.message || 'Error')).show();
                     }
-                } catch(err) {
+                } catch (err) {
                     hasError = true;
-                    let msg = 'Terjadi kesalahan saat mengupload ' + fileName;
+                    let msg = 'Gagal';
                     if (err.responseJSON && err.responseJSON.message) {
                         msg += ': ' + err.responseJSON.message;
+                    } else if (err.status === 413) {
+                        msg += ': Ukuran file melebihi batas server.';
                     }
-                    $('#g-upload-alert').append('<div>' + msg + '</div>');
+                    $progressBar.removeClass('progress-bar-striped progress-bar-animated').addClass('bg-danger');
+                    $('#error-msg-' + i).text(msg).show();
                 }
             }
-            
-            $('#g-upload-progress-container').hide();
-            
-            if (hasError) {
-                $('#g-upload-alert').show();
-                // Tetap di tab ini jika ada error, agar user bisa lihat
-                $('#g-upload-ui').show();
-            } else {
+
+            $('#btn-start-upload').prop('disabled', false);
+            $('#btn-cancel-upload').prop('disabled', false);
+
+            if (!hasError) {
+                // Bersihkan tampilan list jika semua berhasil
+                selectedFilesForUpload = [];
                 $('#g-ajax-upload-input').val('');
+                $('#g-pre-upload-preview').hide();
+                $('#g-upload-alert').hide();
                 $('#g-upload-ui').show();
             }
-            
+
             if (successCount > 0) {
                 notif(successCount + ' file berhasil diupload', 'success');
                 if (lastUploadedCard) {
@@ -631,13 +698,29 @@
                 currentFileWrapper.find('.btn-clear-gmedia').show();
                 $('#globalMediaModal').modal('hide');
             } else if (currentTextInput) {
-                let fileUrl = '{{ url("media") }}/' + selectedVal;
+                let fileUrl = '/media/' + selectedVal;
                 currentTextInput.val(fileUrl);
+                $('#globalMediaModal').modal('hide');
+            } else if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
+                let fileUrl = '/media/' + selectedVal;
+                let ext = selectedVal.split('.').pop().toLowerCase();
+                let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                
+                if (isImage) {
+                    window.currentSummernoteObj.context.summernote('insertImage', fileUrl);
+                } else {
+                    window.currentSummernoteObj.context.summernote('createLink', {
+                        text: selectedVal,
+                        url: fileUrl,
+                        isNewWindow: true
+                    });
+                }
                 $('#globalMediaModal').modal('hide');
             }
         });
 
         $('#globalMediaModal').on('hidden.bs.modal', function () {
+            window.currentSummernoteObj = null;
             $('#global-library-select').val('');
             $('.media-grid-item').removeClass('border-primary shadow').css('border-width', '1px');
             $('#btn-use-selected-media').attr('disabled', 'disabled');
