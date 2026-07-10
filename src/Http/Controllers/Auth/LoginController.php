@@ -124,6 +124,7 @@ class LoginController extends Controller
         // Throttle login attempts
         $limiterKey = $request->ip() . '|' . $request->username;
         if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
+            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Terlalu banyak percobaan login. Silakan coba lagi nanti.']);
             return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
         }
 
@@ -136,6 +137,7 @@ class LoginController extends Controller
         if ($request->captcha !== Session::get('captcha')) {
             $request->session()->regenerateToken();
 
+            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Captcha tidak valid!']);
             return back()->with('error', 'Captcha tidak valid!');
         }
 
@@ -144,12 +146,11 @@ class LoginController extends Controller
             $user = Auth::user();
 
             if ($user->status === 'active') {
-                dispatch(function () use ($request) {
-
-                    $ip = e($request->ip());
-                    $email = e($request->input('email'));
-                    $url = e($request->fullUrl());
-                    $userAgent = e($request->userAgent());
+                $ip = e($request->ip());
+                $email = e($request->input('email', $request->username));
+                $url = e($request->fullUrl());
+                $userAgent = e($request->userAgent());
+                dispatch(function () use ($ip, $email, $url, $userAgent) {
                     $time = now()->format('Y-m-d H:i:s');
 
                     $message = "
@@ -182,18 +183,21 @@ class LoginController extends Controller
                             Auth::logout();
                         } else {
                             Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+                            if ($request->ajax()) return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
                             return redirect()->intended('/' . admin_path());
                         }
                     } else {
                         if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                             Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+                            if ($request->ajax()) return response()->json(['status' => 'success', 'redirect' => url('/login')]);
                             return redirect()->intended('/login');
                         } else {
                             Auth::logout();
                         }
                     }
                 } else {
-                    return redirect()->intended('/' . admin_path());
+                    if ($request->ajax()) return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
+                            return redirect()->intended('/' . admin_path());
                 }
             }
 
@@ -201,18 +205,18 @@ class LoginController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
+            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Akun telah diblokir!']);
             return back()->with('error', 'Akun telah diblokir!');
         }
 
         $limiter->hit($limiterKey);
         $request->session()->regenerateToken();
         Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-        dispatch(function () {
-
-            $ip = get_client_ip();
-            $email = e((new Request)->input('username'));
-            $url = e((new Request)->fullUrl());
-            $userAgent = e((new Request)->userAgent());
+        $ip = get_client_ip();
+        $email = e($request->input('username'));
+        $url = e($request->fullUrl());
+        $userAgent = e($request->userAgent());
+        dispatch(function () use ($ip, $email, $url, $userAgent) {
             $time = now()->format('Y-m-d H:i:s');
 
             $message = "
@@ -233,6 +237,7 @@ class LoginController extends Controller
 
             sendTelegramBotMessage($message);
         })->afterResponse();
+        if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Akun tidak ditemukan!']);
         return back()->with('error', 'Akun tidak ditemukan!');
     }
 

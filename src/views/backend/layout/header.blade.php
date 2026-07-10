@@ -1,3 +1,15 @@
+<style>
+/* Fix Summernote CSS conflict shifting nav icons */
+.app-nav .app-nav__item {
+    display: flex !important;
+    align-items: center !important;
+    height: 50px !important;
+}
+.app-nav .app-nav__item i {
+    display: flex;
+    align-items: center;
+}
+</style>
 <!-- Navbar-->
 <header class="app-header"><a href="{{ route('panel.dashboard') }}" class="app-header__logo"
         style="color: var(--header-font, #fff) !important; background:transparent">

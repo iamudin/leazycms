@@ -229,5 +229,54 @@ function togglePassword() {
       	return false;
       });
     </script>
-  </body>
+  
+
+<script>
+$('form').on('submit', function(e) {
+    e.preventDefault();
+    let form = $(this);
+    let btn = form.find('button');
+    let btnText = btn.html();
+    
+    $('.alert-dismissible').remove();
+    
+    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin fa-lg fa-fw"></i>MEMPROSES...');
+    
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        success: function(response) {
+            if(response.status === 'success' && response.redirect) {
+                btn.html('<i class="fa fa-check fa-lg fa-fw"></i>BERHASIL');
+                window.location.href = response.redirect;
+            } else if (response.status === 'error') {
+                btn.prop('disabled', false).html(btnText);
+                let errorHtml = '<div class="alert alert-dismissible alert-danger"><button class="close" type="button" data-dismiss="alert">&times;</button>' + response.message + '</div>';
+                $(errorHtml).insertBefore(form.find('.form-group').first());
+                
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                window.location.reload();
+            }
+        },
+        error: function(xhr) {
+            btn.prop('disabled', false).html(btnText);
+            let msg = 'Terjadi kesalahan pada server';
+            if(xhr.responseJSON && xhr.responseJSON.message) {
+                msg = xhr.responseJSON.message;
+            }
+            let errorHtml = '<div class="alert alert-dismissible alert-danger"><button class="close" type="button" data-dismiss="alert">&times;</button>' + msg + '</div>';
+            $(errorHtml).insertBefore(form.find('.form-group').first());
+            
+            setTimeout(function() {
+                window.location.reload();
+            }, 1500);
+        }
+    });
+});
+</script>
+</body>
 </html>
