@@ -387,6 +387,8 @@
             if (!files || files.length === 0) return;
 
             let allowedExts = $('#globalMediaModal').data('allowedExts');
+            let maxSizeBytes = {{ \Illuminate\Http\UploadedFile::getMaxFilesize() }};
+            let maxSizeMB = (maxSizeBytes / 1024 / 1024).toFixed(2);
             let invalidFiles = [];
             selectedFilesForUpload = [];
             $('#g-pre-upload-list').empty();
@@ -396,7 +398,9 @@
                 let ext = file.name.split('.').pop().toLowerCase();
                 
                 if (allowedExts && allowedExts.length > 0 && !allowedExts.includes(ext)) {
-                    invalidFiles.push(file.name);
+                    invalidFiles.push(file.name + ' (Ekstensi tidak diizinkan)');
+                } else if (file.size > maxSizeBytes) {
+                    invalidFiles.push(file.name + ' (Ukuran ' + (file.size / 1024 / 1024).toFixed(2) + ' MB melebihi batas ' + maxSizeMB + ' MB)');
                 } else {
                     selectedFilesForUpload.push(file);
                     
@@ -426,7 +430,7 @@
             }
 
             if (invalidFiles.length > 0) {
-                let errMsg = 'File berikut memiliki ekstensi yang tidak diizinkan:<br><ul>';
+                let errMsg = 'File berikut tidak dapat diproses:<br><ul>';
                 invalidFiles.forEach(f => errMsg += '<li>' + f + '</li>');
                 errMsg += '</ul>';
                 $('#g-upload-alert').html(errMsg).show();
