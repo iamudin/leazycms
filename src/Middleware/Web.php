@@ -35,7 +35,11 @@ class Web
                         $response = response($response);
                         $content = $response->getContent();
 
-                        if (strpos($content, '<head>') !== false) {
+                        $disableSeo = config('modules.disable_dynamic_seo');
+                        if (isset($r['seo']) && $r['seo'] === false) {
+                            $disableSeo = true;
+                        }
+                        if (strpos($content, '<head>') !== false && !$disableSeo) {
                             $content = str_replace(
                                 '<head>',
                                 '<head>' . init_plugin_meta_header(),
@@ -48,7 +52,11 @@ class Web
                     // Injeksi SEO khusus halaman plugin
                     if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
                         $content = $response->getContent();
-                        if (strpos($content, '<head>') !== false) {
+                        $disableSeo = config('modules.disable_dynamic_seo');
+                        if (isset($r['seo']) && $r['seo'] === false) {
+                            $disableSeo = true;
+                        }
+                        if (strpos($content, '<head>') !== false && !$disableSeo) {
                             $content = str_replace(
                                 '<head>',
                                 '<head>' . init_plugin_meta_header(),
@@ -72,7 +80,23 @@ class Web
         if (str($response->headers->get('Content-Type'))->lower() == 'text/html; charset=utf-8') {
             $content = $response->getContent();
 
-            if (strpos($content, '<head>') !== false) {
+            $disableSeo = config('modules.disable_dynamic_seo');
+            if (!$disableSeo) {
+                $currentRouteName = \Illuminate\Support\Facades\Route::currentRouteName();
+                if ($currentRouteName) {
+                    $customRoutes = config('modules.custom_web_route', []);
+                    foreach ($customRoutes as $cr) {
+                        if (isset($cr['name']) && $cr['name'] === $currentRouteName) {
+                            if (isset($cr['seo']) && $cr['seo'] === false) {
+                                $disableSeo = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (strpos($content, '<head>') !== false && !$disableSeo) {
                 if (!is_custom_web_route_matched()) {
                     $content = str_replace(
                         '<head>',
