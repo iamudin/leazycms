@@ -80,7 +80,7 @@ class PanelController extends Controller implements HasMiddleware
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="btn-group">'
-                        . '<button onclick="deleteAlert(\'' . route('blocked-ip.destroy', $row->id) . '\')" class="btn btn-sm btn-warning fa fa-unlock"></button>'
+                        . '<button onclick="deleteAlert(\'' . route('blocked-ip.destroy', $row->id) . '\')" class="btn btn-sm btn-warning"><i class="fa fa-unlock"></i></button>'
                         . '</div>';
                 })
                 ->rawColumns(['device_info', 'reason_text', 'blocked_date', 'action'])

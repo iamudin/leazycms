@@ -14,8 +14,7 @@
                             <button type="button" onclick="location.href='{{ route(get_post_type()) }}'" class="btn btn-danger btn-sm "
                             data-toggle="tooltip" title="Kembali Ke Index Data"> <i class="fa fa-undo" aria-hidden></i>
                             Kembali</button>
-                            <button type="submit" data-toggle="tooltip" title="Simpan Perubahan" class="btn btn-sm btn-primary add"> <i
-                                    class="fa fa-save"></i> <span class="text-save"> Simpan</span> </button>
+                          
 
                         </div>
                     </h3>
@@ -109,6 +108,20 @@
                                     @endpush
                     @endif
                     @include('cms::backend.layout.error')
+                    
+                    <!-- Mobile Status Toggle (Visible only on small screens) -->
+                    <div class="d-block d-lg-none mb-3 mt-3">
+                        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                            <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();" class="btn btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
+                                <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required> 
+                                <i class="fa fa-globe"></i> Publikasikan
+                            </label>
+                            <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();" class="btn btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
+                                <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required> 
+                                <i class="fa fa-archive"></i> Draft
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-lg-9">
                     <div class="form-group">
@@ -193,8 +206,22 @@
                     @endif
                 </div>
                 <div class="col-lg-3">
+                    <!-- Desktop Status Toggle (Visible only on large screens) -->
+                    <div class="d-none d-lg-block">
+                        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                            <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();" class="btn btn-md btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
+                                <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required> 
+                                <i class="fa fa-globe"></i> Publikasikan
+                            </label>
+                            <label onclick="$(this).find('input').prop('checked', true); $('.editorForm').submit();" class="btn btn-md  btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
+                                <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required> 
+                                <i class="fa fa-archive"></i> Draft
+                            </label>
+                        </div>
+                    </div>
+
                     @if ($module->form->thumbnail)
-                        <div class="card">
+                        <div class="card mt-3">
                             <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Gambar</p>
                             <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}"/>
                             <input accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="compress-image form-control-file form-control-sm"
@@ -269,51 +296,24 @@
                     @endif
 
                     @if ($module->web->detail)
-                    <div class="animated-checkbox">
-                        <label>
-                            <input type="checkbox" {{ $post && !empty($post->password) ? 'checked=checked' : '' }}
-                                name="password" value="Y"><span class="label-text"><small> Batasi Akses {{ $module->title }} ini
-                                    {!! help('Jika dicentang, Pengunjung wajib memasukkan kode PIN utk melihat. Klik icon merah disamping untuk menyalin kode rahasia') !!}  </small></span>
-                        </label>
-                        @if(!empty($post->password))<i class="fa fa-copy copy text-danger pointer" title="Klik untuk menyalin kode" data-copy="{{ dec64($post->password) }}"></i>@endif
+                    <div class="custom-control custom-switch mb-2">
+                        <input type="checkbox" class="custom-control-input" id="switch-password" name="password" value="Y" {{ $post && !empty($post->password) ? 'checked=checked' : '' }}>
+                        <label class="custom-control-label" for="switch-password"><small>Batasi Akses {{ $module->title }} ini
+                            {!! help('Jika dicentang, Pengunjung wajib memasukkan kode PIN utk melihat. Klik icon merah disamping untuk menyalin kode rahasia') !!}  </small></label>
+                        @if(!empty($post->password))<i class="fa fa-copy copy text-danger pointer ml-1" title="Klik untuk menyalin kode" data-copy="{{ dec64($post->password) }}"></i>@endif
                     </div>
-                        <div class="animated-checkbox">
-                            <label>
-                                <input type="checkbox" {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}
-                                    name="allow_comment" value="Y"><span class="label-text"><small>Izinkan Komentar
-                                        {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}
-
-                                    </small>
-
-
-                                    </span>
-                            </label>
-                        </div>
-
-
+                    <div class="custom-control custom-switch mb-3">
+                        <input type="checkbox" class="custom-control-input" id="switch-comment" name="allow_comment" value="Y" {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}>
+                        <label class="custom-control-label" for="switch-comment"><small>Izinkan Komentar
+                            {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}
+                        </small></label>
+                    </div>
                     @endif
-                        <div class="animated-checkbox">
-                            <label>
-                                <input {{ $post && $post->pinned == 'Y' ? 'checked=checked' : '' }} type="checkbox"
-                                    name="pinned" value="Y"><span class="label-text"><small>Sematkan
-                                        {!! help('Jika dicentang, maka postingan ini akan menjadi prioritas dihalaman jika dikondisikan pada template ') !!}</small></span>
-                            </label>
-                        </div>
-                    <div class="form-group form-inline">
-                        <div class="animated-radio-button">
-                            <label>
-                                <input {{ $post && $post->status == 'publish' ? 'checked=checked' : '' }} required
-                                    type="radio" name="status" value="publish"><small
-                                    class="label-text">Publikasikan</small>
-                            </label>
-                        </div>
-                        &nbsp;&nbsp;&nbsp;
-                        <div class="animated-radio-button">
-                            <label>
-                                <input {{ $post && $post->status == 'draft' ? 'checked=checked' : '' }} required type="radio"
-                                    name="status" value="draft"><small class="label-text">Draft</small>
-                            </label>
-                        </div>
+                    <div class="custom-control custom-switch mb-4">
+                        <input type="checkbox" class="custom-control-input" id="switch-pinned" name="pinned" value="Y" {{ $post && $post->pinned == 'Y' ? 'checked=checked' : '' }}>
+                        <label class="custom-control-label" for="switch-pinned"><small>Sematkan
+                            {!! help('Jika dicentang, maka postingan ini akan menjadi prioritas dihalaman jika dikondisikan pada template ') !!}
+                        </small></label>
                     </div>
 
             </div>

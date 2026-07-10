@@ -49,8 +49,33 @@
                     <div class="tab-pane fade text-center py-5" id="g-upload" role="tabpanel"
                         aria-labelledby="g-upload-tab">
                         <p>Pilih file dari perangkat Anda untuk langsung digunakan pada form ini.</p>
-                        <button type="button" class="btn btn-success btn-lg" id="btn-trigger-upload"><i
-                                class="fa fa-folder-open"></i> Buka File Explorer</button>
+                        
+                        <input type="file" id="g-ajax-upload-input" class="initialized-gmedia" style="display:none;" multiple>
+                        
+                        <div id="g-upload-alert" class="alert alert-danger" style="display:none; max-width: 500px; margin: 0 auto 15px; text-align: left;"></div>
+                        
+                        <div id="g-upload-ui">
+                            <button type="button" class="btn btn-success btn-lg" id="btn-trigger-upload">
+                                <i class="fa fa-folder-open"></i> Buka File Explorer
+                            </button>
+                        </div>
+                        
+                        <div id="g-pre-upload-preview" class="mt-4" style="display:none; max-width: 500px; margin: 0 auto; text-align: left;">
+                            <h6 class="mb-2 text-muted">File Terpilih:</h6>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 15px; background: #fafafa;" id="g-pre-upload-list">
+                            </div>
+                            <div class="text-center">
+                                <button type="button" class="btn btn-outline-secondary mr-2" id="btn-cancel-upload">Batal</button>
+                                <button type="button" class="btn btn-primary" id="btn-start-upload"><i class="fa fa-upload"></i> Mulai Upload</button>
+                            </div>
+                        </div>
+                        
+                        <div id="g-upload-progress-container" class="mt-4" style="display:none; max-width: 500px; margin: 0 auto;">
+                            <div class="mb-2 text-left" id="g-upload-filename" style="font-weight: 500; font-size: 14px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Mengunggah...</div>
+                            <div class="progress" style="height: 20px; border-radius: 10px;">
+                                <div id="g-upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,7 +169,17 @@
                             else if (ext === 'image/svg+xml' || ext === 'image/svg') allowedExts.push('svg');
                             else if (ext === 'application/pdf') allowedExts.push('pdf');
                             else if (ext === 'video/mp4') allowedExts.push('mp4');
+                            else if (ext === 'video/x-matroska') allowedExts.push('mkv');
+                            else if (ext === 'video/x-msvideo') allowedExts.push('avi');
                             else if (ext === 'application/zip') allowedExts.push('zip');
+                            else if (ext === 'application/x-rar-compressed' || ext === 'application/vnd.rar') allowedExts.push('rar');
+                            else if (ext === 'application/msword') allowedExts.push('doc');
+                            else if (ext === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') allowedExts.push('docx');
+                            else if (ext === 'application/vnd.ms-excel') allowedExts.push('xls');
+                            else if (ext === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') allowedExts.push('xlsx');
+                            else if (ext === 'application/vnd.ms-powerpoint') allowedExts.push('ppt');
+                            else if (ext === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') allowedExts.push('pptx');
+                            else if (ext === 'text/csv') allowedExts.push('csv');
                         });
 
                         $('#globalMediaModal').data('allowedExts', allowedExts);
@@ -170,6 +205,54 @@
                 });
             });
         }
+
+        $(document).on('click', '.btn-text-gmedia', function(e) {
+            e.preventDefault();
+            let target = $($(this).data('target'));
+            if (!target.length) return;
+            
+            currentTextInput = target;
+            currentFileInput = null;
+            currentFileWrapper = null;
+            
+            let acceptAttr = target.attr('accept');
+            if (acceptAttr) {
+                let acceptedExts = acceptAttr.split(',').map(s => s.trim().toLowerCase());
+                let allowedExts = [];
+                acceptedExts.forEach(ext => {
+                    if (ext.startsWith('.')) allowedExts.push(ext.substring(1));
+                    else if (ext === 'image/jpeg' || ext === 'image/jpg') allowedExts.push('jpg', 'jpeg');
+                    else if (ext === 'image/png') allowedExts.push('png');
+                    else if (ext === 'image/gif') allowedExts.push('gif');
+                    else if (ext === 'image/webp') allowedExts.push('webp');
+                    else if (ext === 'image/svg+xml' || ext === 'image/svg') allowedExts.push('svg');
+                    else if (ext === 'application/pdf') allowedExts.push('pdf');
+                    else if (ext === 'video/mp4') allowedExts.push('mp4');
+                    else if (ext === 'video/x-matroska') allowedExts.push('mkv');
+                    else if (ext === 'video/x-msvideo') allowedExts.push('avi');
+                    else if (ext === 'application/zip') allowedExts.push('zip');
+                    else if (ext === 'application/x-rar-compressed' || ext === 'application/vnd.rar') allowedExts.push('rar');
+                    else if (ext === 'application/msword') allowedExts.push('doc');
+                    else if (ext === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') allowedExts.push('docx');
+                    else if (ext === 'application/vnd.ms-excel') allowedExts.push('xls');
+                    else if (ext === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') allowedExts.push('xlsx');
+                    else if (ext === 'application/vnd.ms-powerpoint') allowedExts.push('ppt');
+                    else if (ext === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') allowedExts.push('pptx');
+                    else if (ext === 'text/csv') allowedExts.push('csv');
+                });
+                $('#globalMediaModal').data('allowedExts', allowedExts);
+            } else {
+                $('#globalMediaModal').removeData('allowedExts');
+            }
+            
+            if (!window.gmediaLoaded) {
+                loadGlobalMedia(1);
+            } else {
+                filterMediaGrid();
+            }
+            
+            $('#globalMediaModal').modal('show');
+        });
 
         window.gmediaLoaded = false;
         let currentMediaPage = 1;
@@ -232,14 +315,15 @@
                             imgWrapper.append('<i class="fa ' + icon + ' fa-3x"></i>');
                         }
 
-                        let fileSize = Math.round(media.size / 1024); /* KB approx if available, or just omit if not. Actually LeazyCMS uses media_size() php helper. We can just skip size or format it roughly. */
-                        let sizeStr = media.size ? (fileSize > 1024 ? (fileSize / 1024).toFixed(2) + ' MB' : fileSize + ' KB') : '';
+                        let rawSize = media.file_size || media.size;
+                        let fileSize = Math.round(rawSize / 1024);
+                        let sizeStr = rawSize ? (fileSize > 1024 ? (fileSize / 1024).toFixed(2) + ' MB' : fileSize + ' KB') : '';
 
                         let col = $('<div class="col-4 col-md-3 col-lg-2 mb-3 px-1 media-grid-col" data-ext="' + ext + '"></div>');
                         let card = $('<div class="card h-100 border media-grid-item pointer position-relative" data-val="' + fileName + '" onclick="selectMediaGridItem(this, event)"></div>');
                         if (viewBtn) card.append(viewBtn);
                         card.append(imgWrapper);
-                        card.append('<div class="card-body p-1 text-center" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px;"><span title="' + fileName + '">' + fileName + '</span><div style="font-size: 10px; color: #888;">' + sizeStr + '</div></div>');
+                        card.append('<div class="card-body p-1 text-center" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px;"><span title="' + fileName + '">' + fileName + '</span><div style="font-size: 10px; color: #888; margin-top: 2px;"><span class="badge badge-info mr-1" style="font-size: 9px; padding: 2px 4px;">' + ext.toUpperCase() + '</span>' + sizeStr + '</div></div>');
 
                         col.append(card);
                         $('#global-media-loading').before(col); /* Append before loading indicator */
@@ -282,15 +366,220 @@
         observer.observe(document.body, { childList: true, subtree: true });
 
         $('#btn-trigger-upload').on('click', function () {
-            if (currentFileInput) {
-                $('#globalMediaModal').modal('hide');
-                currentFileInput.click();
+            let activeInput = currentFileInput || currentTextInput;
+            if (activeInput) {
+                let acceptAttr = activeInput.attr('accept');
+                if (acceptAttr) {
+                    $('#g-ajax-upload-input').attr('accept', acceptAttr);
+                } else {
+                    $('#g-ajax-upload-input').removeAttr('accept');
+                }
+            } else {
+                $('#g-ajax-upload-input').removeAttr('accept');
+            }
+            $('#g-ajax-upload-input').click();
+        });
+
+        let selectedFilesForUpload = [];
+
+        $('#g-ajax-upload-input').on('change', function () {
+            let files = this.files;
+            if (!files || files.length === 0) return;
+
+            let allowedExts = $('#globalMediaModal').data('allowedExts');
+            let invalidFiles = [];
+            selectedFilesForUpload = [];
+            $('#g-pre-upload-list').empty();
+
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                let ext = file.name.split('.').pop().toLowerCase();
+                
+                if (allowedExts && allowedExts.length > 0 && !allowedExts.includes(ext)) {
+                    invalidFiles.push(file.name);
+                } else {
+                    selectedFilesForUpload.push(file);
+                    
+                    let size = (file.size / 1024).toFixed(2);
+                    let sizeStr = size + ' KB';
+                    if (size > 1024) sizeStr = (size / 1024).toFixed(2) + ' MB';
+                    
+                    let previewHtml = '';
+                    let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                    if (isImage) {
+                        let objectUrl = URL.createObjectURL(file);
+                        previewHtml = '<img src="' + objectUrl + '" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;">';
+                    } else {
+                        previewHtml = '<div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; margin-right: 10px; display: flex; align-items: center; justify-content: center;"><i class="fa fa-file text-secondary"></i></div>';
+                    }
+                    
+                    $('#g-pre-upload-list').append(
+                        '<div class="d-flex align-items-center justify-content-between border-bottom py-2">' +
+                        '<div class="d-flex align-items-center text-truncate" style="max-width: 60%;">' +
+                        previewHtml + 
+                        '<div class="text-truncate" title="'+file.name+'"><strong>' + file.name + '</strong></div>' +
+                        '</div>' +
+                        '<div><span class="badge badge-info mr-2">' + ext.toUpperCase() + '</span><span class="text-muted" style="font-size: 12px;">' + sizeStr + '</span></div>' +
+                        '</div>'
+                    );
+                }
+            }
+
+            if (invalidFiles.length > 0) {
+                let errMsg = 'File berikut memiliki ekstensi yang tidak diizinkan:<br><ul>';
+                invalidFiles.forEach(f => errMsg += '<li>' + f + '</li>');
+                errMsg += '</ul>';
+                $('#g-upload-alert').html(errMsg).show();
+            } else {
+                $('#g-upload-alert').hide();
+            }
+
+            if (selectedFilesForUpload.length > 0) {
+                $('#g-upload-ui').hide();
+                $('#g-pre-upload-preview').show();
+            } else {
+                $(this).val(''); // Reset
+            }
+        });
+
+        $('#btn-cancel-upload').on('click', function() {
+            selectedFilesForUpload = [];
+            $('#g-ajax-upload-input').val('');
+            $('#g-pre-upload-preview').hide();
+            $('#g-upload-alert').hide();
+            $('#g-upload-ui').show();
+        });
+
+        $('#btn-start-upload').on('click', async function() {
+            if (selectedFilesForUpload.length === 0) return;
+            
+            $('#g-pre-upload-preview').hide();
+            $('#g-upload-progress-container').show();
+            $('#g-upload-alert').hide().html('');
+            
+            let successCount = 0;
+            let lastUploadedCard = null;
+            let hasError = false;
+            
+            for (let i = 0; i < selectedFilesForUpload.length; i++) {
+                let file = selectedFilesForUpload[i];
+                let fileName = file.name;
+                
+                $('#g-upload-filename').text('Mengunggah ' + (i+1) + ' dari ' + selectedFilesForUpload.length + ': ' + fileName);
+                $('#g-upload-progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+                
+                let formData = new FormData();
+                formData.append('media', file);
+                formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+                
+                try {
+                    let response = await $.ajax({
+                        url: '{{ route("media.upload") }}',
+                        type: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        xhr: function() {
+                            var xhr = new window.XMLHttpRequest();
+                            xhr.upload.addEventListener("progress", function(evt) {
+                                if (evt.lengthComputable) {
+                                    var percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                                    $('#g-upload-progress-bar').css('width', percentComplete + '%')
+                                        .attr('aria-valuenow', percentComplete)
+                                        .text(percentComplete + '%');
+                                }
+                            }, false);
+                            return xhr;
+                        }
+                    });
+                    
+                    if (response.status === 'success' && response.file_name) {
+                        successCount++;
+                        let savedFileName = response.file_name.replace('/media/', '');
+                        let savedExt = savedFileName.split('.').pop().toLowerCase();
+                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(savedExt);
+                        let baseUrl = '{{ url("media") }}/' + savedFileName;
+                        let previewUrl = baseUrl + (isImage ? '?size=small' : '');
+                        let scheme = '{{ request()->getScheme() }}';
+                        let host = window.location.host;
+                        
+                        let icon = 'fa-file';
+                        if (['pdf'].includes(savedExt)) icon = 'fa-file-pdf text-danger';
+                        else if (['doc', 'docx'].includes(savedExt)) icon = 'fa-file-word text-primary';
+                        else if (['xls', 'xlsx'].includes(savedExt)) icon = 'fa-file-excel text-success';
+                        else if (['zip', 'rar'].includes(savedExt)) icon = 'fa-file-archive text-warning';
+                        else if (['mp4', 'mkv', 'avi'].includes(savedExt)) icon = 'fa-file-video text-info';
+
+                        let viewBtn = '';
+                        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(savedExt)) {
+                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + host + '/media/' + savedFileName + '" data-ext="' + savedExt + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                        }
+
+                        let imgWrapper = $('<div class="card-img-top text-center bg-light d-flex align-items-center justify-content-center" style="height: 90px; overflow: hidden;"></div>');
+                        if (isImage) {
+                            let $img = $('<img>').attr('src', previewUrl).addClass('img-fluid').css({
+                                'object-fit': 'cover',
+                                'width': '100%',
+                                'height': '100%'
+                            }).attr('alt', savedFileName).attr('loading', 'lazy');
+                            imgWrapper.append($img);
+                        } else {
+                            imgWrapper.append('<i class="fa ' + icon + ' fa-3x"></i>');
+                        }
+
+                        let col = $('<div class="col-4 col-md-3 col-lg-2 mb-3 px-1 media-grid-col" data-ext="' + savedExt + '"></div>');
+                        let card = $('<div class="card h-100 border media-grid-item pointer position-relative" data-val="' + savedFileName + '" onclick="selectMediaGridItem(this, event)"></div>');
+                        
+                        if (viewBtn) card.append(viewBtn);
+                        card.append(imgWrapper);
+                        card.append('<div class="card-body p-1 text-center" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px;"><span title="' + savedFileName + '">' + savedFileName + '</span><div style="font-size: 10px; color: #888; margin-top: 2px;"><span class="badge badge-info mr-1" style="font-size: 9px; padding: 2px 4px;">' + savedExt.toUpperCase() + '</span>Baru</div></div>');
+                        
+                        col.append(card);
+                        $('#global-media-empty').hide();
+                        $('#global-media-grid').prepend(col);
+                        
+                        lastUploadedCard = card;
+                    } else {
+                        hasError = true;
+                        $('#g-upload-alert').append('<div>Gagal mengupload ' + fileName + ': ' + (response.message || 'Error') + '</div>');
+                    }
+                } catch(err) {
+                    hasError = true;
+                    let msg = 'Terjadi kesalahan saat mengupload ' + fileName;
+                    if (err.responseJSON && err.responseJSON.message) {
+                        msg += ': ' + err.responseJSON.message;
+                    }
+                    $('#g-upload-alert').append('<div>' + msg + '</div>');
+                }
+            }
+            
+            $('#g-upload-progress-container').hide();
+            
+            if (hasError) {
+                $('#g-upload-alert').show();
+                // Tetap di tab ini jika ada error, agar user bisa lihat
+                $('#g-upload-ui').show();
+            } else {
+                $('#g-ajax-upload-input').val('');
+                $('#g-upload-ui').show();
+            }
+            
+            if (successCount > 0) {
+                notif(successCount + ' file berhasil diupload', 'success');
+                if (lastUploadedCard) {
+                    lastUploadedCard.click();
+                }
+                if (!hasError) {
+                    $('#g-library-tab').tab('show');
+                }
             }
         });
 
         $('#btn-use-selected-media').on('click', function () {
             let selectedVal = $('#global-library-select').val();
-            if (selectedVal && currentFileInput && currentFileWrapper) {
+            if (!selectedVal) return;
+
+            if (currentFileInput && currentFileWrapper) {
                 let fieldName = currentFileInput.attr('name') || currentFileInput.data('name');
                 if (!fieldName) return;
 
@@ -336,6 +625,10 @@
                 previewArea.append('<div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + selectedVal + '">' + selectedVal + '</div>');
 
                 currentFileWrapper.find('.btn-clear-gmedia').show();
+                $('#globalMediaModal').modal('hide');
+            } else if (currentTextInput) {
+                let fileUrl = '{{ url("media") }}/' + selectedVal;
+                currentTextInput.val(fileUrl);
                 $('#globalMediaModal').modal('hide');
             }
         });

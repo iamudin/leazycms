@@ -67,6 +67,21 @@ class Post extends BaseModel
                 foreach ($post->files as $row) {
                     $row->deleteFile();
                 }
+                
+                // Hapus file pada kolom media (jika ada) apabila tidak digunakan oleh post lain
+                if (!empty($post->media)) {
+                    $fileName = basename(parse_url($post->media, PHP_URL_PATH));
+                    $isUsedElsewhere = self::where('media', 'like', "%{$fileName}%")
+                                           ->where('id', '!=', $post->id)
+                                           ->exists();
+                                           
+                    if (!$isUsedElsewhere) {
+                        $fileModel = \Leazycms\FLC\Models\File::where('file_name', $fileName)->first();
+                        if ($fileModel) {
+                            $fileModel->deleteFile();
+                        }
+                    }
+                }
             }
 
             try {

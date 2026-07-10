@@ -135,7 +135,7 @@ class Panel
             } else {
                 $content = minify_all_one_line($content);
             }
-            if (preg_match('/<input\b[^>]*type\s*=\s*(["\'])file\1/i', $content)) {
+            if (preg_match('/<input\b[^>]*type\s*=\s*(["\'])file\1/i', $content) || strpos($content, 'btn-text-gmedia') !== false) {
                 try {
                     $jsSnippet = minify_all_one_line(init_modal_upload());
                     if (stripos($content, '</body>') !== false) {

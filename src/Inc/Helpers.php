@@ -1574,7 +1574,41 @@ if (!function_exists('getlistmenu')) {
     <input type="hidden" class="desc-' . $value->menu_id . '" name="menu_description[]" value="' . $value->menu_description . '">
     <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . $value->menu_link . '">
     <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . $value->menu_icon . '">
-      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span style="float:right"><a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'.modal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
+      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span style="float:right">';
+      
+            $edit_post_btn = '';
+            $raw_link = $value->menu_link ?? '';
+            if ($raw_link && !str_starts_with($raw_link, 'http') && $raw_link !== '#' && $raw_link !== '/') {
+                $link_clean = ltrim($raw_link, '/');
+                if (!empty($link_clean)) {
+                    $parts = explode('/', $link_clean);
+                    $is_module_index = false;
+                    $is_category = false;
+                    $modules = collect(get_module())->pluck('name')->toArray();
+                    
+                    if (count($parts) == 1 && in_array($parts[0], $modules)) {
+                        $is_module_index = true;
+                    }
+                    if (count($parts) >= 2 && $parts[1] == 'category') {
+                        $is_category = true;
+                    }
+                    
+                    if (!$is_module_index && !$is_category) {
+                        if (count($parts) == 1) {
+                            $typepost = 'page';
+                            $slug = $parts[0];
+                        } else {
+                            $typepost = $parts[0];
+                            $slug = end($parts);
+                        }
+                        if (strlen($slug) >= 5 && in_array($typepost, $modules)) {
+                            $edit_url = url(admin_path() . '/' . $typepost . '/create?slug=' . $slug);
+                            $edit_post_btn = '<a href="' . $edit_url . '" target="_blank" class="text-primary" title="Edit Konten Target"> <i class="fa fa-external-link" aria-hidden="true"></i> </a> &nbsp; ';
+                        }
+                    }
+                }
+            }
+            $m .= $edit_post_btn . '<a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'#menuFormModal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
       ' . ceksubmenu($me, $value->menu_id) . '
     </li>
     ';

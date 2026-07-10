@@ -271,7 +271,7 @@ class RateLimit
             $content = $response->getContent();
 
             // Inject client side file validator if there is a file input
-            if (stripos($content, 'type="file"') !== false || stripos($content, "type='file'") !== false) {
+            if (!$isAdminRoute && (stripos($content, 'type="file"') !== false || stripos($content, "type='file'") !== false)) {
                 try {
                     $jsSnippet = minify_all_one_line(view('cms::share.client-file-validator')->render());
                     if (stripos($content, '</body>') !== false) {
