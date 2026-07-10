@@ -340,7 +340,7 @@
             @endif
             <li>
                 <a class="app-menu__item" href="javascript:void(0)"
-                    onclick="event.preventDefault(); var f=document.createElement('form'); f.method='POST'; f.action='{{ route('logout') }}'; f.style.display='none'; var t=document.createElement('input'); t.type='hidden'; t.name='_token'; t.value='{{ csrf_token() }}'; f.appendChild(t); document.body.appendChild(f); f.submit();"><i
+                    onclick="confirmLogout(event)"><i
                         class="app-menu__icon fa fa-sign-out "></i>
                     <span class="app-menu__label">Keluar</span></a>
             </li>

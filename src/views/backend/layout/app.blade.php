@@ -503,6 +503,46 @@
 
     <!-- Global Media Modal -->
 
+    <script>
+    function confirmLogout(event) {
+        event.preventDefault();
+        swal(
+            {
+                title: "Anda yakin ingin keluar?",
+                text: "Anda akan mengakhiri sesi ini.",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Ya, Keluar!",
+                cancelButtonText: "Batal",
+                closeOnConfirm: false
+            },
+            function (isConfirm) {
+                if (isConfirm) {
+                    swal({
+                        title: "Terima kasih!",
+                        text: "Sampai jumpa kembali.",
+                        type: "success",
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    setTimeout(function() {
+                        var f=document.createElement('form');
+                        f.method='POST';
+                        f.action='{{ route('logout') }}';
+                        f.style.display='none';
+                        var t=document.createElement('input');
+                        t.type='hidden';
+                        t.name='_token';
+                        t.value='{{ csrf_token() }}';
+                        f.appendChild(t);
+                        document.body.appendChild(f);
+                        f.submit();
+                    }, 1000);
+                }
+            }
+        );
+    }
+    </script>
 </body>
 
 </html>

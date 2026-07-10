@@ -152,8 +152,7 @@
             modal.remove();
         });
 
-    });
-</script>
+    });</script>
 <script src="{{url('backend/js/plugins/select2.min.js')}}"></script>
 
 
@@ -214,8 +213,7 @@
 
     function showalert(val) {
         swal(val);
-    }
-</script>
+    }</script>
 @if(get_post_type() || in_array(request()->segment(2), ['polling', 'tags', 'user', 'files', 'comments', 'tenant', 'theme', 'security']))
     <script>
         function deleteAlert(url) {
@@ -260,8 +258,7 @@
                     }
                 }
             );
-        }
-    </script>
+        }</script>
 @endif
 <script>
 
@@ -276,5 +273,4 @@
             }
         };
     };
-    goUrl();
-</script>
+    goUrl();</script>
