@@ -99,7 +99,17 @@ class TenantController extends Controller implements HasMiddleware
 
                 return $badges[$row->status] ?? '-';
             })
-            ->rawColumns(['action', 'status', 'theme'])
+            ->addColumn('resource', function ($row) {
+                $totalSize = \Leazycms\FLC\Models\File::where('host', $row->domain)->sum('file_size');
+                $formattedSize = '0 B';
+                if ($totalSize > 0) {
+                    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                    $power = $totalSize > 0 ? floor(log($totalSize, 1024)) : 0;
+                    $formattedSize = number_format($totalSize / pow(1024, $power), 2, '.', ',') . ' ' . $units[$power];
+                }
+                return '<span class="badge badge-info" style="font-size:12px"><i class="fa fa-hdd-o"></i> ' . $formattedSize . '</span>';
+            })
+            ->rawColumns(['action', 'status', 'theme', 'resource'])
             ->toJson();
     }
 

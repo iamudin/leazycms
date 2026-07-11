@@ -15,6 +15,7 @@
                         <th style="vertical-align: middle">Nama Tenant</th>
                         <th style="vertical-align: middle">Domain</th>
                         <th style="vertical-align: middle">Theme</th>
+                        <th style="vertical-align: middle">Resource</th>
                         <th style="vertical-align: middle" width="10px">Status</th>
                         <th style="vertical-align: middle" width="10px">Aksi</th>
                     </tr>
@@ -58,6 +59,13 @@
                         data: 'theme',
                         name: 'theme',
                         searchable: true
+                    },
+                    {
+                        data: 'resource',
+                        name: 'resource',
+                        className: 'text-center',
+                        searchable: false,
+                        orderable: false
                     },
                     {
                         data: 'status',

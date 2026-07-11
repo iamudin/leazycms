@@ -468,24 +468,75 @@
                 var link = $('.link').val();
                 var icon = $('.iconx').val();
 
-                $('#name').val(name);
-                $('#description').val(desc);
-                $('#link').val(link);
-                $('#iconx').val(icon);
-                $('#labelname').html(name);
                 var type = $('#type').val();
+                
+                var escapedDesc = desc.replace(/'/g, "\\'");
+                var escapedLink = link.replace(/'/g, "\\'");
+                var escapedName = name.replace(/'/g, "\\'");
+                var escapedIcon = icon.replace(/'/g, "\\'");
+
+                function formatLinkMenu(menuUrl) {
+                    if (!menuUrl) return '';
+                    if (menuUrl.indexOf('http') !== -1 || menuUrl.indexOf('javascript:') === 0 || menuUrl === '#') {
+                        return menuUrl;
+                    }
+                    var cleanLink = menuUrl.charAt(0) === '/' ? menuUrl.substring(1) : menuUrl;
+                    return "{{ url('') }}/" + cleanLink;
+                }
+                var formattedLink = formatLinkMenu(link);
+
                 if (type != 'add') {
+                    // Update hidden inputs
                     $('.name-' + type).val(name);
                     $('.desc-' + type).val(desc);
                     $('.link-' + type).val(link);
                     $('.icon-' + type).val(icon);
+                    
+                    // Update UI text in nested list
+                    var $content = $('.menu-id-' + type + ' > .dd3-content');
+                    if ($content.length) {
+                        // Update text node
+                        if ($content[0].childNodes[0].nodeType === 3) {
+                            $content[0].childNodes[0].nodeValue = name + " ";
+                        }
+                        
+                        // Update the link text and href if present
+                        var $linkCode = $content.find('code a');
+                        if ($linkCode.length) {
+                            $linkCode.attr('href', formattedLink).find('i').text(formattedLink.substring(0, 60) + (formattedLink.length > 60 ? '...' : ''));
+                        }
+                        
+                        // Update onclick on edit button
+                        var $editBtn = $content.find('.text-warning');
+                        if ($editBtn.length) {
+                            $editBtn.attr('onclick', "$('.description').val('"+escapedDesc+"');$('.link').val('"+escapedLink+"');$('.name').val('"+escapedName+"');$('.iconx').val('"+escapedIcon+"');$('#type').val('"+type+"');$('#menuFormModal').modal('show')");
+                        }
+                    }
                 } else {
-                    $('.main-list').append($('.newmenu').html());
+                    var newId = Math.floor(Math.random() * 900000) + 100000;
+                    var $newItem = $($('.newmenu').html());
+                    
+                    $newItem.attr('data-id', newId).addClass('menu-id-' + newId);
+                    
+                    $newItem.find('input[name="menu_id[]"]').val(newId);
+                    $newItem.find('input[name="menu_name[]"]').val(name).addClass('name-' + newId);
+                    $newItem.find('input[name="menu_description[]"]').val(desc).addClass('desc-' + newId);
+                    $newItem.find('input[name="menu_link[]"]').val(link).addClass('link-' + newId);
+                    $newItem.find('input[name="menu_icon[]"]').val(icon).addClass('icon-' + newId);
+                    
+                    // Remove IDs from cloned inputs to avoid duplicates
+                    $newItem.find('input').removeAttr('id');
+                    $newItem.removeAttr('id'); // li element
+                    
+                    var buttonsHtml = '<span style="float:right"><a href="javascript:void(0)" onclick="$(\'.description\').val(\''+escapedDesc+'\');$(\'.link\').val(\''+escapedLink+'\');$(\'.name\').val(\''+escapedName+'\');$(\'.iconx\').val(\''+escapedIcon+'\');$(\'#type\').val(\''+newId+'\');$(\'#menuFormModal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\''+newId+'\')" class="text-danger"> <i class="fa fa-trash" aria-hidden></i> </a></span>';
+                    
+                    $newItem.find('.dd3-content').html(name + ' <i class="fa fa-angle-right" aria-hidden></i> <code><a href="' + formattedLink + '"><i>' + formattedLink.substring(0, 60) + (formattedLink.length > 60 ? '...' : '') + '</i></a></code>' + buttonsHtml).removeAttr('id');
+                    
+                    $('.main-list').append($newItem);
+                    
                     $('#nestable3').nestable({
                         group: 1
-                    }
-                    ).change();
-
+                    }).change();
                 }
 
                 $('.add').click();

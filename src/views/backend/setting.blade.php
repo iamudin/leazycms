@@ -1,6 +1,6 @@
 @extends('cms::backend.layout.app', ['title' => 'Setting › Website'])
 @section('content')
-    <form class="" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
+    <form class="settingForm" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
         @method('PUT')
         @csrf
         <div class="row">
@@ -196,6 +196,7 @@
                                         Login
                                         Path</h6>
                                     <input type="text" class="form-control form-control-sm" name="admin_path"
+                                        oninput="this.value = this.value.replace(/[^a-z]/g, '')"
                                         value="{{ admin_path() }}">
                                     <small class="text-danger"> <i class="fa fa-warning"></i> Menggunakan kata kunci yang
                                         unik
@@ -262,5 +263,80 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
         @include('cms::backend.layout.js')
+        <script>
+            $('.settingForm').on('submit', function (e) {
+                e.preventDefault();
+                let $btn = $(this).find('button[name="save_setting"]');
+                let originalText = $btn.html();
+                $btn.html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...').attr('disabled', 'disabled');
+                
+                let form = this;
+                let actionUrl = $(form).attr('action');
+                let formData = new FormData(form);
+                formData.append('save_setting', 'true');
+                
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+
+                $.ajax({
+                    url: actionUrl,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        let submittedAdminPath = formData.get('admin_path');
+                        let originalAdminPath = '{{ admin_path() }}';
+                        
+                        if (submittedAdminPath && submittedAdminPath !== originalAdminPath) {
+                            notif('Berhasil! Mengalihkan ke halaman admin baru...', 'success');
+                            let newUrl = window.location.href.replace('/' + originalAdminPath + '/', '/' + submittedAdminPath + '/');
+                            window.location.href = newUrl;
+                            return;
+                        }
+
+                        notif('Berhasil menyimpan pengaturan!', 'success');
+                        $btn.html(originalText).removeAttr('disabled');
+                        
+                        if (typeof response === 'string' && response.includes('<html')) {
+                            let newDoc = new DOMParser().parseFromString(response, 'text/html');
+                            
+                            ['profile', 'keamanan', 'pwa'].forEach(function(tabId) {
+                                let newTab = newDoc.getElementById(tabId);
+                                if (newTab && document.getElementById(tabId)) {
+                                    document.getElementById(tabId).innerHTML = newTab.innerHTML;
+                                }
+                            });
+                            
+                            if ($.fn.bootstrapToggle) {
+                                $('.toggle-status').bootstrapToggle();
+                            }
+                            
+                            $('.btn-clear-gmedia').click();
+                        }
+                    },
+                    error: function (xhr) {
+                        try {
+                            let res = JSON.parse(xhr.responseText);
+                            let allMsg = [];
+                            if (res.errors) {
+                                Object.values(res.errors).forEach(arrMsg => { allMsg = allMsg.concat(arrMsg); });
+                                notif(allMsg.join('<br>'), 'danger');
+                            } else if (res.message) {
+                                notif(res.message, 'danger');
+                            } else {
+                                notif('Gagal menyimpan perubahan!', 'danger');
+                            }
+                        } catch (e) {
+                            notif('Gagal menyimpan perubahan!', 'danger');
+                        }
+                        $btn.html(originalText).removeAttr('disabled');
+                    }
+                });
+            });
+        </script>
     @endpush
 @endsection

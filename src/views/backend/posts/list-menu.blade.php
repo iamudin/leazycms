@@ -147,7 +147,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary save" onclick="setmenu();$('#menuFormModal').modal('hide')" type="button"
+          <button class="btn btn-primary save" onclick="setmenu();submitMenuAjax(this)" type="button"
             name="save" value="">Simpan</button>
 
         </div>
@@ -156,6 +156,40 @@
     </div>
   </div>
 </div>
+
+<script>
+  function submitMenuAjax(btn) {
+    let $btn = $(btn);
+    let originalText = $btn.text();
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+    $btn.prop('disabled', true);
+    
+    var form = $('.editorForm')[0];
+    var formData = new FormData(form);
+    
+    $.ajax({
+      url: $(form).attr('action'),
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        $btn.html('Simpan');
+        $btn.prop('disabled', false);
+        $('#menuFormModal').modal('hide');
+     
+        
+        // Refresh the page so the newly added menu gets proper edit/delete buttons and correct hierarchy
+      
+      },
+      error: function(xhr) {
+        $btn.html('Simpan');
+        $btn.prop('disabled', false);
+        alert('Terjadi kesalahan saat menyimpan menu');
+      }
+    });
+  }
+</script>
 
 <script>
   $(function () {

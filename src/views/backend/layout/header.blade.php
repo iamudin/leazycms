@@ -29,12 +29,12 @@
     <ul class="app-nav">
         @include('cms::backend.layout.notif')
         <!--Notification Menu-->
-        <li class="item" title="Kunjungi Website"><a class="app-nav__item" href="{{ url('/') }}" target="_blank" style="color: var(--header-font, #fff) !important;"><i class="fa fa-globe fa-lg"></i></a></li>
+        <li class="item" title="Kunjungi Website"><a class="app-nav__item" href="{{ url('/') }}" target="_blank" style="color: var(--header-font, #fff) !important;"><i class="fa fa-globe fa-lg text-primary"></i></a></li>
 
         <!-- Sidebar Theme Menu -->
         <li class="dropdown">
             <a class="app-nav__item" title="Ubah Tema Sidebar" href="#" data-toggle="dropdown" aria-label="Open Theme Menu" style="color: var(--header-font, #fff) !important;">
-                <i class="fa fa-paint-brush fa-lg"></i>
+                <i class="fa fa-paint-brush fa-lg text-info"></i>
             </a>
             <ul class="dropdown-menu settings-menu dropdown-menu-right" id="theme-selector-menu">
                 <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="setSidebarTheme('dark')"><span style="width:15px;height:15px;border-radius:50%;background:#1D2327;margin-right:10px;border:1px solid #ccc;"></span> Dark (Default)</a></li>
@@ -46,7 +46,7 @@
         </li>
 
         <li class="dropdown"><a class="app-nav__item" title="Profile" href="#" data-toggle="dropdown"
-                aria-label="Open Profile Menu" style="color: var(--header-font, #fff) !important;"><i class="fa fa-user fa-lg"></i></a>
+                aria-label="Open Profile Menu" style="color: var(--header-font, #fff) !important;"><i class="fa fa-user fa-lg text-danger"></i></a>
             <ul class="dropdown-menu settings-menu dropdown-menu-right">
                 @if(request()->user()->level=='admin')
 

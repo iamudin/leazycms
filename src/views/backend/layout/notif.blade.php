@@ -3,7 +3,7 @@
         @php
         $total_notifikasi = notifications()->get_unread_notifications();
         @endphp
-      <a class="app-nav__item" href="javascript:void(0)" data-toggle="dropdown" aria-label="Show notifications"><i class="fa fa-bell-o fa-lg"></i>
+      <a class="app-nav__item" href="javascript:void(0)" data-toggle="dropdown" aria-label="Show notifications"><i class="fa fa-bell-o fa-lg text-warning"></i>
         @if($total_notifikasi->count()) <span class="badge badge-warning">{{$total_notifikasi->count()}}</span>@endif
     </a>
       <ul class="app-notification dropdown-menu dropdown-menu-right">

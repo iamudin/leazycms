@@ -198,11 +198,14 @@
                     @endif
 
                     @if ($module->form->custom_field)
-                        @include('cms::backend.posts.custom_field.form')
-
+                        <div id="custom-fields-container">
+                            @include('cms::backend.posts.custom_field.form')
+                        </div>
                     @endif
                     @if ($module->form->looping_data)
-                    @include('cms::backend.posts.looping_data.form')
+                        <div id="looping-data-container">
+                            @include('cms::backend.posts.looping_data.form')
+                        </div>
                     @endif
                 </div>
                 <div class="col-lg-3">
@@ -354,7 +357,62 @@
                                     notif('Berhasil menyimpan perubahan!', 'success');
                                     $('.text-save').html('Simpan');
                                     $('.btn-primary').removeAttr('disabled');
-                                    location.reload();
+                                    
+                                    if (typeof response === 'string' && response.includes('<html')) {
+                                        let newDoc = new DOMParser().parseFromString(response, 'text/html');
+                                        
+                                        // Update Thumbnail Image
+                                        let newThumb = newDoc.getElementById('thumb');
+                                        if (newThumb && document.getElementById('thumb')) {
+                                            document.getElementById('thumb').src = newThumb.src;
+                                            $('input[name="media"]').val('');
+                                        }
+                                        
+                                        // Update Custom Fields Container
+                                        let newCustomFields = newDoc.getElementById('custom-fields-container');
+                                        if (newCustomFields && document.getElementById('custom-fields-container')) {
+                                            document.getElementById('custom-fields-container').innerHTML = newCustomFields.innerHTML;
+                                        }
+                                        
+                                        // Update Looping Data Container
+                                        let newLoopingData = newDoc.getElementById('looping-data-container');
+                                        if (newLoopingData && document.getElementById('looping-data-container')) {
+                                            document.getElementById('looping-data-container').innerHTML = newLoopingData.innerHTML;
+                                        }
+                                        
+                                        // Clear any lingering Gmedia preview wrappers (temporary previews)
+                                        $('.btn-clear-gmedia').click();
+                                    }
+
+                                    // Reset status buttons state instead of reloading
+                                    $('.btn-group-toggle label').each(function() {
+                                        let $label = $(this);
+                                        let $input = $label.find('input');
+                                        let val = $input.val();
+                                        
+                                        // Enable all labels
+                                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
+                                        
+                                        // Reset icon and text based on value
+                                        let $icon = $label.find('i');
+                                        $icon.removeClass('fa-spinner fa-spin');
+                                        
+                                        if (val === 'publish') {
+                                            $icon.addClass('fa-globe');
+                                            $label.contents().filter(function() {
+                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                            }).each(function() {
+                                                this.nodeValue = ' Publikasikan';
+                                            });
+                                        } else if (val === 'draft') {
+                                            $icon.addClass('fa-archive');
+                                            $label.contents().filter(function() {
+                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                            }).each(function() {
+                                                this.nodeValue = ' Draft';
+                                            });
+                                        }
+                                    });
                                 },
                                error: function (xhr) {
 

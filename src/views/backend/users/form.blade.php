@@ -29,7 +29,7 @@
                     @method('PUT')
                 @endif
                 <div class="form-group mt-2  mb-2">
-                    <label class="mb-0">Foto <span style="color:red">(TEST RENDER)</span></label>
+                    <label class="mb-0">Foto</label>
                     @if($user && $user->photo && media_exists($user->photo))
                         <div class="media-preview-wrapper">
                             <br><img src="{{ $user->photo_user}}" style="height: 70px" class="img-thumbnail"> <a
