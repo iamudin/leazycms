@@ -131,6 +131,7 @@ class TenantController extends Controller implements HasMiddleware
             'admin_email' => 'required|email|unique:users,email',
             'admin_username' => 'required|string|min:5|unique:users,username',
             'modules' => 'nullable|array',
+            'disk_space' => 'nullable|integer|min:0',
             'admin_password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ], [
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
@@ -149,6 +150,7 @@ class TenantController extends Controller implements HasMiddleware
             'status' => $request->status,
             'theme' => $theme ?? '',
             'modules' => $request->modules,
+            'disk_space' => $request->disk_space,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
 
@@ -218,6 +220,7 @@ class TenantController extends Controller implements HasMiddleware
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
             'theme' => 'required_unless:custom_theme,1',
             'modules' => 'nullable|array',
+            'disk_space' => 'nullable|integer|min:0',
         ];
 
         if (!$isMainDomain) {
@@ -247,6 +250,7 @@ class TenantController extends Controller implements HasMiddleware
             'status' => $isMainDomain ? $tenant->status : $request->status,
             'theme' => $theme ?: $oldTheme,
             'modules' => $request->modules,
+            'disk_space' => $request->disk_space,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
 

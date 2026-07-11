@@ -35,6 +35,13 @@
                                 otomatis mengambil hostname-nya.</small>
                         </div>
                         <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Kapasitas Penyimpanan (MB)</label>
+                            <input class="form-control form-control-sm" name="disk_space" type="number"
+                                placeholder="Misal: 500"
+                                value="{{ $tenant ? $tenant->disk_space : old('disk_space') }}">
+                            <small class="text-muted">Biarkan kosong atau isi 0 jika tidak ingin membatasi (unmetered).</small>
+                        </div>
+                        <div class="form-group mt-2 mb-2">
 
                             <label for="">Module</label>
                             <select name="modules[]" id="select2" class="form-control form-control-sm form-control-select"

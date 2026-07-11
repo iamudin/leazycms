@@ -91,6 +91,62 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center" style="font-size: 13px; border-top: 1px solid #e9ecef;">
+                @php
+                    $tenantFilesQuery = \Leazycms\FLC\Models\File::query();
+                    if (config('modules.multisite_enabled') && !is_main_domain()) {
+                        $tenantFilesQuery->where('host', request()->getHttpHost());
+                    }
+                    
+                    $totalFiles = $tenantFilesQuery->count();
+                    $totalSizeBytes = $tenantFilesQuery->sum('file_size');
+                    
+                    $formattedSize = '0 B';
+                    if ($totalSizeBytes > 0) {
+                        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                        $power = $totalSizeBytes > 0 ? floor(log($totalSizeBytes, 1024)) : 0;
+                        $formattedSize = number_format($totalSizeBytes / pow(1024, $power), 2, '.', ',') . ' ' . $units[$power];
+                    }
+                @endphp
+                <div class="text-muted">
+                    <i class="fa fa-hdd-o text-info mr-1"></i> Total Media: <b class="text-dark" id="g-total-media-count">{{ number_format($totalFiles, 0, ',', '.') }}</b> file (<b class="text-dark" id="g-total-media-size">{{ $formattedSize }}</b>)
+                </div>
+                
+                @if(config('modules.multisite_enabled') && !is_main_domain())
+                    @php
+                        $tenantData = tenant();
+                        $diskSpaceMB = $tenantData ? ($tenantData->disk_space ?? 0) : 0;
+                        $diskSpaceBytes = $diskSpaceMB * 1024 * 1024;
+                        $percentUsed = 0;
+                        if ($diskSpaceBytes > 0) {
+                            $percentUsed = min(100, round(($totalSizeBytes / $diskSpaceBytes) * 100, 1));
+                        }
+                    @endphp
+                    @if($diskSpaceMB > 0)
+                        @php
+                            $sisaBytes = max(0, $diskSpaceBytes - $totalSizeBytes);
+                            $sisaMB = round($sisaBytes / 1024 / 1024, 2);
+                        @endphp
+                        <div class="d-flex align-items-center ml-auto" style="width: 320px;" id="g-disk-space-container">
+                            <div class="mr-2 text-right" style="line-height: 1.2;">
+                                <div class="text-muted" style="font-size: 10px;">{{ $diskSpaceMB }} MB</div>
+                                <div class="font-weight-bold g-disk-sisa-text {{ $sisaMB <= ($diskSpaceMB * 0.1) ? 'text-danger' : 'text-success' }}" style="font-size: 11px;">Sisa: {{ $sisaMB }} MB</div>
+                            </div>
+                            <div class="progress flex-grow-1" style="height: 12px; border-radius: 6px;" title="{{ $formattedSize }} terpakai dari {{ $diskSpaceMB }} MB (Sisa: {{ $sisaMB }} MB)">
+                                <div class="progress-bar g-disk-progress-bar {{ $percentUsed >= 90 ? 'bg-danger' : ($percentUsed >= 70 ? 'bg-warning' : 'bg-success') }}" role="progressbar" style="width: {{ $percentUsed }}%;" aria-valuenow="{{ $percentUsed }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="ml-2 font-weight-bold g-disk-percent-text {{ $percentUsed >= 90 ? 'text-danger' : 'text-muted' }}" style="font-size: 11px;">{{ $percentUsed }}%</span>
+                        </div>
+                    @else
+                        <div class="text-muted ml-auto"><i class="fa fa-infinity text-primary"></i> Kapasitas Unmetered</div>
+                    @endif
+                @endif
+                <script>
+                    window.tenantDiskSpaceBytes = {{ (config('modules.multisite_enabled') && !is_main_domain() && isset($diskSpaceBytes) && $diskSpaceBytes > 0) ? $diskSpaceBytes : 'null' }};
+                    window.tenantUsedSpaceBytes = {{ isset($totalSizeBytes) ? $totalSizeBytes : 0 }};
+                </script>
+            </div>
         </div>
     </div>
 </div>
@@ -98,11 +154,66 @@
 <script>
     function selectMediaGridItem(elem, event) {
         if (event && $(event.target).closest('.btn-view-media').length > 0) return;
+        if (event && $(event.target).closest('.btn-delete-media').length > 0) return;
         $('.media-grid-item').removeClass('border-primary shadow').css('border-width', '1px');
         $(elem).addClass('border-primary shadow').css('border-width', '2px');
         $('#global-library-select').val($(elem).data('val'));
         $('#btn-use-selected-media').removeAttr('disabled');
     }
+
+    window.updateDiskSpaceUI = function(addedBytes = 0) {
+        if (addedBytes !== 0) {
+            window.tenantUsedSpaceBytes += addedBytes;
+            if (window.tenantUsedSpaceBytes < 0) window.tenantUsedSpaceBytes = 0;
+        }
+        
+        let totalMediaEl = $('#g-total-media-count');
+        let totalMediaSizeEl = $('#g-total-media-size');
+        if (addedBytes !== 0 && totalMediaEl.length) {
+            let count = parseInt(totalMediaEl.text().replace(/\./g, '')) || 0;
+            let increment = addedBytes > 0 ? 1 : -1;
+            count += increment;
+            if (count < 0) count = 0;
+            totalMediaEl.text(count.toLocaleString('id-ID'));
+        }
+        
+        let formatSize = function(size) {
+            if (size === 0) return '0 B';
+            let pwr = Math.floor(Math.log(size) / Math.log(1024));
+            let units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            return (size / Math.pow(1024, pwr)).toFixed(2).replace('.00', '') + ' ' + units[pwr];
+        };
+
+        if (totalMediaSizeEl.length) {
+            totalMediaSizeEl.text(formatSize(window.tenantUsedSpaceBytes));
+        }
+
+        if (window.tenantDiskSpaceBytes !== null && window.tenantDiskSpaceBytes > 0) {
+            let diskMB = (window.tenantDiskSpaceBytes / 1024 / 1024).toFixed(0);
+            let usedBytes = window.tenantUsedSpaceBytes;
+            let sisaBytes = Math.max(0, window.tenantDiskSpaceBytes - usedBytes);
+            let sisaMB = (sisaBytes / 1024 / 1024).toFixed(2);
+            let percent = Math.min(100, Math.round((usedBytes / window.tenantDiskSpaceBytes) * 100 * 10) / 10);
+            
+            let barClass = percent >= 90 ? 'bg-danger' : (percent >= 70 ? 'bg-warning' : 'bg-success');
+            let textClass = percent >= 90 ? 'text-danger' : 'text-muted';
+            let sisaClass = sisaBytes <= (window.tenantDiskSpaceBytes * 0.1) ? 'text-danger' : 'text-success';
+            let uStr = formatSize(usedBytes);
+            
+            let diskContainer = $('#g-disk-space-container');
+            if (diskContainer.length) {
+                diskContainer.find('.g-disk-sisa-text').removeClass('text-danger text-success').addClass(sisaClass).text('Sisa: ' + sisaMB + ' MB');
+                
+                let progressBar = diskContainer.find('.g-disk-progress-bar');
+                progressBar.removeClass('bg-danger bg-warning bg-success').addClass(barClass)
+                           .css('width', percent + '%')
+                           .attr('aria-valuenow', percent);
+                           
+                diskContainer.find('.g-disk-percent-text').removeClass('text-danger text-muted').addClass(textClass).text(percent + '%');
+                diskContainer.find('.progress').attr('title', uStr + ' terpakai dari ' + diskMB + ' MB (Sisa: ' + sisaMB + ' MB)');
+            }
+        }
+    };
 
     $(function () {
         let currentFileInput = null;
@@ -312,6 +423,8 @@
                         else if (['mp4', 'mkv', 'avi'].includes(ext)) icon = 'fa-file-video text-info';
 
                         let viewBtn = '';
+                        let deleteBtn = '<button type="button" class="btn btn-sm btn-danger position-absolute btn-delete-media" data-media="' + fileName + '" style="top: 2px; left: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Hapus File"><i class="fa fa-trash"></i></button>';
+                        
                         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
                             viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + media.host + '/media/' + fileName + '" data-ext="' + ext + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
                         }
@@ -334,6 +447,7 @@
 
                         let col = $('<div class="col-4 col-md-3 col-lg-2 mb-3 px-1 media-grid-col" data-ext="' + ext + '"></div>');
                         let card = $('<div class="card h-100 border media-grid-item pointer position-relative" data-val="' + fileName + '" onclick="selectMediaGridItem(this, event)"></div>');
+                        card.append(deleteBtn);
                         if (viewBtn) card.append(viewBtn);
                         card.append(imgWrapper);
                         card.append('<div class="card-body p-1 text-center" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px;"><span title="' + fileName + '">' + fileName + '</span><div style="font-size: 10px; color: #888; margin-top: 2px;"><span class="badge badge-info mr-1" style="font-size: 9px; padding: 2px 4px;">' + ext.toUpperCase() + '</span>' + sizeStr + '</div></div>');
@@ -446,6 +560,7 @@
             $('#g-pre-upload-list').empty();
 
             let validIndex = 0;
+            let totalSelectedSize = 0;
             for (let i = 0; i < files.length; i++) {
                 let file = files[i];
                 let ext = file.name.split('.').pop().toLowerCase();
@@ -455,6 +570,7 @@
                 } else if (file.size > maxSizeBytes) {
                     invalidFiles.push(file.name + ' (Ukuran ' + (file.size / 1024 / 1024).toFixed(2) + ' MB melebihi batas ' + maxSizeMB + ' MB)');
                 } else {
+                    totalSelectedSize += file.size;
                     selectedFilesForUpload.push(file);
 
                     let size = (file.size / 1024).toFixed(2);
@@ -489,9 +605,22 @@
                     validIndex++;
                 }
             }
+            
+            if (window.tenantDiskSpaceBytes !== null && window.tenantDiskSpaceBytes > 0) {
+                let remainingSpace = Math.max(0, window.tenantDiskSpaceBytes - window.tenantUsedSpaceBytes);
+                if (totalSelectedSize > remainingSpace) {
+                    let totalSelMB = (totalSelectedSize / 1024 / 1024).toFixed(2);
+                    let remMB = (remainingSpace / 1024 / 1024).toFixed(2);
+                    invalidFiles.push('<strong>Disk Penuh / Tidak Cukup!</strong><br>Total file yang dipilih (' + totalSelMB + ' MB) melebihi sisa kapasitas disk (' + remMB + ' MB). Silakan hapus file lama.');
+                    
+                    // Reset selected files to prevent upload
+                    selectedFilesForUpload = [];
+                    $('#g-pre-upload-list').empty();
+                }
+            }
 
             if (invalidFiles.length > 0) {
-                let errMsg = 'File berikut tidak dapat diproses:<br><ul>';
+                let errMsg = 'File berikut tidak dapat diproses:<br><ul class="mb-0 mt-1 pl-3">';
                 invalidFiles.forEach(f => errMsg += '<li>' + f + '</li>');
                 errMsg += '</ul>';
                 $('#g-upload-alert').html(errMsg).show();
@@ -559,6 +688,9 @@
 
                     if (response.status === 'success' && response.file_name) {
                         successCount++;
+                        if (typeof updateDiskSpaceUI === 'function') {
+                            updateDiskSpaceUI(response.file_size || file.size);
+                        }
                         $progressBar.removeClass('progress-bar-striped progress-bar-animated').addClass('bg-success');
                         $('#success-msg-' + i).show();
                         let savedFileName = response.file_name.replace('/media/', '');
@@ -577,6 +709,8 @@
                         else if (['mp4', 'mkv', 'avi'].includes(savedExt)) icon = 'fa-file-video text-info';
 
                         let viewBtn = '';
+                        let deleteBtn = '<button type="button" class="btn btn-sm btn-danger position-absolute btn-delete-media" data-media="' + savedFileName + '" style="top: 2px; left: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Hapus File"><i class="fa fa-trash"></i></button>';
+
                         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(savedExt)) {
                             viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + host + '/media/' + savedFileName + '" data-ext="' + savedExt + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
                         }
@@ -596,6 +730,7 @@
                         let col = $('<div class="col-4 col-md-3 col-lg-2 mb-3 px-1 media-grid-col" data-ext="' + savedExt + '"></div>');
                         let card = $('<div class="card h-100 border media-grid-item pointer position-relative" data-val="' + savedFileName + '" onclick="selectMediaGridItem(this, event)"></div>');
 
+                        card.append(deleteBtn);
                         if (viewBtn) card.append(viewBtn);
                         card.append(imgWrapper);
                         card.append('<div class="card-body p-1 text-center" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px;"><span title="' + savedFileName + '">' + savedFileName + '</span><div style="font-size: 10px; color: #888; margin-top: 2px;"><span class="badge badge-info mr-1" style="font-size: 9px; padding: 2px 4px;">' + savedExt.toUpperCase() + '</span>Baru</div></div>');
@@ -740,6 +875,39 @@
                 if (existingHidden.length === 0) {
                     inputWrapper.prepend('<input type="hidden" class="removed-media-hidden" name="' + field + '" value="">');
                 }
+            }
+        });
+
+        $(document).on('click', '.btn-delete-media', function(e) {
+            e.stopPropagation();
+            if (confirm('Yakin ingin menghapus file ini secara permanen dari server?')) {
+                let btn = $(this);
+                let mediaName = btn.data('media');
+                let cardCol = btn.closest('.media-grid-col');
+                
+                btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+                
+                $.post('{{ route("media.destroy") }}', {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    media: mediaName
+                }, function(res) {
+                    if (res.status === 'success') {
+                        cardCol.fadeOut(300, function() { $(this).remove(); });
+                        if (typeof updateDiskSpaceUI === 'function' && res.deleted_size) {
+                            updateDiskSpaceUI(-res.deleted_size);
+                        }
+                    } else {
+                        alert('Gagal menghapus file.');
+                        btn.html('<i class="fa fa-trash"></i>').prop('disabled', false);
+                    }
+                }).fail(function(xhr) {
+                    let errorMsg = 'Terjadi kesalahan saat menghapus file.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    alert(errorMsg);
+                    btn.html('<i class="fa fa-trash"></i>').prop('disabled', false);
+                });
             }
         });
     });
