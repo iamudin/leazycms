@@ -1,3 +1,16 @@
+<style>
+    .media-grid-item .btn-view-media,
+    .media-grid-item .btn-download-media,
+    .media-grid-item .btn-delete-media {
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+    }
+    .media-grid-item:hover .btn-view-media,
+    .media-grid-item:hover .btn-download-media,
+    .media-grid-item:hover .btn-delete-media {
+        opacity: 1;
+    }
+</style>
 <div class="modal fade" id="globalMediaModal" tabindex="-1" role="dialog" aria-labelledby="globalMediaModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -155,6 +168,10 @@
     function selectMediaGridItem(elem, event) {
         if (event && $(event.target).closest('.btn-view-media').length > 0) return;
         if (event && $(event.target).closest('.btn-delete-media').length > 0) return;
+        if (event && $(event.target).closest('.btn-download-media').length > 0) {
+            event.stopPropagation();
+            return;
+        }
         $('.media-grid-item').removeClass('border-primary shadow').css('border-width', '1px');
         $(elem).addClass('border-primary shadow').css('border-width', '2px');
         $('#global-library-select').val($(elem).data('val'));
@@ -246,7 +263,7 @@
                         let file = this.files[0];
                         let fileName = file.name;
                         let ext = fileName.split('.').pop().toLowerCase();
-                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg','ico'].includes(ext);
 
                         previewArea.empty().show();
                         if (isImage) {
@@ -295,6 +312,7 @@
                             else if (ext === 'video/mp4') allowedExts.push('mp4');
                             else if (ext === 'video/x-matroska') allowedExts.push('mkv');
                             else if (ext === 'video/x-msvideo') allowedExts.push('avi');
+                            else if (ext === 'image/x-icon' || ext === 'image/vnd.microsoft.icon') allowedExts.push('ico');
                             else if (ext === 'application/zip') allowedExts.push('zip');
                             else if (ext === 'application/x-rar-compressed' || ext === 'application/vnd.rar') allowedExts.push('rar');
                             else if (ext === 'application/msword') allowedExts.push('doc');
@@ -410,9 +428,9 @@
                     response.data.forEach(function (media) {
                         let fileName = media.file_name;
                         let ext = fileName.split('.').pop().toLowerCase();
-                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
                         let baseUrl = '{{ url("media") }}/' + fileName;
-                        let previewUrl = baseUrl + (isImage ? '?size=small' : '');
+                        let previewUrl = baseUrl + (isImage && !['svg', 'ico'].includes(ext) ? '?size=small' : '');
                         let scheme = '{{ request()->getScheme() }}';
 
                         let icon = 'fa-file';
@@ -425,8 +443,10 @@
                         let viewBtn = '';
                         let deleteBtn = '<button type="button" class="btn btn-sm btn-danger position-absolute btn-delete-media" data-media="' + fileName + '" style="top: 2px; left: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Hapus File"><i class="fa fa-trash"></i></button>';
                         
-                        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+                        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx','ico'].includes(ext)) {
                             viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + media.host + '/media/' + fileName + '" data-ext="' + ext + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                        } else {
+                            viewBtn = '<a href="' + scheme + '://' + media.host + '/media/' + fileName + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
                         }
 
                         let imgWrapper = $('<div class="card-img-top text-center bg-light d-flex align-items-center justify-content-center" style="height: 90px; overflow: hidden;"></div>');
@@ -483,10 +503,16 @@
             setTimeout(function() {
                 $('.note-toolbar').each(function() {
                     let $toolbar = $(this);
+                    
+                    /* Hide default summernote insert buttons to avoid confusion */
+                    $toolbar.find('button[data-original-title="Picture"], .note-icon-picture').closest('button').hide();
+                    $toolbar.find('button[data-original-title="Video"], .note-icon-video').closest('button').hide();
+                    $toolbar.find('button[data-original-title="Link"], .note-icon-link').closest('button').hide();
+
                     if ($toolbar.find('.btn-summernote-gmedia').length > 0) return;
 
                     let $btnGroup = $('<div class="note-btn-group btn-group note-insert"></div>');
-                    let $btn = $('<button type="button" class="note-btn btn btn-light btn-sm btn-summernote-gmedia" tabindex="-1" title="Media Library"><i class="fa fa-image"></i></button>');
+                    let $btn = $('<button type="button" class="note-btn btn btn-light btn-sm btn-summernote-gmedia" tabindex="-1" title="Media Library"><i class="fa fa-file"></i> Sisipkan Media</button>');
                     
                     $btn.on('click', function (e) {
                         e.preventDefault();
@@ -500,8 +526,7 @@
                         }
                         window.currentSummernoteObj = { context: context };
 
-                        let allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
-                        $('#globalMediaModal').data('allowedExts', allowedExts);
+                        $('#globalMediaModal').removeData('allowedExts');
                         
                         if (!window.gmediaLoaded) {
                             loadGlobalMedia(1);
@@ -578,7 +603,7 @@
                     if (size > 1024) sizeStr = (size / 1024).toFixed(2) + ' MB';
 
                     let previewHtml = '';
-                    let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                    let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
                     if (isImage) {
                         let objectUrl = URL.createObjectURL(file);
                         previewHtml = '<img src="' + objectUrl + '" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px;">';
@@ -695,9 +720,9 @@
                         $('#success-msg-' + i).show();
                         let savedFileName = response.file_name.replace('/media/', '');
                         let savedExt = savedFileName.split('.').pop().toLowerCase();
-                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(savedExt);
+                        let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(savedExt);
                         let baseUrl = '{{ url("media") }}/' + savedFileName;
-                        let previewUrl = baseUrl + (isImage ? '?size=small' : '');
+                        let previewUrl = baseUrl + (isImage && !['svg', 'ico'].includes(savedExt) ? '?size=small' : '');
                         let scheme = '{{ request()->getScheme() }}';
                         let host = window.location.host;
 
@@ -711,8 +736,10 @@
                         let viewBtn = '';
                         let deleteBtn = '<button type="button" class="btn btn-sm btn-danger position-absolute btn-delete-media" data-media="' + savedFileName + '" style="top: 2px; left: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Hapus File"><i class="fa fa-trash"></i></button>';
 
-                        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(savedExt)) {
+                        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'ico'].includes(savedExt)) {
                             viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + host + '/media/' + savedFileName + '" data-ext="' + savedExt + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                        } else {
+                            viewBtn = '<a href="' + scheme + '://' + host + '/media/' + savedFileName + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
                         }
 
                         let imgWrapper = $('<div class="card-img-top text-center bg-light d-flex align-items-center justify-content-center" style="height: 90px; overflow: hidden;"></div>');
@@ -805,12 +832,12 @@
                 }).insertAfter(currentFileWrapper);
 
                 let ext = selectedVal.split('.').pop().toLowerCase();
-                let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
                 let previewArea = currentFileWrapper.find('.media-preview-area');
 
                 previewArea.empty().show();
                 if (isImage) {
-                    let url = '/media/' + selectedVal + '?size=small';
+                    let url = '/media/' + selectedVal + (!['svg', 'ico'].includes(ext) ? '?size=small' : '');
                     let $img = $('<img>').attr('src', url).css({
                         'max-width': '100%',
                         'height': 'auto',
@@ -839,10 +866,14 @@
             } else if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
                 let fileUrl = '/media/' + selectedVal;
                 let ext = selectedVal.split('.').pop().toLowerCase();
-                let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
                 
                 if (isImage) {
-                    window.currentSummernoteObj.context.summernote('insertImage', fileUrl);
+                    let figureHTML = '<figure style="text-align: center; margin: 10px 0;">' +
+                        '<img src="' + fileUrl + '" style="max-width: 100%; height: auto;" alt="">' +
+                        '<figcaption style="font-style: italic; color: #666;"><small>Keterangan gambar</small></figcaption>' +
+                        '</figure><p><br></p>';
+                    window.currentSummernoteObj.context.summernote('pasteHTML', figureHTML);
                 } else {
                     window.currentSummernoteObj.context.summernote('createLink', {
                         text: selectedVal,

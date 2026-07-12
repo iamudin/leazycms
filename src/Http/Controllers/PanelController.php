@@ -852,6 +852,34 @@ class PanelController extends Controller implements HasMiddleware
                         }
                     } elseif ($request->request->has($key)) {
                         $val = $request->request->get($key);
+                        
+                        // Handle favicon submitted as media path string (from upload modal)
+                        if ($key == 'favicon' && $val) {
+                            $mediaPath = ltrim($val, '/');
+                            // Try to find the file in media storage
+                            $fileName = basename($mediaPath);
+                            $fileRecord = \Leazycms\FLC\Models\File::whereFileName($fileName)->first();
+                            
+                            if (!config('modules.multisite_enabled') || (config('modules.multisite_enabled') && get_option('favicon_for_all') == 1)) {
+                                if ($fileRecord && \Illuminate\Support\Facades\Storage::disk($fileRecord->disk)->exists($fileRecord->file_path)) {
+                                    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                                    if ($ext === 'ico') {
+                                        $destination = public_path('favicon.ico');
+                                        if (file_exists($destination)) {
+                                            unlink($destination);
+                                        }
+                                        // Copy from storage to public
+                                        $content = \Illuminate\Support\Facades\Storage::disk($fileRecord->disk)->get($fileRecord->file_path);
+                                        file_put_contents($destination, $content);
+                                    }
+                                }
+                            } else {
+                                if (file_exists(public_path('favicon.ico'))) {
+                                    unlink(public_path('favicon.ico'));
+                                }
+                            }
+                        }
+                        
                         $option->updateOrCreate(['name' => $key], ['value' => $val ? strip_tags($val) : null, 'autoload' => 1]);
                     }
                 } else {

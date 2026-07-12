@@ -9,6 +9,14 @@
     display: flex;
     align-items: center;
 }
+.app-header__logo {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.app-header__logo img {
+    vertical-align: middle !important;
+}
 </style>
 <!-- Navbar-->
 <header class="app-header"><a href="{{ route('panel.dashboard') }}" class="app-header__logo"

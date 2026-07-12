@@ -42,7 +42,7 @@
                                         @if (is_main_domain() || (config('modules.multisite_enabled') && !get_option('favicon_for_all') && !is_main_domain()))
                                             <small for="" class="text-muted">Favicon (didukung hanya file gambar
                                                 format
-                                                .ico ukuran 64px x 64px)</small>
+                                                .ico)</small>
                                             @if (is_main_domain() && config('modules.multisite_enabled'))
                                                 <br> <input name="favicon_for_all" value="1" type="checkbox"
                                                     @if (get_option('favicon_for_all')) checked @endif> (Aktikan untuk Semua
@@ -52,7 +52,7 @@
                                             <br><img height="60" src="/favicon.ico" onerror="{{ noimage() }}">
                                             <br>
                                             <input accept="image/x-icon,image/vnd.microsoft.icon" type="file"
-                                                class="form-control-sm form-control-file compress-image" name="{{ $r[1] }}">
+                                                class="form-control-sm form-control-file" name="{{ $r[1] }}">
                                         @endif
                                     @else
                                         <small for="" class="text-muted">{{ $r[0] }}</small>

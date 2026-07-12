@@ -88,10 +88,101 @@
         </div>
     </div>
 </div>
+<!-- Table Style Modal -->
+<div class="modal fade" id="tableStyleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Properti Tabel</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="tableStyleTabs">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabStyleTable">Table</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabStyleTr">Baris (TR)</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabStyleTd">Sel (TD)</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tabStyleTable">
+                        <div class="form-group">
+                            <label>Width</label>
+                            <input type="text" class="form-control form-control-sm" id="tblStyleWidth" placeholder="100%, 500px, auto">
+                        </div>
+                        <div class="form-group">
+                            <label>Border</label>
+                            <input type="text" class="form-control form-control-sm" id="tblStyleBorder" placeholder="1px solid #ccc">
+                        </div>
+                        <div class="form-group">
+                            <label>Style Lainnya</label>
+                            <input type="text" class="form-control form-control-sm" id="tblStyleExtra" placeholder="background:#fff; padding:5px;">
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tabStyleTr">
+                        <p class="text-muted small">Mengubah style pada baris (TR) yang sedang aktif/diklik.</p>
+                        <div class="form-group">
+                            <label>Background</label>
+                            <input type="text" class="form-control form-control-sm" id="trStyleBg" placeholder="#f5f5f5, transparent">
+                        </div>
+                        <div class="form-group">
+                            <label>Style Lainnya</label>
+                            <input type="text" class="form-control form-control-sm" id="trStyleExtra" placeholder="border-bottom:1px solid #ccc;">
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tabStyleTd">
+                        <p class="text-muted small">Mengubah style pada sel (TD/TH) yang sedang aktif/diklik.</p>
+                        <div class="form-group">
+                            <label>Width</label>
+                            <input type="text" class="form-control form-control-sm" id="tdStyleWidth" placeholder="200px, 30%">
+                        </div>
+                        <div class="form-group">
+                            <label>Background</label>
+                            <input type="text" class="form-control form-control-sm" id="tdStyleBg" placeholder="#fff, transparent">
+                        </div>
+                        <div class="form-group">
+                            <label>Text Align</label>
+                            <select class="form-control form-control-sm" id="tdStyleAlign">
+                                <option value="">-- Tidak diubah --</option>
+                                <option value="left">Kiri</option>
+                                <option value="center">Tengah</option>
+                                <option value="right">Kanan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Vertical Align</label>
+                            <select class="form-control form-control-sm" id="tdStyleVAlign">
+                                <option value="">-- Tidak diubah --</option>
+                                <option value="top">Atas</option>
+                                <option value="middle">Tengah</option>
+                                <option value="bottom">Bawah</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Border</label>
+                            <input type="text" class="form-control form-control-sm" id="tdStyleBorder" placeholder="1px solid #ccc">
+                        </div>
+                        <div class="form-group">
+                            <label>Padding</label>
+                            <input type="text" class="form-control form-control-sm" id="tdStylePadding" placeholder="5px, 10px 15px">
+                        </div>
+                        <div class="form-group">
+                            <label>Style Lainnya</label>
+                            <input type="text" class="form-control form-control-sm" id="tdStyleExtra" placeholder="font-weight:bold; color:red;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnSaveTableStyle">Terapkan</button>
+            </div>
+        </div>
+    </div>
+</div>
 @push('scripts')
     <script src="https://js.puter.com/v2/"></script>
 @endpush
 <script type="text/javascript">
+    var _tblStyleTarget = { table: null, tr: null, td: null };
     let currentImage = null;
 
     $(document).ready(function () {
@@ -170,6 +261,7 @@
             height: 600,
             codeviewFilter: true,
             codeviewIframeFilter: true,
+            disableDragAndDrop: true,
             callbacks: {
                 onChange: function (contents, $editable) {
                     let sanitized = contents
@@ -183,9 +275,7 @@
                         $('#editor').summernote('code', sanitized);
                     }
                 },
-                onImageUpload: function (files) {
-                    uploadImage(files[0]);
-                },
+           
                 onMediaDelete: function (target) {
                     var img = $(target).is('img') ? $(target) : $(target).find('img');
 
@@ -209,7 +299,7 @@
                 image: [
                     ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
                     ['float', ['floatLeft', 'floatRight', 'floatNone']],
-                    ['custom', ['editImage', 'replaceImage']],
+                    ['custom', ['editImage']],
                     ['remove', ['removeMedia']],
                 ],
                 link: [
@@ -219,6 +309,7 @@
                 table: [
                     ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
                     ['delete', ['deleteRow', 'deleteCol', 'deleteTable']],
+                    ['custom', ['tableProps', 'addParagraphBelow']],
                 ]
             },
             toolbar: [
@@ -229,7 +320,7 @@
                 ['height', ['height']],
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['link', 'video', 'hr', 'embedUrl', 'uploadFile']],
+                ['insert', ['link', 'video', 'hr', 'embedUrl']],
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help', 'codeview']],
                 ['custom', ['aiGenerate']],
@@ -248,18 +339,80 @@
                     });
                     return button.render();
                 },
-                uploadFile: function () {
+                tableProps: function (context) {
                     var ui = $.summernote.ui;
-
                     return ui.button({
-                        contents: '<i class="fa fa-upload"></i>',
-                        tooltip: 'Upload File',
-
+                        contents: '<i class="fa fa-cogs"></i> Properti',
+                        tooltip: 'Ubah Properti Tabel / Baris / Sel',
                         click: function () {
-                            $('#fileUploadInput').click();
+                            var anchor = window.getSelection().anchorNode;
+                            var $td = $(anchor).closest('td, th');
+                            var $tr = $(anchor).closest('tr');
+                            var $table = $(anchor).closest('table');
+                            if (!$table.length) return;
+
+                            _tblStyleTarget = { table: $table, tr: $tr.length ? $tr : null, td: $td.length ? $td : null };
+
+                            /* Populate Table tab */
+                            $('#tblStyleWidth').val($table[0].style.width || '');
+                            $('#tblStyleBorder').val($table[0].style.border || '');
+                            var tableExtra = $table.attr('style') || '';
+                            tableExtra = tableExtra.replace(/width\s*:[^;]+;?/gi, '').replace(/border\s*:[^;]+;?/gi, '').trim();
+                            $('#tblStyleExtra').val(tableExtra);
+
+                            /* Populate TR tab */
+                            if ($tr.length) {
+                                $('#trStyleBg').val($tr[0].style.background || $tr[0].style.backgroundColor || '');
+                                var trExtra = $tr.attr('style') || '';
+                                trExtra = trExtra.replace(/background[^;]*;?/gi, '').trim();
+                                $('#trStyleExtra').val(trExtra);
+                            } else {
+                                $('#trStyleBg, #trStyleExtra').val('');
+                            }
+
+                            /* Populate TD tab */
+                            if ($td.length) {
+                                $('#tdStyleWidth').val($td[0].style.width || '');
+                                $('#tdStyleBg').val($td[0].style.background || $td[0].style.backgroundColor || '');
+                                $('#tdStyleAlign').val($td[0].style.textAlign || '');
+                                $('#tdStyleVAlign').val($td[0].style.verticalAlign || '');
+                                $('#tdStyleBorder').val($td[0].style.border || '');
+                                $('#tdStylePadding').val($td[0].style.padding || '');
+                                var tdExtra = $td.attr('style') || '';
+                                tdExtra = tdExtra.replace(/width\s*:[^;]+;?/gi, '').replace(/background[^;]*;?/gi, '').replace(/text-align\s*:[^;]+;?/gi, '').replace(/vertical-align\s*:[^;]+;?/gi, '').replace(/border\s*:[^;]+;?/gi, '').replace(/padding\s*:[^;]+;?/gi, '').trim();
+                                $('#tdStyleExtra').val(tdExtra);
+                            } else {
+                                $('#tdStyleWidth, #tdStyleBg, #tdStyleBorder, #tdStylePadding, #tdStyleExtra').val('');
+                                $('#tdStyleAlign, #tdStyleVAlign').val('');
+                            }
+
+                            $('#tableStyleTabs a:first').tab('show');
+                            $('#tableStyleModal').modal('show');
                         }
                     }).render();
                 },
+                addParagraphBelow: function (context) {
+                    var ui = $.summernote.ui;
+                    return ui.button({
+                        contents: '<i class="fa fa-level-down"></i> Baris Baru',
+                        tooltip: 'Tambah paragraf di bawah tabel',
+                        click: function () {
+                            var $table = $(window.getSelection().anchorNode).closest('table');
+                            if ($table.length) {
+                                var $p = $('<p><br></p>');
+                                $table.after($p);
+                                
+                                var range = document.createRange();
+                                var sel = window.getSelection();
+                                range.setStart($p[0], 0);
+                                range.collapse(true);
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }
+                        }
+                    }).render();
+                },
+          
                 removeFile: function () {
                     var ui = $.summernote.ui;
 
@@ -299,23 +452,7 @@
                         }
                     }).render();
                 },
-                replaceImage: function () {
-                    var ui = $.summernote.ui;
-
-                    return ui.button({
-                        contents: '<i class="fa fa-image"></i>',
-                        tooltip: 'Ganti Gambar',
-
-                        click: function () {
-                            if (!currentImage || !currentImage.length) {
-                                alert('Klik gambar dulu');
-                                return;
-                            }
-
-                            $('#replaceImageInput').click();
-                        }
-                    }).render();
-                },
+      
                 editImage: function () {
                     var ui = $.summernote.ui;
 
@@ -358,45 +495,7 @@
                     .css('padding', '5px');
             },
         });
-        $('#fileUploadInput').on('change', function () {
 
-            let file = this.files[0];
-            if (!file) return;
-            let data = new FormData();
-            data.append("file", file);
-            data.append("post", "{{ $post->id }}");
-            data.append("_token", "{{ csrf_token() }}");
-
-            $.ajax({
-                url: "{{ route('upload_file_summernote') }}", // 🔥 endpoint upload file
-                type: "POST",
-                data: data,
-                contentType: false,
-                processData: false,
-
-                success: function (res) {
-
-                    let fileUrl = res.url;
-                    if (fileUrl !== null) {
-                        let fileName = file.name;
-                        let html = `
-                    📎 <a href="${fileUrl}" >${fileName}</a>
-            `;
-
-                        $('#editor').summernote('pasteHTML', html);
-                    } else {
-                        alert('Upload file gagal, bisa jadi format tidak didukung');
-                    }
-
-                },
-
-                error: function () {
-                    alert('Upload file gagal');
-                }
-            });
-
-            $(this).val('');
-        });
         $('#btnSaveImageEdit').on('click', function () {
 
 
@@ -428,109 +527,75 @@
             $('.modal-backdrop').remove();
         });
 
-        $('#replaceImageInput').on('change', function () {
+        /* Save Table Style Modal */
+        $('#btnSaveTableStyle').on('click', function () {
+            var t = _tblStyleTarget;
+            if (!t.table) return;
 
-            let file = this.files[0];
-            if (!file) return;
+            /* Build style string helper */
+            function buildStyle(parts) {
+                return parts.filter(function(p) { return p; }).join(' ').replace(/;?\s*$/, '').trim();
+            }
 
-            uploadImage(file, true);
+            /* === TABLE === */
+            var tblParts = [];
+            var w = $('#tblStyleWidth').val().trim();
+            if (w) tblParts.push('width:' + w + ';');
+            var b = $('#tblStyleBorder').val().trim();
+            if (b) tblParts.push('border:' + b + ';');
+            var ex = $('#tblStyleExtra').val().trim();
+            if (ex) tblParts.push(ex);
+            var tblStyle = buildStyle(tblParts);
+            if (tblStyle) {
+                t.table.attr('style', tblStyle);
+            } else {
+                t.table.removeAttr('style');
+            }
 
-            $(this).val('');
-        });
-    });
-
-
-    async function compressToWebP(file, quality = 0.3) {
-        const imageBitmap = await createImageBitmap(file);
-        const canvas = document.createElement('canvas');
-        canvas.width = imageBitmap.width;
-        canvas.height = imageBitmap.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imageBitmap, 0, 0);
-
-        const blob = await new Promise(resolve =>
-            canvas.toBlob(resolve, 'image/webp', quality)
-        );
-
-        const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
-        return new File([blob], newFileName, {
-            type: 'image/webp'
-        });
-    }
-
-    async function uploadImage(file, isReplace = false) {
-        if (!file) return;
-
-        const allowedTypes = ['image/jpeg', 'image/png'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Pilih hanya format gambar: JPG atau PNG.');
-            return;
-        }
-
-        try {
-            const compressedFile = await compressToWebP(file);
-
-            const data = new FormData();
-            data.append("file", compressedFile);
-            data.append("post", "{{ $post?->id }}");
-            data.append("_token", "{{ csrf_token() }}");
-
-            $.ajax({
-                url: "{{ route('upload_image_summernote') }}",
-                type: 'POST',
-                data: data,
-                contentType: false,
-                processData: false,
-
-                success: function (response) {
-
-                    const actualImageUrl = response.url;
-
-                    if (isReplace && currentImage && currentImage.length) {
-
-                        let oldSrc = currentImage.attr('src');
-
-                        $.post("{{ route('media.destroy') }}", {
-                            media: oldSrc,
-                            _token: "{{ csrf_token() }}"
-                        });
-
-                        let content = $('#editor').summernote('code');
-
-                        content = content.replace(oldSrc, actualImageUrl);
-
-                        $('#editor').summernote('code', content);
-
-                        return;
-                    }
-                    const figureHTML = `
-                <figure style="text-align: center; margin: 10px 0;">
-                    <img src="${actualImageUrl}" style="max-width: 100%; height: auto;">
-                    <figcaption style="font-style: italic; color: #666;">
-                        <small>Ilustrasi Gambar Disini</small>
-                    </figcaption>
-                </figure>`;
-
-                    $('#editor').summernote("pasteHTML", figureHTML);
-                },
-
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.error('Error uploading image: ', textStatus, errorThrown);
+            /* === TR === */
+            if (t.tr) {
+                var trParts = [];
+                var trBg = $('#trStyleBg').val().trim();
+                if (trBg) trParts.push('background:' + trBg + ';');
+                var trEx = $('#trStyleExtra').val().trim();
+                if (trEx) trParts.push(trEx);
+                var trStyle = buildStyle(trParts);
+                if (trStyle) {
+                    t.tr.attr('style', trStyle);
+                } else {
+                    t.tr.removeAttr('style');
                 }
-            });
+            }
 
-        } catch (err) {
-            console.error('Compress error:', err);
-            alert('Gagal mengompres gambar.');
-        }
-    }
+            /* === TD === */
+            if (t.td) {
+                var tdParts = [];
+                var tdW = $('#tdStyleWidth').val().trim();
+                if (tdW) tdParts.push('width:' + tdW + ';');
+                var tdBg = $('#tdStyleBg').val().trim();
+                if (tdBg) tdParts.push('background:' + tdBg + ';');
+                var tdA = $('#tdStyleAlign').val();
+                if (tdA) tdParts.push('text-align:' + tdA + ';');
+                var tdVA = $('#tdStyleVAlign').val();
+                if (tdVA) tdParts.push('vertical-align:' + tdVA + ';');
+                var tdB = $('#tdStyleBorder').val().trim();
+                if (tdB) tdParts.push('border:' + tdB + ';');
+                var tdP = $('#tdStylePadding').val().trim();
+                if (tdP) tdParts.push('padding:' + tdP + ';');
+                var tdEx = $('#tdStyleExtra').val().trim();
+                if (tdEx) tdParts.push(tdEx);
+                var tdStyle = buildStyle(tdParts);
+                if (tdStyle) {
+                    t.td.attr('style', tdStyle);
+                } else {
+                    t.td.removeAttr('style');
+                }
+            }
 
-    function removeFigure(target) {
-        var figure = $(target).closest('figure');
-        if (figure.length > 0) {
-            figure.remove();
-        } else { }
-    }
+            $('#tableStyleModal').modal('hide');
+        });
+      
+    });
 
     function deleteImage(src) {
         var data = new FormData();

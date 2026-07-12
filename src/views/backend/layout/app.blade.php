@@ -467,7 +467,7 @@
         const savedTheme = localStorage.getItem('sidebar_theme_{{ request()->user()->id ?? 0 }}') || 'dark';
         applySidebarTheme(savedTheme);
 
-        $('.copy').click(function () {
+        $(document).on('click', '.copy', function () {
             var $temp = $("<input>");
             $("body").append($temp);
             $temp.val($(this).attr('data-copy')).select();

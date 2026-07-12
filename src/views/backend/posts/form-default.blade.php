@@ -19,13 +19,17 @@
                         </div>
                     </h3>
                     <br>
-                    @if (!empty($post && $module->web->detail && $post->title && $post->status == 'publish') && $module->public)
-                        <div style="border-left:3px solid green" class="alert alert-success"><b>URL : </b><a
-                                title="Kunjungi URL" data-toggle="tooltip" href="{{ url($post->url) }}"
-                                target="_blank"><i class="url"><u>{{ str(url($post->url))->limit(150, ' ...') }}</u></i>  </a><span class="custom-url"></span> <i class="fa fa-edit ml-2 pointer"  data-post-url="{{ url($post->url) }}"
+                    @php
+                        $showUrl = !empty($post && $module->web->detail && $post->title && $post->status == 'publish') && $module->public;
+                        $postUrl = $post->url ?? '';
+                    @endphp
+                    @if($module->web->detail && $module->public)
+                    <div id="post-url-bar" style="border-left:3px solid green;{{ $showUrl ? '' : 'display:none' }}" class="alert alert-success"><b>URL : </b><a
+                                title="Kunjungi URL" data-toggle="tooltip" href="{{ url($postUrl) }}"
+                                target="_blank" class="post-url-link"><i class="url"><u>{{ $showUrl ? str(url($postUrl))->limit(150, ' ...') : '' }}</u></i>  </a><span class="custom-url"></span> <i class="fa fa-edit ml-2 pointer"  data-post-url="{{ url($postUrl) }}"
                                     data-slug="{{ $post->slug }}"></i><span
                                 title="Klik Untuk Menyalin alamat URL {{ $module->title }}" data-toggle="tooltip"
-                                class="pointer copy pull-right badge badge-primary" data-copy="{{ url($post->url) }}"><i
+                                class="pointer copy pull-right badge badge-primary" data-copy="{{ url($postUrl) }}"><i
                                     class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
                                     @push('scripts')
                                     <script>
@@ -382,6 +386,35 @@
                                         
                                         // Clear any lingering Gmedia preview wrappers (temporary previews)
                                         $('.btn-clear-gmedia').click();
+
+                                        // Update URL bar dynamically
+                                        let newUrlBar = newDoc.getElementById('post-url-bar');
+                                        let currentUrlBar = document.getElementById('post-url-bar');
+                                        if (currentUrlBar && newUrlBar) {
+                                            currentUrlBar.innerHTML = newUrlBar.innerHTML;
+                                            // Update href/data attributes
+                                            let newLink = newUrlBar.querySelector('.post-url-link');
+                                            if (newLink) {
+                                                currentUrlBar.querySelector('.post-url-link').href = newLink.href;
+                                            }
+                                            let newEdit = newUrlBar.querySelector('.fa-edit');
+                                            let curEdit = currentUrlBar.querySelector('.fa-edit');
+                                            if (newEdit && curEdit) {
+                                                curEdit.dataset.postUrl = newEdit.dataset.postUrl;
+                                                curEdit.dataset.slug = newEdit.dataset.slug;
+                                            }
+                                            let newCopy = newUrlBar.querySelector('.copy');
+                                            let curCopy = currentUrlBar.querySelector('.copy');
+                                            if (newCopy && curCopy) {
+                                                curCopy.dataset.copy = newCopy.dataset.copy;
+                                            }
+                                            // Show or hide based on display style from server
+                                            if (newUrlBar.style.display === 'none') {
+                                                $(currentUrlBar).slideUp(300);
+                                            } else {
+                                                $(currentUrlBar).slideDown(300);
+                                            }
+                                        }
                                     }
 
                                     // Reset status buttons state instead of reloading
