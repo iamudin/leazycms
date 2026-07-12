@@ -18,10 +18,16 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Inter', sans-serif;
-    margin: 0;
-    overflow: hidden;
     background: #0f172a; /* Deep dark blue */
 }
 
@@ -30,8 +36,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: radial-gradient(circle at 15% 50%, rgba(76, 184, 182, 0.15), transparent 25%),
                 radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15), transparent 25%);
     z-index: 0;
@@ -88,7 +94,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
     z-index: 10;
     padding: 20px;
@@ -106,6 +114,7 @@ body {
     max-width: 400px;
     position: relative;
     overflow: hidden;
+    transform: translateZ(0);
 }
 
 /* Subtle inner shine */
@@ -264,7 +273,7 @@ body {
         <form method="POST" action="{{$data['loginsubmit'] }}">
           @csrf
           <div class="text-center mb-4">
-            <img height="48" src="{{$data['logo']}}" onerror="{{ noimage() }}" style="margin-bottom: 16px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">
+            <img height="48" src="{{$data['logo']}}" onerror="this.onerror=null;this.src='{{ url(noimage()) }}';" style="margin-bottom: 16px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">
             <h4 class="brand-title">{{$data['title'] ?? 'Web Title'}}</h4>
             @if(get_option('site_description')) 
               <div class="brand-desc">{{ $data['description'] ?? 'Web description'  }}</div>
