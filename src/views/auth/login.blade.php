@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <meta name="robots" content="noindex, nofollow">
     <!-- Main CSS-->
     <link rel="stylesheet" type="text/css" href="{{url('backend/css/main.css')}}">
@@ -115,6 +115,7 @@ body {
     position: relative;
     overflow: hidden;
     transform: translateZ(0);
+    margin: auto;
 }
 
 /* Subtle inner shine */
