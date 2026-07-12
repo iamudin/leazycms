@@ -16,187 +16,311 @@
 <meta property="og:site_name" content="{{$data['title'] ?? 'Web Title'}}" />
 <meta property="og:description" content="Masuk Sebagai Admin / Operator" />
 <style>
-  .no-focus-border {
-border: 1px solid #ccc;
-outline: none;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    overflow: hidden;
+    background: #0f172a; /* Deep dark blue */
 }
 
-.no-focus-border:focus {
-border: none;
-outline: none;
-}
-@keyframes move {
-  100% {
-    transform: translate3d(0, 0, 1px) rotate(360deg);
-  }
-}
-
-.background {
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
-  top: 0;
-  left: 0;
-  background: #4CB8B6;
-  overflow: hidden;
+/* Modern animated mesh gradient background */
+.bg-animated {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at 15% 50%, rgba(76, 184, 182, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15), transparent 25%);
+    z-index: 0;
+    animation: bgPulse 15s ease-in-out infinite alternate;
 }
 
-.ball {
-  position: absolute;
-  width: 20vmin;
-  height: 20vmin;
-  border-radius: 50%;
-  backface-visibility: hidden;
-  animation: move linear infinite;
+.blob {
+    position: absolute;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.5;
+    animation: float 20s infinite ease-in-out;
 }
 
-.ball:nth-child(odd) {
-    color: #006D5B;
+.blob-1 {
+    top: -10%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: #0ea5e9;
+    animation-delay: 0s;
 }
 
-.ball:nth-child(even) {
-    color: #FF6F61;
+.blob-2 {
+    bottom: -20%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: #14b8a6;
+    animation-delay: -5s;
 }
 
-/* Using a custom attribute for variability */
-.ball:nth-child(1) {
-  top: 77%;
-  left: 88%;
-  animation-duration: 40s;
-  animation-delay: -3s;
-  transform-origin: 16vw -2vh;
-  box-shadow: 40vmin 0 5.703076368487546vmin currentColor;
-}
-.ball:nth-child(2) {
-  top: 42%;
-  left: 2%;
-  animation-duration: 53s;
-  animation-delay: -29s;
-  transform-origin: -19vw 21vh;
-  box-shadow: -40vmin 0 5.17594621519026vmin currentColor;
-}
-.ball:nth-child(3) {
-  top: 28%;
-  left: 18%;
-  animation-duration: 49s;
-  animation-delay: -8s;
-  transform-origin: -22vw 3vh;
-  box-shadow: 40vmin 0 5.248179047256236vmin currentColor;
-}
-.ball:nth-child(4) {
-  top: 50%;
-  left: 79%;
-  animation-duration: 26s;
-  animation-delay: -21s;
-  transform-origin: -17vw -6vh;
-  box-shadow: 40vmin 0 5.279749632220298vmin currentColor;
-}
-.ball:nth-child(5) {
-  top: 46%;
-  left: 15%;
-  animation-duration: 36s;
-  animation-delay: -40s;
-  transform-origin: 4vw 0vh;
-  box-shadow: -40vmin 0 5.964309466052033vmin currentColor;
-}
-.ball:nth-child(6) {
-  top: 77%;
-  left: 16%;
-  animation-duration: 31s;
-  animation-delay: -10s;
-  transform-origin: 18vw 4vh;
-  box-shadow: 40vmin 0 5.178483653434181vmin currentColor;
-}
-.ball:nth-child(7) {
-  top: 22%;
-  left: 17%;
-  animation-duration: 55s;
-  animation-delay: -6s;
-  transform-origin: 1vw -23vh;
-  box-shadow: -40vmin 0 5.703026794398318vmin currentColor;
-}
-.ball:nth-child(8) {
-  top: 41%;
-  left: 47%;
-  animation-duration: 43s;
-  animation-delay: -28s;
-  transform-origin: 25vw -3vh;
-  box-shadow: 40vmin 0 5.196265905749415vmin currentColor;
+.blob-3 {
+    top: 40%;
+    left: 40%;
+    width: 40vw;
+    height: 40vw;
+    background: #6366f1;
+    animation-delay: -10s;
 }
 
- </style>
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+@keyframes bgPulse {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+.login-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+    z-index: 10;
+    padding: 20px;
+}
+
+.glass-panel {
+    background: rgba(30, 41, 59, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 24px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle inner shine */
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+}
+
+.form-control-custom {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+    border-radius: 12px;
+    padding: 12px 16px;
+    height: auto;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control-custom:focus {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15) !important;
+    outline: none;
+}
+
+.form-control-custom::placeholder {
+    color: #64748b;
+}
+
+.btn-primary-custom {
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    padding: 14px;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px -10px rgba(14, 165, 233, 0.5);
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-primary-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px -10px rgba(14, 165, 233, 0.6);
+    background: linear-gradient(135deg, #0284c7, #0d9488);
+}
+
+.btn-primary-custom:active {
+    transform: translateY(0);
+}
+
+.input-label {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+    letter-spacing: 0.3px;
+}
+
+.captcha-wrapper {
+    display: flex;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.captcha-wrapper img {
+    height: 48px;
+    width: 120px;
+    object-fit: cover;
+}
+
+.captcha-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    outline: none;
+}
+
+.captcha-wrapper input:focus {
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    color: #cbd5e1;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.custom-checkbox input {
+    margin-right: 8px;
+    accent-color: #0ea5e9;
+    width: 16px;
+    height: 16px;
+}
+
+.eye-icon-wrapper {
+    position: absolute;
+    right: 16px;
+    top: 0;
+    bottom: 0;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.eye-icon-wrapper:hover {
+    color: #38bdf8;
+}
+
+.brand-title {
+    color: #f8fafc;
+    font-weight: 700;
+    font-size: 24px;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+.brand-desc {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+</style>
   </head>
   <body class="background">
-    <span class="ball"></span>
-    <span class="ball"></span>
-    <span class="ball"></span>
-    <span class="ball"></span>
-    <span class="ball"></span>
-    <span class="ball"></span>
-    <section class="login-content" style=" background-color:rgba(33, 11, 11, 0.4);">
-      <div class="login-box" style=" background-color:transparent;box-shadow:none;width:100%">
+    <!-- Animated background blobs -->
+    <div class="bg-animated"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
 
-        <form method="POST"  style="width:300px;margin-left:auto;margin-right:auto"  action="{{$data['loginsubmit'] }}">
+    <section class="login-content">
+      <div class="glass-panel">
+        <form method="POST" action="{{$data['loginsubmit'] }}">
           @csrf
-          <center>
-            <img height="40" src="{{$data['logo']}}" onerror="{{ noimage() }}">
-            <br>
-            <br>
-            <h4 class="text-warning">{{$data['title'] ?? 'Web Title'}}</h4>
-           @if(get_option('site_description')) <h6 class="text-white"><i>{{ $data['description'] ?? 'Web description'  }}</i></h6>@endif
-            <br>
+          <div class="text-center mb-4">
+            <img height="48" src="{{$data['logo']}}" onerror="{{ noimage() }}" style="margin-bottom: 16px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">
+            <h4 class="brand-title">{{$data['title'] ?? 'Web Title'}}</h4>
+            @if(get_option('site_description')) 
+              <div class="brand-desc">{{ $data['description'] ?? 'Web description'  }}</div>
+            @endif
 
             @if(get_option('site_maintenance') == 'Y')
-            <p class="badge badge-danger">Mode Perbaikan Aktif</p>
+              <div class="mt-2"><span class="badge badge-danger px-3 py-2" style="border-radius: 8px; font-weight: 500;">Mode Perbaikan Aktif</span></div>
             @endif
-          </center>
-                @if (session()->has('error'))
-                <div class="alert alert-dismissible alert-danger">
-                  <button class="close" type="button" data-dismiss="alert">×</button>
-                  {{session()->get('error')}}
-                </div>
-                @endif
-
-          <div class="form-group  pb-0 mb-2">
-            <label class="control-label " style="color:#f5f5f5"><i class="fa fa-at"></i> Nama Pengguna</label>
-                <input id="username" placeholder="Isi Nama Pengguna" type="text" class="form-control form-control-lg " name="username" required autocomplete="username"
-                onkeyup="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')"
-pattern="[a-z0-9]+" autofocus>
           </div>
-      <div class="form-group position-relative">
-        <label class="control-label" style="color:#f5f5f5">
-          <i class="fa fa-key"></i> Kata Sandi
-        </label>
 
-        <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Isi Kata Sandi"
-          type="password" class="form-control form-control-lg pr-5" name="password" required autocomplete="current-password"
-          autofocus>
+          @if (session()->has('error'))
+            <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; border-radius: 12px; font-size: 14px;">
+              <button class="close" type="button" data-dismiss="alert" style="color: #fca5a5;">×</button>
+              {{session()->get('error')}}
+            </div>
+          @endif
 
-        <!-- Icon show / hide -->
-        <span onclick="togglePassword()" style="
-                  position:absolute;
-                  right:15px;
-                  top:70%;
-                  transform:translateY(-50%);
-                  cursor:pointer;
-                  color:#999;
-              ">
-          <i id="eyeIcon" class="fa fa-eye fa-2x"></i>
-        </span>
-      </div>
-
-
-          <div class="form-group">
-            <img src="{{ $captcha }}" alt="" style="border-radius: 5px 0 0 5px;height: 40px;width:45%;"> <input class="no-focus-border" type="text" name="captcha" placeholder="Enter Code" required  maxlength="6" style="font-weight: bold; border:none;float:right;height: 40px;border-radius:0 5px 5px 0;height: 40px;width:55%;">
+          <div class="form-group mb-4">
+            <label class="input-label"><i class="fa fa-at mr-1"></i> Nama Pengguna</label>
+            <input id="username" placeholder="Masukkan nama pengguna" type="text" class="form-control form-control-custom" name="username" required autocomplete="username" onkeyup="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')" pattern="[a-z0-9]+" autofocus>
           </div>
-          <div class="form-group text-white">
-            <input  type="checkbox" name="remember"> Tetap ingat akun ini <sup class="text-warning"> {!! help('Akun tetap login dibrowser ini selama tidak melakukan logout') !!}</sup>
-         </div>
-          <div class="form-group btn-container">
-            <button class="btn btn-warning btn-block"><i class="fa fa-sign-in fa-lg fa-fw"></i>MASUK</button>
+
+          <div class="form-group mb-4">
+            <label class="input-label"><i class="fa fa-key mr-1"></i> Kata Sandi</label>
+            <div class="position-relative">
+              <input id="password" onkeyup="this.value = this.value.replace(/\s+/g, '')" placeholder="Masukkan kata sandi" type="password" class="form-control form-control-custom pr-5" name="password" required autocomplete="current-password">
+              <div class="eye-icon-wrapper" onclick="togglePassword()">
+                <i id="eyeIcon" class="fa fa-eye fa-lg"></i>
+              </div>
+            </div>
           </div>
-          <div class="form-group text-white credit text-center mt-4">
-            <small>Build with &#10084; by LeazyCMS v{{ current_cms_version() ?? '0.0' }}</small></div>
+
+          <div class="form-group mb-4">
+            <div class="captcha-wrapper">
+              <img src="{{ $captcha }}" alt="Captcha">
+              <input type="text" name="captcha" placeholder="Kode Captcha" required maxlength="6">
+            </div>
+          </div>
+
+          <div class="form-group mb-4">
+            <label class="custom-checkbox">
+              <input type="checkbox" name="remember"> 
+              <span>Tetap ingat akun ini</span>
+              <sup class="text-info ml-1" style="font-size: 16px; top: -2px;">{!! help('Akun tetap login dibrowser ini selama tidak melakukan logout') !!}</sup>
+            </label>
+          </div>
+
+          <div class="form-group mb-2 mt-4">
+            <button class="btn btn-primary-custom btn-block w-100">
+              MASUK <i class="fa fa-sign-in ml-2"></i>
+            </button>
+          </div>
+          
+          <div class="text-center mt-4">
+            <small style="color: #64748b;">Build with <span style="color: #ef4444;">&#10084;</span> by LeazyCMS v{{ current_cms_version() ?? '0.0' }}</small>
+          </div>
         </form>
       </div>
     </section>
