@@ -100,14 +100,40 @@ class TenantController extends Controller implements HasMiddleware
                 return $badges[$row->status] ?? '-';
             })
             ->addColumn('resource', function ($row) {
-                $totalSize = \Leazycms\FLC\Models\File::where('host', $row->domain)->sum('file_size');
+                $fileStats = \Leazycms\FLC\Models\File::where('host', $row->domain)
+                    ->selectRaw('COUNT(id) as total_files, SUM(file_size) as total_size')
+                    ->first();
+                $totalSize = $fileStats->total_size ?? 0;
+                $fileCount = $fileStats->total_files ?? 0;
+
                 $formattedSize = '0 B';
                 if ($totalSize > 0) {
                     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-                    $power = $totalSize > 0 ? floor(log($totalSize, 1024)) : 0;
+                    $power = floor(log($totalSize, 1024));
                     $formattedSize = number_format($totalSize / pow(1024, $power), 2, '.', ',') . ' ' . $units[$power];
                 }
-                return '<span class="badge badge-info" style="font-size:12px"><i class="fa fa-hdd-o"></i> ' . $formattedSize . '</span>';
+
+                $html = '<div style="font-size:12px; min-width:120px;">';
+                $html .= '<span class="badge badge-info mb-1"><i class="fa fa-hdd-o"></i> ' . $formattedSize . '</span> ';
+                $html .= '<span class="badge badge-secondary mb-1"><i class="fa fa-file-o"></i> ' . number_format($fileCount) . ' file</span>';
+
+                $limitMB = $row->disk_space;
+                if ($limitMB > 0) {
+                    $limitBytes = $limitMB * 1024 * 1024;
+                    $percentage = round(($totalSize / $limitBytes) * 100, 1);
+                    // Cap percentage at 100 for the progress bar width, but show actual if over 100%
+                    $barWidth = min(100, $percentage);
+                    $color = $percentage > 90 ? 'danger' : ($percentage > 75 ? 'warning' : 'success');
+                    
+                    $html .= '<div class="progress mt-1" style="height: 6px; border-radius: 3px;">';
+                    $html .= '<div class="progress-bar bg-' . $color . '" role="progressbar" style="width: ' . $barWidth . '%;"></div>';
+                    $html .= '</div>';
+                    $html .= '<small class="text-muted d-block mt-1">' . $percentage . '% of ' . $limitMB . ' MB</small>';
+                }
+
+                $html .= '</div>';
+                
+                return $html;
             })
             ->rawColumns(['action', 'status', 'theme', 'resource'])
             ->toJson();

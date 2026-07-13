@@ -47,7 +47,7 @@
                                         <div class="media-preview-wrapper">
                                             <br>
                                             <img src="{{ get_option('logo_organisasi') }}" alt="Logo Organisasi" class=" rounded"
-                                                style="max-height: 200px"> <br>
+                                                style="width:100%"> <br>
                                             <a title="Hapus" href="javascript:void(0)" class="btn-sm text-danger btn-remove-media"
                                                 data-field="logo_organisasi"> <i class="fa fa-trash"></i> </a>
                                         </div>
@@ -318,6 +318,8 @@
                     }, 1200);
                 });
             })();
+
+
         </script>
     @endpush
 @endsection
