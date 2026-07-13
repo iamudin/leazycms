@@ -121,10 +121,37 @@
           </div>
           <div class="form-group ">
             <label for="">Url Tujuan </label>
-            <div class="autocomplete-box">
+            <div class="input-group autocomplete-box">
               <input type="text" class="menu form-control link" name="links" id="link_target"
                 placeholder="Masukkan Url Tujuan">
-              <div id="autocomplete-list" class="autocomplete-results"></div>
+              <div id="autocomplete-list" class="autocomplete-results" style="top: 100%; left: 0; right: 0; width: 100%;"></div>
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Pilih Link Template">
+                    <i class="fa fa-link"></i> Pilih
+                </button>
+                <div class="dropdown-menu dropdown-menu-right p-2 shadow" style="width: 300px; max-height: 250px; overflow-y: auto;">
+                    <h6 class="dropdown-header font-weight-bold text-primary"><i class="fa fa-cube"></i> Module (Index)</h6>
+                    @php
+                        $activeModules = collect(get_module());
+                        if (config('modules.multisite_enabled')) {
+                            $tenantModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
+                            $activeModules = $activeModules->whereIn('name', array_merge(is_array($tenantModules) ? $tenantModules : [], function_exists('default_menu') ? default_menu() : []));
+                        }
+                    @endphp
+                    @foreach($activeModules->filter(function($m) { return isset($m->web->index) && $m->web->index; }) as $mod)
+                        <button type="button" class="dropdown-item link-pick-btn" data-link="/{{ $mod->name }}">
+                            <i class="fa {{ $mod->icon ?? 'fa-circle-o' }}"></i> {{ $mod->title }} <small class="text-muted">(/{{ $mod->name }})</small>
+                        </button>
+                    @endforeach
+                    <div class="dropdown-divider"></div>
+                    <h6 class="dropdown-header font-weight-bold text-primary"><i class="fa fa-file-text"></i> Halaman (Page)</h6>
+                    @foreach(query()->where('type', 'page')->published()->get(['title', 'url']) as $page)
+                        <button type="button" class="dropdown-item link-pick-btn" data-link="/{{ ltrim($page->url, '/') }}">
+                            <i class="fa fa-file-o"></i> {{ \Str::limit($page->title ?? 'Untitled', 20) }} <small class="text-muted">(/{{ ltrim($page->url, '/') }})</small>
+                        </button>
+                    @endforeach
+                </div>
+              </div>
             </div>
           </div>
           <div class="form-group">
@@ -230,6 +257,13 @@
         e.preventDefault();
         e.stopPropagation();
         $('#menu-icon-input').val($(this).data('icon'));
+        $(this).closest('.dropdown-menu').removeClass('show');
+      });
+
+      $(document).off('click', '.link-pick-btn').on('click', '.link-pick-btn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#link_target').val($(this).data('link'));
         $(this).closest('.dropdown-menu').removeClass('show');
       });
     }

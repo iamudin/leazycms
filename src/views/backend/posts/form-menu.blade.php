@@ -69,10 +69,10 @@
                     style="border-left:4px solid #000;font-size:20px; background:#222;">
                     <small>Untuk memanggil menu di file <code>.blade.php</code><br>
                         <code>@ php<br> @ foreach(get_menu('{{ $post->slug }}') as $menu)
-                        <br>$menu->name
-                        <br>$menu->sub
-                        <br>$menu->link
-                        <br>@ endforeaceh<br>@ endphp</code>
+                            <br>$menu->name
+                            <br>$menu->sub
+                            <br>$menu->link
+                            <br>@ endforeaceh<br>@ endphp</code>
                     </small>
                 </div>
 
@@ -469,7 +469,7 @@
                 var icon = $('.iconx').val();
 
                 var type = $('#type').val();
-                
+
                 var escapedDesc = desc.replace(/'/g, "\\'");
                 var escapedLink = link.replace(/'/g, "\\'");
                 var escapedName = name.replace(/'/g, "\\'");
@@ -491,7 +491,7 @@
                     $('.desc-' + type).val(desc);
                     $('.link-' + type).val(link);
                     $('.icon-' + type).val(icon);
-                    
+
                     // Update UI text in nested list
                     var $content = $('.menu-id-' + type + ' > .dd3-content');
                     if ($content.length) {
@@ -499,41 +499,41 @@
                         if ($content[0].childNodes[0].nodeType === 3) {
                             $content[0].childNodes[0].nodeValue = name + " ";
                         }
-                        
+
                         // Update the link text and href if present
                         var $linkCode = $content.find('code a');
                         if ($linkCode.length) {
                             $linkCode.attr('href', formattedLink).find('i').text(formattedLink.substring(0, 60) + (formattedLink.length > 60 ? '...' : ''));
                         }
-                        
+
                         // Update onclick on edit button
                         var $editBtn = $content.find('.text-warning');
                         if ($editBtn.length) {
-                            $editBtn.attr('onclick', "$('.description').val('"+escapedDesc+"');$('.link').val('"+escapedLink+"');$('.name').val('"+escapedName+"');$('.iconx').val('"+escapedIcon+"');$('#type').val('"+type+"');$('#menuFormModal').modal('show')");
+                            $editBtn.attr('onclick', "$('.description').val('" + escapedDesc + "');$('.link').val('" + escapedLink + "');$('.name').val('" + escapedName + "');$('.iconx').val('" + escapedIcon + "');$('#type').val('" + type + "');$('#menuFormModal').modal('show')");
                         }
                     }
                 } else {
                     var newId = Math.floor(Math.random() * 900000) + 100000;
                     var $newItem = $($('.newmenu').html());
-                    
+
                     $newItem.attr('data-id', newId).addClass('menu-id-' + newId);
-                    
+
                     $newItem.find('input[name="menu_id[]"]').val(newId);
                     $newItem.find('input[name="menu_name[]"]').val(name).addClass('name-' + newId);
                     $newItem.find('input[name="menu_description[]"]').val(desc).addClass('desc-' + newId);
                     $newItem.find('input[name="menu_link[]"]').val(link).addClass('link-' + newId);
                     $newItem.find('input[name="menu_icon[]"]').val(icon).addClass('icon-' + newId);
-                    
+
                     // Remove IDs from cloned inputs to avoid duplicates
                     $newItem.find('input').removeAttr('id');
                     $newItem.removeAttr('id'); // li element
-                    
-                    var buttonsHtml = '<span style="float:right"><a href="javascript:void(0)" onclick="$(\'.description\').val(\''+escapedDesc+'\');$(\'.link\').val(\''+escapedLink+'\');$(\'.name\').val(\''+escapedName+'\');$(\'.iconx\').val(\''+escapedIcon+'\');$(\'#type\').val(\''+newId+'\');$(\'#menuFormModal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\''+newId+'\')" class="text-danger"> <i class="fa fa-trash" aria-hidden></i> </a></span>';
-                    
+
+                    var buttonsHtml = '<span style="float:right"><a href="javascript:void(0)" onclick="$(\'.description\').val(\'' + escapedDesc + '\');$(\'.link\').val(\'' + escapedLink + '\');$(\'.name\').val(\'' + escapedName + '\');$(\'.iconx\').val(\'' + escapedIcon + '\');$(\'#type\').val(\'' + newId + '\');$(\'#menuFormModal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' + newId + '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden></i> </a></span>';
+
                     $newItem.find('.dd3-content').html(name + ' <i class="fa fa-angle-right" aria-hidden></i> <code><a href="' + formattedLink + '"><i>' + formattedLink.substring(0, 60) + (formattedLink.length > 60 ? '...' : '') + '</i></a></code>' + buttonsHtml).removeAttr('id');
-                    
+
                     $('.main-list').append($newItem);
-                    
+
                     $('#nestable3').nestable({
                         group: 1
                     }).change();
@@ -543,32 +543,31 @@
             }
         </script>
         @include('cms::backend.layout.js')
+        <script>
+            function handleStatusSubmit(btn) {
+                let $btn = $(btn);
+                // Set radio button to checked
+                $btn.find('input').prop('checked', true);
+                let val = $btn.find('input').val();
 
+                // Change icon to spinner
+                let $icon = $btn.find('i');
+                $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
+
+                // Change text safely without removing the input
+                // Get all text nodes and replace their content
+                $btn.contents().filter(function () {
+                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                }).each(function () {
+                    this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
+                });
+
+                // Disable other buttons
+                $btn.siblings('label').css('pointer-events', 'none').fadeTo(200, 0.5);
+
+                // Submit form
+                $('.editorForm').submit();
+            }
+        </script>
     @endpush
 @endsection
-<script>
-function handleStatusSubmit(btn) {
-    let $btn = $(btn);
-    // Set radio button to checked
-    $btn.find('input').prop('checked', true);
-    let val = $btn.find('input').val();
-    
-    // Change icon to spinner
-    let $icon = $btn.find('i');
-    $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
-    
-    // Change text safely without removing the input
-    // Get all text nodes and replace their content
-    $btn.contents().filter(function() {
-        return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-    }).each(function() {
-        this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
-    });
-    
-    // Disable other buttons
-    $btn.siblings('label').css('pointer-events', 'none').fadeTo(200, 0.5);
-    
-    // Submit form
-    $('.editorForm').submit();
-}
-</script>

@@ -472,17 +472,42 @@
 
                                     $('.text-save').html('Simpan');
                                     $('.btn-primary').removeAttr('disabled');
+                                    
+                                    // Reset status buttons state instead of reloading
+                                    $('.btn-group-toggle label').each(function() {
+                                        let $label = $(this);
+                                        let $input = $label.find('input');
+                                        let val = $input.val();
+                                        
+                                        // Enable all labels
+                                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
+                                        
+                                        // Reset icon and text based on value
+                                        let $icon = $label.find('i');
+                                        $icon.removeClass('fa-spinner fa-spin');
+                                        
+                                        if (val === 'publish') {
+                                            $icon.addClass('fa-globe');
+                                            $label.contents().filter(function() {
+                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                            }).each(function() {
+                                                this.nodeValue = ' Publikasikan';
+                                            });
+                                        } else if (val === 'draft') {
+                                            $icon.addClass('fa-archive');
+                                            $label.contents().filter(function() {
+                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                            }).each(function() {
+                                                this.nodeValue = ' Draft';
+                                            });
+                                        }
+                                    });
                                 }
 
                             });
                         });
                     </script>
             @include('cms::backend.layout.js')
-
-        @endpush
-
-@endsection
-
 <script>
 function handleStatusSubmit(btn) {
     let $btn = $(btn);
@@ -509,3 +534,7 @@ function handleStatusSubmit(btn) {
     $('.editorForm').submit();
 }
 </script>
+        @endpush
+
+@endsection
+
