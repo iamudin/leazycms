@@ -118,9 +118,7 @@
                                                 @endif
                                                 <input type="hidden" name="type" value="change_file">
 
-                                                <textarea id="editor" name="file_src" class="custom_html">
-                                                                                        {{ $view }}
-                                                                                        </textarea>
+                                                <textarea id="editor" name="file_src" class="custom_html">{{ $view }}</textarea>
                                             </form>
                                         </div>
                                     </div>

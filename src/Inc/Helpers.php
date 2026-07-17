@@ -2322,8 +2322,8 @@ if (!function_exists('isPrePanel')) {
                 $beforeEditor .= $part;
             }
         }
-        $beforeEditor = preg_replace('/\s+/', ' ', $beforeEditor);
-        $afterEditor = preg_replace('/\s+/', ' ', $afterEditor);
+        $beforeEditor = minify_all_one_line($beforeEditor);
+        $afterEditor = minify_all_one_line($afterEditor);
         $content = $beforeEditor . $insideEditor . $afterEditor;
         return $content;
     }
@@ -3392,6 +3392,12 @@ if (!function_exists('add_plugin_public_route')) {
         if ($customConfig['path'] == '') {
             $customConfig['path'] = '/';
         }
+        
+        $domain = get_option($pluginSlug . '-domain');
+        if (!empty($domain)) {
+            $customConfig['domain'] = $domain;
+        }
+        
         add_route('public', $customConfig);
     }
 }

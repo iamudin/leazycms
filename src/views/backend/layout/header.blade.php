@@ -45,11 +45,11 @@
                 <i class="fa fa-paint-brush fa-lg text-info"></i>
             </a>
             <ul class="dropdown-menu settings-menu dropdown-menu-right" id="theme-selector-menu">
-                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="setSidebarTheme('dark')"><span style="width:15px;height:15px;border-radius:50%;background:#1D2327;margin-right:10px;border:1px solid #ccc;"></span> Dark (Default)</a></li>
-                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="setSidebarTheme('navy')"><span style="width:15px;height:15px;border-radius:50%;background:#1e293b;margin-right:10px;border:1px solid #ccc;"></span> Navy Blue</a></li>
-                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="setSidebarTheme('purple')"><span style="width:15px;height:15px;border-radius:50%;background:#4c1d95;margin-right:10px;border:1px solid #ccc;"></span> Elegant Purple</a></li>
-                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="setSidebarTheme('forest')"><span style="width:15px;height:15px;border-radius:50%;background:#064e3b;margin-right:10px;border:1px solid #ccc;"></span> Deep Forest</a></li>
-                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="setSidebarTheme('light')"><span style="width:15px;height:15px;border-radius:50%;background:#ffffff;margin-right:10px;border:1px solid #ccc;"></span> Clean Light</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="changePanelTheme('dark')"><span style="width:15px;height:15px;border-radius:50%;background:#1D2327;margin-right:10px;border:1px solid #ccc;"></span> Dark (Default)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="changePanelTheme('navy')"><span style="width:15px;height:15px;border-radius:50%;background:#1e293b;margin-right:10px;border:1px solid #ccc;"></span> Navy Blue</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="changePanelTheme('purple')"><span style="width:15px;height:15px;border-radius:50%;background:#4c1d95;margin-right:10px;border:1px solid #ccc;"></span> Elegant Purple</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="changePanelTheme('forest')"><span style="width:15px;height:15px;border-radius:50%;background:#064e3b;margin-right:10px;border:1px solid #ccc;"></span> Deep Forest</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0)" onclick="changePanelTheme('light')"><span style="width:15px;height:15px;border-radius:50%;background:#ffffff;margin-right:10px;border:1px solid #ccc;"></span> Clean Light</a></li>
             </ul>
         </li>
 

@@ -29,7 +29,7 @@ class LoginController extends Controller
         }
 
         Auth::login($user);
-        DB::table('one_time_tokens')->where('token',$token)->delete(); // Token hanya sekali pakai
+        DB::table('one_time_tokens')->where('token', $token)->delete(); // Token hanya sekali pakai
 
         $request->session()->regenerate();
         $user->update([
@@ -45,9 +45,9 @@ class LoginController extends Controller
         Session::put('captcha', Str::random(6));
     }
 
-    public function generateCaptcha(Request $request,$session)
+    public function generateCaptcha(Request $request, $session)
     {
-        abort_if($session != md5($request->session()->id()),'404');
+        abort_if($session != md5($request->session()->id()), '404');
         $image = imagecreatetruecolor(120, 40);
         $bgColor = imagecolorallocate($image, 255, 255, 255);
         $textColor = imagecolorallocate($image, 0, 0, 0);
@@ -94,7 +94,7 @@ class LoginController extends Controller
         }
         $this->codeCaptcha();
 
-        $captchaUrl = route('captcha',md5($request->session()->id()));
+        $captchaUrl = route('captcha', md5($request->session()->id()));
         $data = null;
 
 
@@ -124,7 +124,8 @@ class LoginController extends Controller
         // Throttle login attempts
         $limiterKey = $request->ip() . '|' . $request->username;
         if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
-            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Terlalu banyak percobaan login. Silakan coba lagi nanti.']);
+            if ($request->ajax())
+                return response()->json(['status' => 'error', 'message' => 'Terlalu banyak percobaan login. Silakan coba lagi nanti.']);
             return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
         }
 
@@ -137,11 +138,12 @@ class LoginController extends Controller
         if ($request->captcha !== Session::get('captcha')) {
             $request->session()->regenerateToken();
 
-            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Captcha tidak valid!']);
+            if ($request->ajax())
+                return response()->json(['status' => 'error', 'message' => 'Captcha tidak valid!']);
             return back()->with('error', 'Captcha tidak valid!');
         }
 
-        if (Auth::attempt(array_merge(['username' => $request->username, 'password' => $request->password], config('modules.multisite_enabled') ? ['tenant_id' => tenant()->id ?? null] : []), $request->remember ?? false)) {
+        if (Auth::attempt(array_merge(['username' => $request->username, 'password' => $request->password, 'host' => $request->getHost()], config('modules.multisite_enabled') ? ['tenant_id' => tenant()->id ?? null] : []), $request->remember ?? false)) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -183,21 +185,24 @@ class LoginController extends Controller
                             Auth::logout();
                         } else {
                             Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-                            if ($request->ajax()) return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
+                            if ($request->ajax())
+                                return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
                             return redirect()->intended('/' . admin_path());
                         }
                     } else {
                         if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
                             Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-                            if ($request->ajax()) return response()->json(['status' => 'success', 'redirect' => url('/login')]);
+                            if ($request->ajax())
+                                return response()->json(['status' => 'success', 'redirect' => url('/login')]);
                             return redirect()->intended('/login');
                         } else {
                             Auth::logout();
                         }
                     }
                 } else {
-                    if ($request->ajax()) return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
-                            return redirect()->intended('/' . admin_path());
+                    if ($request->ajax())
+                        return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
+                    return redirect()->intended('/' . admin_path());
                 }
             }
 
@@ -205,7 +210,8 @@ class LoginController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Akun telah diblokir!']);
+            if ($request->ajax())
+                return response()->json(['status' => 'error', 'message' => 'Akun telah diblokir!']);
             return back()->with('error', 'Akun telah diblokir!');
         }
 
@@ -237,7 +243,8 @@ class LoginController extends Controller
 
             sendTelegramBotMessage($message);
         })->afterResponse();
-        if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Akun tidak ditemukan!']);
+        if ($request->ajax())
+            return response()->json(['status' => 'error', 'message' => 'Akun tidak ditemukan!']);
         return back()->with('error', 'Akun tidak ditemukan!');
     }
 

@@ -265,13 +265,13 @@
                     class="treeview {{ active_item(['setting', 'appearance', 'cache', 'profile','plugins']) ? 'is-expanded' : '' }}">
                     <a class="app-menu__item" href="#" data-toggle="treeview"><i
                             class="app-menu__icon fa fa-gear "></i><span
-                            class="app-menu__label">Setting</span><i class="treeview-indicator fa fa-chevron-right"></i>
+                            class="app-menu__label">Pengaturan</span><i class="treeview-indicator fa fa-chevron-right"></i>
                     </a>
 
                     <ul class="treeview-menu">
                         <li>
                             <a class="treeview-item {{ active_item('profile') }}"
-                                href="{{ \Illuminate\Support\Facades\Route::has('profile') ? route('profile') : '#' }}"><i
+                                href="{{ Route::has('profile') ? route('profile') : '#' }}"><i
                                     class="icon fa fa-building "></i> Profile </a>
                         </li>
 

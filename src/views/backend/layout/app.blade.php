@@ -430,7 +430,7 @@
     </main>
 
     <script>
-        const themes = {
+        const panel_theme_config = {
             'dark': { bg: '#1D2327', headerBg: '#111518', listBg: '#000000', font: '#ffffff', headerFont: '#ffffff', muted: '#a0aabf', bodyBg: '#F0F0F1', primary: '#0d6efd', primaryDark: '#0a58ca', hoverBg: 'rgba(255, 255, 255, 0.1)', hoverColor: '#ffffff' },
             'navy': { bg: '#1e293b', headerBg: '#0f172a', listBg: '#0f172a', font: '#f8fafc', headerFont: '#ffffff', muted: '#94a3b8', bodyBg: '#f1f5f9', primary: '#3b82f6', primaryDark: '#2563eb', hoverBg: 'rgba(255, 255, 255, 0.1)', hoverColor: '#ffffff' },
             'purple': { bg: '#4c1d95', headerBg: '#3b0764', listBg: '#2e1065', font: '#f5f3ff', headerFont: '#ffffff', muted: '#c4b5fd', bodyBg: '#f5f3ff', primary: '#8b5cf6', primaryDark: '#7c3aed', hoverBg: 'rgba(255, 255, 255, 0.1)', hoverColor: '#ffffff' },
@@ -438,15 +438,15 @@
             'light': { bg: '#ffffff', headerBg: '#f8f9fa', listBg: '#f1f5f9', font: '#334155', headerFont: '#334155', muted: '#64748b', bodyBg: '#f8f9fa', primary: '#0d6efd', primaryDark: '#0a58ca', hoverBg: 'rgba(0, 0, 0, 0.05)', hoverColor: '#000000' }
         };
 
-        function setSidebarTheme(themeName) {
-            if (!themes[themeName]) return;
+        function changePanelTheme(themeName) {
+            if (!panel_theme_config[themeName]) return;
             // Gunakan prefix unik agar terikat dengan session login ini (optional tapi localStorage berbasis browser)
             localStorage.setItem('sidebar_theme_{{ request()->user()->id ?? 0 }}', themeName);
-            applySidebarTheme(themeName);
+            applyPanelTheme(themeName);
         }
 
-        function applySidebarTheme(themeName) {
-            const theme = themes[themeName];
+        function applyPanelTheme(themeName) {
+            const theme = panel_theme_config[themeName];
             if (!theme) return;
 
             document.documentElement.style.setProperty('--sidebar-bg', theme.bg);
@@ -465,7 +465,7 @@
 
         // Apply immediately on load based on user ID
         const savedTheme = localStorage.getItem('sidebar_theme_{{ request()->user()->id ?? 0 }}') || 'dark';
-        applySidebarTheme(savedTheme);
+        applyPanelTheme(savedTheme);
 
         $(document).on('click', '.copy', function () {
             var $temp = $("<input>");

@@ -184,11 +184,7 @@
     </form>
 
   @push('scripts')
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        /* Scripts removed, handled by template_store view */
-    });
-    </script>
+
     @include('cms::backend.layout.js')
   @endpush
 @endsection
