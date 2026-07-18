@@ -2573,20 +2573,16 @@ if (!function_exists('init_plugin_meta_header')) {
         $site_meta_keyword = get_option('site_meta_keyword') ?? 'Situs Resmi, Cara Buat, Buat Website';
 
         if ($seo) {
-            $title = $seo['title'] ? $seo['title'] . ' - ' . $site_title : $site_title;
+            $title = $seo['title'] ? $seo['title'] : 'Untitled';
             $description = $seo['description'] ?: $site_desc;
             $thumbnail = $seo['thumbnail'] ?: url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage());
-        } else {
-            $title = $site_title;
-            $description = $site_desc;
-            $thumbnail = url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage());
-        }
+        } 
 
         $data = [
-            'title' => $title,
-            'description' => $description,
+            'title' => $title ?? 'Untitled',
+            'description' => $description ?? null,
             'keywords' => $site_meta_keyword,
-            'thumbnail' => $thumbnail,
+            'thumbnail' => $thumbnail ?? url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage()),
             'url' => request()->fullUrl(),
         ];
 

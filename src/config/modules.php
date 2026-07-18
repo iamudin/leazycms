@@ -159,6 +159,7 @@ return [
                 'data_title' => 'Nama Sambutan',
             ],
             'form' => [
+                'editor_mode' => 'simple',
                 'unique_title' => false,
                 'post_parent' => false,
                 'thumbnail' => true,

@@ -6,7 +6,18 @@
     .note-editable img.selected-img {
         outline: 2px solid #007bff;
     }
+
 </style>
+
+    @if (function_exists('current_module') && isset(current_module()?->form?->editor_mode) && current_module()?->form?->editor_mode == 'simple')
+<style>
+    
+        .btn-summernote-gmedia {
+            display: none !important;
+        }
+</style>
+
+    @endif
 <input type="file" id="replaceImageInput" accept="image/*" style="display:none;">
 <input type="file" id="fileUploadInput" style="display:none;" accept="{{ allow_mime() }}">
 <div class="modal fade" id="editImageModal" tabindex="-1">
@@ -313,6 +324,11 @@
                 ]
             },
             toolbar: [
+                @if(function_exists('current_module') && isset(current_module()?->form?->editor_mode) && current_module()?->form?->editor_mode == 'simple')
+                ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
+                ['para', ['paragraph']],
+                ['view', ['fullscreen', 'codeview']],
+                @else
                 ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
                 ['fontsize', ['fontsize']],
                 ['font', ['strikethrough', 'superscript', 'subscript']],
@@ -324,7 +340,9 @@
                 ['table', ['table']],
                 ['view', ['fullscreen', 'help', 'codeview']],
                 ['custom', ['aiGenerate']],
+                @endif
             ],
+
 
             buttons: {
                 aiGenerate: aiButton,
