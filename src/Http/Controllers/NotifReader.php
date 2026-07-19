@@ -1,29 +1,17 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
 use Leazycms\Web\Models\Notification;
 
-class NotifReader extends Controller  implements HasMiddleware
-
+class NotifReader extends Controller
 {
-    public static function middleware(): array {
-        return [
-            new Middleware('auth')
-        ];
-    }
-      function notifreader($notification){
-        $notification = Notification::whereId($notification)->first();
-        if(empty($notification)){
-        return to_route('login');
 
-        }
-        if(auth()->user()->isAdmin() || $notification->user_id == auth()->user()->id){
-            $notification->mark_as_read();
-            return redirect($notification->url);
-        }
-        return to_route('login');
+    function notifreader($notification)
+    {
+        $notification = Notification::whereId($notification)->first();
+        abort_if(empty($notification), 404);
+        $notification->mark_as_read();
+        return redirect($notification->url);
 
     }
 }
