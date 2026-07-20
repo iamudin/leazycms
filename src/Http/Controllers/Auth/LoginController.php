@@ -1,5 +1,6 @@
 <?php
 namespace Leazycms\Web\Http\Controllers\Auth;
+use Leazycms\Web\Http\Controllers\UserController;
 use Leazycms\Web\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -68,28 +69,12 @@ class LoginController extends Controller
     {
 
 
-        if (!config('modules.multisite_enabled')) {
 
-            if (Auth::check()) {
-                if (!$request->user()->isAdmin() && get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !is_main_domain()) {
-                    return to_route($request->user()->level . '.dashboard');
-                }
-
-                if (!is_main_domain() && $request->user()->isAdmin()) {
-                    Auth::logout();
-                }
-                if (is_main_domain() && !$request->user()->isAdmin()) {
-                    Auth::logout();
-                }
-
-                return to_route('panel.dashboard');
-            } else {
-                if (!is_main_domain() && admin_path() != 'login' && admin_path() == $request->segment(1)) {
-                    return redirect('login');
-                }
-            }
-        }
         if (Auth::check()) {
+            if (!in_array(Auth::user()->level, (new UserController)->all_role()->toArray())) {
+                Auth::logout();
+                return redirect(admin_path())->with('error', 'Peran Akun tidak tidak valid');
+            }
             return to_route('panel.dashboard');
         }
         $this->codeCaptcha();
@@ -178,32 +163,10 @@ class LoginController extends Controller
                     'last_login_ip' => $request->ip(),
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
-                if (!config('modules.multisite_enabled')) {
 
-                    if (is_main_domain()) {
-                        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
-                            Auth::logout();
-                        } else {
-                            Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-                            if ($request->ajax())
-                                return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
-                            return redirect()->intended('/' . admin_path());
-                        }
-                    } else {
-                        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && in_array($user->level, collect(config('modules.extension_module'))->pluck('path')->toArray())) {
-                            Log::channel('daily')->warning('Berhasil login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
-                            if ($request->ajax())
-                                return response()->json(['status' => 'success', 'redirect' => url('/login')]);
-                            return redirect()->intended('/login');
-                        } else {
-                            Auth::logout();
-                        }
-                    }
-                } else {
-                    if ($request->ajax())
-                        return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
-                    return redirect()->intended('/' . admin_path());
-                }
+                if ($request->ajax())
+                    return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
+                return redirect()->intended('/' . admin_path());
             }
 
             Auth::logout();
