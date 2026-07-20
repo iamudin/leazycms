@@ -70,13 +70,14 @@ class LoginController extends Controller
 
 
 
-        if (Auth::check() && Auth::user()->level != 'admin') {
-            if (!in_array(Auth::user()->level, (new UserController)->all_role()->toArray())) {
+        if (Auth::check()) {
+
+            if (Auth::user()->level != 'admin' && !in_array(Auth::user()->level, (new UserController)->all_role()->toArray())) {
                 Auth::logout();
                 return redirect(admin_path())->with('error', 'Peran Akun tidak tidak valid');
             }
+            return to_route('panel.dashboard');
         }
-        return to_route('panel.dashboard');
 
         $this->codeCaptcha();
 
