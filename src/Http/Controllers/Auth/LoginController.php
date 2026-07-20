@@ -70,7 +70,7 @@ class LoginController extends Controller
 
 
 
-        if (Auth::check()) {
+        if (Auth::check() && Auth::user()->level != 'admin') {
             if (!in_array(Auth::user()->level, (new UserController)->all_role()->toArray())) {
                 Auth::logout();
                 return redirect(admin_path())->with('error', 'Peran Akun tidak tidak valid');
