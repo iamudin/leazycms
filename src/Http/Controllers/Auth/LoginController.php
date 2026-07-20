@@ -75,8 +75,9 @@ class LoginController extends Controller
                 Auth::logout();
                 return redirect(admin_path())->with('error', 'Peran Akun tidak tidak valid');
             }
-            return to_route('panel.dashboard');
         }
+        return to_route('panel.dashboard');
+
         $this->codeCaptcha();
 
         $captchaUrl = route('captcha', md5($request->session()->id()));
