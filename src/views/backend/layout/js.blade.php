@@ -46,7 +46,7 @@
 
         } else if (extensions.office.includes(ext)) {
 
-            viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+            viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
             showDownloadBtn = true;
         }
 
@@ -58,7 +58,7 @@
             content = `
             <div class="position-relative" style="min-height:600px;">
                 <div id="mediaLoader"
-                     class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-white">
+                     class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-white" style="z-index: 10;">
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
 
@@ -67,9 +67,7 @@
                     id="dynamicPdfIframe"
                     width="100%"
                     height="600px"
-                    style="border:none; display:none;"
-                    onload="var el = document.getElementById('mediaLoader'); if(el) el.style.display='none'; this.style.display='block';"
-                    onerror="var el = document.getElementById('mediaLoader'); if(el) el.innerHTML='<p class=\\'text-danger\\'>Gagal memuat file.</p>';">
+                    style="border:none; position:relative; z-index: 1;">
                 </iframe>
             </div>
         `;
@@ -145,6 +143,34 @@
             var embed = document.getElementById('dynamicPdfEmbed');
             if (embed && embed.getAttribute('data-src')) {
                 embed.src = embed.getAttribute('data-src');
+            }
+
+            var iframe = document.getElementById('dynamicPdfIframe');
+            if (iframe && iframe.getAttribute('data-src')) {
+                var loader = document.getElementById('mediaLoader');
+                var iframeLoaded = false;
+
+                iframe.onload = function () {
+                    iframeLoaded = true;
+                    if (loader) loader.remove();
+                };
+
+                iframe.onerror = function () {
+                    iframeLoaded = true;
+                    if (loader) {
+                        loader.classList.remove('d-flex', 'align-items-center');
+                        loader.innerHTML = '<p class="text-danger pt-5">Gagal memuat file.</p>';
+                    }
+                };
+
+                // Fallback timeout in case onload fails to fire
+                setTimeout(function () {
+                    if (!iframeLoaded && loader) {
+                        loader.remove();
+                    }
+                }, 8000);
+
+                iframe.src = iframe.getAttribute('data-src');
             }
         });
 
