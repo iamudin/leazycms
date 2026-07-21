@@ -67,14 +67,14 @@ class Post extends BaseModel
                 foreach ($post->files as $row) {
                     $row->deleteFile();
                 }
-                
+
                 // Hapus file pada kolom media (jika ada) apabila tidak digunakan oleh post lain
                 if (!empty($post->media)) {
                     $fileName = basename(parse_url($post->media, PHP_URL_PATH));
                     $isUsedElsewhere = self::where('media', 'like', "%{$fileName}%")
-                                           ->where('id', '!=', $post->id)
-                                           ->exists();
-                                           
+                        ->where('id', '!=', $post->id)
+                        ->exists();
+
                     if (!$isUsedElsewhere) {
                         $fileModel = \Leazycms\FLC\Models\File::where('file_name', $fileName)->first();
                         if ($fileModel) {
@@ -93,6 +93,10 @@ class Post extends BaseModel
 
         static::saving(function ($post) {
             if (empty($post->media) && !empty($post->content) || $post->media && !media_exists($post->media)) {
+                if (!empty($post->media) && !media_exists($post->media)) {
+                    $post->media = null;
+                }
+
                 libxml_use_internal_errors(true);
                 $dom = new \DOMDocument();
                 $dom->loadHTML('<?xml encoding="utf-8" ?>' . $post->content);
@@ -102,7 +106,7 @@ class Post extends BaseModel
                     $src = $img->getAttribute('src');
                     if (strpos($src, 'data:image') !== 0) {
                         // Simpan ke dalam cache langsung saat saving
-                        Cache::put(self::getCurrentHost() . ':thumbnail:' . $post->id, $src);
+                        Cache::put($post->getCacheHost() . ':thumbnail:' . $post->id, $src);
                         break;
                     }
                 }
@@ -125,7 +129,7 @@ class Post extends BaseModel
         static::saved(function ($post) {
             if (!empty($post->media) && media_exists($post->media)) {
                 // Jika ada media baru, hapus cache thumbnail karena sudah tidak diperlukan
-                Cache::forget(self::getCurrentHost() . ':thumbnail:' . $post->id);
+                Cache::forget($post->getCacheHost() . ':thumbnail:' . $post->id);
             }
 
             try {
@@ -150,6 +154,14 @@ class Post extends BaseModel
             return config('app.url') ? parse_url(config('app.url'), PHP_URL_HOST) : 'localhost';
         }
         return config('modules.multisite_enabled') && app()->has('tenant') ? tenant()->domain : request()->getHost();
+    }
+
+    public function getCacheHost(): string
+    {
+        if (config('modules.multisite_enabled') && !empty($this->tenant_id) && $this->tenant) {
+            return $this->tenant->domain;
+        }
+        return self::getCurrentHost();
     }
 
     private static function postCacheTags(self $post): array
@@ -186,6 +198,17 @@ class Post extends BaseModel
         return $this->hasOne(Post::class, 'parent_id', 'id')->select($this->selected);
     }
 
+    public function setContentAttribute($value)
+    {
+        if (config('modules.multisite_enabled') && !empty($this->tenant_id) && is_main_domain()) {
+            if ($this->tenant && $this->tenant->domain) {
+                $domain = $this->tenant->domain;
+                $value = preg_replace('/src="https?:\/\/' . preg_quote($domain, '/') . '\/media\//i', 'src="/media/', (string) $value);
+            }
+        }
+        $this->attributes['content'] = $value;
+    }
+
     public function getThumbnailAttribute()
     {
         if ($this->media) {
@@ -197,9 +220,15 @@ class Post extends BaseModel
             }
             return media($this->media)->url();
         }
+
+
         // Cek cache
-        $cacheKey = config('modules.multisite_enabled') ? tenant()->domain . ':' . ':thumbnail:' . $this->id : self::getCurrentHost() . ':thumbnail:' . $this->id;
-        return Cache::get($cacheKey, noimage());
+        $cacheKey = $this->getCacheHost() . ':thumbnail:' . $this->id;
+        $media = Cache::get($cacheKey, noimage());
+        if (str_starts_with($media, '/media')) {
+            return media($media, $this->tenant?->domain ?? null)->url();
+        }
+        return $media;
     }
     public function getThumbnailTextAttribute()
     {

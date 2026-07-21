@@ -52,7 +52,13 @@
                                 .isi img {width:100%}
                             </style>
                            <div class="isi" style="max-height: 60vh;overflow:auto;padding:0 10px 0 0">
-                            {!!$post->content ?? '' !!}
+                            @php
+                                $content = $post->content ?? '';
+                                if (config('modules.multisite_enabled') && !empty($post) && !empty($post->tenant_id) && is_main_domain() && $post->tenant) {
+                                    $content = preg_replace('/src="\/media\//i', 'src="https://' . $post->tenant->domain . '/media/', $content);
+                                }
+                            @endphp
+                            {!! $content !!}
                            </div>
                         </div>
                     @endif

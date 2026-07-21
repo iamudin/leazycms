@@ -4,8 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,20 +15,20 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('parent_id')->index()->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
-            $table->string('status',50)->default('draft')->index();
+            $table->string('status', 50)->default('draft')->index();
             $table->string('type')->index();
             $table->text('title')->nullable();
-            $table->char('pinned',1)->default('0');
+            $table->char('pinned', 1)->default('0');
             $table->longText('content')->nullable();
             $table->text('short_content')->nullable();
-            $table->string('slug',255)->index()->nullable();
-            $table->string('keyword',300)->nullable();
-            $table->string('description',600)->nullable();
-            $table->string('media',500)->nullable();
-            $table->text('media_description')->nullable();
-            $table->string('url',500)->nullable();
+            $table->string('slug', 255)->index()->nullable();
+            $table->string('keyword', 300)->nullable();
+            $table->string('description', 200)->nullable();
+            $table->string('media', 500)->nullable();
+            $table->string('media_description', 200)->nullable();
+            $table->string('url', 500)->nullable();
             $table->text('redirect_to')->nullable();
-            $table->char('allow_comment',1)->default(0);
+            $table->char('allow_comment', 1)->default(0);
             $table->tinyInteger('comment_count')->default(0);
             $table->tinyInteger('sort')->default(0);
             $table->json('data_field')->nullable();

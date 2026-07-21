@@ -1,281 +1,317 @@
 @extends('cms::backend.layout.app', ['title' => get_post_type('title_crud')])
 @section('content')
-        <form class="editorForm" action="{{ route(get_post_type() . '.update', $post->id) }}" method="POST"
-            enctype="multipart/form-data">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h3 style="font-weight:normal">
-                        <i class="fa {{ $module->icon }}" aria-hidden="true"></i> {{ get_post_type('title_crud') }}
-                        <div class="btn-group pull-right">
-                            @if(View::exists('template.' . template() . '.' . $post->type . '.' . $post->slug))
-                            <a href="{{ route('appearance.editor') . '?edit='.enc64('/' . $post->type . '/' . $post->slug . '.blade.php') }}" class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> Edit Halaman {!! help('Tombol ini akan muncul ketika ' . $module->title . ' ini memiliki custom page pada tampilan. Klik untuk mulai mengedit') !!}</a>
-                            @endif
+    <form class="editorForm" action="{{ route(get_post_type() . '.update', $post->id) }}" method="POST"
+        enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-lg-12">
+                <h3 style="font-weight:normal">
+                    <i class="fa {{ $module->icon }}" aria-hidden="true"></i> {{ get_post_type('title_crud') }}
+                    <div class="btn-group pull-right">
+                        @if(View::exists('template.' . template() . '.' . $post->type . '.' . $post->slug))
+                            <a href="{{ route('appearance.editor') . '?edit=' . enc64('/' . $post->type . '/' . $post->slug . '.blade.php') }}"
+                                class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> Edit Halaman
+                                {!! help('Tombol ini akan muncul ketika ' . $module->title . ' ini memiliki custom page pada tampilan. Klik untuk mulai mengedit') !!}</a>
+                        @endif
 
-                            <button type="button" onclick="location.href='{{ route(get_post_type()) }}'" class="btn btn-danger btn-sm "
-                            data-toggle="tooltip" title="Kembali Ke Index Data"> <i class="fa fa-undo" aria-hidden></i>
+                        <button type="button" onclick="location.href='{{ route(get_post_type()) }}'"
+                            class="btn btn-danger btn-sm " data-toggle="tooltip" title="Kembali Ke Index Data"> <i
+                                class="fa fa-undo" aria-hidden></i>
                             Kembali</button>
-                          
 
-                        </div>
-                    </h3>
-                    <br>
-                    @php
-                        $showUrl = !empty($post && $module->web->detail && $post->title && $post->status == 'publish') && $module->public;
-                        $postUrl = $post->url ?? '';
-                    @endphp
-                    @if($module->web->detail && $module->public)
-                    <div id="post-url-bar" style="border-left:3px solid green;{{ $showUrl ? '' : 'display:none' }}" class="alert alert-success"><b>URL : </b><a
-                                title="Kunjungi URL" data-toggle="tooltip" href="{{ url($postUrl) }}"
-                                target="_blank" class="post-url-link"><i class="url"><u>{{ $showUrl ? str(url($postUrl))->limit(150, ' ...') : '' }}</u></i>  </a><span class="custom-url"></span> <i class="fa fa-edit ml-2 pointer"  data-post-url="{{ url($postUrl) }}"
-                                    data-slug="{{ $post->slug }}"></i><span
-                                title="Klik Untuk Menyalin alamat URL {{ $module->title }}" data-toggle="tooltip"
-                                class="pointer copy pull-right badge badge-primary" data-copy="{{ url($postUrl) }}"><i
-                                    class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
-                                    @push('scripts')
-                                    <script>
 
-                                              function enableCustomSlugEdit(postUrl, slug) {
-                                                const urlElement = document.querySelector('.url');
-                                                const customUrlElement = document.querySelector('.custom-url');
-                                                const editButton = document.querySelector('.fa-edit');
+                    </div>
+                </h3>
+                <br>
+                @php
+                    $showUrl = !empty($post && $module->web->detail && $post->title && $post->status == 'publish') && $module->public;
+                    $postUrl = config('modules.multisite_enabled') && $post->tenant ? 'https://' . $post->tenant->domain . '/' . $post->url : url($post->url);
+                @endphp
+                @if($module->web->detail && $module->public)
+                    <div id="post-url-bar" style="border-left:3px solid green;{{ $showUrl ? '' : 'display:none' }}"
+                        class="alert alert-success"><b>URL : </b><a title="Kunjungi URL" data-toggle="tooltip"
+                            href="{{ $postUrl }}" target="_blank" class="post-url-link"><i
+                                class="url"><u>{{ $showUrl ? str($postUrl)->limit(150, ' ...') : '' }}</u></i> </a><span
+                            class="custom-url"></span> <i class="fa fa-edit ml-2 pointer" data-post-url="{{ $postUrl }}"
+                            data-slug="{{ $post->slug }}"></i><span title="Klik Untuk Menyalin alamat URL {{ $module->title }}"
+                            data-toggle="tooltip" class="pointer copy pull-right badge badge-primary"
+                            data-copy="{{ $postUrl }}"><i class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
+                    @push('scripts')
+                        <script>
 
-                                                const baseUrl = postUrl.replace(slug, '');
-                                                urlElement.innerHTML = baseUrl;
+                            function enableCustomSlugEdit(postUrl, slug) {
+                                const urlElement = document.querySelector('.url');
+                                const customUrlElement = document.querySelector('.custom-url');
+                                const editButton = document.querySelector('.fa-edit');
 
-                                                customUrlElement.innerHTML = `
-                                                    <input type='text' name='custom_slug' autofocus
-                                                           style='border:none;border-radius:5px;color:#004A43;width:300px;background:transparent'
-                                                           value='${slug}'
-                                                           maxlength='100'
-                                                           oninput="validateAndUpdateSlug('${baseUrl}', this)">
-                                                    <i class="fa fa-check ml-2 pointer" onclick="finalizeSlugEdit('${baseUrl}', this)"></i>
-                                                `;
+                                const baseUrl = postUrl.replace(slug, '');
+                                urlElement.innerHTML = baseUrl;
 
-                                                if (editButton) {
-                                                    editButton.style.display = 'none';
-                                                }
-                                            }
+                                customUrlElement.innerHTML = `
+                                                                                                                                            <input type='text' name='custom_slug' autofocus
+                                                                                                                                                   style='border:none;border-radius:5px;color:#004A43;width:300px;background:transparent'
+                                                                                                                                                   value='${slug}'
+                                                                                                                                                   maxlength='100'
+                                                                                                                                                   oninput="validateAndUpdateSlug('${baseUrl}', this)">
+                                                                                                                                            <i class="fa fa-check ml-2 pointer" onclick="finalizeSlugEdit('${baseUrl}', this)"></i>
+                                                                                                                                        `;
 
-                                            function validateAndUpdateSlug(baseUrl, inputElement) {
-                                                let newSlug = inputElement.value.replace(/[^a-z\-\^0-9]/g, '');
-                                                if (newSlug && !/^[a-z0-9]/.test(newSlug[0])) {
-                                                    newSlug = newSlug.slice(1);
-                                                }
-                                                while (/--/.test(newSlug)) {
-                                                    newSlug = newSlug.replace(/--/g, '-');
-                                                }
-                                                if (newSlug.length > 100) {
-                                                    newSlug = newSlug.slice(0, 100);
-                                                }
-                                                inputElement.value = newSlug;
+                                if (editButton) {
+                                    editButton.style.display = 'none';
+                                }
+                            }
 
-                                                const urlElement = document.querySelector('.url');
-                                                urlElement.innerHTML = `${baseUrl}`;
-                                            }
+                            function validateAndUpdateSlug(baseUrl, inputElement) {
+                                let newSlug = inputElement.value.replace(/[^a-z\-\^0-9]/g, '');
+                                if (newSlug && !/^[a-z0-9]/.test(newSlug[0])) {
+                                    newSlug = newSlug.slice(1);
+                                }
+                                while (/--/.test(newSlug)) {
+                                    newSlug = newSlug.replace(/--/g, '-');
+                                }
+                                if (newSlug.length > 100) {
+                                    newSlug = newSlug.slice(0, 100);
+                                }
+                                inputElement.value = newSlug;
 
-                                            function finalizeSlugEdit(baseUrl, checkButton) {
-                                                const inputElement = document.querySelector('.custom-url input');
-                                                const editButton = document.querySelector('.fa-edit');
+                                const urlElement = document.querySelector('.url');
+                                urlElement.innerHTML = `${baseUrl}`;
+                            }
 
-                                                if (inputElement) {
-                                                    let slug = inputElement.value;
-                                                    if (slug.endsWith('-')) {
-                                                        slug = slug.slice(0, -1);
-                                                    }
+                            function finalizeSlugEdit(baseUrl, checkButton) {
+                                const inputElement = document.querySelector('.custom-url input');
+                                const editButton = document.querySelector('.fa-edit');
 
-                                                    inputElement.value = slug;
-                                                    inputElement.setAttribute('type', 'hidden');
-                                                }
+                                if (inputElement) {
+                                    let slug = inputElement.value;
+                                    if (slug.endsWith('-')) {
+                                        slug = slug.slice(0, -1);
+                                    }
 
-                                                if (checkButton) {
-                                                    checkButton.style.display = 'none';
-                                                }
+                                    inputElement.value = slug;
+                                    inputElement.setAttribute('type', 'hidden');
+                                }
 
-                                                if (editButton) {
-                                                    editButton.style.display = 'inline';
-                                                }
+                                if (checkButton) {
+                                    checkButton.style.display = 'none';
+                                }
 
-                                                const urlElement = document.querySelector('.url');
-                                                const slug = inputElement.value;
-                                                urlElement.innerHTML = `${baseUrl}${slug}`;
-                                            }
+                                if (editButton) {
+                                    editButton.style.display = 'inline';
+                                }
 
-                                            document.querySelectorAll('.fa-edit').forEach(icon => {
-                                                icon.addEventListener('click', function () {
-                                                    const postUrl = this.dataset.postUrl;
-                                                    const slug = this.dataset.slug;
-                                                    enableCustomSlugEdit(postUrl, slug);
-                                                });
-                                            });
+                                const urlElement = document.querySelector('.url');
+                                const slug = inputElement.value;
+                                urlElement.innerHTML = `${baseUrl}${slug}`;
+                            }
 
-                                                                            </script>
-                                    @endpush
-                    @endif
-                    @include('cms::backend.layout.error')
-                    
-                    <!-- Mobile Status Toggle (Visible only on small screens) -->
-                    <div class="d-block d-lg-none mb-3 mt-3">
-                        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-                            <label onclick="handleStatusSubmit(this)" class="btn btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
-                                <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required> 
-                                <i class="fa fa-globe"></i> Publikasikan
-                            </label>
-                            <label onclick="handleStatusSubmit(this)" class="btn btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
-                                <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required> 
-                                <i class="fa fa-archive"></i> Draft
-                            </label>
-                        </div>
+                            document.querySelectorAll('.fa-edit').forEach(icon => {
+                                icon.addEventListener('click', function () {
+                                    const postUrl = this.dataset.postUrl;
+                                    const slug = this.dataset.slug;
+                                    enableCustomSlugEdit(postUrl, slug);
+                                });
+                            });
+
+                        </script>
+                    @endpush
+                @endif
+                @include('cms::backend.layout.error')
+
+                <!-- Mobile Status Toggle (Visible only on small screens) -->
+                <div class="d-block d-lg-none mb-3 mt-3">
+                    <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                        <label onclick="handleStatusSubmit(this)"
+                            class="btn btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
+                            <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required>
+                            <i class="fa fa-globe"></i> Publikasikan
+                        </label>
+                        <label onclick="handleStatusSubmit(this)"
+                            class="btn btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
+                            <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required>
+                            <i class="fa fa-archive"></i> Draft
+                        </label>
                     </div>
                 </div>
-                <div class="col-lg-9">
+            </div>
+            <div class="col-lg-9">
+                <div class="form-group">
+                    @if(isset($module->form?->editable_title) && $module->form?->editable_title == true || !isset($module->form?->editable_title))
+                        <input data-toggle="tooltip" title="Masukkan {{ $module->datatable->data_title }}" required name="title"
+                            type="text" value="{{ !empty(old('title')) ? old('title') : ($post->title ?? null) }}"
+                            placeholder="Masukkan {{ $module->datatable->data_title }}" class="form-control form-control-lg">
+                    @else
+                        <input type="hidden" name="title" value="{{ $post->title ?? null }}">
+                        <label for="">{{ $module->datatable->data_title }}</label>
+                        <h3>{{ $post->title ?? null }}</h3>
+                    @endif
+
+                </div>
+
+                @if ($module->form->editor)
                     <div class="form-group">
-                        @if(isset($module->form?->editable_title) && $module->form?->editable_title == true || !isset($module->form?->editable_title))
-                        <input data-toggle="tooltip" title="Masukkan {{ $module->datatable->data_title }}" required
-                            name="title" type="text" value="{{ !empty(old('title')) ? old('title') : ($post->title ?? null) }}"
-                            placeholder="Masukkan {{ $module->datatable->data_title }}" class="form-control form-control-lg" >
-                            @else
-                                <input type="hidden" name="title" value="{{ $post->title ?? null }}">
-                                <label for="">{{ $module->datatable->data_title }}</label>
-                                <h3>{{ $post->title ?? null }}</h3>
-                            @endif
 
+                        @php
+                            $isTenantOnMainDomain = config('modules.multisite_enabled') && !empty($post) && !empty($post->tenant_id) && is_main_domain() && $post->tenant;
+                        @endphp
+                        @if($post->type == 'docs')
+                            @php 
+                                $type = "application/x-httpd-php"; 
+                                $content = $post->content ?? '';
+                                if ($isTenantOnMainDomain) {
+                                    $content = preg_replace('/src="\/media\//i', 'src="https://' . $post->tenant->domain . '/media/', $content);
+                                }
+                            @endphp
+                            <textarea name="content" placeholder="Dokumentasi" id="editor"
+                                class="custom_html">{{ $content }}</textarea>
+                            @include('cms::backend.layout.codemirrorjs')
+                        @else
+                            @php
+                                $content = !empty(old('content')) ? old('content') : ($post->content ?? '');
+                                if ($isTenantOnMainDomain) {
+                                    $content = preg_replace('/src="\/media\//i', 'src="https://' . $post->tenant->domain . '/media/', $content);
+                                }
+                            @endphp
+                            <textarea name="content" placeholder="Keterangan..."
+                                id="editor">{{ $content }}</textarea>
+                        @endif
                     </div>
+                @endif
 
-                    @if ($module->form->editor)
-                        <div class="form-group">
+                @if ($pp = $module->form->post_parent)
+                            <?php
+                    if (isset($pp[1])) {
+                        if (isset($pp[2]) && $pp[2] != 'all') {
+                            $par = query()->withwherehas('category', function ($q) use ($pp) {
+                                $q->where('slug', $pp[2]);
+                            })
+                                ->whereType($pp[1])
+                                ->with('parent.parent.parent')
+                                ->published()
+                                ->select('id', 'title', 'parent_id')
+                                ->whereNotIn('id', [$post->id])
+                                ->get();
+                        } else {
+                            $par = query()->whereType($pp[1])
+                                ->with('parent.parent.parent')
+                                ->published()
+                                ->select('id', 'title', 'parent_id')
+                                ->whereNotIn('id', [$post->id])
+                                ->get();
+                        }
+                    }
+                                                                                                                                                            ?>
+                            <h6>{{ $pp[0] }}</h6>
+                            <select @if (isset($pp[3]) && $pp[3] == 'required') required @endif data-live-search="true"
+                                class="selectpicker form-control" name="parent_id">
+                                <option value="">--pilih--</option>
 
-                              @if($post->type == 'docs')
-                              @php $type = "application/x-httpd-php"; @endphp
-                              <textarea name="content" placeholder="Dokumentasi" id="editor" class="custom_html">{{ $post->content ?? '' }}</textarea>
-                              @include('cms::backend.layout.codemirrorjs')
-                              @else
-                                <textarea name="content" placeholder="Keterangan..." id="editor">{{ !empty(old('content')) ? old('content') : ($post->content ?? '') }}</textarea>
-                              @endif
-                        </div>
-                    @endif
+                                @foreach ($par as $row)
+                                    <option @if ($post && $post->parent_id == $row->id) selected @endif value="{{ $row->id }}">
+                                        {{ $row->title }}
+                                        {{ $row->parent ? ' - ' . $row->parent->title . ($row->parent->parent ? ' - ' . $row->parent->parent->title : '') : ''}}
+                                    </option>
+                                @endforeach
 
-                    @if ($pp = $module->form->post_parent)
-                        <?php
-    if (isset($pp[1])) {
-        if (isset($pp[2]) && $pp[2] != 'all') {
-            $par = query()->withwherehas('category', function ($q) use ($pp) {
-                $q->where('slug', $pp[2]);
-            })
-                ->whereType($pp[1])
-                ->with('parent.parent.parent')
-                ->published()
-                ->select('id', 'title', 'parent_id')
-                ->whereNotIn('id', [$post->id])
-                ->get();
-        } else {
-            $par = query()->whereType($pp[1])
-                ->with('parent.parent.parent')
-                ->published()
-                ->select('id', 'title', 'parent_id')
-                ->whereNotIn('id', [$post->id])
-                ->get();
-        }
-    }
-                        ?>
-                        <h6>{{ $pp[0] }}</h6>
-                        <select @if (isset($pp[3]) && $pp[3] == 'required') required @endif  data-live-search="true"  class="selectpicker form-control"
-                            name="parent_id">
-                            <option value="">--pilih--</option>
+                            </select>
+                            @push('styles')
+                                <link rel="stylesheet"
+                                    href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+                            @endpush
+                            @push('scripts')
+                                <!-- Latest compiled and minified JavaScript -->
+                                <script
+                                    src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
 
-                            @foreach ($par as $row)
-                                <option @if ($post && $post->parent_id == $row->id) selected @endif value="{{ $row->id }}">
-                                    {{ $row->title }} {{ $row->parent ? ' - ' . $row->parent->title . ($row->parent->parent ? ' - ' . $row->parent->parent->title : '') : ''}}</option>
-                            @endforeach
+                                <!-- (Optional) Latest compiled and minified JavaScript translation files -->
+                                <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/i18n/defaults-*.min.js"></script>
+                            @endpush
 
-                        </select>
-                        @push('styles')
-                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
-                        @endpush
-                        @push('scripts')
-                        <!-- Latest compiled and minified JavaScript -->
-                        <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+                @endif
 
-                        <!-- (Optional) Latest compiled and minified JavaScript translation files -->
-                        <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/i18n/defaults-*.min.js"></script>
-                        @endpush
-
-                    @endif
-
-                    @if ($module->form->custom_field)
-                        <div id="custom-fields-container">
-                            @include('cms::backend.posts.custom_field.form')
-                        </div>
-                    @endif
-                    @if ($module->form->looping_data)
-                        <div id="looping-data-container">
-                            @include('cms::backend.posts.looping_data.form')
-                        </div>
-                    @endif
+                @if ($module->form->custom_field)
+                    <div id="custom-fields-container">
+                        @include('cms::backend.posts.custom_field.form')
+                    </div>
+                @endif
+                @if ($module->form->looping_data)
+                    <div id="looping-data-container">
+                        @include('cms::backend.posts.looping_data.form')
+                    </div>
+                @endif
+            </div>
+            <div class="col-lg-3">
+                <!-- Desktop Status Toggle (Visible only on large screens) -->
+                <div class="d-none d-lg-block">
+                    <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                        <label onclick="handleStatusSubmit(this)"
+                            class="btn btn-md btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
+                            <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required>
+                            <i class="fa fa-globe"></i> Publikasikan
+                        </label>
+                        <label onclick="handleStatusSubmit(this)"
+                            class="btn btn-md  btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
+                            <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required>
+                            <i class="fa fa-archive"></i> Draft
+                        </label>
+                    </div>
                 </div>
-                <div class="col-lg-3">
-                    <!-- Desktop Status Toggle (Visible only on large screens) -->
-                    <div class="d-none d-lg-block">
-                        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-                            <label onclick="handleStatusSubmit(this)" class="btn btn-md btn-outline-success {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
-                                <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required> 
-                                <i class="fa fa-globe"></i> Publikasikan
-                            </label>
-                            <label onclick="handleStatusSubmit(this)" class="btn btn-md  btn-outline-secondary {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
-                                <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required> 
-                                <i class="fa fa-archive"></i> Draft
-                            </label>
-                        </div>
+
+                @if ($module->form->thumbnail)
+                    <div class="card mt-3">
+                        <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Gambar Unggulan</p>
+                        <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}" />
+                        <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
+                            class="compress-image form-control-file form-control-sm" name="media" value="">
+                        @if ($module->web->index && $module->web->detail)
+                            <span style="padding:10px">
+                                <textarea maxlength="200" placeholder="Keterangan Gambar" type="text" class="form-control form-control-sm"
+                                    name="media_description">{{ !empty(old('media_description')) ? old('media_description') : ($post->media_description ?? '') }}</textarea>
+                            </span>
+                        @endif
+
                     </div>
 
-                    @if ($module->form->thumbnail)
-                        <div class="card mt-3">
-                            <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Gambar</p>
-                            <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}"/>
-                            <input accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="compress-image form-control-file form-control-sm"
-                                name="media" value="">
-                            @if ($module->web->index && $module->web->detail)
-                                <span style="padding:10px">
-                                    <textarea placeholder="Keterangan Gambar" type="text" class="form-control form-control-sm"
-                                        name="media_description">{{ !empty(old('media_description')) ? old('media_description') : ($post->media_description ?? '') }}</textarea>
-                                </span>
-                            @endif
+                @endif
 
-                        </div>
-
-                    @endif
-
-                    @if ($module->web->detail || $modname = $module->name == 'banner')
-                        <small>Pengalihan URL {!! help('Opsi Jika Ingin Mengalihkan Konten Ini ke suatu halaman web atau url') !!} </small>
-                        <input type="text" class="form-control form-control-sm" name="redirect_to"
-                            placeholder="URL dimulai https:// atau http://" value="{{ !empty(old('redirect_to')) ? old('redirect_to') : ($post->redirect_to ?? '') }}">
-                        @if(!isset($modname))
-                        <small for="">Deskripsi {!! help('Opsi deskripsi singkat tentang konten yang dapat ditelusuri oleh mesin pencarian') !!} </small>
-                        <textarea placeholder="Tulis Deskripsi" type="text" class="form-control form-control-sm" name="description">{{ !empty(old('description')) ? old('description') : ($post->description ?? '') }}</textarea>
-                        <small for="">Kata Kunci {!! help('Kata kunci tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}</small>
+                @if ($module->web->detail || $modname = $module->name == 'banner')
+                    <small>Pengalihan URL {!! help('Opsi Jika Ingin Mengalihkan Konten Ini ke suatu halaman web atau url') !!}
+                    </small>
+                    <input type="text" class="form-control form-control-sm" name="redirect_to"
+                        placeholder="URL dimulai https:// atau http://"
+                        value="{{ !empty(old('redirect_to')) ? old('redirect_to') : ($post->redirect_to ?? '') }}">
+                    @if(!isset($modname))
+                        <small for="">Deskripsi
+                            {!! help('Opsi deskripsi singkat tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}
+                        </small>
+                        <textarea maxlength="200" placeholder="Tulis Deskripsi" type="text" class="form-control form-control-sm"
+                            name="description">{{ !empty(old('description')) ? old('description') : ($post->description ?? '') }}</textarea>
+                        <small for="">Kata Kunci
+                            {!! help('Kata kunci tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}</small>
                         <input placeholder="Keyword1,Keyword2,Keyword3" type="text" class="form-control form-control-sm"
                             name="keyword" value="{{ !empty(old('keyword')) ? old('keyword') : ($post->keyword ?? '') }}">
-                            @endif
+                    @endif
                     @if ($module->form->tag)
 
-                            <small for="">Tags {!! help('Penanda untuk memudahkan pencarian topik') !!}</small>
-                            <select name="tags[]" id="select2" class="form-control form-control-sm form-control-select" multiple id="">
-                                @foreach($tags as $row)
-                                <option  {{ in_array($row->id, $post->tags->pluck('id')->toArray()) ? 'selected' : '' }} value="{{  $row->id}}">{{ $row->name }}</option>
-                                @endforeach
-                            </select>
+                        <small for="">Tags {!! help('Penanda untuk memudahkan pencarian topik') !!}</small>
+                        <select name="tags[]" id="select2" class="form-control form-control-sm form-control-select" multiple id="">
+                            @foreach($tags as $row)
+                                <option {{ in_array($row->id, $post->tags->pluck('id')->toArray()) ? 'selected' : '' }}
+                                    value="{{  $row->id}}">{{ $row->name }}</option>
+                            @endforeach
+                        </select>
 
                     @else
                     @endif
 
-                    @endif
-                    @if ($module->form->category )
-                    @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category )
+                @endif
+                @if ($module->form->category)
+                    @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category)
                         <small for="">Kategori {{ $module->title }} </small><br>
                         <select class="form-control form-control-sm" name="category_id">
                             <option value=""> --pilih-- </option>
                             @foreach (config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category as $row)
-                                <option value="{{ $row->id }}"
-                                    {{ $row->id == $post->category_id ? 'selected=selected' : '' }}>{{ $row->name }}
+                                <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected=selected' : '' }}>
+                                    {{ $row->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -283,258 +319,260 @@
                                         class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
                     @endif
 
-                    @else
+                @else
 
-                    @endif
-                    @if ($module->web->sortable)
+                @endif
+                @if ($module->web->sortable)
                     <small for="">Urutan {!! help('Urutan konten yang akan ditampilkan') !!}</small>
                     <select class="form-control form-control-sm" name="sort">
                         @php $count = query()->onType(get_post_type())->count();@endphp
                         @for ($i = 1; $i <= $count; $i++)
-                            <option value="{{ $i }}"  {{ $post->sort == $i ? 'selected=selected' : '' }}>{{ $i }}
+                            <option value="{{ $i }}" {{ $post->sort == $i ? 'selected=selected' : '' }}>{{ $i }}
                             </option>
                         @endfor
                     </select>
                     <div class="mb-2"></div>
 
-                    @else
+                @else
                     <div class="mb-2"></div>
 
-                    @endif
+                @endif
 
-                    @if ($module->web->detail)
+                @if ($module->web->detail)
                     <div class="custom-control custom-switch mb-2">
                         <input type="checkbox" class="custom-control-input" id="switch-password" name="password" value="Y" {{ $post && !empty($post->password) ? 'checked=checked' : '' }}>
                         <label class="custom-control-label" for="switch-password"><small>Batasi Akses {{ $module->title }} ini
-                            {!! help('Jika dicentang, Pengunjung wajib memasukkan kode PIN utk melihat. Klik icon merah disamping untuk menyalin kode rahasia') !!}  </small></label>
-                        @if(!empty($post->password))<i class="fa fa-copy copy text-danger pointer ml-1" title="Klik untuk menyalin kode" data-copy="{{ dec64($post->password) }}"></i>@endif
+                                {!! help('Jika dicentang, Pengunjung wajib memasukkan kode PIN utk melihat. Klik icon merah disamping untuk menyalin kode rahasia') !!}
+                            </small></label>
+                        @if(!empty($post->password))<i class="fa fa-copy copy text-danger pointer ml-1"
+                        title="Klik untuk menyalin kode" data-copy="{{ dec64($post->password) }}"></i>@endif
                     </div>
                     <div class="custom-control custom-switch mb-3">
-                        <input type="checkbox" class="custom-control-input" id="switch-comment" name="allow_comment" value="Y" {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}>
+                        <input type="checkbox" class="custom-control-input" id="switch-comment" name="allow_comment" value="Y"
+                            {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}>
                         <label class="custom-control-label" for="switch-comment"><small>Izinkan Komentar
-                            {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}
-                        </small></label>
+                                {!! help('Jika dicentang, maka pengunjung bisa mengirim komentar pada postingan ini') !!}
+                            </small></label>
                     </div>
-                    @endif
-                    <div class="custom-control custom-switch mb-4">
-                        <input type="checkbox" class="custom-control-input" id="switch-pinned" name="pinned" value="Y" {{ $post && $post->pinned == 'Y' ? 'checked=checked' : '' }}>
-                        <label class="custom-control-label" for="switch-pinned"><small>Sematkan
+                @endif
+                <div class="custom-control custom-switch mb-4">
+                    <input type="checkbox" class="custom-control-input" id="switch-pinned" name="pinned" value="Y" {{ $post && $post->pinned == 'Y' ? 'checked=checked' : '' }}>
+                    <label class="custom-control-label" for="switch-pinned"><small>Sematkan
                             {!! help('Jika dicentang, maka postingan ini akan menjadi prioritas dihalaman jika dikondisikan pada template ') !!}
                         </small></label>
-                    </div>
+                </div>
 
             </div>
-        </form>
-        @if ($post->mime != 'html' && $post->type != 'docs' && $module->form->editor)
-            @push('styles')
-                <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
-            @endpush
-            @push('scripts')
-                <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
-
-            @endpush
-            @include('cms::backend.layout.summernote')
-        @endif
-        @push('scripts')
-                <script>
-                      $('.editorForm').on('submit', function (e) {
-                            e.preventDefault();
-                            $('.text-save').html('Menyimpan...');
-                            $('.btn-primary').attr('disabled', 'disabled');
-                            let form = this;
-                            let actionUrl = $(form).attr('action');
-                            let formData = new FormData(form);
-                            formData.append('_method', 'PUT');
-                          $.ajaxSetup({
-                              headers: {
-                                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                              }
-                          });
-
-                            $.ajax({
-                                url: actionUrl,
-                                method: 'POST',
-                                data: formData,
-                                processData: false,
-                                contentType: false,
-                                success: function (response) {
-                                    notif('Berhasil menyimpan perubahan!', 'success');
-                                    $('.text-save').html('Simpan');
-                                    $('.btn-primary').removeAttr('disabled');
-                                    
-                                    if (typeof response === 'string' && response.includes('<html')) {
-                                        let newDoc = new DOMParser().parseFromString(response, 'text/html');
-                                        
-                                        // Update Thumbnail Image
-                                        let newThumb = newDoc.getElementById('thumb');
-                                        if (newThumb && document.getElementById('thumb')) {
-                                            document.getElementById('thumb').src = newThumb.src;
-                                            $('input[name="media"]').val('');
-                                        }
-                                        
-                                        // Update Custom Fields Container
-                                        let newCustomFields = newDoc.getElementById('custom-fields-container');
-                                        if (newCustomFields && document.getElementById('custom-fields-container')) {
-                                            document.getElementById('custom-fields-container').innerHTML = newCustomFields.innerHTML;
-                                        }
-                                        
-                                        // Update Looping Data Container
-                                        let newLoopingData = newDoc.getElementById('looping-data-container');
-                                        if (newLoopingData && document.getElementById('looping-data-container')) {
-                                            document.getElementById('looping-data-container').innerHTML = newLoopingData.innerHTML;
-                                        }
-                                        
-                                        // Clear any lingering Gmedia preview wrappers (temporary previews)
-                                        $('.btn-clear-gmedia').click();
-
-                                        // Update URL bar dynamically
-                                        let newUrlBar = newDoc.getElementById('post-url-bar');
-                                        let currentUrlBar = document.getElementById('post-url-bar');
-                                        if (currentUrlBar && newUrlBar) {
-                                            currentUrlBar.innerHTML = newUrlBar.innerHTML;
-                                            // Update href/data attributes
-                                            let newLink = newUrlBar.querySelector('.post-url-link');
-                                            if (newLink) {
-                                                currentUrlBar.querySelector('.post-url-link').href = newLink.href;
-                                            }
-                                            let newEdit = newUrlBar.querySelector('.fa-edit');
-                                            let curEdit = currentUrlBar.querySelector('.fa-edit');
-                                            if (newEdit && curEdit) {
-                                                curEdit.dataset.postUrl = newEdit.dataset.postUrl;
-                                                curEdit.dataset.slug = newEdit.dataset.slug;
-                                            }
-                                            let newCopy = newUrlBar.querySelector('.copy');
-                                            let curCopy = currentUrlBar.querySelector('.copy');
-                                            if (newCopy && curCopy) {
-                                                curCopy.dataset.copy = newCopy.dataset.copy;
-                                            }
-                                            // Show or hide based on display style from server
-                                            if (newUrlBar.style.display === 'none') {
-                                                $(currentUrlBar).slideUp(300);
-                                            } else {
-                                                $(currentUrlBar).slideDown(300);
-                                            }
-                                        }
-                                    }
-
-                                    // Reset status buttons state instead of reloading
-                                    $('.btn-group-toggle label').each(function() {
-                                        let $label = $(this);
-                                        let $input = $label.find('input');
-                                        let val = $input.val();
-                                        
-                                        // Enable all labels
-                                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
-                                        
-                                        // Reset icon and text based on value
-                                        let $icon = $label.find('i');
-                                        $icon.removeClass('fa-spinner fa-spin');
-                                        
-                                        if (val === 'publish') {
-                                            $icon.addClass('fa-globe');
-                                            $label.contents().filter(function() {
-                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                                            }).each(function() {
-                                                this.nodeValue = ' Publikasikan';
-                                            });
-                                        } else if (val === 'draft') {
-                                            $icon.addClass('fa-archive');
-                                            $label.contents().filter(function() {
-                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                                            }).each(function() {
-                                                this.nodeValue = ' Draft';
-                                            });
-                                        }
-                                    });
-                                },
-                               error: function (xhr) {
-
-                                    try {
-                                        let res = JSON.parse(xhr.responseText);
-                                        let allMsg = [];
-
-                                        if (res.errors) {
-                                            Object.values(res.errors).forEach(arrMsg => {
-                                                allMsg = allMsg.concat(arrMsg);
-                                            });
-
-                                            let finalMsg = allMsg.join('<br>');
-
-                                            notif(finalMsg, 'danger');
-                                        } else if (res.message) {
-                                            notif(res.message, 'danger');
-                                        } else {
-                                            notif('Gagal menyimpan perubahan!', 'danger');
-                                        }
-                                    } catch (e) {
-                                        notif('Gagal menyimpan perubahan!', 'danger');
-                                    }
-
-                                    $('.text-save').html('Simpan');
-                                    $('.btn-primary').removeAttr('disabled');
-                                    
-                                    // Reset status buttons state instead of reloading
-                                    $('.btn-group-toggle label').each(function() {
-                                        let $label = $(this);
-                                        let $input = $label.find('input');
-                                        let val = $input.val();
-                                        
-                                        // Enable all labels
-                                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
-                                        
-                                        // Reset icon and text based on value
-                                        let $icon = $label.find('i');
-                                        $icon.removeClass('fa-spinner fa-spin');
-                                        
-                                        if (val === 'publish') {
-                                            $icon.addClass('fa-globe');
-                                            $label.contents().filter(function() {
-                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                                            }).each(function() {
-                                                this.nodeValue = ' Publikasikan';
-                                            });
-                                        } else if (val === 'draft') {
-                                            $icon.addClass('fa-archive');
-                                            $label.contents().filter(function() {
-                                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                                            }).each(function() {
-                                                this.nodeValue = ' Draft';
-                                            });
-                                        }
-                                    });
-                                }
-
-                            });
-                        });
-                    </script>
-            @include('cms::backend.layout.js')
-<script>
-function handleStatusSubmit(btn) {
-    let $btn = $(btn);
-    // Set radio button to checked
-    $btn.find('input').prop('checked', true);
-    let val = $btn.find('input').val();
-    
-    // Change icon to spinner
-    let $icon = $btn.find('i');
-    $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
-    
-    // Change text safely without removing the input
-    // Get all text nodes and replace their content
-    $btn.contents().filter(function() {
-        return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-    }).each(function() {
-        this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
-    });
-    
-    // Disable other buttons
-    $btn.siblings('label').css('pointer-events', 'none').fadeTo(200, 0.5);
-    
-    // Submit form
-    $('.editorForm').submit();
-}
-</script>
+    </form>
+    @if ($post->mime != 'html' && $post->type != 'docs' && $module->form->editor)
+        @push('styles')
+            <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
         @endpush
+        @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+
+        @endpush
+        @include('cms::backend.layout.summernote')
+    @endif
+    @push('scripts')
+        <script>
+            $('.editorForm').on('submit', function (e) {
+                e.preventDefault();
+                $('.text-save').html('Menyimpan...');
+                $('.btn-primary').attr('disabled', 'disabled');
+                let form = this;
+                let actionUrl = $(form).attr('action');
+                let formData = new FormData(form);
+                formData.append('_method', 'PUT');
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+
+                $.ajax({
+                    url: actionUrl,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        notif('Berhasil menyimpan perubahan!', 'success');
+                        $('.text-save').html('Simpan');
+                        $('.btn-primary').removeAttr('disabled');
+
+                        if (typeof response === 'string' && response.includes('<html')) {
+                            let newDoc = new DOMParser().parseFromString(response, 'text/html');
+
+                            // Update Thumbnail Image
+                            let newThumb = newDoc.getElementById('thumb');
+                            if (newThumb && document.getElementById('thumb')) {
+                                document.getElementById('thumb').src = newThumb.src;
+                                $('input[name="media"]').val('');
+                            }
+
+                            // Update Custom Fields Container
+                            let newCustomFields = newDoc.getElementById('custom-fields-container');
+                            if (newCustomFields && document.getElementById('custom-fields-container')) {
+                                document.getElementById('custom-fields-container').innerHTML = newCustomFields.innerHTML;
+                            }
+
+                            // Update Looping Data Container
+                            let newLoopingData = newDoc.getElementById('looping-data-container');
+                            if (newLoopingData && document.getElementById('looping-data-container')) {
+                                document.getElementById('looping-data-container').innerHTML = newLoopingData.innerHTML;
+                            }
+
+                            // Clear any lingering Gmedia preview wrappers (temporary previews)
+                            $('.btn-clear-gmedia').click();
+
+                            // Update URL bar dynamically
+                            let newUrlBar = newDoc.getElementById('post-url-bar');
+                            let currentUrlBar = document.getElementById('post-url-bar');
+                            if (currentUrlBar && newUrlBar) {
+                                currentUrlBar.innerHTML = newUrlBar.innerHTML;
+                                // Update href/data attributes
+                                let newLink = newUrlBar.querySelector('.post-url-link');
+                                if (newLink) {
+                                    currentUrlBar.querySelector('.post-url-link').href = newLink.href;
+                                }
+                                let newEdit = newUrlBar.querySelector('.fa-edit');
+                                let curEdit = currentUrlBar.querySelector('.fa-edit');
+                                if (newEdit && curEdit) {
+                                    curEdit.dataset.postUrl = newEdit.dataset.postUrl;
+                                    curEdit.dataset.slug = newEdit.dataset.slug;
+                                }
+                                let newCopy = newUrlBar.querySelector('.copy');
+                                let curCopy = currentUrlBar.querySelector('.copy');
+                                if (newCopy && curCopy) {
+                                    curCopy.dataset.copy = newCopy.dataset.copy;
+                                }
+                                // Show or hide based on display style from server
+                                if (newUrlBar.style.display === 'none') {
+                                    $(currentUrlBar).slideUp(300);
+                                } else {
+                                    $(currentUrlBar).slideDown(300);
+                                }
+                            }
+                        }
+
+                        // Reset status buttons state instead of reloading
+                        $('.btn-group-toggle label').each(function () {
+                            let $label = $(this);
+                            let $input = $label.find('input');
+                            let val = $input.val();
+
+                            // Enable all labels
+                            $label.css('pointer-events', 'auto').fadeTo(200, 1);
+
+                            // Reset icon and text based on value
+                            let $icon = $label.find('i');
+                            $icon.removeClass('fa-spinner fa-spin');
+
+                            if (val === 'publish') {
+                                $icon.addClass('fa-globe');
+                                $label.contents().filter(function () {
+                                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                }).each(function () {
+                                    this.nodeValue = ' Publikasikan';
+                                });
+                            } else if (val === 'draft') {
+                                $icon.addClass('fa-archive');
+                                $label.contents().filter(function () {
+                                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                }).each(function () {
+                                    this.nodeValue = ' Draft';
+                                });
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+
+                        try {
+                            let res = JSON.parse(xhr.responseText);
+                            let allMsg = [];
+
+                            if (res.errors) {
+                                Object.values(res.errors).forEach(arrMsg => {
+                                    allMsg = allMsg.concat(arrMsg);
+                                });
+
+                                let finalMsg = allMsg.join('<br>');
+
+                                notif(finalMsg, 'danger');
+                            } else if (res.message) {
+                                notif(res.message, 'danger');
+                            } else {
+                                notif('Gagal menyimpan perubahan!', 'danger');
+                            }
+                        } catch (e) {
+                            notif('Gagal menyimpan perubahan!', 'danger');
+                        }
+
+                        $('.text-save').html('Simpan');
+                        $('.btn-primary').removeAttr('disabled');
+
+                        // Reset status buttons state instead of reloading
+                        $('.btn-group-toggle label').each(function () {
+                            let $label = $(this);
+                            let $input = $label.find('input');
+                            let val = $input.val();
+
+                            // Enable all labels
+                            $label.css('pointer-events', 'auto').fadeTo(200, 1);
+
+                            // Reset icon and text based on value
+                            let $icon = $label.find('i');
+                            $icon.removeClass('fa-spinner fa-spin');
+
+                            if (val === 'publish') {
+                                $icon.addClass('fa-globe');
+                                $label.contents().filter(function () {
+                                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                }).each(function () {
+                                    this.nodeValue = ' Publikasikan';
+                                });
+                            } else if (val === 'draft') {
+                                $icon.addClass('fa-archive');
+                                $label.contents().filter(function () {
+                                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                }).each(function () {
+                                    this.nodeValue = ' Draft';
+                                });
+                            }
+                        });
+                    }
+
+                });
+            });
+        </script>
+        @include('cms::backend.layout.js')
+        <script>
+            function handleStatusSubmit(btn) {
+                let $btn = $(btn);
+                // Set radio button to checked
+                $btn.find('input').prop('checked', true);
+                let val = $btn.find('input').val();
+
+                // Change icon to spinner
+                let $icon = $btn.find('i');
+                $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
+
+                // Change text safely without removing the input
+                // Get all text nodes and replace their content
+                $btn.contents().filter(function () {
+                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                }).each(function () {
+                    this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
+                });
+
+                // Disable other buttons
+                $btn.siblings('label').css('pointer-events', 'none').fadeTo(200, 0.5);
+
+                // Submit form
+                $('.editorForm').submit();
+            }
+        </script>
+    @endpush
 
 @endsection
-

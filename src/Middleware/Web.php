@@ -187,31 +187,169 @@ class Web
         return $response;
     }
 
-    function securityHeaders($response, $request)
+    // function securityHeaders($response, $request)
+    // {
+    //     $cacheEnabled = app()->routesAreCached();
+    //     $isCacheableRequest = $request->isMethod('GET') && !$request->expectsJson();
+
+    //     $noCacheRoutes = config('modules.no_cache_for_route', []);
+
+    //     $isExcludedRoute = collect($noCacheRoutes)
+    //         ->contains(fn($pattern) => $request->is($pattern));
+
+    //     if ($cacheEnabled && get_option('cache_web') == 'Y' && $isCacheableRequest && !$isExcludedRoute) {
+    //         $response->setPublic();
+    //         $response->setMaxAge(86400);
+    //         $response->setSharedMaxAge(86400);
+    //     } else {
+    //         $response->headers->set(
+    //             'Cache-Control',
+    //             'no-cache, no-store, must-revalidate'
+    //         );
+    //     }
+    //     $response->headers->set('X-Content-Type-Options', 'nosniff');
+    //     if (get_option('frame_embed') == 'N' && !Auth::check()) {
+    //         $response->headers->set('X-Frame-Options', 'DENY');
+    //     }
+    //     $response->headers->set('X-XSS-Protection', '1; mode=block');
+    //     $response->headers->set('Content-Security-Policy', " base-uri 'self'; form-action 'self';");
+    // }
+
+    protected function securityHeaders($response, Request $request): void
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Cache
+        |--------------------------------------------------------------------------
+        */
+
         $cacheEnabled = app()->routesAreCached();
-        $isCacheableRequest = $request->isMethod('GET') && !$request->expectsJson();
+
+        $isCacheableRequest =
+            $request->isMethod('GET')
+            && !$request->expectsJson();
 
         $noCacheRoutes = config('modules.no_cache_for_route', []);
 
         $isExcludedRoute = collect($noCacheRoutes)
             ->contains(fn($pattern) => $request->is($pattern));
 
-        if ($cacheEnabled && get_option('cache_web') == 'Y' && $isCacheableRequest && !$isExcludedRoute) {
+        if (
+            $cacheEnabled &&
+            get_option('cache_web') === 'Y' &&
+            $isCacheableRequest &&
+            !$isExcludedRoute
+        ) {
             $response->setPublic();
             $response->setMaxAge(86400);
             $response->setSharedMaxAge(86400);
         } else {
             $response->headers->set(
                 'Cache-Control',
-                'no-cache, no-store, must-revalidate'
+                'private, no-cache, no-store, must-revalidate'
+            );
+
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Security Headers
+        |--------------------------------------------------------------------------
+        */
+
+        // Prevent MIME sniffing
+        $response->headers->set(
+            'X-Content-Type-Options',
+            'nosniff'
+        );
+
+        // Prevent Clickjacking
+        if (get_option('frame_embed') === 'N' && !Auth::check()) {
+            $response->headers->set(
+                'X-Frame-Options',
+                'DENY'
             );
         }
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-        if (get_option('frame_embed') == 'N' && !Auth::check()) {
-            $response->headers->set('X-Frame-Options', 'DENY');
+
+        // Hide Referer
+        $response->headers->set(
+            'Referrer-Policy',
+            'strict-origin-when-cross-origin'
+        );
+
+        // Browser Permissions
+        $response->headers->set(
+            'Permissions-Policy',
+            'accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), publickey-credentials-get=(self), usb=(), xr-spatial-tracking=()'
+        );
+
+        // Cross Origin
+        $response->headers->set(
+            'Cross-Origin-Opener-Policy',
+            'same-origin'
+        );
+
+        $response->headers->set(
+            'Cross-Origin-Resource-Policy',
+            'same-origin'
+        );
+
+        // HTTPS Only
+        if ($request->isSecure()) {
+
+            $response->headers->set(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains; preload'
+            );
         }
-        $response->headers->set('X-XSS-Protection', '1; mode=block');
-        $response->headers->set('Content-Security-Policy', " base-uri 'self'; form-action 'self';");
+
+        /*
+        |--------------------------------------------------------------------------
+        | Content Security Policy
+        |--------------------------------------------------------------------------
+        */
+
+        $csp = implode('; ', [
+
+            "default-src 'self'",
+
+            "base-uri 'self'",
+
+            "form-action 'self'",
+
+            "frame-ancestors 'none'",
+
+            "object-src 'none'",
+
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+
+            "style-src 'self' 'unsafe-inline' https:",
+
+            "img-src 'self' data: blob: https:",
+
+            "font-src 'self' data: https:",
+
+            "connect-src 'self' https: wss:",
+
+            "media-src 'self' blob:",
+
+            "worker-src 'self' blob:",
+
+            "manifest-src 'self'",
+
+            "frame-src 'self'",
+
+            "upgrade-insecure-requests",
+
+            "block-all-mixed-content"
+
+        ]);
+
+        $response->headers->set(
+            'Content-Security-Policy',
+            $csp
+        );
     }
 }
