@@ -143,7 +143,8 @@ class TenantController extends Controller implements HasMiddleware
     {
         $themes = Theme::where('status', 'active')->get();
         $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
-        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules]);
+        $availablePlugins = $this->getAvailablePlugins();
+        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules, 'availablePlugins' => $availablePlugins]);
     }
 
     public function store(Request $request)
@@ -157,6 +158,7 @@ class TenantController extends Controller implements HasMiddleware
             'admin_email' => 'required|email|unique:users,email',
             'admin_username' => 'required|string|min:5|unique:users,username',
             'modules' => 'nullable|array',
+            'plugins' => 'nullable|array',
             'disk_space' => 'nullable|integer|min:0',
             'admin_password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]+$/',
         ], [
@@ -176,6 +178,7 @@ class TenantController extends Controller implements HasMiddleware
             'status' => $request->status,
             'theme' => $theme ?? '',
             'modules' => $request->modules,
+            'plugins' => $request->plugins,
             'disk_space' => $request->disk_space,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
@@ -232,8 +235,9 @@ class TenantController extends Controller implements HasMiddleware
         $themes = Theme::where('status', 'active')->get();
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
         $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
+        $availablePlugins = $this->getAvailablePlugins();
         $options = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->pluck('value', 'name')->toArray();
-        return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules'));
+        return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules', 'availablePlugins'));
     }
 
     public function update(Request $request, Tenant $tenant)
@@ -246,6 +250,7 @@ class TenantController extends Controller implements HasMiddleware
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
             'theme' => 'required_unless:custom_theme,1',
             'modules' => 'nullable|array',
+            'plugins' => 'nullable|array',
             'disk_space' => 'nullable|integer|min:0',
         ];
 
@@ -276,6 +281,7 @@ class TenantController extends Controller implements HasMiddleware
             'status' => $isMainDomain ? $tenant->status : $request->status,
             'theme' => $theme ?: $oldTheme,
             'modules' => $request->modules,
+            'plugins' => $request->plugins,
             'disk_space' => $request->disk_space,
             'custom_theme' => $request->custom_theme ? 1 : 0,
         ]);
@@ -402,5 +408,17 @@ class TenantController extends Controller implements HasMiddleware
         Cache::forget("tenant:{$tenantId}:options");
         $tenant->delete();
         return response()->json(['success' => 'Tenant berhasil dihapus']);
+    }
+
+    private function getAvailablePlugins()
+    {
+        $availablePlugins = [];
+        $pluginsPaths = glob(resource_path('plugins/*'), GLOB_ONLYDIR);
+        if ($pluginsPaths) {
+            foreach ($pluginsPaths as $path) {
+                $availablePlugins[] = basename($path);
+            }
+        }
+        return $availablePlugins;
     }
 }

@@ -3392,9 +3392,8 @@ if (!function_exists('add_plugin_public_route')) {
         $domain = get_option($pluginSlug . '-domain');
         if (!empty($domain)) {
             $customConfig['domain'] = $domain;
+            add_route('public', $customConfig);
         }
-        
-        add_route('public', $customConfig);
     }
 }
 

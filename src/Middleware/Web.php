@@ -27,6 +27,10 @@ class Web
             $routes = config('modules.custom_web_route', []);
             foreach ($routes as $r) {
                 if (isset($r['path']) && ltrim($r['path'], '/') === '') {
+                    if (isset($r['domain']) && $r['domain'] !== $host) {
+                        continue;
+                    }
+
                     $controller = app($r['controller']);
                     $response = $controller->{$r['function']}(request());
 
@@ -311,41 +315,31 @@ class Web
         |--------------------------------------------------------------------------
         */
 
-        $csp = implode('; ', [
-
+        $cspRules = [
             "default-src 'self'",
-
             "base-uri 'self'",
-
             "form-action 'self'",
-
-            "frame-ancestors 'none'",
-
             "object-src 'none'",
-
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
-
             "style-src 'self' 'unsafe-inline' https:",
-
             "img-src 'self' data: blob: https:",
-
             "font-src 'self' data: https:",
-
             "connect-src 'self' https: wss:",
-
             "media-src 'self' blob:",
-
             "worker-src 'self' blob:",
-
             "manifest-src 'self'",
-
-            "frame-src 'self'",
-
+            "frame-src 'self' https:",
             "upgrade-insecure-requests",
-
             "block-all-mixed-content"
+        ];
 
-        ]);
+        if (get_option('frame_embed') === 'N' && !Auth::check()) {
+            $cspRules[] = "frame-ancestors 'none'";
+        } else {
+            $cspRules[] = "frame-ancestors *";
+        }
+
+        $csp = implode('; ', $cspRules);
 
         $response->headers->set(
             'Content-Security-Policy',
