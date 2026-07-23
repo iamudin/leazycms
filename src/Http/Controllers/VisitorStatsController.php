@@ -28,7 +28,7 @@ class VisitorStatsController extends Controller
 
         $logoPath = get_option('logo_image') && media_exists(get_option('logo_image'))
             ? media(get_option('logo_image'))->path()
-            : public_path('noimage.png');
+            : public_path('noimage.webp');
 
         /*
         |--------------------------------------------------------------------------
@@ -127,7 +127,7 @@ class VisitorStatsController extends Controller
         */
 
         $fontBold = public_path('fonts/Poppins-Bold.ttf');
-        $img->text($title, 100, 60, function ($font) use ($fontBold) {
+        $img->text($title, 108, 60, function ($font) use ($fontBold) {
             if (File::exists($fontBold)) {
                 $font->file($fontBold);
             }
@@ -142,7 +142,7 @@ class VisitorStatsController extends Controller
         */
 
         $fontRegular = public_path('fonts/Poppins-Regular.ttf');
-        $img->text($slogan, 102, 91, function ($font) use ($fontRegular) {
+        $img->text($slogan, 110, 91, function ($font) use ($fontRegular) {
             if (File::exists($fontRegular)) {
                 $font->file($fontRegular);
             }
