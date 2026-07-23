@@ -103,7 +103,7 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
   @if(file_exists(public_path('template/' . template() . '/styles.css')))
   <link rel="stylesheet" type='text/css'  href="{{url('template/' . template() . '/styles.css')}}">
   @endif
-@if(get_option('whatsapp') && is_main_domain())
+@if(get_option('whatsapp'))
 <style>
 
 .wa-float{
