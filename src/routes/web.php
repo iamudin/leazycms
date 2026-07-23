@@ -73,12 +73,9 @@ Route::match(['get', 'post'], '/', [WebController::class, 'home'])->name('home')
 Route::get('logo.webp', [Leazycms\Web\Http\Controllers\VisitorStatsController::class, 'logoGenerator'])->name('logo');
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
 
-
-
 Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
     ->where('slug', '(?!(?:' . implode('|', array_merge(
         [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.ico', 'logo.webp', 'stats.webp'],
         $modules->pluck('name')->toArray()
     )) . ')$)[a-zA-Z0-9-_]+')
     ->middleware(['public', TrackVisitor::class]);
-

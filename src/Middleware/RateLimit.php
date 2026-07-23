@@ -67,10 +67,10 @@ class RateLimit
             if (config('app.debug') && !Route::is('formaster') && !Route::is('captcha') && $isNotLogo) {
 
                 if (!$isMainDomain) {
-                    //   return $renderUnderMaintenance();
+                    return $renderUnderMaintenance();
                 }
                 if (!$isAdminRoute && !Auth::check()) {
-                    //   return $renderUnderMaintenance();
+                    return $renderUnderMaintenance();
                 }
             }
 
@@ -78,12 +78,12 @@ class RateLimit
                 $currentTenant = tenant();
                 if (isset($currentTenant->status) && $currentTenant->status === 'maintenance' && !Route::is('captcha') && $isNotLogo) {
                     if (!$isAdminRoute && !Auth::check() && !in_array($request->segment(1), ['secure', 'login-token']) && $isNotLogo) {
-                        //   return $renderUnderMaintenance();
+                        return $renderUnderMaintenance();
                     }
                 }
             }
         } elseif (config('app.debug') && !Route::is('formaster') && !$isAdminRoute && !Route::is('captcha') && !Auth::check() && $isNotLogo) {
-            //return $renderUnderMaintenance();
+            return $renderUnderMaintenance();
         }
 
         $uri = $request->getRequestUri();
