@@ -49,6 +49,9 @@ trait BelongsToTenant
         // 🔹 Create
         static::creating(function ($model) {
             if (app()->has('tenant')) {
+                if (is_main_domain() && $model->tenant_id) {
+                    return;
+                }
                 $model->tenant_id = tenant()->id;
             }
         });

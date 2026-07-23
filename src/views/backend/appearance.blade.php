@@ -3,7 +3,7 @@
 
     <div class="row">
     <div class="col-lg-12 mb-3">
-      <h3 style="font-weight:normal;float: left;"> <i class="fa fa-brush"></i> Setting › Template </h3>
+      <h3 style="font-weight:normal;float: left;"> <i class="fa fa-brush"></i>  Setting › Template </h3>
 
 
             <div class="btn-group  pull-right">

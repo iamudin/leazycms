@@ -225,7 +225,7 @@ class TenantController extends Controller implements HasMiddleware
         // Save Options
         $this->saveTenantOptions($tenant, $request);
 
-        Cache::forget("tenant:{$domain}");
+        Cache::forget("tenant:{$domain}:options");
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil ditambah');
     }
@@ -315,6 +315,7 @@ class TenantController extends Controller implements HasMiddleware
                 'host' => $domain,
                 'level' => 'admin',
                 'status' => 'active',
+                'tenant_id' => $tenant->id,
                 'slug' => str($request->admin_name)->slug(),
                 'url' => 'author/' . str($request->admin_name)->slug(),
             ];
@@ -324,9 +325,12 @@ class TenantController extends Controller implements HasMiddleware
             }
 
             if ($admin) {
-                $admin->update($userData);
+                $admin->forceFill($userData)->save();
+                DB::table('users')->where('id', $admin->id)->update(['tenant_id' => $tenant->id]);
             } else {
-                User::create($userData);
+                $userData['created_at'] = now();
+                $userData['updated_at'] = now();
+                DB::table('users')->insert($userData);
             }
         }
 
@@ -340,7 +344,7 @@ class TenantController extends Controller implements HasMiddleware
 
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
-        Cache::forget("tenant:{$tenant->id}:options");
+        Cache::forget("tenant:{$tenant->domain}:options");
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil diupdate');
     }
