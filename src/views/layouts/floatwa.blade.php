@@ -1,7 +1,12 @@
-@if(get_option('whatsapp') && is_main_domain())
-
+@if(get_option('whatsapp'))
+@php
+    $waNumber = preg_replace('/[^0-9]/', '', get_option('whatsapp'));
+    if (str_starts_with($waNumber, '0')) {
+        $waNumber = '62' . substr($waNumber, 1);
+    }
+@endphp
   <div class="wa-float"
-    onclick="location.href='https://wa.me/{{get_option('whatsapp')}}?text=Halo%2C%20saya%20ingin%20bertanya.'">
+    onclick="location.href='https://wa.me/{{ $waNumber }}?text=Halo%2C%20saya%20ingin%20bertanya.'">
     <!-- WhatsApp Icon -->
     <i>
   <img 
