@@ -1,9 +1,29 @@
 <!-- Sidebar menu-->
+<style>
+.app-sidebar {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+.app-sidebar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+    width: 0;
+}
+.app-menu {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    width: 100%;
+}
+.app-menu__item {
+    width: 100% !important;
+}
+</style>
 <div class="app-sidebar__overlay" data-toggle="sidebar"></div>
 @auth
     @php $userprofile = Auth::user() @endphp
     <aside class="app-sidebar" style="font-size: 12px">
-        <div class="app-sidebar__user" style="cursor: pointer; margin-bottom: 0">
+        <div class="app-sidebar__user" style="cursor: pointer; margin-bottom: 0;padding-top:0">
             <img alt="User Photo" class="app-sidebar__user-avatar" style="width: 30px; height: 30px"
                 src="{{ $userprofile->photo_user }}">
             <div>
