@@ -35,13 +35,11 @@
         </div>
 
         <ul class="app-menu">
-            @if (!in_array(Auth::user()->level, collect(config('modules.extension_module'))->pluck('path')->toArray()))
                 <li>
                     <a class="app-menu__item {{ Request::is(admin_path() . '/dashboard') ? 'active' : '' }}"
                         href="{{ route('panel.dashboard') }}"><i class="app-menu__icon fa fa-dashboard "></i>
                         <span class="app-menu__label">Dahsboard</span></a>
                 </li>
-            @endif
             <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
                 <i class="fa fa-globe" aria-hidden="true"></i> &nbsp; PUBLIKASI
             </li>
@@ -102,7 +100,7 @@
                     </ul>
                 </li>
             @endforeach
-            @if (Auth::user()->level == 'admin')
+            @if (Auth::user()->isAdmin())
                 <li>
                     <a class="app-menu__item {{ Request::is(admin_path() . '/tags') ? 'active' : '' }}"
                         href="{{ admin_url('tags') }}"><i class="app-menu__icon fa fa-hashtag "></i>
@@ -136,8 +134,11 @@
                     </li>
                 @endforeach
             @endif
-            @if (Auth::user()->level == 'admin')
+            @if (Auth::user()->isAdmin())
                 @if ($custom = config('modules.custom_menu'))
+                  <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
+                        <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; Plugin
+                    </li>
                     @php
                         $customMenus = collect($custom)->where('show_in_sidebar', true);
                         $groupedPlugins = [];
@@ -208,58 +209,6 @@
                     @endforeach
                 @endif
             @endif
-
-            @if (get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled'))
-
-                @if ($ext = config('modules.extension_module'))
-                    @if (Auth::user()->level == 'admin')
-                        <li class="text-muted" style="padding: 12px 10px; font-size: small; background: #000">
-                            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; APLIKASI
-                        </li>
-                    @endif
-                    @foreach (json_decode(json_encode($ext)) as $row)
-                        @if ((Auth::user()->level != 'admin' && Auth::user()->level == $row->path) || Auth::user()->level == 'admin')
-                            @if (auth()->user()->isAdmin())
-                                <li
-                                    class="treeview {{ Str::contains($row->path . '/' . request()->segment(3), collect($row->module)->pluck('path')->toArray()) ? 'is-expanded' : null }}">
-                                    <a title="{{ $row->description }}" class="app-menu__item" href="#"
-                                        data-toggle="treeview"><i
-                                            class="app-menu__icon fa {{ $row->icon }} "></i><span
-                                            class="app-menu__label">{{ $row->name }}</span><i
-                                            class="treeview-indicator fa fa-chevron-right"></i></a>
-                                    <ul class="treeview-menu">
-
-                                        @foreach (collect($row->module)->where('only_admin', true) as $module)
-                                            <li>
-                                                <a class="treeview-item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}"
-                                                    href="{{ Route::has(config($row->path . '.route') . $module->route) ? route(config($row->path . '.route') . $module->route) : '#' }}"><i
-                                                        class="icon fa {{ $module->icon }}"></i> {{ $module->name }}</a>
-                                            </li>
-                                        @endforeach
-                                        <li>
-                                            <a class="treeview-item " title="{{ $row->url }}"
-                                                onclick="return confirm('Buka alamat aplikasi {{ $row->url }}')"
-                                                href="{{ $row->url }}" target="_blank"><i class="icon fa fa-globe"></i>
-                                                Buka Aplikasi</a>
-                                        </li>
-                                    </ul>
-                                </li>
-                            @else
-                                @foreach (collect($row->module)->where('only_admin', false) as $module)
-                                    <li title="{{ $module->name }}">
-                                        <a class="app-menu__item {{ str_contains(url()->full(), $module->path) ? 'active' : '' }}"
-                                            href="{{ route($module->route) }}"><i
-                                                class="app-menu__icon fa {{ $module->icon }} "></i>
-                                            <span class="app-menu__label">{{ $module->name }}</span></a>
-                                    </li>
-                                @endforeach
-                            @endif
-                        @endif
-                    @endforeach
-                @endif
-
-            @endif
-
             @if (Auth::user()->isAdmin())
                                  <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
 
