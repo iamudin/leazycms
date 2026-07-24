@@ -277,6 +277,27 @@ class PostController extends Controller implements HasMiddleware
                 },
                 $uniq
             ],
+            'custom_slug' => [
+                'nullable',
+                'string',
+                'min:5',
+                'max:150',
+                function ($attribute, $value, $fail) use ($post) {
+                    if ($value && strlen($value) > 0) {
+                        $query = Post::onType($post->type)
+                            ->where('slug', $value)
+                            ->whereNotIn('id', [$post->id]);
+                        
+                        if (config('modules.multisite_enabled')) {
+                            $query->where('tenant_id', $post->tenant_id);
+                        }
+                        
+                        if ($query->exists()) {
+                            $fail('URL/Slug tersebut sudah dipakai oleh post lain.');
+                        }
+                    }
+                }
+            ],
             'media' => $request->hasFile('media') ? 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif' : 'nullable|string',
             'content' => [
                 'nullable',
@@ -303,21 +324,26 @@ class PostController extends Controller implements HasMiddleware
             'title.min' => $module->datatable->data_title . ' minimal 5 karakter',
             'title.max' => $module->datatable->data_title . ' maksimal 200 karakter',
             'title.regex' => 'Jika ' . $module->datatable->data_title . ' hanya 5 karakter, tidak boleh mengandung spasi atau simbol.',
+            'custom_slug.min' => 'URL/Slug minimal 5 karakter',
         ];
-        $request->validate(array_merge($custom_f ?? [], $post_field), array_merge($msg ?? [], $custommsg));
-        if (strlen($post->slug) == 0 || $post->type == 'docs') {
-            $slug = str($request->title)->slug();
-        } else {
-            if ($post->slug_edited == '1' && !$request->custom_slug) {
-                $slug = $post->slug;
-            } elseif (($post->slug_edited == '1' && $request->custom_slug) || ($post->slug_edited == '0' && $request->custom_slug)) {
-                $slug = $request->custom_slug;
+        try {
+            $request->validate(array_merge($custom_f ?? [], $post_field), array_merge($msg ?? [], $custommsg));
+            if (strlen($post->slug) == 0 || $post->type == 'docs') {
+                $slug = str($request->title)->slug();
             } else {
-                $slug = $post->slug;
+                if ($post->slug_edited == '1' && !$request->custom_slug) {
+                    $slug = $post->slug;
+                } elseif (($post->slug_edited == '1' && $request->custom_slug) || ($post->slug_edited == '0' && $request->custom_slug)) {
+                    $slug = $request->custom_slug;
+                } else {
+                    $slug = str($request->title)->slug();
+                }
             }
+    
+            $data = $request->validate($post_field);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
         }
-
-        $data = $request->validate($post_field);
         $allowed_tags = '<p><s><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
         $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content']) : null;
 
@@ -326,7 +352,7 @@ class PostController extends Controller implements HasMiddleware
         } else {
             $data['slug'] = $slug;
         }
-        $data['slug_edited'] = $request->custom_slug && strlen($request->custom_slug) > 0 ? '1' : '0';
+        $data['slug_edited'] = $request->custom_slug && strlen($request->custom_slug) > 0 ? '1' : $post->slug_edited;
         $data['pinned'] = isset($request->pinned) ? 'Y' : 'N';
         if ($module->web->detail && strlen($post->shortcut) < 6) {
             $data['shortcut'] = Str::random(6);
