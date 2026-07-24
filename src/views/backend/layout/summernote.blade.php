@@ -1,4 +1,8 @@
 <style>
+    .note-editor .note-editable iframe {
+        pointer-events: none;
+    }
+
     .note-editable img {
         cursor: pointer;
     }
@@ -6,18 +10,20 @@
     .note-editable img.selected-img {
         outline: 2px solid #007bff;
     }
-
 </style>
 
-    @if (function_exists('current_module') && isset(current_module()?->form?->editor_mode) && current_module()?->form?->editor_mode == 'simple')
-<style>
-    
+@if (function_exists('current_module') && isset(current_module()?->form?->editor_mode) && current_module()?->form?->editor_mode == 'simple')
+    <style>
+        .note-editor .note-editable iframe {
+            pointer-events: none;
+        }
+
         .btn-summernote-gmedia {
             display: none !important;
         }
-</style>
+    </style>
 
-    @endif
+@endif
 <input type="file" id="replaceImageInput" accept="image/*" style="display:none;">
 <input type="file" id="fileUploadInput" style="display:none;" accept="{{ allow_mime() }}">
 <div class="modal fade" id="editImageModal" tabindex="-1">
@@ -65,6 +71,11 @@
                     <input type="text" class="form-control" id="embed-height"
                         placeholder="Sample : 100%, 100px or other">
                 </div>
+                <div class="form-group">
+                    <label for="embed-style-attr">Style Attribute</label>
+                    <input type="text" class="form-control" id="embed-style-attr"
+                        placeholder="Sample : border: 1px solid #ccc; border-radius: 10px;">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -109,7 +120,8 @@
             </div>
             <div class="modal-body">
                 <ul class="nav nav-tabs mb-3" id="tableStyleTabs">
-                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabStyleTable">Table</a></li>
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabStyleTable">Table</a>
+                    </li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabStyleTr">Baris (TR)</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabStyleTd">Sel (TD)</a></li>
                 </ul>
@@ -117,37 +129,44 @@
                     <div class="tab-pane fade show active" id="tabStyleTable">
                         <div class="form-group">
                             <label>Width</label>
-                            <input type="text" class="form-control form-control-sm" id="tblStyleWidth" placeholder="100%, 500px, auto">
+                            <input type="text" class="form-control form-control-sm" id="tblStyleWidth"
+                                placeholder="100%, 500px, auto">
                         </div>
                         <div class="form-group">
                             <label>Border</label>
-                            <input type="text" class="form-control form-control-sm" id="tblStyleBorder" placeholder="1px solid #ccc">
+                            <input type="text" class="form-control form-control-sm" id="tblStyleBorder"
+                                placeholder="1px solid #ccc">
                         </div>
                         <div class="form-group">
                             <label>Style Lainnya</label>
-                            <input type="text" class="form-control form-control-sm" id="tblStyleExtra" placeholder="background:#fff; padding:5px;">
+                            <input type="text" class="form-control form-control-sm" id="tblStyleExtra"
+                                placeholder="background:#fff; padding:5px;">
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tabStyleTr">
                         <p class="text-muted small">Mengubah style pada baris (TR) yang sedang aktif/diklik.</p>
                         <div class="form-group">
                             <label>Background</label>
-                            <input type="text" class="form-control form-control-sm" id="trStyleBg" placeholder="#f5f5f5, transparent">
+                            <input type="text" class="form-control form-control-sm" id="trStyleBg"
+                                placeholder="#f5f5f5, transparent">
                         </div>
                         <div class="form-group">
                             <label>Style Lainnya</label>
-                            <input type="text" class="form-control form-control-sm" id="trStyleExtra" placeholder="border-bottom:1px solid #ccc;">
+                            <input type="text" class="form-control form-control-sm" id="trStyleExtra"
+                                placeholder="border-bottom:1px solid #ccc;">
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tabStyleTd">
                         <p class="text-muted small">Mengubah style pada sel (TD/TH) yang sedang aktif/diklik.</p>
                         <div class="form-group">
                             <label>Width</label>
-                            <input type="text" class="form-control form-control-sm" id="tdStyleWidth" placeholder="200px, 30%">
+                            <input type="text" class="form-control form-control-sm" id="tdStyleWidth"
+                                placeholder="200px, 30%">
                         </div>
                         <div class="form-group">
                             <label>Background</label>
-                            <input type="text" class="form-control form-control-sm" id="tdStyleBg" placeholder="#fff, transparent">
+                            <input type="text" class="form-control form-control-sm" id="tdStyleBg"
+                                placeholder="#fff, transparent">
                         </div>
                         <div class="form-group">
                             <label>Text Align</label>
@@ -169,15 +188,18 @@
                         </div>
                         <div class="form-group">
                             <label>Border</label>
-                            <input type="text" class="form-control form-control-sm" id="tdStyleBorder" placeholder="1px solid #ccc">
+                            <input type="text" class="form-control form-control-sm" id="tdStyleBorder"
+                                placeholder="1px solid #ccc">
                         </div>
                         <div class="form-group">
                             <label>Padding</label>
-                            <input type="text" class="form-control form-control-sm" id="tdStylePadding" placeholder="5px, 10px 15px">
+                            <input type="text" class="form-control form-control-sm" id="tdStylePadding"
+                                placeholder="5px, 10px 15px">
                         </div>
                         <div class="form-group">
                             <label>Style Lainnya</label>
-                            <input type="text" class="form-control form-control-sm" id="tdStyleExtra" placeholder="font-weight:bold; color:red;">
+                            <input type="text" class="form-control form-control-sm" id="tdStyleExtra"
+                                placeholder="font-weight:bold; color:red;">
                         </div>
                     </div>
                 </div>
@@ -197,7 +219,6 @@
     let currentImage = null;
 
     $(document).ready(function () {
-
         $(document).on('mousedown', '.note-editable img', function () {
             $('.note-editable img').removeClass('selected-img');
             $(this).addClass('selected-img');
@@ -271,7 +292,7 @@
             placeholder: 'Tulis isi..',
             height: 600,
             codeviewFilter: true,
-            codeviewIframeFilter: true,
+            codeviewIframeFilter: false,
             disableDragAndDrop: true,
             callbacks: {
                 onChange: function (contents, $editable) {
@@ -286,7 +307,7 @@
                         $('#editor').summernote('code', sanitized);
                     }
                 },
-           
+
                 onMediaDelete: function (target) {
                     var img = $(target).is('img') ? $(target) : $(target).find('img');
 
@@ -307,6 +328,10 @@
 
             lang: 'en-EN',
             popover: {
+                video: [
+                    ['custom', ['editEmbed']],
+                    ['remove', ['removeVideo']]
+                ],
                 image: [
                     ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
                     ['float', ['floatLeft', 'floatRight', 'floatNone']],
@@ -325,33 +350,59 @@
             },
             toolbar: [
                 @if(function_exists('current_module') && isset(current_module()?->form?->editor_mode) && current_module()?->form?->editor_mode == 'simple')
-                ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
-                ['para', ['paragraph']],
-                ['view', ['fullscreen', 'codeview']],
+                    ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
+                    ['para', ['paragraph']],
+                    ['view', ['fullscreen', 'codeview']],
                 @else
-                ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
-                ['fontsize', ['fontsize']],
-                ['font', ['strikethrough', 'superscript', 'subscript']],
-                ['fontname', ['fontname']],
-                ['height', ['height']],
-                ['color', ['color']],
-                ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['link', 'video', 'hr', 'embedUrl']],
-                ['table', ['table']],
-                ['view', ['fullscreen', 'help', 'codeview']],
-                ['custom', ['aiGenerate']],
+                    ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
+                    ['fontsize', ['fontsize']],
+                    ['font', ['strikethrough', 'superscript', 'subscript']],
+                    ['fontname', ['fontname']],
+                    ['height', ['height']],
+                    ['color', ['color']],
+                    ['para', ['paragraph', 'ul', 'ol']],
+                    ['insert', ['link', 'video', 'hr']],
+                    ['embed', ['embedUrl']],
+                    ['table', ['table']],
+                    ['view', ['fullscreen', 'codeview']],
+                    ['custom', ['aiGenerate']],
                 @endif
             ],
 
 
             buttons: {
+                editEmbed: function (context) {
+                    var ui = $.summernote.ui;
+                    var button = ui.button({
+                        contents: '<i class="fa fa-pencil"></i> Edit Embed',
+                        tooltip: 'Edit Embed',
+                        click: function () {
+                            var $node = $(context.invoke('restoreTarget') || window.getSelection().anchorNode);
+                            var $iframe = $node.is('iframe') ? $node : $node.closest('iframe');
+                            if (!$iframe.length) $iframe = $(context.invoke('restoreTarget'));
+                            if ($iframe.length && $iframe.is('iframe')) {
+                                $('#embed-url').val($iframe.attr('src'));
+                                $('#embed-width').val($iframe[0].style.width || $iframe.attr('width'));
+                                $('#embed-height').val($iframe[0].style.height || $iframe.attr('height'));
+                                $('#embed-border').val($iframe.css('border') || '');
+
+                                // Store the active iframe so we can update it instead of inserting a new one
+                                window.activeSummernoteIframe = $iframe;
+
+                                $('#embedModal').modal('show');
+                            }
+                        }
+                    });
+                    return button.render();
+                },
                 aiGenerate: aiButton,
                 embedUrl: function () {
                     var ui = $.summernote.ui;
                     var button = ui.button({
-                        contents: '<i class="fa fa-globe"/></i> Embed URL',
+                        contents: '<i class="fa fa-globe"></i>',
                         tooltip: 'Embed URL',
                         click: function () {
+                            $('#editor').summernote('editor.saveRange');
                             $('#embedModal').modal('show');
                         }
                     });
@@ -419,7 +470,7 @@
                             if ($table.length) {
                                 var $p = $('<p><br></p>');
                                 $table.after($p);
-                                
+
                                 var range = document.createRange();
                                 var sel = window.getSelection();
                                 range.setStart($p[0], 0);
@@ -430,7 +481,7 @@
                         }
                     }).render();
                 },
-          
+
                 removeFile: function () {
                     var ui = $.summernote.ui;
 
@@ -470,7 +521,7 @@
                         }
                     }).render();
                 },
-      
+
                 editImage: function () {
                     var ui = $.summernote.ui;
 
@@ -552,7 +603,7 @@
 
             /* Build style string helper */
             function buildStyle(parts) {
-                return parts.filter(function(p) { return p; }).join(' ').replace(/;?\s*$/, '').trim();
+                return parts.filter(function (p) { return p; }).join(' ').replace(/;?\s*$/, '').trim();
             }
 
             /* === TABLE === */
@@ -612,7 +663,7 @@
 
             $('#tableStyleModal').modal('hide');
         });
-      
+
     });
 
     function deleteImage(src) {
@@ -632,18 +683,136 @@
     }
     $('#embedModalSave').click(function () {
         var url = $('#embed-url').val();
-        var width = $('#embed-width').val();
-        var height = $('#embed-height').val();
+        var width = $('#embed-width').val() || '100%';
+        var height = $('#embed-height').val() || '400px';
+        var styleAttr = $('#embed-style-attr').val() || '';
 
-        if (url && width && height) {
-            var iframeHTML = `
-                <iframe src="${url}" style="width:${width};height:${height}" frameborder="0" allowfullscreen></iframe>
-            `;
-            $('#editor').summernote('pasteHTML', iframeHTML);
+        if (url) {
+            if (window.activeSummernoteIframe && window.activeSummernoteIframe.length) {
+                // Updating existing iframe
+                var $iframe = window.activeSummernoteIframe;
+                $iframe.attr('src', url);
+
+                // Reset style and apply new styles
+                $iframe.attr('style', '');
+                $iframe.css({
+                    'width': width,
+                    'height': height
+                });
+
+                if (styleAttr) {
+                    var currentStyle = $iframe.attr('style') || '';
+                    $iframe.attr('style', currentStyle + (currentStyle.endsWith(';') ? ' ' : '; ') + styleAttr);
+                }
+
+                window.activeSummernoteIframe = null; // reset
+                $('#embed-custom-popover').hide();
+            } else {
+                // Inserting new iframe
+                $('#editor').summernote('editor.restoreRange');
+                $('#editor').summernote('editor.focus');
+
+                var iframeNode = document.createElement('iframe');
+                iframeNode.src = url;
+                $(iframeNode).css({
+                    'width': width,
+                    'height': height
+                });
+
+                if (styleAttr) {
+                    var currentStyle = iframeNode.getAttribute('style') || '';
+                    iframeNode.setAttribute('style', currentStyle + (currentStyle.endsWith(';') ? ' ' : '; ') + styleAttr);
+                }
+
+                iframeNode.setAttribute('frameborder', '0');
+                iframeNode.setAttribute('allowfullscreen', 'true');
+
+                $('#editor').summernote('insertNode', iframeNode);
+
+                // Add a small paragraph after it so the user can continue typing
+                var pNode = document.createElement('p');
+                pNode.innerHTML = '<br>';
+                $('#editor').summernote('insertNode', pNode);
+            }
+
             $('#embedModal').modal('hide');
+            $('#embed-url').val('');
+            $('#embed-width').val('');
+            $('#embed-height').val('');
+            $('#embed-style-attr').val('');
         } else {
-            alert("Please fill out all fields.");
+            alert("Please enter a URL.");
         }
+    });
+
+    // Custom Popover Logic for Iframes
+    $(document).ready(function () {
+        var $customPopover = $('<div id="embed-custom-popover" class="note-popover popover in note-video-popover bottom" style="display: none; position: absolute; z-index: 1060; background: #fff; border: 1px solid rgba(0,0,0,.2); padding: 5px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,.2);"><div class="arrow" style="left: 50%; margin-left: -5px; top: -11px; border-bottom-color: #fff; border-width: 0 5px 5px;"></div><div class="popover-content note-children-container"><div class="note-btn-group btn-group note-custom"><button type="button" class="note-btn btn btn-light btn-sm" id="btn-edit-embed" title="Edit Embed" style="margin-right:2px;"><i class="fa fa-pencil"></i> Edit</button><button type="button" class="note-btn btn btn-danger btn-sm" id="btn-remove-embed" title="Remove Embed"><i class="fa fa-trash"></i></button></div></div></div>');
+        $('body').append($customPopover);
+
+        $(document).on('mousedown', '.note-editable', function (e) {
+            var $iframes = $(this).find('iframe');
+            var clickedIframe = null;
+            $iframes.each(function () {
+                var rect = this.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    clickedIframe = this;
+                    return false; // break loop
+                }
+            });
+
+            if (clickedIframe) {
+                var $iframe = $(clickedIframe);
+                window.activeSummernoteIframe = $iframe;
+                var rect = clickedIframe.getBoundingClientRect();
+
+                $customPopover.css({
+                    display: 'block',
+                    left: rect.left + window.scrollX + (rect.width / 2) - ($customPopover.outerWidth() / 2),
+                    top: rect.bottom + window.scrollY + 5
+                });
+            } else {
+                $customPopover.hide();
+            }
+        });
+
+        // Hide popover if clicking outside
+        $(document).on('mousedown', function (e) {
+            if (!$(e.target).closest('#embed-custom-popover').length && !$(e.target).closest('.note-editable').length) {
+                $('#embed-custom-popover').hide();
+            }
+        });
+
+        $('#btn-edit-embed').click(function () {
+            var $iframe = window.activeSummernoteIframe;
+            if ($iframe && $iframe.length) {
+                $('#embed-url').val($iframe.attr('src'));
+                $('#embed-width').val($iframe[0].style.width || $iframe.attr('width') || '');
+                $('#embed-height').val($iframe[0].style.height || $iframe.attr('height') || '');
+
+                // Extract custom styles (excluding width and height which are handled separately)
+                var fullStyle = $iframe.attr('style') || '';
+                var styles = fullStyle.split(';').map(s => s.trim()).filter(s => s.length > 0);
+                var customStyles = [];
+                for (var i = 0; i < styles.length; i++) {
+                    var parts = styles[i].split(':').map(s => s.trim());
+                    if (parts[0] !== 'width' && parts[0] !== 'height') {
+                        customStyles.push(styles[i]);
+                    }
+                }
+
+                $('#embed-style-attr').val(customStyles.length > 0 ? customStyles.join('; ') + ';' : '');
+                $('#embedModal').modal('show');
+            }
+        });
+
+        $('#btn-remove-embed').click(function () {
+            if (window.activeSummernoteIframe && window.activeSummernoteIframe.length) {
+                window.activeSummernoteIframe.remove();
+                $('#embed-custom-popover').hide();
+                window.activeSummernoteIframe = null;
+            }
+        });
     });
 </script>
 

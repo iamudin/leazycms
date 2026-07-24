@@ -527,8 +527,8 @@
 
                     /* Hide default summernote insert buttons to avoid confusion */
                     $toolbar.find('button[data-original-title="Picture"], .note-icon-picture').closest('button').hide();
-                    $toolbar.find('button[data-original-title="Video"], .note-icon-video').closest('button').hide();
-                    $toolbar.find('button[data-original-title="Link"], .note-icon-link').closest('button').hide();
+                    // $toolbar.find('button[data-original-title="Video"], .note-icon-video').closest('button').hide();
+                    // $toolbar.find('button[data-original-title="Link"], .note-icon-link').closest('button').hide();
 
                     if ($toolbar.find('.btn-summernote-gmedia').length > 0) return;
 
