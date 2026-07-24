@@ -304,7 +304,7 @@ class PostController extends Controller implements HasMiddleware
             'title.max' => $module->datatable->data_title . ' maksimal 200 karakter',
             'title.regex' => 'Jika ' . $module->datatable->data_title . ' hanya 5 karakter, tidak boleh mengandung spasi atau simbol.',
         ];
-        $request->validate(array_merge($post_field, $custom_f ?? []), array_merge($custommsg, $msg ?? []));
+        $request->validate(array_merge($custom_f ?? [], $post_field), array_merge($msg ?? [], $custommsg));
         if (strlen($post->slug) == 0 || $post->type == 'docs') {
             $slug = str($request->title)->slug();
         } else {
