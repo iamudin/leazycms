@@ -27,7 +27,7 @@
     "require": {
         "leazycms/flc": "*",
         "yajra/laravel-datatables-oracle":"*",
-        "intervention/image": "*",
+        "intervention/image-laravel": "*",
         "stevebauman/location":"*",
         "nesbot/carbon": "*",
         "maatwebsite/excel":"^3.1",
