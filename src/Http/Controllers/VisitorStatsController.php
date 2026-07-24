@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\Laravel\Facades\Image;
 
 class VisitorStatsController extends Controller
 {
@@ -91,7 +91,7 @@ class VisitorStatsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $img = Image::canvas($canvasWidth, 110); // Default is transparent
+        $img = Image::createImage($canvasWidth, 110)->fill('rgba(0,0,0,0)'); // Default is transparent
 
         /*
         |--------------------------------------------------------------------------
@@ -100,13 +100,10 @@ class VisitorStatsController extends Controller
         */
 
         if (File::exists($logoPath)) {
-            $logoImage = Image::make($logoPath)->resize(100, 100, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
+            $logoImage = Image::decode($logoPath)->scaleDown(100, 100);
 
-            // Menyisipkan logo di koordinat x: 30, y: 35
-            $img->insert($logoImage, 'top-left', 10, 5);
+            // Menyisipkan logo di koordinat x: 10, y: 5
+            $img->insert($logoImage, 10, 5, 'top-left');
         }
 
         /*
@@ -129,7 +126,7 @@ class VisitorStatsController extends Controller
         $fontBold = public_path('fonts/Poppins-Bold.ttf');
         $img->text($title, 108, 60, function ($font) use ($fontBold) {
             if (File::exists($fontBold)) {
-                $font->file($fontBold);
+                $font->filename($fontBold);
             }
             $font->size(55);
             $font->color('#00843D');
@@ -144,7 +141,7 @@ class VisitorStatsController extends Controller
         $fontRegular = public_path('fonts/Poppins-Regular.ttf');
         $img->text($slogan, 110, 91, function ($font) use ($fontRegular) {
             if (File::exists($fontRegular)) {
-                $font->file($fontRegular);
+                $font->filename($fontRegular);
             }
             $font->size(30);
             $font->color('#B8860B');
@@ -157,7 +154,7 @@ class VisitorStatsController extends Controller
         */
 
         // Menggunakan format webp untuk performa lebih baik sesuai ekstensi route
-        $output = $img->encode('webp', 90);
+        $output = $img->encodeUsingFileExtension('webp', quality: 90)->toString();
 
         return response($output)
             ->header('Content-Type', 'image/webp')
@@ -255,13 +252,13 @@ class VisitorStatsController extends Controller
            GENERATE IMAGE
         ==========================*/
 
-        $img = Image::canvas(800, 730, 'rgba(0,0,0,0.65)');
+        $img = Image::createImage(800, 730)->fill('rgba(0,0,0,0.65)');
         $fontPath = public_path('backend/fonts/captcha.ttf');
 
         $y = 70;
 
         $img->text('Statistik Pengunjung :', 30, $y, function ($font) use ($fontPath) {
-            $font->file($fontPath);
+            $font->filename($fontPath);
             $font->size(40);
             $font->color('#ffffff');
         });
@@ -291,7 +288,7 @@ class VisitorStatsController extends Controller
         foreach ($data as $label => $value) {
 
             $img->text($label, 30, $y, function ($font) use ($fontPath) {
-                $font->file($fontPath);
+                $font->filename($fontPath);
                 $font->size(32);
                 $font->color('#ffffff');
             });
@@ -299,7 +296,7 @@ class VisitorStatsController extends Controller
             if (!is_null($value)) {
 
                 $img->text($value, 770, $y, function ($font) use ($fontPath) {
-                    $font->file($fontPath);
+                    $font->filename($fontPath);
                     $font->size(32);
                     $font->color('#ffdd00');
                     $font->align('right');
@@ -310,8 +307,8 @@ class VisitorStatsController extends Controller
             $y += 55;
         }
 
-        $response = $img->response('png');
-        return $response;
+        $output = $img->encodeUsingFileExtension('png')->toString();
+        return response($output)->header('Content-Type', 'image/png');
     }
 
 
