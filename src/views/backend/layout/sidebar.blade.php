@@ -23,7 +23,7 @@
 @auth
     @php $userprofile = Auth::user() @endphp
     <aside class="app-sidebar" style="font-size: 12px">
-        <div class="app-sidebar__user" style="cursor: pointer; margin-bottom: 0;padding-top:0">
+        <div class="app-sidebar__user" style="cursor: pointer; margin-bottom: 0;padding-top:0;margin-top:-7px">
             <img alt="User Photo" class="app-sidebar__user-avatar" style="width: 30px; height: 30px"
                 src="{{ $userprofile->photo_user }}">
             <div>
