@@ -149,6 +149,11 @@
 
                 @if ($module->form->editor)
                     <div class="form-group">
+                        @if (isset($module->form->ai_generator) && $module->form->ai_generator)
+                        <button type="button" class="btn btn-sm btn-outline-primary mb-2" data-toggle="modal" data-target="#promptGeneratorModal" onclick="$('#prompt_topic').val($('input[name=title]').val())">
+                            <i class="fa fa-magic"></i> AI Prompt Generator
+                        </button>
+                        @endif
 
                         @php
                             $isTenantOnMainDomain = config('modules.multisite_enabled') && !empty($post) && !empty($post->tenant_id) && is_main_domain() && $post->tenant;
@@ -575,5 +580,130 @@
             }
         </script>
     @endpush
+
+@if ($module->form->editor && isset($module->form->ai_generator) && $module->form->ai_generator)
+    <!-- AI Prompt Generator Modal -->
+    <div class="modal fade" id="promptGeneratorModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fa fa-magic"></i> AI Content Prompt Generator</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small">
+                        Gunakan asisten ini untuk menyusun instruksi (prompt) ke AI. Anda bisa menggunakannya untuk berbagai jenis tulisan: artikel blog, berita, opini, cerita, hingga materi promosi.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label>Topik / Judul Tulisan</label>
+                            <input type="text" id="prompt_topic" class="form-control" placeholder="Contoh: Manfaat AI untuk Produktivitas...">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Konteks / Latar Belakang (Opsional)</label>
+                            <input type="text" id="prompt_context" class="form-control" placeholder="Contoh: Tahun 2024 di Indonesia, atau situasi spesifik...">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Target Pembaca / Audiens (Opsional)</label>
+                            <input type="text" id="prompt_audience" class="form-control" placeholder="Contoh: Masyarakat umum, Anak muda, Profesional...">
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label>Poin Utama / Pesan yang Ingin Disampaikan</label>
+                            <textarea id="prompt_what" class="form-control" rows="3" placeholder="Contoh: Menjelaskan apa itu AI, contoh penggunaannya sehari-hari, dan dampaknya bagi efisiensi kerja..."></textarea>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Gaya Bahasa (Tone of Voice)</label>
+                            <select id="prompt_style" class="form-control">
+                                <option value="Informatif dan edukatif">Edukasi / Informatif</option>
+                                <option value="Santai, ramah, dan komunikatif layaknya blogger">Santai & Komunikatif</option>
+                                <option value="Jurnalistik formal layaknya reporter berita">Berita Formal</option>
+                                <option value="Kreatif, imajinatif, dan bercerita">Kreatif / Storytelling</option>
+                                <option value="Persuasif dan menarik untuk promosi (Copywriting)">Promosi / Persuasif</option>
+                                <option value="Resmi dan kaku layaknya dokumen formal/akademik">Resmi / Akademik</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Call to Action / Penutup (Opsional)</label>
+                            <input type="text" id="prompt_cta" class="form-control" placeholder="Contoh: Ajak pembaca untuk berkomentar atau mencoba produk...">
+                        </div>
+                    </div>
+                    <hr>
+                    <button type="button" class="btn btn-primary btn-block mb-3" onclick="generatePromptText()">
+                        <i class="fa fa-cogs"></i> Generate Prompt
+                    </button>
+                    <div class="form-group">
+                        <label>Hasil Prompt (Salin teks ini ke ChatGPT / AI Anda)</label>
+                        <textarea id="prompt_result" class="form-control" rows="10" style="background:#f8f9fa; border:1px solid #ced4da;" readonly></textarea>
+                        <button type="button" class="btn btn-success btn-sm mt-2" onclick="copyPrompt()">
+                            <i class="fa fa-copy"></i> Salin ke Clipboard
+                        </button>
+                        <button type="button" class="btn btn-info btn-sm mt-2 ml-2" onclick="generateDirectToEditor()">
+                            <i class="fa fa-magic"></i> Generate Langsung ke Editor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function generatePromptText() {
+            let topic = $('#prompt_topic').val() || '[Topik Belum Diisi]';
+            let context = $('#prompt_context').val();
+            let audience = $('#prompt_audience').val();
+            let what = $('#prompt_what').val() || '[Poin Utama Belum Diisi]';
+            let style = $('#prompt_style').val();
+            let cta = $('#prompt_cta').val();
+            
+            let prompt = "Bertindaklah sebagai penulis profesional. Tolong buatkan sebuah konten/artikel dengan detail instruksi berikut:\n\n";
+            prompt += "- Topik Utama / Judul: " + topic + "\n";
+            if(context) prompt += "- Konteks / Latar Belakang: " + context + "\n";
+            if(audience) prompt += "- Target Pembaca: " + audience + "\n";
+            prompt += "- Poin-Poin Penting yang Wajib Disampaikan:\n  " + what.replace(/\n/g, "\n  ") + "\n\n";
+            prompt += "- Gaya Bahasa Tulisan: " + style + "\n";
+            if(cta) prompt += "- Penutup / Call-to-Action: " + cta + "\n\n";
+            prompt += "Tulis konten tersebut dengan struktur paragraf yang rapi, transisi antar ide yang mengalir dengan baik, dan panjang teks yang memadai agar pesan tersampaikan secara utuh.";
+            
+            $('#prompt_result').val(prompt);
+        }
+        
+        function copyPrompt() {
+            let copyText = document.getElementById("prompt_result");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+            
+            let btn = $(event.currentTarget);
+            let oldHtml = btn.html();
+            btn.html('<i class="fa fa-check"></i> Tersalin!');
+            btn.removeClass('btn-success').addClass('btn-info');
+            setTimeout(function(){
+                btn.html(oldHtml);
+                btn.removeClass('btn-info').addClass('btn-success');
+            }, 2000);
+        }
+
+        function generateDirectToEditor() {
+            let promptText = $('#prompt_result').val();
+            if(!promptText) {
+                alert("Silakan klik 'Generate Prompt' terlebih dahulu.");
+                return;
+            }
+            
+            // Set value ke modal AI Summernote bawaan
+            $('#aiPrompt').val(promptText);
+            
+            // Tutup modal generator ini
+            $('#promptGeneratorModal').modal('hide');
+            
+            // Memicu klik pada tombol generate bawaan Summernote AI
+            setTimeout(function() {
+                $('#btnGenerateAI').click();
+            }, 300);
+        }
+    </script>
+@endif
 
 @endsection

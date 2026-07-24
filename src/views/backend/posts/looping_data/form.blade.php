@@ -1,4 +1,4 @@
-<div class="table-responsive" style="height:75vh;">
+<div class="table-responsive" >
     <br>
     <h6 style="border-bottom:1px dashed #000;font-weight:normal"><b>Data {{ $module->form->looping_name }}</b></h6>
     <table class="table table-bordered table-hover table-striped" style="background:#fff;font-size:small;">
@@ -47,7 +47,7 @@
           </td>
 
           @endforeach
-          <td class="text-center" >  @if(!Route::is($post->type.'.show')) <i @if(isset($f[$y])) onclick="alert('Hapus file terlebih dahulu')" @else onclick="if(confirm('Hapus Data Baris?')){$('#data-{{$y}}').remove()}" @endif class="fa fa-trash pointer text-danger" style="display:inline" aria-hidden></i> @endif </td>
+          <td class="text-center" >  @if(!Route::is($post->type.'.show')) <i onclick="if(confirm('Hapus Data Baris?')){$('#data-{{$y}}').remove()}" class="fa fa-trash pointer text-danger" style="display:inline" aria-hidden></i> @endif </td>
           </tr>
           @endforeach
 

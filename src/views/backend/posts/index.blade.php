@@ -2,7 +2,10 @@
 @section('content')
 
   <div class="row">
-    <div class="col-lg-12 mb-3">
+    <!-- Modern Background Watermark -->
+    <i class="fa {{get_module_info('icon')}}" style="position: fixed; right: -5%; top: 20%; font-size: 80vh; color: rgba(0, 0, 0, 0.1); z-index: 0; pointer-events: none; transform: rotate(-15deg);"></i>
+
+    <div class="col-lg-12 mb-3" style="position: relative; z-index: 1;">
       <h3 style="font-weight:normal;float:left;"> <i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i>
         {{get_post_type('title_crud')}}
       </h3>
@@ -139,9 +142,40 @@
           </div>
         </div>
       </div>
+      <style>
+        .dataTables_wrapper {
+            background: rgba(255, 255, 255, 0.3) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 1;
+        }
+        table.dataTable {
+            background: transparent !important;
+        }
+        table.dataTable tbody tr {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        table.dataTable tbody tr.odd {
+            background-color: rgba(255, 255, 255, 0.4) !important;
+        }
+        table.dataTable tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.6) !important;
+        }
+        table.dataTable tbody td, table.dataTable thead th {
+            background-color: transparent !important;
+            border-color: rgba(0, 0, 0, 0.05) !important;
+        }
+        table.dataTable thead {
+            background: rgba(255, 255, 255, 0.5) !important;
+        }
+      </style>
       <table class="display table table-hover table-bordered datatable table-striped"
-        style="background:#ffffff;width:100%;">
-        <thead style="text-transform:uppercase;color:#444;font-size:small">
+        style="width:100%;">
+        <thead style="text-transform:uppercase;color:#444;font-size:small; background: rgba(255, 255, 255, 0.4);">
           <tr>
             <th style="width:10px;vertical-align: middle">
               <div class="animated-checkbox">
@@ -192,7 +226,7 @@
           </tr>
         </thead>
 
-        <tbody style="background:#fff">
+        <tbody style="background: transparent;">
 
         </tbody>
 
