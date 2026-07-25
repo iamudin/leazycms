@@ -34,9 +34,7 @@ foreach (get_module() as $value) {
             Route::get($value->name . '/{id}/edit', 'edit')->name($value->name . '.edit');
             Route::put($value->name . '/{post}/edit', 'update')->name($value->name . '.update');
         }
-        if (in_array('show', $value->route)) {
-            Route::get($value->name . '/{id}/show', 'edit')->name($value->name . '.show');
-        }
+     
         if (in_array('delete', $value->route)) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
             Route::post($value->name . '/bulkaction', 'bulkaction')->name($value->name . '.bulkaction');

@@ -267,8 +267,8 @@
                         <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}" />
                         <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
                             class="compress-image form-control-file form-control-sm" name="media" value="">
-                        @if ($module->web->index && $module->web->detail)
-                            <span style="padding:10px">
+                        @if ($module->web->detail || $module->name == 'banner')
+                            <span style="padding:10px;padding-top:0px">
                                 <textarea maxlength="200" placeholder="Keterangan Gambar" type="text" class="form-control form-control-sm"
                                     name="media_description">{{ !empty(old('media_description')) ? old('media_description') : ($post->media_description ?? '') }}</textarea>
                             </span>
@@ -285,15 +285,20 @@
                         placeholder="URL dimulai https:// atau http://"
                         value="{{ !empty(old('redirect_to')) ? old('redirect_to') : ($post->redirect_to ?? '') }}">
                     @if(!isset($modname))
-                        <small for="">Deskripsi
-                            {!! help('Opsi deskripsi singkat tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}
-                        </small>
-                        <textarea maxlength="200" placeholder="Tulis Deskripsi" type="text" class="form-control form-control-sm"
-                            name="description">{{ !empty(old('description')) ? old('description') : ($post->description ?? '') }}</textarea>
-                        <small for="">Kata Kunci
-                            {!! help('Kata kunci tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}</small>
-                        <input placeholder="Keyword1,Keyword2,Keyword3" type="text" class="form-control form-control-sm"
-                            name="keyword" value="{{ !empty(old('keyword')) ? old('keyword') : ($post->keyword ?? '') }}">
+                    <div class="card mt-3">
+                        <p class="card-header"> <i class="fa fa-search" aria-hidden></i> SEO Meta (Opsional)</p>
+                        <div style="padding:10px">
+                            <small for="">Deskripsi
+                                {!! help('Opsi deskripsi singkat tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}
+                            </small>
+                            <textarea maxlength="200" placeholder="Tulis Deskripsi" type="text" class="form-control form-control-sm mb-2"
+                                name="description">{{ !empty(old('description')) ? old('description') : ($post->description ?? '') }}</textarea>
+                            <small for="">Kata Kunci
+                                {!! help('Kata kunci tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}</small>
+                            <input placeholder="Keyword1,Keyword2,Keyword3" type="text" class="form-control form-control-sm"
+                                name="keyword" value="{{ !empty(old('keyword')) ? old('keyword') : ($post->keyword ?? '') }}">
+                        </div>
+                    </div>
                     @endif
                     @if ($module->form->tag)
 
@@ -305,7 +310,7 @@
                             @endforeach
                         </select>
 
-                    @else
+                    
                     @endif
 
                 @endif
@@ -352,7 +357,7 @@
                         @if(!empty($post->password))<i class="fa fa-copy copy text-danger pointer ml-1"
                         title="Klik untuk menyalin kode" data-copy="{{ dec64($post->password) }}"></i>@endif
                     </div>
-                    <div class="custom-control custom-switch mb-3">
+                    <div class="custom-control custom-switch mb-2">
                         <input type="checkbox" class="custom-control-input" id="switch-comment" name="allow_comment" value="Y"
                             {{ $post && $post->allow_comment == 'Y' ? 'checked=checked' : '' }}>
                         <label class="custom-control-label" for="switch-comment"><small>Izinkan Komentar

@@ -648,12 +648,12 @@ class PostController extends Controller implements HasMiddleware
 
             $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
             $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
-            $tit = ($current_module->web->detail) ? ((!empty($row->title)) ? ($row->status == 'publish' ? '<a title="Klik untuk melihat di tampilan web" href="' . $row->link . '" target="_blank">' . $row->title . '</a> ' . $redirect . ' ' . ($row->custom_page == 1 ? '<sup class="badge badge-dark"><small>Custom Page</small></sup>' : '') : $row->title) : '<i class="text-muted">__Tanpa ' . $current_module->datatable->data_title . '__</i>') : ((!empty($row->title)) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>');
+            $tit = !empty($row->title) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>';
 
 
             $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
             $locked = (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\'' . dec64($row->password) . '\')" title="Akses ' . $current_module->title . ' ini  dibatasi. Klik untuk menyalin kode akses"></i>' : '');
-            $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
+            $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i>' . $row->shortcut_counter . '</a>' : '';
 
             $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . $row->tenant?->domain : null;
             $b = '<b class="text-primary">' . $tit . '</b><br>';
@@ -808,8 +808,8 @@ class PostController extends Controller implements HasMiddleware
         });
         $dt->addColumn('action', function ($row) use ($current_module) {
 
-            $btn = '<div class="btn-group">';
-            $btn .= in_array('show', $current_module->route) ? '<a title="Lihat data" href="' . route($row->type . '.show', $row->id) . '"  class="btn btn-primary btn-sm"> <i class="fa fa-eye"></i></a>' : '';
+            $btn = '<div class="btn-group float-right">';
+            $btn .= $current_module->web->detail == true && $row->status=="publish"  ? '<a title="Lihat di website" href="' . url($row->url) . '" target="_blank"  class="btn btn-primary btn-sm"> <i class="fa fa-globe"></i></a>' : '';
             if (empty($row->deleted_at)) {
                 $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> </a>' : '';
             } else {

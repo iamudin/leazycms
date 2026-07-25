@@ -54,8 +54,8 @@
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-            <h4 id="count-publish" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
-              {{ $publish }}</h4>
+            <h4 id="count-publish" class="counter-effect" data-target="{{ $publish }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+              0</h4>
             <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
               Dipublikasi</p>
             <i class="fa fa-globe"
@@ -69,8 +69,8 @@
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #fd7e14 0%, #e85d04 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-            <h4 id="count-draft" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
-              {{ $draft }}</h4>
+            <h4 id="count-draft" class="counter-effect" data-target="{{ $draft }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+              0</h4>
             <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
               Draft</p>
             <i class="fa fa-save"
@@ -85,8 +85,8 @@
                 style="position: relative; overflow: hidden; background: linear-gradient(135deg, #6f42c1 0%, #59359a 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
                 onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
                 onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-                <h4 id="count-category" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
-                  {{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}</h4>
+                <h4 id="count-category" class="counter-effect" data-target="{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+                  0</h4>
                 <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
                   Kategori</p>
                 <i class="fa fa-tags"
@@ -101,8 +101,8 @@
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-            <h4 id="count-trash" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
-              {{ $trash }}</h4>
+            <h4 id="count-trash" class="counter-effect" data-target="{{ $trash }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+              0</h4>
             <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
               Sampah</p>
             <i class="fa fa-trash-alt"
@@ -541,6 +541,27 @@
               }
             });
           }
+        });
+      });
+
+      // Counter effect
+      document.addEventListener('DOMContentLoaded', function () {
+        const counters = document.querySelectorAll('.counter-effect');
+        counters.forEach(counter => {
+          const updateCount = () => {
+            const target = +counter.getAttribute('data-target');
+            const count = +counter.innerText;
+            const speed = 20;
+            const inc = target / speed;
+
+            if (count < target) {
+              counter.innerText = Math.ceil(count + inc);
+              setTimeout(updateCount, 40);
+            } else {
+              counter.innerText = target;
+            }
+          };
+          updateCount();
         });
       });
     </script>

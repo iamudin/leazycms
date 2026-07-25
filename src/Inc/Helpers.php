@@ -2839,7 +2839,7 @@ if (!function_exists('recache_banner')) {
         if (config('modules.multisite_enabled')) {
             $posts->whereTenantId(tenant()->id);
         }
-        $posts = $posts->select('media', 'redirect_to', 'title', 'category_id', 'data_field')->get();
+        $posts = $posts->select('media', 'redirect_to', 'title', 'category_id', 'media_description')->get();
         // Group by category name and map the results
         $result = $posts->groupBy('category.slug') // Asumsikan 'name' adalah atribut pada model kategori
             ->mapWithKeys(function ($items, $categoryName) {
@@ -2848,7 +2848,7 @@ if (!function_exists('recache_banner')) {
                         return [
                             'image' => $item->media,
                             'name' => $item->title,
-                            'description' => $item->field?->description ?? null,
+                            'description' => $item->media_description?? null,
                             'link' => $item->redirect_to,
                         ];
                     })->toArray()

@@ -180,7 +180,7 @@ return [
                 'api' => false,
                 'archive' => false,
                 'index' => false,
-                'detail' => false,
+                'detail' => true,
                 'history' => false,
                 'auto_query' => true,
                 'sortable' => false,
@@ -911,7 +911,7 @@ return [
                 'tag' => false,
                 'looping_name' => 'Daftar Menu',
                 'looping_data' => false,
-                'custom_field' => [['Description', ['type' => 'textarea']]],
+                'custom_field' => false,
             ],
             'web' => [
                 'api' => false,
