@@ -175,11 +175,6 @@
 </div>
 
 <script>
-    let currentFileInput = null;
-    let currentFileWrapper = null;
-    let currentTextInput = null;
-    window.currentSummernoteObj = null;
-
     function selectMediaGridItem(elem, event) {
         if (event && $(event.target).closest('.btn-view-media').length > 0) return;
         if (event && $(event.target).closest('.btn-delete-media').length > 0) return;
@@ -187,34 +182,10 @@
             event.stopPropagation();
             return;
         }
-
-        let isMultiple = currentFileInput && currentFileInput.prop('multiple');
-
-        if (isMultiple) {
-            $(elem).toggleClass('border-primary shadow selected-media');
-            if ($(elem).hasClass('selected-media')) {
-                $(elem).css('border-width', '2px');
-            } else {
-                $(elem).css('border-width', '1px');
-            }
-            
-            let selectedVals = [];
-            $('.media-grid-item.selected-media').each(function() {
-                selectedVals.push($(this).data('val'));
-            });
-            $('#global-library-select').val(selectedVals.join(','));
-            
-            if (selectedVals.length > 0) {
-                $('#btn-use-selected-media').removeAttr('disabled');
-            } else {
-                $('#btn-use-selected-media').attr('disabled', 'disabled');
-            }
-        } else {
-            $('.media-grid-item').removeClass('border-primary shadow selected-media').css('border-width', '1px');
-            $(elem).addClass('border-primary shadow selected-media').css('border-width', '2px');
-            $('#global-library-select').val($(elem).data('val'));
-            $('#btn-use-selected-media').removeAttr('disabled');
-        }
+        $('.media-grid-item').removeClass('border-primary shadow').css('border-width', '1px');
+        $(elem).addClass('border-primary shadow').css('border-width', '2px');
+        $('#global-library-select').val($(elem).data('val'));
+        $('#btn-use-selected-media').removeAttr('disabled');
     }
 
     window.updateDiskSpaceUI = function (addedBytes = 0) {
@@ -272,6 +243,11 @@
     };
 
     $(function () {
+        let currentFileInput = null;
+        let currentFileWrapper = null;
+        let currentTextInput = null;
+        window.currentSummernoteObj = null;
+
         function initGlobalFilePickers() {
             let uninitialized = $('input[type="file"]').not('.initialized-gmedia');
 
@@ -921,65 +897,46 @@
                 let fieldName = currentFileInput.attr('name') || currentFileInput.data('name');
                 if (!fieldName) return;
 
-                /* Instead of modifying the original file input, we disable it and create hidden inputs */
+                /* Instead of modifying the original file input (which can't be set programmatically due to security),
+                   we disable it and create a hidden input with the same name that contains the selected file path. */
                 currentFileInput.attr('disabled', 'disabled');
 
                 /* Remove existing hidden input if any */
                 currentFileWrapper.siblings('input[type="hidden"].gmedia-hidden').remove();
 
-                let vals = selectedVal.split(',');
+                /* Add new hidden input */
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: fieldName,
+                    class: 'gmedia-hidden',
+                    value: '/media/' + selectedVal
+                }).insertAfter(currentFileWrapper);
+
+                let ext = selectedVal.split('.').pop().toLowerCase();
+                let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
                 let previewArea = currentFileWrapper.find('.media-preview-area');
+
                 previewArea.empty().show();
-                
-                // Adjust preview area max-width if multiple
-                if (vals.length > 1) {
-                    previewArea.css('max-width', '100%');
+                if (isImage) {
+                    let url = '/media/' + selectedVal + (!['svg', 'ico'].includes(ext) ? '?size=small' : '');
+                    let $img = $('<img>').attr('src', url).css({
+                        'max-width': '100%',
+                        'height': 'auto',
+                        'max-height': '150px',
+                        'object-fit': 'contain',
+                        'margin-bottom': '5px'
+                    });
+                    previewArea.append($img);
                 } else {
-                    previewArea.css('max-width', '200px');
+                    let icon = 'fa-file';
+                    if (['pdf'].includes(ext)) icon = 'fa-file-pdf text-danger';
+                    else if (['doc', 'docx'].includes(ext)) icon = 'fa-file-word text-primary';
+                    else if (['xls', 'xlsx'].includes(ext)) icon = 'fa-file-excel text-success';
+                    else if (['zip', 'rar'].includes(ext)) icon = 'fa-file-archive text-warning';
+                    else if (['mp4', 'mkv', 'avi'].includes(ext)) icon = 'fa-file-video text-info';
+                    previewArea.append('<i class="fa ' + icon + ' fa-3x mb-2"></i>');
                 }
-
-                vals.forEach(function(val) {
-                    /* Add new hidden input */
-                    $('<input>').attr({
-                        type: 'hidden',
-                        name: fieldName,
-                        class: 'gmedia-hidden',
-                        value: '/media/' + val
-                    }).insertAfter(currentFileWrapper);
-
-                    let ext = val.split('.').pop().toLowerCase();
-                    let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
-
-                    let itemDiv = $('<div style="display:inline-block; margin-right:5px; margin-bottom:5px; text-align:center; vertical-align:top;"></div>');
-
-                    if (isImage) {
-                        let url = '/media/' + val + (!['svg', 'ico'].includes(ext) ? '?size=small' : '');
-                        let $img = $('<img>').attr('src', url).css({
-                            'width': vals.length > 1 ? '60px' : '100%',
-                            'height': vals.length > 1 ? '60px' : 'auto',
-                            'max-height': '150px',
-                            'object-fit': 'contain',
-                            'margin-bottom': '5px',
-                            'border-radius': '4px'
-                        });
-                        itemDiv.append($img);
-                    } else {
-                        let icon = 'fa-file';
-                        if (['pdf'].includes(ext)) icon = 'fa-file-pdf text-danger';
-                        else if (['doc', 'docx'].includes(ext)) icon = 'fa-file-word text-primary';
-                        else if (['xls', 'xlsx'].includes(ext)) icon = 'fa-file-excel text-success';
-                        else if (['zip', 'rar'].includes(ext)) icon = 'fa-file-archive text-warning';
-                        else if (['mp4', 'mkv', 'avi'].includes(ext)) icon = 'fa-file-video text-info';
-                        let faSize = vals.length > 1 ? 'fa-2x' : 'fa-3x';
-                        itemDiv.append('<i class="fa ' + icon + ' ' + faSize + ' mb-2 d-block"></i>');
-                    }
-                    
-                    let shortName = vals.length > 1 && val.length > 10 ? val.substring(0,8) + '..' : val;
-                    let widthCss = vals.length > 1 ? '60px' : 'auto';
-                    itemDiv.append('<div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width:' + widthCss + ';" title="' + val + '">' + shortName + '</div>');
-                    
-                    previewArea.append(itemDiv);
-                });
+                previewArea.append('<div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + selectedVal + '">' + selectedVal + '</div>');
 
                 currentFileWrapper.find('.btn-clear-gmedia').show();
                 $('#globalMediaModal').modal('hide');
@@ -1012,7 +969,7 @@
         $('#globalMediaModal').on('hidden.bs.modal', function () {
             window.currentSummernoteObj = null;
             $('#global-library-select').val('');
-            $('.media-grid-item').removeClass('border-primary shadow selected-media').css('border-width', '1px');
+            $('.media-grid-item').removeClass('border-primary shadow').css('border-width', '1px');
             $('#btn-use-selected-media').attr('disabled', 'disabled');
         });
 

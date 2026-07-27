@@ -147,7 +147,7 @@
 
           <ul class="list-group mb-3">
             {{template_info()}}
-                <div class="mb-5">
+                <div class="">
     <form  class="list-group-item" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
       @csrf
       <label>Upload Template :</label>
@@ -158,13 +158,13 @@
 
     </form>
     
-    <a href="{{ route('appearance.template_store') }}" class="btn btn-info btn-sm w-100 my-1">
-        <i class="fa fa-cloud-download-alt"></i> Pilih dari Cloud
-    </a>
+  
   </div>
       </ul>
       @endif
-
+  <a href="{{ route('appearance.template_store') }}" class="btn btn-info btn-sm w-100">
+        <i class="fa fa-cloud-download-alt"></i> Pilih dari Cloud
+    </a>
     </div>
 
     <div class="col-lg-10">

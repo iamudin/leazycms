@@ -226,7 +226,13 @@
             @php
                 $slug = $template['slug'] ?? Str::slug($template['name']);
                 $isInstalled = in_array($slug, $installedPlugins);
-                $isActive = in_array($slug, $activePlugins);
+                if (config('modules.multisite_enabled') && !is_main_domain()) {
+                    $tenant = tenant();
+                    $tenantPlugins = is_string($tenant->plugins) ? json_decode($tenant->plugins, true) : ($tenant->plugins ?? []);
+                    $isActive = is_array($tenantPlugins) && in_array($slug, $tenantPlugins);
+                } else {
+                    $isActive = in_array($slug, $activePlugins);
+                }
             @endphp
             <div class="col-md-4 col-sm-6 mb-4">
                 <div class="store-card">
@@ -240,7 +246,10 @@
                         @if(isset($template['is_premium']) && $template['is_premium'])
                             <div class="glass-badge badge-premium badge-tr text-right">
                                 <div><i class="fa fa-star"></i> PREMIUM</div>
-                                @if(isset($template['price']) && $template['price'] > 0)
+                                @if(isset($template['discount_price']) && $template['discount_price'] > 0)
+                                    <del style="font-size: 0.7rem; font-weight:normal; opacity: 0.7; color: #fff;">Rp {{ number_format($template['price'], 0, ',', '.') }}</del><br>
+                                    <span class="price-tag" style="margin-top:-4px;">Rp {{ number_format($template['discount_price'], 0, ',', '.') }}</span>
+                                @elseif(isset($template['price']) && $template['price'] > 0)
                                     <span class="price-tag">Rp {{ number_format($template['price'], 0, ',', '.') }}</span>
                                 @endif
                             </div>
@@ -280,10 +289,10 @@
                             @if(isset($template['is_premium']) && $template['is_premium'])
                                 @if(isset($template['is_purchased']) && $template['is_purchased'])
                                     @if($isActive)
-                                        <button type="button" class="btn btn-light btn-modern w-50 text-muted" disabled>Aktif</button>
+                                        <button type="button" class="btn btn-danger-gradient btn-modern w-50 toggle-plugin-btn" data-slug="{{ $slug }}" data-action="disable">Nonaktifkan</button>
                                     @elseif($isInstalled)
                                         <button type="button" class="btn btn-success-gradient btn-modern w-50 toggle-plugin-btn" data-slug="{{ $slug }}" data-action="enable">Aktifkan</button>
-                                    @else
+                                    @elseif(!config('modules.multisite_enabled') || is_main_domain())
                                         <button type="button" class="btn btn-success-gradient btn-modern w-50 install-cloud-btn" data-url="{{ $template['url'] }}"><i class="fa fa-download"></i> Install</button>
                                     @endif
                                 @else
@@ -293,10 +302,10 @@
                                 @endif
                             @else
                                 @if($isActive)
-                                    <button type="button" class="btn btn-light btn-modern w-50 text-muted" disabled>Aktif</button>
+                                    <button type="button" class="btn btn-danger-gradient btn-modern w-50 toggle-plugin-btn" data-slug="{{ $slug }}" data-action="disable">Nonaktifkan</button>
                                 @elseif($isInstalled)
                                     <button type="button" class="btn btn-success-gradient btn-modern w-50 toggle-plugin-btn" data-slug="{{ $slug }}" data-action="enable">Aktifkan</button>
-                                @else
+                                @elseif(!config('modules.multisite_enabled') || is_main_domain())
                                     <button type="button" class="btn btn-primary-gradient btn-modern w-50 install-cloud-btn" data-url="{{ $template['url'] }}"><i class="fa fa-download"></i> Install</button>
                                 @endif
                             @endif

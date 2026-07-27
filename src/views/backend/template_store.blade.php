@@ -176,6 +176,7 @@
 <form id="activate-template-form" action="{{ route('appearance.activate_template') }}" method="POST" style="display: none;">
     @csrf
     <input type="hidden" name="slug" id="activate-template-slug">
+    <input type="hidden" name="original_slug" id="activate-template-original-slug">
 </form>
 
 <div class="store-hero d-flex justify-content-between align-items-center flex-wrap">
@@ -225,7 +226,8 @@
     @if(count($paginatedTemplates) > 0)
         @foreach($paginatedTemplates as $template)
             @php
-                $slug = $template['slug'] ?? Str::slug($template['name']);
+                $originalSlug = $template['slug'] ?? Str::slug($template['name']);
+                $slug = (config('modules.multisite_enabled') && !is_main_domain()) ? str_replace('.', '-', request()->getHost()) . '-' . $originalSlug : $originalSlug;
                 $isInstalled = \Illuminate\Support\Facades\File::isDirectory(resource_path('views/template/' . $slug));
                 $isActive = (template() === $slug);
             @endphp
@@ -241,7 +243,10 @@
                         @if(isset($template['is_premium']) && $template['is_premium'])
                             <div class="glass-badge badge-premium badge-tr text-right">
                                 <div><i class="fa fa-star"></i> PREMIUM</div>
-                                @if(isset($template['price']) && $template['price'] > 0)
+                                @if(isset($template['discount_price']) && $template['discount_price'] > 0)
+                                    <del style="font-size: 0.7rem; font-weight:normal; opacity: 0.7; color: #fff;">Rp {{ number_format($template['price'], 0, ',', '.') }}</del><br>
+                                    <span class="price-tag" style="margin-top:-4px;">Rp {{ number_format($template['discount_price'], 0, ',', '.') }}</span>
+                                @elseif(isset($template['price']) && $template['price'] > 0)
                                     <span class="price-tag">Rp {{ number_format($template['price'], 0, ',', '.') }}</span>
                                 @endif
                             </div>
@@ -296,7 +301,7 @@
                                 @if($isActive)
                                     <button type="button" class="btn btn-light btn-modern w-50 text-muted" disabled>Aktif</button>
                                 @elseif($isInstalled)
-                                    <button type="button" class="btn btn-success-gradient btn-modern w-50 activate-template-btn" data-slug="{{ $slug }}">Aktifkan</button>
+                                    <button type="button" class="btn btn-success-gradient btn-modern w-50 activate-template-btn" data-slug="{{ $slug }}" data-original-slug="{{ $originalSlug }}">Aktifkan</button>
                                 @else
                                     <button type="button" class="btn btn-primary-gradient btn-modern w-50 install-cloud-btn" data-url="{{ $template['url'] }}"><i class="fa fa-download"></i> Install</button>
                                 @endif
@@ -343,8 +348,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     $('.activate-template-btn').click(function() {
         var slug = $(this).data('slug');
+        var originalSlug = $(this).data('original-slug');
         if (confirm('Yakin ingin mengaktifkan template ini?')) {
             $('#activate-template-slug').val(slug);
+            $('#activate-template-original-slug').val(originalSlug);
             $('#activate-template-form').submit();
         }
     });

@@ -2,7 +2,8 @@
 
 @section('content')
 @php
-    $slug = $template['slug'] ?? Str::slug($template['name']);
+    $originalSlug = $template['slug'] ?? Str::slug($template['name']);
+    $slug = (config('modules.multisite_enabled') && !is_main_domain()) ? str_replace('.', '-', request()->getHost()) . '-' . $originalSlug : $originalSlug;
     $isInstalled = \Illuminate\Support\Facades\File::isDirectory(resource_path('views/template/' . $slug));
     $isActive = (template() === $slug);
 @endphp
@@ -177,6 +178,7 @@
 <form id="activate-template-form" action="{{ route('appearance.activate_template') }}" method="POST" style="display: none;">
     @csrf
     <input type="hidden" name="slug" id="activate-template-slug">
+    <input type="hidden" name="original_slug" id="activate-template-original-slug">
 </form>
 
 <div class="row mb-4">
@@ -226,7 +228,10 @@
                     <div class="mt-2 mt-md-0">
                         @if($template['is_premium'])
                             <span class="badge-modern badge-premium"><i class="fa fa-star"></i> PREMIUM</span>
-                            @if(isset($template['price']) && $template['price'] > 0)
+                            @if(isset($template['discount_price']) && $template['discount_price'] > 0)
+                                <span class="badge-modern badge-price ml-1 text-muted" style="text-decoration: line-through; opacity: 0.8; font-size: 0.7rem; padding: 4px 10px;">Rp {{ number_format($template['price'], 0, ',', '.') }}</span>
+                                <span class="badge-modern badge-price ml-1">Rp {{ number_format($template['discount_price'], 0, ',', '.') }}</span>
+                            @elseif(isset($template['price']) && $template['price'] > 0)
                                 <span class="badge-modern badge-price ml-1">Rp {{ number_format($template['price'], 0, ',', '.') }}</span>
                             @endif
                         @else
@@ -263,7 +268,12 @@
                 <p class="text-muted font-weight-bold text-uppercase tracking-wide mb-2" style="letter-spacing: 2px; font-size: 0.8rem;">Investasi Desain</p>
                 
                 @if($template['is_premium'])
-                    <h2 class="price-display">Rp {{ number_format($template['price'] ?? 0, 0, ',', '.') }}</h2>
+                    @if(isset($template['discount_price']) && $template['discount_price'] > 0)
+                        <div class="mb-1 text-muted" style="text-decoration: line-through; font-size:1.2rem;">Rp {{ number_format($template['price'], 0, ',', '.') }}</div>
+                        <h2 class="price-display">Rp {{ number_format($template['discount_price'], 0, ',', '.') }}</h2>
+                    @else
+                        <h2 class="price-display">Rp {{ number_format($template['price'] ?? 0, 0, ',', '.') }}</h2>
+                    @endif
                 @else
                     <h2 class="price-display-free">GRATIS</h2>
                 @endif
@@ -312,7 +322,7 @@
                             <i class="fa fa-check-circle mr-2"></i> Sedang Aktif
                         </button>
                     @elseif($isInstalled)
-                        <button type="button" class="btn btn-action-main btn-gradient-success btn-block activate-template-btn" data-slug="{{ $slug }}">
+                        <button type="button" class="btn btn-action-main btn-gradient-success btn-block activate-template-btn" data-slug="{{ $slug }}" data-original-slug="{{ $originalSlug }}">
                             <i class="fa fa-power-off mr-2"></i> Aktifkan Template
                         </button>
                     @else
@@ -347,9 +357,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     $('.activate-template-btn').click(function() {
         var slug = $(this).data('slug');
+        var originalSlug = $(this).data('original-slug');
         if (confirm('Yakin ingin mengaktifkan template ini?')) {
             $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-2"></i> Mengaktifkan...');
             $('#activate-template-slug').val(slug);
+            $('#activate-template-original-slug').val(originalSlug);
             $('#activate-template-form').submit();
         }
     });

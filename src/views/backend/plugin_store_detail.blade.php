@@ -222,7 +222,10 @@
                     <div class="mt-2 mt-md-0">
                         @if($template['is_premium'])
                             <span class="badge-modern badge-premium"><i class="fa fa-star"></i> PREMIUM</span>
-                            @if(isset($template['price']) && $template['price'] > 0)
+                            @if(isset($template['discount_price']) && $template['discount_price'] > 0)
+                                <span class="badge-modern badge-price ml-1 text-muted" style="text-decoration: line-through; opacity: 0.8; font-size: 0.7rem; padding: 4px 10px;">Rp {{ number_format($template['price'], 0, ',', '.') }}</span>
+                                <span class="badge-modern badge-price ml-1">Rp {{ number_format($template['discount_price'], 0, ',', '.') }}</span>
+                            @elseif(isset($template['price']) && $template['price'] > 0)
                                 <span class="badge-modern badge-price ml-1">Rp {{ number_format($template['price'], 0, ',', '.') }}</span>
                             @endif
                         @else
@@ -259,7 +262,12 @@
                 <p class="text-muted font-weight-bold text-uppercase tracking-wide mb-2" style="letter-spacing: 2px; font-size: 0.8rem;">Investasi Fitur</p>
                 
                 @if($template['is_premium'])
-                    <h2 class="price-display">Rp {{ number_format($template['price'] ?? 0, 0, ',', '.') }}</h2>
+                    @if(isset($template['discount_price']) && $template['discount_price'] > 0)
+                        <div class="mb-1 text-muted" style="text-decoration: line-through; font-size:1.2rem;">Rp {{ number_format($template['price'], 0, ',', '.') }}</div>
+                        <h2 class="price-display">Rp {{ number_format($template['discount_price'], 0, ',', '.') }}</h2>
+                    @else
+                        <h2 class="price-display">Rp {{ number_format($template['price'] ?? 0, 0, ',', '.') }}</h2>
+                    @endif
                 @else
                     <h2 class="price-display-free">GRATIS</h2>
                 @endif
@@ -279,14 +287,14 @@
                             Anda sudah memiliki lisensi plugin ini
                         </div>
                         @if($isActive)
-                            <button type="button" class="btn btn-action-main btn-gradient-secondary btn-block" disabled>
-                                <i class="fa fa-check-circle mr-2"></i> Sedang Aktif
+                            <button type="button" class="btn btn-action-main btn-gradient-danger btn-block toggle-plugin-btn" data-slug="{{ $slug }}" data-action="disable">
+                                <i class="fa fa-power-off mr-2"></i> Nonaktifkan Plugin
                             </button>
                         @elseif($isInstalled)
                             <button type="button" class="btn btn-action-main btn-gradient-success btn-block toggle-plugin-btn" data-slug="{{ $slug }}" data-action="enable">
                                 <i class="fa fa-power-off mr-2"></i> Aktifkan Plugin
                             </button>
-                        @else
+                        @elseif(!config('modules.multisite_enabled') || is_main_domain())
                             <button type="button" class="btn btn-action-main btn-gradient-primary btn-block install-cloud-btn" data-url="{{ $template['url'] }}">
                                 <i class="fa fa-cloud-download mr-2"></i> Install Sekarang
                             </button>
@@ -304,14 +312,14 @@
                     @endif
                 @else
                     @if($isActive)
-                        <button type="button" class="btn btn-action-main btn-gradient-secondary btn-block" disabled>
-                            <i class="fa fa-check-circle mr-2"></i> Sedang Aktif
+                        <button type="button" class="btn btn-action-main btn-gradient-danger btn-block toggle-plugin-btn" data-slug="{{ $slug }}" data-action="disable">
+                            <i class="fa fa-power-off mr-2"></i> Nonaktifkan Plugin
                         </button>
                     @elseif($isInstalled)
                         <button type="button" class="btn btn-action-main btn-gradient-success btn-block toggle-plugin-btn" data-slug="{{ $slug }}" data-action="enable">
                             <i class="fa fa-power-off mr-2"></i> Aktifkan Plugin
                         </button>
-                    @else
+                    @elseif(!config('modules.multisite_enabled') || is_main_domain())
                         <button type="button" class="btn btn-action-main btn-gradient-primary btn-block install-cloud-btn" data-url="{{ $template['url'] }}">
                             <i class="fa fa-cloud-download mr-2"></i> Install Sekarang
                         </button>

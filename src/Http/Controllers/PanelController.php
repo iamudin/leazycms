@@ -107,35 +107,100 @@ class PanelController extends Controller implements HasMiddleware
 
     function plugins(Request $request)
     {
-        abort_if(!is_main_domain(), 404);
-
         if ($request->isMethod('post')) {
             $pluginName = $request->plugin_name;
             $action = $request->action; // 'enable' or 'disable'
 
-            $disabledPlugins = get_disabled_plugins();
+            if (config('modules.multisite_enabled') && !is_main_domain()) {
+                $tenant = tenant();
+                $tenantPlugins = is_string($tenant->plugins) ? json_decode($tenant->plugins, true) : ($tenant->plugins ?? []);
 
-            if ($action == 'disable') {
-                if (!in_array($pluginName, $disabledPlugins)) {
-                    $disabledPlugins[] = $pluginName;
+                if (!is_array($tenantPlugins)) {
+                    $tenantPlugins = [];
                 }
 
-                // Hapus opsi custom domain secara dinamis (fleksibel untuk semua plugin)
-                DB::table('options')
-                    ->where('name', "{$pluginName}-domain")
-                    ->delete();
+                if ($action == 'disable') {
+                    $tenantPlugins = array_diff($tenantPlugins, [$pluginName]);
+                } else {
+                    // Verify purchase for tenant
+                    $cloudKey = $this->getOrRegisterCloudKey();
+                    if ($cloudKey) {
+                        $cloudHost = "https://newlara.test";
+                        $verifyUrl = $cloudHost . "/api/verify-purchase?api_key=" . urlencode($cloudKey) . "&slug=" . urlencode($pluginName);
+                        try {
+                            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($verifyUrl);
+                            if ($response->successful()) {
+                                $verifyData = $response->json();
+                                if (isset($verifyData['is_premium']) && $verifyData['is_premium']) {
+                                    if (!isset($verifyData['valid']) || !$verifyData['valid']) {
+                                        return back()->with('danger', 'Anda belum membeli lisensi untuk plugin ini.');
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            // fail silently or block
+                        }
+                    }
+
+                    if (!in_array($pluginName, $tenantPlugins)) {
+                        $tenantPlugins[] = $pluginName;
+                    }
+                }
+
+                $tenant->plugins = array_values($tenantPlugins);
+                $tenant->save();
+
+                // Clear cache so the plugin loads immediately
+                cache()->forget("tenant:model:" . $tenant->id);
+
+                return back()->with('success', 'Status plugin berhasil diubah untuk domain Anda.');
             } else {
-                $disabledPlugins = array_diff($disabledPlugins, [$pluginName]);
+                $disabledPlugins = get_disabled_plugins();
+
+                if ($action == 'disable') {
+                    if (!in_array($pluginName, $disabledPlugins)) {
+                        $disabledPlugins[] = $pluginName;
+                    }
+
+                    // Hapus opsi custom domain secara dinamis (fleksibel untuk semua plugin)
+                    DB::table('options')
+                        ->where('name', "{$pluginName}-domain")
+                        ->delete();
+                } else {
+                    // Verify purchase if premium plugin
+                    $cloudKey = $this->getOrRegisterCloudKey();
+                    if ($cloudKey) {
+                        $cloudHost = "https://newlara.test";
+                        $verifyUrl = $cloudHost . "/api/verify-purchase?api_key=" . urlencode($cloudKey) . "&slug=" . urlencode($pluginName);
+                        try {
+                            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($verifyUrl);
+                            if ($response->successful()) {
+                                $verifyData = $response->json();
+                                if (isset($verifyData['is_premium']) && $verifyData['is_premium']) {
+                                    if (!isset($verifyData['valid']) || !$verifyData['valid']) {
+                                        return back()->with('danger', 'Anda belum membeli lisensi untuk plugin ini.');
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            // fail silently or block
+                        }
+                    }
+
+                    $disabledPlugins = array_diff($disabledPlugins, [$pluginName]);
+                }
+
+                DB::table('options')->updateOrInsert(
+                    ['name' => 'disabled_plugins', 'tenant_id' => null],
+                    ['value' => json_encode(array_values($disabledPlugins)), 'autoload' => 1]
+                );
+
+                cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+                return back()->with('success', 'Status plugin berhasil diubah secara global.');
             }
-
-            DB::table('options')->updateOrInsert(
-                ['name' => 'disabled_plugins', 'tenant_id' => null],
-                ['value' => json_encode(array_values($disabledPlugins)), 'autoload' => 1]
-            );
-
-            cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
-            return back()->with('success', 'Status plugin berhasil diubah.');
         }
+
+        abort_if(!is_main_domain(), 404);
 
         $plugins = [];
         $disabledPlugins = get_disabled_plugins();
@@ -1191,13 +1256,50 @@ class PanelController extends Controller implements HasMiddleware
         return view('cms::backend.appearance');
     }
 
+    private function getOrRegisterCloudKey()
+    {
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $cloudKey = get_option('cloud_key');
+        } else {
+            $cloudKey = config('modules.cloud_key') ?: get_option('cloud_key');
+        }
+        if ($cloudKey) {
+            return $cloudKey;
+        }
+
+        $domain = request()->getHost();
+        $cloudHost = "https://newlara.test";
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                ->withUserAgent("LeazyCMS-Installer/1.0 (PHP " . PHP_VERSION . "; " . PHP_OS . ")")
+                ->withHeaders(["Accept" => "application/json", "X-Requested-With" => "XMLHttpRequest"])
+                ->timeout(30)
+                ->post(rtrim($cloudHost, "/") . "/api/register-client", [
+                    "domain" => $domain,
+                    "server_ip" => gethostbyname(gethostname()),
+                    "php_version" => PHP_VERSION,
+                    "os" => PHP_OS
+                ]);
+
+            if ($response->successful() && $response->json('api_key')) {
+                $apiKey = $response->json('api_key');
+                \Leazycms\Web\Models\Option::updateOrCreate(['name' => 'cloud_key'], ['value' => $apiKey]);
+                return $apiKey;
+            }
+        } catch (\Exception $e) {
+            // fail silently
+        }
+        return null;
+    }
+
     public function templateStore(Request $request)
     {
         admin_only();
 
-        $cloudKey = config('modules.cloud_key');
+        $cloudKey = $this->getOrRegisterCloudKey();
         if (!$cloudKey) {
-            return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
+            return back()->with('danger', 'Gagal mendaftar ke Cloud Template Host secara otomatis. API Key tidak ditemukan.');
         }
 
         $cloudHost = "https://newlara.test";
@@ -1250,7 +1352,7 @@ class PanelController extends Controller implements HasMiddleware
     {
         admin_only();
 
-        $cloudKey = config('modules.cloud_key');
+        $cloudKey = $this->getOrRegisterCloudKey();
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
         }
@@ -1417,6 +1519,10 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
 
+            if (config('modules.multisite_enabled') && !is_main_domain()) {
+                $mainFolderName = str_replace('.', '-', request()->getHost()) . '-' . $mainFolderName;
+            }
+
             // Path tujuan untuk resource_path
             $templatePath = resource_path('views/template/' . $mainFolderName);
 
@@ -1441,6 +1547,18 @@ class PanelController extends Controller implements HasMiddleware
                     return to_route('appearance')->with('danger', trim((string) Artisan::output()) ?: 'Template berhasil diupload, tapi gagal link asset.');
                 }
             }
+            if (config('modules.multisite_enabled')) {
+                if (!is_main_domain()) {
+                    cache()->forget('tenant:' . tenant()->domain . ':options');
+                } else {
+                    cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+                }
+            } else {
+                if (app()->configurationIsCached()) {
+                    \Illuminate\Support\Facades\Artisan::call('config:cache');
+                }
+            }
+
             return to_route('appearance');
         } else {
             return back()->with('danger', 'Template Gagal Diupload');
@@ -1451,8 +1569,44 @@ class PanelController extends Controller implements HasMiddleware
     {
         admin_only();
         $slug = $request->input('slug');
+        $originalSlug = $request->input('original_slug') ?? $slug;
         if (!$slug) {
             return back()->with('danger', 'Slug template tidak valid.');
+        }
+
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $prefix = str_replace('.', '-', request()->getHost()) . '-';
+            if (str_starts_with($originalSlug, $prefix)) {
+                $originalSlug = substr($originalSlug, strlen($prefix));
+            }
+        }
+
+        // Verify purchase for multisite
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $cloudKey = $this->getOrRegisterCloudKey();
+            if (!$cloudKey) {
+                return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
+            }
+
+            $cloudHost = "https://newlara.test";
+            $verifyUrl = $cloudHost . "/api/verify-purchase?api_key=" . urlencode($cloudKey) . "&slug=" . urlencode($originalSlug);
+
+            try {
+                $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($verifyUrl);
+                if ($response->successful()) {
+                    $verifyData = $response->json();
+                    if (isset($verifyData['is_premium']) && $verifyData['is_premium']) {
+                        if (!isset($verifyData['valid']) || !$verifyData['valid']) {
+
+                            return back()->with('danger', 'Anda belum membeli lisensi untuk template ini.');
+                        }
+                    }
+                } else {
+                    return back()->with('danger', 'Gagal memverifikasi lisensi template ke Cloud Host.');
+                }
+            } catch (\Exception $e) {
+                return back()->with('danger', 'Error memverifikasi lisensi: ' . $e->getMessage());
+            }
         }
 
         $templatePath = resource_path('views/template/' . $slug);
@@ -1463,7 +1617,17 @@ class PanelController extends Controller implements HasMiddleware
         \Leazycms\Web\Models\Option::updateOrCreate(['name' => 'template'], [
             'value' => $slug
         ]);
-
+        if (config('modules.multisite_enabled')) {
+            if (!is_main_domain()) {
+                cache()->forget('tenant:' . tenant()->domain . ':options');
+            } else {
+                cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+            }
+        } else {
+            if (app()->configurationIsCached()) {
+                \Illuminate\Support\Facades\Artisan::call('config:cache');
+            }
+        }
         return back()->with('success', 'Template ' . $slug . ' berhasil diaktifkan.');
     }
 
@@ -1942,8 +2106,7 @@ class PanelController extends Controller implements HasMiddleware
     public function pluginStore(Request $request)
     {
         admin_only();
-
-        $cloudKey = config('modules.cloud_key');
+        $cloudKey = $this->getOrRegisterCloudKey();
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
         }
@@ -1972,6 +2135,17 @@ class PanelController extends Controller implements HasMiddleware
             session()->flash('danger', 'Error memuat plugin dari cloud: ' . $e->getMessage());
         }
 
+        // Filter out uninstalled plugins for sub-tenants
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $installedPlugins = array_map('basename', \Illuminate\Support\Facades\File::directories(resource_path('plugins')));
+            $templates = array_filter($templates, function ($template) use ($installedPlugins) {
+                $slug = $template['slug'] ?? \Illuminate\Support\Str::slug($template['name']);
+                return in_array($slug, $installedPlugins);
+            });
+            // Re-index array for correct pagination
+            $templates = array_values($templates);
+        }
+
         // Fetch categories
         $categoriesUrl = $cloudHost . "/api/fetch-categories.json?api_key=" . $cloudKey . "&type=plugin";
         try {
@@ -1997,7 +2171,7 @@ class PanelController extends Controller implements HasMiddleware
     {
         admin_only();
 
-        $cloudKey = config('modules.cloud_key');
+        $cloudKey = $this->getOrRegisterCloudKey();
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
         }
@@ -2010,6 +2184,15 @@ class PanelController extends Controller implements HasMiddleware
 
             if ($response->successful()) {
                 $template = $response->json();
+
+                // Block uninstalled plugins for sub-tenants
+                if (config('modules.multisite_enabled') && !is_main_domain()) {
+                    $slug = $template['slug'] ?? \Illuminate\Support\Str::slug($template['name']);
+                    if (!\Illuminate\Support\Facades\File::isDirectory(resource_path('plugins/' . $slug))) {
+                        abort(404, 'Plugin belum diinstall oleh Admin Induk.');
+                    }
+                }
+
                 return view('cms::backend.plugin_store_detail', compact('template'));
             } else {
                 return redirect()->route('admin.plugins.store')->with('danger', 'Plugin tidak ditemukan atau API bermasalah.');
