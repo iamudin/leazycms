@@ -284,11 +284,13 @@
                             <span class="app-menu__label">Themes</span></a>
                     </li>
                 @endif
+                @if (!config('modules.multisite_enabled') || is_main_domain())
                 <li title="Backup & Restore">
                     <a class="app-menu__item {{ active_item(['backup']) }}" href="{{ route('backup') }}"><i
                             class="app-menu__icon fa fa-database "></i>
                         <span class="app-menu__label">Backup</span></a>
                 </li>
+                @endif
                 @if (is_main_domain())
                     <li title="Logs">
                         <a class="app-menu__item {{ active_item(['logs']) }}" href="{{ route('panel.logs') }}"><i

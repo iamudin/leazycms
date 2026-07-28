@@ -70,14 +70,21 @@
 
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Pilih Tema</label>
+                            @php
+                                $activeTheme = old('theme', $tenant ? ($options['template'] ?? $tenant->theme) : null);
+                            @endphp
                             <select class="form-control form-control-sm" name="theme" id="theme-select" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? '' : 'required' }}>
                                 <option value="">-- Pilih Tema --</option>
-                                @if($tenant && $tenant->custom_theme && $tenant->theme && !$themes->contains('path', $tenant->theme))
-                                    <option value="{{ $tenant->theme }}" selected>
-                                        {{ Str::title(str_replace('-', ' ', $tenant->theme)) }} (Tema Custom Aktif)</option>
+                                <option value="default" {{ $activeTheme == 'default' ? 'selected' : '' }}>Default</option>
+
+                                @if($activeTheme && $activeTheme != 'default' && !$themes->contains('path', $activeTheme))
+                                    <option value="{{ $activeTheme }}" selected>
+                                        {{ Str::title(str_replace('-', ' ', $activeTheme)) }} (Cloud / Custom Aktif)
+                                    </option>
                                 @endif
+
                                 @foreach($themes as $row)
-                                    <option value="{{ $row->path }}" {{ (($tenant && $tenant->theme == $row->path) || old('theme') == $row->path) ? 'selected' : '' }}>{{ $row->name }} ({{ $row->path }})
+                                    <option value="{{ $row->path }}" {{ $activeTheme == $row->path ? 'selected' : '' }}>{{ $row->name }} ({{ $row->path }})
                                     </option>
                                 @endforeach
                             </select>
@@ -169,6 +176,16 @@
                                 <label class="mb-0">Dapat Edit Template ?</label><br>
                                 <input name="options[can_edit_template]" type="radio" value="Y" {{ (old('options.can_edit_template', $options['can_edit_template'] ?? 'N') == 'Y') ? 'checked' : '' }}> Iya &nbsp; &nbsp;
                                 <input name="options[can_edit_template]" type="radio" value="N" {{ (old('options.can_edit_template', $options['can_edit_template'] ?? 'N') == 'N') ? 'checked' : '' }}> Tidak
+                            </div>
+
+                            <div class="form-group mt-2 mb-2">
+                                <label class="mb-0">Kategori</label>
+                                <select name="options[category]" class="form-control form-control-sm">
+                                    <option value="">-- Pilih Kategori --</option>
+                                    @foreach(['Sekolah', 'Desa', 'Kecamatan', 'Instansi', 'Blog', 'Masjid', 'Puskesmas', 'Rumah Sakit'] as $cat)
+                                        <option value="{{ $cat }}" {{ (old('options.category', $options['category'] ?? '') == $cat) ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <hr>

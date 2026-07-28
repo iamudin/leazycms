@@ -29,7 +29,8 @@ class RateLimit
         'curl_exec(',
         'create_function(',
         'file_get_contents(',
-        'delete('
+        'delete(',
+        'update('
     ];
 
     public function handle(Request $request, Closure $next)

@@ -30,6 +30,11 @@
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pwa"> <i
                                     class="fa fa-mobile-alt"></i>
                                 PWA</a></li>
+                        @if (is_main_domain())
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#gdrive"> <i
+                                        class="fab fa-google-drive"></i>
+                                    Google Drive</a></li>
+                        @endif
                     </ul>
                     <div class="tab-content pt-2" id="myTabContent">
 
@@ -40,19 +45,34 @@
                                 @if ($r[2] == 'file')
                                     @if ($r[1] == 'favicon')
                                         @if (is_main_domain() || (config('modules.multisite_enabled') && !get_option('favicon_for_all') && !is_main_domain()))
-                                            <small for="" class="text-muted">Favicon (didukung hanya file gambar
-                                                format
-                                                .ico)</small>
+                                            <small for="" class="text-muted">Favicon (didukung hanya file gambar format .ico)</small>
                                             @if (is_main_domain() && config('modules.multisite_enabled'))
                                                 <br> <input name="favicon_for_all" value="1" type="checkbox"
-                                                    @if (get_option('favicon_for_all')) checked @endif> (Aktikan untuk Semua
-                                                tenant)
+                                                    @if (get_option('favicon_for_all')) checked @endif> (Aktikan untuk Semua tenant)
                                             @endif
+                                            
+                                            @php
+                                                $faviconUrl = get_option('favicon') ? (str_starts_with(get_option('favicon'), '/') ? get_option('favicon') : '/' . ltrim(get_option('favicon'), '/')) : '/favicon.ico';
+                                            @endphp
 
-                                            <br><img height="60" src="/favicon.ico" onerror="{{ noimage() }}">
-                                            <br>
-                                            <input accept="image/x-icon,image/vnd.microsoft.icon" type="file"
-                                                class="form-control-sm form-control-file" name="{{ $r[1] }}">
+                                            @if (get_option('favicon') && media_exists(get_option('favicon')))
+                                                <div class="media-preview-wrapper">
+                                                    <br><img height="60" src="{{ $faviconUrl }}" onerror="{{ noimage() }}"> &nbsp;<a
+                                                        href="javascript:void(0)" class="btn-sm text-danger btn-remove-media" data-field="favicon"> <i class="fa fa-trash"></i> </a>
+                                                    <br>
+                                                </div>
+                                            @elseif(file_exists(public_path('favicon.ico')))
+                                                <div class="media-preview-wrapper">
+                                                    <br><img height="60" src="/favicon.ico?v={{ time() }}" onerror="{{ noimage() }}"> &nbsp;<a
+                                                        href="javascript:void(0)" class="btn-sm text-danger btn-remove-media" data-field="favicon"> <i class="fa fa-trash"></i> </a>
+                                                    <br>
+                                                </div>
+                                            @endif
+                                            
+                                            <div class="media-input-wrapper" style="{{ (get_option('favicon') || file_exists(public_path('favicon.ico'))) ? 'display:none;' : '' }}">
+                                                <input accept=".ico,image/x-icon,image/vnd.microsoft.icon" type="file"
+                                                    class="form-control-sm form-control-file compress-image" name="favicon">
+                                            </div>
                                         @endif
                                     @else
                                         <small for="" class="text-muted">{{ $r[0] }}</small>
@@ -241,6 +261,42 @@
 
                         </div>
 
+                        @if (is_main_domain())
+                            <div class="tab-pane fade" id="gdrive">
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle"></i> Konfigurasi kredensial Google Drive API. Kosongkan semua isian jika ingin menonaktifkan fitur upload otomatis ke Google Drive.
+                                </div>
+                                @foreach ($google_drive as $r)
+                                    <div class="form-group mb-2">
+                                        <small for="" class="text-muted">{{ $r[0] }}</small>
+                                        <input type="{{ $r[2] }}" class="form-control form-control-sm" placeholder="Masukkan {{ $r[0] }}" name="{{ $r[1] }}" value="{{ get_option($r[1]) }}">
+                                    </div>
+                                @endforeach
+
+                                <div class="form-group mt-4">
+                                    <small for="" class="text-muted d-block mb-1">Status Koneksi Google Drive</small>
+                                    @if(get_option('google_drive_refresh_token'))
+                                        <div class="alert alert-success d-flex justify-content-between align-items-center p-2 mb-0">
+                                            <span><i class="fa fa-check-circle"></i> Terhubung dengan Google Drive</span>
+                                            <form action="{{ route('setting.gdrive.disconnect') }}" method="POST" style="margin:0;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin memutus koneksi Google Drive?')"><i class="fa fa-unlink"></i> Disconnect</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <div class="alert alert-warning d-flex justify-content-between align-items-center p-2 mb-0">
+                                            <span><i class="fa fa-exclamation-triangle"></i> Belum Terhubung</span>
+                                            @if(get_option('google_drive_client_id') && get_option('google_drive_client_secret'))
+                                                <a href="{{ route('setting.gdrive.auth') }}" class="btn btn-primary btn-sm"><i class="fab fa-google-drive"></i> Connect Google Drive</a>
+                                            @else
+                                                <button type="button" class="btn btn-secondary btn-sm" disabled title="Isi dan simpan Client ID & Secret terlebih dahulu"><i class="fab fa-google-drive"></i> Connect Google Drive</button>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
                 @else
                     <div class="alert alert-danger">
@@ -305,7 +361,7 @@
                         if (typeof response === 'string' && response.includes('<html')) {
                             let newDoc = new DOMParser().parseFromString(response, 'text/html');
                             
-                            ['profile', 'keamanan', 'pwa'].forEach(function(tabId) {
+                            ['profile', 'keamanan', 'pwa', 'gdrive'].forEach(function(tabId) {
                                 let newTab = newDoc.getElementById(tabId);
                                 if (newTab && document.getElementById(tabId)) {
                                     document.getElementById(tabId).innerHTML = newTab.innerHTML;

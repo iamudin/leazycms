@@ -54,7 +54,7 @@ class DummyGenerator
             $postHeader->user_id = $userId;
             $postHeader->shortcut = Str::random(6);
             $postHeader->category_id = $categoryIds[0];
-            $postHeader->title = 'Menu Header';
+            $postHeader->title = 'Header';
             $postHeader->slug = 'header';
             $postHeader->url = $currentType . '/header';
             $postHeader->data_loop = [
@@ -91,7 +91,7 @@ class DummyGenerator
             $postFooter->user_id = $userId;
             $postFooter->shortcut = Str::random(6);
             $postFooter->category_id = $categoryIds[0];
-            $postFooter->title = 'Menu Footer';
+            $postFooter->title = 'Footer';
             $postFooter->slug = 'footer';
             $postFooter->url = $currentType . '/footer';
             $postFooter->data_loop = [
@@ -341,7 +341,45 @@ class DummyGenerator
                                 $post->media = $postData['media'];
                             }
                             if (isset($postData['data_loop'])) {
-                                $post->data_loop = $postData['data_loop'];
+                                if ($type == 'menu') {
+                                    $flatDataLoop = [];
+                                    $menuCounter = 1;
+                                    
+                                    $flattenMenu = function ($items, $parentId) use (&$flattenMenu, &$flatDataLoop, &$menuCounter) {
+                                        foreach ($items as $item) {
+                                            $currentId = (string) $menuCounter++;
+                                            
+                                            $flatItem = $item;
+                                            unset($flatItem['child']);
+                                            
+                                            $flatItem['menu_id'] = $flatItem['menu_id'] ?? $currentId;
+                                            $flatItem['menu_parent'] = $flatItem['menu_parent'] ?? $parentId;
+                                            
+                                            $flatDataLoop[] = $flatItem;
+                                            
+                                            if (isset($item['child']) && is_array($item['child'])) {
+                                                $flattenMenu($item['child'], $flatItem['menu_id']);
+                                            }
+                                        }
+                                    };
+                                    
+                                    $isNested = false;
+                                    foreach ($postData['data_loop'] as $item) {
+                                        if (isset($item['child'])) {
+                                            $isNested = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if ($isNested) {
+                                        $flattenMenu($postData['data_loop'], '0');
+                                        $post->data_loop = $flatDataLoop;
+                                    } else {
+                                        $post->data_loop = $postData['data_loop'];
+                                    }
+                                } else {
+                                    $post->data_loop = $postData['data_loop'];
+                                }
                             }
                             if (isset($postData['data_field'])) {
                                 $post->data_field = $postData['data_field'];

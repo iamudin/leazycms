@@ -193,7 +193,7 @@
 
 <div class="search-panel mb-4">
     <form action="{{ route('appearance.template_store') }}" method="GET" class="row align-items-center">
-        <div class="col-md-5 mb-2 mb-md-0">
+        <div class="col-md-9 mb-2 mb-md-0">
             <div class="input-group">
                 <div class="input-group-prepend">
                     <span class="input-group-text bg-light border-0"><i class="fa fa-search text-muted"></i></span>
@@ -201,23 +201,8 @@
                 <input type="text" name="search" class="form-control border-left-0 pl-0 bg-light" placeholder="Cari nama template..." value="{{ request('search') }}">
             </div>
         </div>
-        <div class="col-md-4 mb-2 mb-md-0">
-            <select name="category" class="form-control bg-light">
-                <option value="">Semua Kategori</option>
-                @php
-                    $reqCategory = request('category');
-                    $availableCategories = isset($categories) && is_array($categories) ? $categories : [];
-                @endphp
-                @foreach($availableCategories as $cat)
-                    <option value="{{ $cat }}" {{ $reqCategory == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                @endforeach
-                @if($reqCategory && !in_array($reqCategory, $availableCategories))
-                    <option value="{{ $reqCategory }}" selected>{{ $reqCategory }}</option>
-                @endif
-            </select>
-        </div>
         <div class="col-md-3">
-            <button type="submit" class="btn btn-primary-gradient btn-modern w-100 py-2"><i class="fa fa-filter"></i> Filter</button>
+            <button type="submit" class="btn btn-primary-gradient btn-modern w-100 py-2"><i class="fa fa-search"></i> Cari</button>
         </div>
     </form>
 </div>

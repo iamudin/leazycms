@@ -19,7 +19,7 @@ class RegisterCloudCommand extends Command
         $this->line('');
 
         $domain = env('APP_URL') ? str_replace(['http://', 'https://'], '', env('APP_URL')) : $this->ask('Masukkan URL domain web tanpa http(s)://', 'localhost');
-        $cloudHost = 'https://newlara.test';
+        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
         $this->info("Menghubungi Cloud Template Host ($cloudHost) ...");
 
         try {

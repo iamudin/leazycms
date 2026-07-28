@@ -22,7 +22,7 @@ class BackupImportJob implements ShouldQueue
 
     public function __construct(
         public string $statusCacheKey,
-        public string $zipPath,
+        public string $sqlPath,
         public string $host,
         public bool $multisite,
         public bool $isTenantScope,
@@ -42,7 +42,7 @@ class BackupImportJob implements ShouldQueue
         ]), now()->addHours(6));
 
         try {
-            $report = $service->importFromZipPath($this->zipPath, [
+            $report = $service->importFromSqlPath($this->sqlPath, [
                 'host' => $this->host,
                 'multisite' => $this->multisite,
                 'is_tenant_scope' => $this->isTenantScope,
@@ -52,14 +52,14 @@ class BackupImportJob implements ShouldQueue
                 'overwrite_users' => $this->overwriteUsers,
             ]);
 
-            if (is_file($this->zipPath)) {
-                File::delete($this->zipPath);
+            if (is_file($this->sqlPath)) {
+                File::delete($this->sqlPath);
             }
 
             Cache::put($this->statusCacheKey, array_merge(Cache::get($this->statusCacheKey, []), [
                 'state' => 'done',
                 'finished_at' => now()->toIso8601String(),
-                'message' => 'Import selesai. ' . ($report ? json_encode($report) : ''),
+                'message' => 'Import selesai.',
             ]), now()->addHours(6));
         } catch (Throwable $e) {
             Cache::put($this->statusCacheKey, array_merge(Cache::get($this->statusCacheKey, []), [

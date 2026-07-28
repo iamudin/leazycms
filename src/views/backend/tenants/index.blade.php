@@ -15,6 +15,7 @@
                         <th style="vertical-align: middle">Nama Tenant</th>
                         <th style="vertical-align: middle">Domain</th>
                         <th style="vertical-align: middle">Theme</th>
+                        <th style="vertical-align: middle">Kategori</th>
                         <th style="vertical-align: middle">Resource</th>
                         <th style="vertical-align: middle" width="10px">Status</th>
                         <th style="vertical-align: middle" width="10px">Aksi</th>
@@ -59,6 +60,12 @@
                         data: 'theme',
                         name: 'theme',
                         searchable: true
+                    },
+                    {
+                        data: 'category',
+                        name: 'category',
+                        searchable: false,
+                        orderable: false
                     },
                     {
                         data: 'resource',

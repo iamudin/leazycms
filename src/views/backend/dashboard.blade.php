@@ -170,6 +170,7 @@
           let diff = parseInt(sessionEl.getAttribute('data-diff')) || 0;
 
           const updateSessionTime = () => {     
+            const h = String(Math.floor(diff / 3600)).padStart(2, '0');
             const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
             const s = String(diff % 60).padStart(2, '0');
             sessionEl.innerHTML = `${h}:${m}:${s}`;
@@ -181,7 +182,6 @@
             updateSessionTime();
           }, 1000);
         }
-        // Counter effect
         const counters = document.querySelectorAll('.counter-effect');
         counters.forEach(counter => {
           const updateCount = () => {

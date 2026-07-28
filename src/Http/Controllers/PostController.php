@@ -579,6 +579,11 @@ class PostController extends Controller implements HasMiddleware
                                     $q->where('name', 'like', $search . '%');
                                 });
                             }
+                            if (config('modules.admin_path') && is_main_domain()) {
+                                $q->orWhereHas('tenant', function ($q) use ($search) {
+                                    $q->where('domain', 'like', $search . '%');
+                                });
+                            }
                         });
                 }
                 if ($status = $req->status) {
@@ -653,7 +658,7 @@ class PostController extends Controller implements HasMiddleware
 
             $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
             $locked = (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\'' . dec64($row->password) . '\')" title="Akses ' . $current_module->title . ' ini  dibatasi. Klik untuk menyalin kode akses"></i>' : '');
-            $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i>' . $row->shortcut_counter . '</a>' : '';
+            $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
             $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . $row->tenant?->domain : null;
             $b = '<b class="text-primary">' . $tit . '</b><br>';

@@ -9,8 +9,8 @@
             </div>
         </h3>
         <div class="alert alert-info">
-            Backup akan diekspor sebagai file <b>.zip</b> berisi data database (data + relasi) dan folder <b>storage/</b> (file fisik).
-            Import akan membuat ulang data dengan ID baru lalu menghubungkan relasi otomatis.
+            Backup akan diekspor sebagai file <b>.zip</b> berisi file SQL (Smart SQL) dan media <b>storage/</b> ter-embed.
+            Import akan mengekstrak file ZIP dan merestore data secara statis (menggunakan ID asli).
             <div style="margin-top:6px">
                 <b>Scope:</b> {{ $scope ?? '-' }} @if(!empty($tenant)) • <b>Tenant:</b> {{ $tenant->domain ?? $tenant->name ?? $tenant->id }} @endif • <b>Host:</b> {{ $host ?? request()->getHost() }}
             </div>
@@ -73,31 +73,113 @@
                     <div><small>Queue: {{ $importStatus['queue_connection'] ?? '-' }} / {{ $importStatus['queue_name'] ?? '-' }} • Pending: {{ $importStatus['pending_jobs'] ?? '-' }}</small></div>
                 </div>
             @endif
-            <form action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
+            <form id="importBackupForm" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="action" value="import">
                 <div class="form-group">
                     <label>File Backup (.zip)</label>
-                    <input type="file" name="backup_file" class="form-control" required {{ in_array(($importStatus['state'] ?? null), ['queued', 'running'], true) ? 'disabled' : '' }}>
+                    <input type="file" name="backup_file" id="backupFileInput" accept=".zip" class="form-control" required {{ in_array(($importStatus['state'] ?? null), ['queued', 'running'], true) ? 'disabled' : '' }}>
                 </div>
+
+                <div class="progress mb-3" id="importProgressContainer" style="display:none; height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="importProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>
+
                 <div class="form-group">
                     <label style="display:block">
                         <input type="checkbox" name="replace" value="1" checked>
                         Replace data scope ini sebelum import
                     </label>
-                    @if(empty($tenant))
-                        <label style="display:block;margin-top:6px">
+                    @if(empty($scope) || $scope === 'induk')
+                        <label style="display:block">
                             <input type="checkbox" name="replace_non_tenant" value="1">
-                            Replace juga tabel non-tenant (induk) sebelum import
+                            Replace seluruh table non-tenant (semua data hilang)
                         </label>
-                        <label style="display:block;margin-top:6px">
+                        <label style="display:block">
                             <input type="checkbox" name="overwrite_users" value="1">
-                            Overwrite user jika email/username sudah ada
+                            Timpa data Users dengan yang ada di backup
                         </label>
                     @endif
                 </div>
-                <button class="btn btn-success btn-sm" type="submit" onclick="return confirm('Yakin import backup ini? Data akan dibuat ulang dan relasi akan disambungkan otomatis.')" {{ in_array(($importStatus['state'] ?? null), ['queued', 'running'], true) ? 'disabled' : '' }}><i class="fa fa-upload"></i> Jalankan Import (Queue)</button>
+                <button class="btn btn-success btn-sm" id="importSubmitBtn" type="submit" {{ in_array(($importStatus['state'] ?? null), ['queued', 'running'], true) ? 'disabled' : '' }}><i class="fa fa-upload"></i> Jalankan Import (Queue)</button>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-lg-6">
+        <div class="card" style="padding:15px">
+            <h4 style="margin-top:0;margin-bottom:15px"><i class="fa fa-folder-open"></i> Daftar Backup Lokal</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped text-nowrap table-sm">
+                    <thead>
+                        <tr>
+                            <th>Nama File</th>
+                            <th>Ukuran</th>
+                            <th>Tanggal</th>
+                            <th width="10%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($localBackups ?? [] as $backup)
+                            <tr>
+                                <td>{{ $backup['name'] }}</td>
+                                <td>{{ number_format($backup['size'] / 1048576, 2) }} MB</td>
+                                <td>{{ date('Y-m-d H:i:s', $backup['time']) }}</td>
+                                <td>
+                                    <a href="{{ route('backup.download.local', ['file' => $backup['name']]) }}" class="btn btn-sm btn-primary" title="Download">
+                                        <i class="fa fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center">Belum ada file backup lokal.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <small class="text-muted">Backup lokal otomatis dibersihkan setiap 7 hari.</small>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card" style="padding:15px">
+            <h4 style="margin-top:0;margin-bottom:15px"><i class="fab fa-google-drive"></i> Daftar Backup Google Drive</h4>
+            @if(get_option('google_drive_client_id') && get_option('google_drive_client_secret') && get_option('google_drive_refresh_token'))
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped text-nowrap table-sm">
+                        <thead>
+                            <tr>
+                                <th>Nama File</th>
+                                <th>Ukuran</th>
+                                <th>Tanggal</th>
+                                <th width="10%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($gdriveBackups ?? [] as $backup)
+                                <tr>
+                                    <td>{{ $backup['name'] }}</td>
+                                    <td>{{ number_format($backup['size'] / 1048576, 2) }} MB</td>
+                                    <td>{{ date('Y-m-d H:i:s', $backup['time']) }}</td>
+                                    <td>
+                                        <a href="{{ route('backup.download.gdrive', ['id' => $backup['id']]) }}" class="btn btn-sm btn-primary" title="Download">
+                                            <i class="fa fa-download"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center">Belum ada file backup di Google Drive.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted">Backup Google Drive otomatis dibersihkan setiap 7 hari.</small>
+            @else
+                <div class="alert alert-warning">
+                    Google Drive belum dikonfigurasi. Silakan konfigurasi melalui menu <b>Setting -> Website</b> pada tab Google Drive.
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -111,5 +193,6 @@
             }, 5000);
         </script>
     @endif
+
 @endpush
 @endsection

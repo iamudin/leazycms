@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
-            $table->integer('disk_space')->nullable()->after('status');
-        });
+        if (!Schema::hasColumn('tenants', 'disk_space')) {
+            Schema::table('tenants', function (Blueprint $table) {
+                $table->integer('disk_space')->nullable()->after('status');
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
-            $table->dropColumn('disk_space');
-        });
+        if (Schema::hasColumn('tenants', 'disk_space')) {
+            Schema::table('tenants', function (Blueprint $table) {
+                $table->dropColumn('disk_space');
+            });
+        }
     }
 };

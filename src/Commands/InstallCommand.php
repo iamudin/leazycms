@@ -25,7 +25,7 @@ class InstallCommand extends Command
             $this->info("Aplikasi ini hampir siap digunakan. Ikuti langkah berikut:");
 
             $domain = $this->ask('Masukkan URL domain web tanpa http://', 'localhost');
-            $cloudHost = 'https://newlara.test';
+            $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
 
             $dbHost = $this->ask('Masukkan host database MySQL (default: 127.0.0.1)', '127.0.0.1');
             $dbPort = $this->ask('Masukkan port database MySQL (default: 3306)', '3306');

@@ -14,4 +14,8 @@ class Tenant extends Model
     function admin(){
         return $this->hasOne(User::class,'id','tenant_id');
     }
+    public function options()
+    {
+        return $this->hasMany(Option::class, 'tenant_id')->withoutGlobalScope('tenant');
+    }
 }

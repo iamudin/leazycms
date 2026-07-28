@@ -71,7 +71,7 @@ class TenantController extends Controller implements HasMiddleware
 
     public function datatable(Request $request)
     {
-        $data = Tenant::query()->with('themeSelected')->with('admin')->latest();
+        $data = Tenant::query()->with(['themeSelected', 'admin', 'options'])->latest();
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('theme', function ($row) {
@@ -79,6 +79,10 @@ class TenantController extends Controller implements HasMiddleware
             })
             ->addColumn('admin', function ($row) {
                 return $row->admin?->name ?? '-';
+            })
+            ->addColumn('category', function ($row) {
+                $category = $row->options->where('name', 'category')->first()?->value;
+                return $category ? '<span class="badge badge-info">' . $category . '</span>' : '-';
             })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
@@ -135,7 +139,7 @@ class TenantController extends Controller implements HasMiddleware
                 
                 return $html;
             })
-            ->rawColumns(['action', 'status', 'theme', 'resource'])
+            ->rawColumns(['action', 'status', 'theme', 'resource', 'category'])
             ->toJson();
     }
 

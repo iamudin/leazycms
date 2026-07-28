@@ -73,8 +73,13 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'cache', 'cache')->name('cache-manager');
     Route::match(['get', 'post'], 'appearance/editor', 'editorTemplate')->name('appearance.editor');
     Route::match(['get', 'put'], 'setting', 'setting')->name('setting');
+    Route::get('setting/gdrive/auth', 'gdriveAuth')->name('setting.gdrive.auth');
+    Route::get('setting/gdrive/callback', 'gdriveCallback')->name('setting.gdrive.callback');
+    Route::post('setting/gdrive/disconnect', 'gdriveDisconnect')->name('setting.gdrive.disconnect');
     Route::match(['get', 'post'], 'option/{slug}', 'option')->name('option');
     Route::get('backup/download', 'backup_download')->name('backup.download');
+    Route::get('backup/download/local', 'download_local_backup')->name('backup.download.local');
+    Route::get('backup/download/gdrive', 'download_gdrive_backup')->name('backup.download.gdrive');
     Route::match(['get', 'post'], 'backup', 'backup_restore')->name('backup');
     Route::match(['get', 'post'], 'menu-target', 'menu_target')->name('menu-target');
     Route::match(['get', 'put'], 'profile', 'profile')->name('profile');

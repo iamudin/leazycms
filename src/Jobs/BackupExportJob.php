@@ -39,7 +39,7 @@ class BackupExportJob implements ShouldQueue
         ]), now()->addHours(6));
 
         try {
-            $zipPath = $service->exportToZipPath([
+            $sqlPath = $service->exportToSqlPath([
                 'host' => $this->host,
                 'multisite' => $this->multisite,
                 'is_tenant_scope' => $this->isTenantScope,
@@ -48,17 +48,38 @@ class BackupExportJob implements ShouldQueue
                 'include_users' => $this->includeUsers,
             ]);
 
-            $storageApp = rtrim(storage_path('app'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-            $downloadRelPath = str_starts_with($zipPath, $storageApp)
-                ? substr($zipPath, strlen($storageApp))
-                : $zipPath;
+            $zipPath = $sqlPath . '.zip';
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
+                $zip->addFile($sqlPath, basename($sqlPath));
+                $zip->close();
+                unlink($sqlPath);
+                $sqlPath = $zipPath;
+            }
+
+            $normalizedSqlPath = str_replace('\\', '/', $sqlPath);
+            $normalizedStorageApp = str_replace('\\', '/', rtrim(storage_path('app'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+
+            if (get_option('google_drive_client_id') && get_option('google_drive_client_secret') && get_option('google_drive_refresh_token')) {
+                try {
+                    $fileName = basename($sqlPath);
+                    $gDriveService = new \Leazycms\Web\Services\GoogleDriveService();
+                    $gDriveService->upload($sqlPath, $fileName);
+                } catch (\Exception $e) {
+                    // Fail silently for gdrive upload
+                }
+            }
+
+            $downloadRelPath = str_starts_with($normalizedSqlPath, $normalizedStorageApp)
+                ? substr($normalizedSqlPath, strlen($normalizedStorageApp))
+                : $normalizedSqlPath;
 
             Cache::put($this->statusCacheKey, array_merge(Cache::get($this->statusCacheKey, []), [
                 'state' => 'done',
                 'finished_at' => now()->toIso8601String(),
                 'message' => 'Export selesai. File siap diunduh.',
                 'download_rel_path' => $downloadRelPath,
-                'download_name' => basename($zipPath),
+                'download_name' => basename($sqlPath),
             ]), now()->addHours(6));
         } catch (Throwable $e) {
             Cache::put($this->statusCacheKey, array_merge(Cache::get($this->statusCacheKey, []), [

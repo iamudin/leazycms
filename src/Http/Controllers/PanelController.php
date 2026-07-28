@@ -125,7 +125,7 @@ class PanelController extends Controller implements HasMiddleware
                     // Verify purchase for tenant
                     $cloudKey = $this->getOrRegisterCloudKey();
                     if ($cloudKey) {
-                        $cloudHost = "https://newlara.test";
+                        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
                         $verifyUrl = $cloudHost . "/api/verify-purchase?api_key=" . urlencode($cloudKey) . "&slug=" . urlencode($pluginName);
                         try {
                             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($verifyUrl);
@@ -170,7 +170,7 @@ class PanelController extends Controller implements HasMiddleware
                     // Verify purchase if premium plugin
                     $cloudKey = $this->getOrRegisterCloudKey();
                     if ($cloudKey) {
-                        $cloudHost = "https://newlara.test";
+                        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
                         $verifyUrl = $cloudHost . "/api/verify-purchase?api_key=" . urlencode($cloudKey) . "&slug=" . urlencode($pluginName);
                         try {
                             $response = \Illuminate\Support\Facades\Http::withoutVerifying()->get($verifyUrl);
@@ -379,7 +379,6 @@ class PanelController extends Controller implements HasMiddleware
         $posts = $user->isAdmin()
             ? Post::whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray()
             : Post::whereBelongsTo($user)->whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
-
         $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])
             ->with('user')
             ->whereIn('type', $type_list)
@@ -750,6 +749,11 @@ class PanelController extends Controller implements HasMiddleware
             ['Limit Duration', 'in minute default 1 minute'],
             ['Roles', 'operator,editor,publisher']
         );
+        $data['google_drive'] = array(
+            ['Client ID', 'google_drive_client_id', 'text'],
+            ['Client Secret', 'google_drive_client_secret', 'text'],
+            ['Folder ID', 'google_drive_folder_id', 'text'],
+        );
 
 
         if ($request->isMethod('PUT')) {
@@ -932,6 +936,13 @@ class PanelController extends Controller implements HasMiddleware
                                 if ($fileRecord && \Illuminate\Support\Facades\Storage::disk($fileRecord->disk)->exists($fileRecord->file_path)) {
                                     $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                                     if ($ext === 'ico') {
+                                        $fullPath = \Illuminate\Support\Facades\Storage::disk($fileRecord->disk)->path($fileRecord->file_path);
+                                        $size = @getimagesize($fullPath);
+                                        
+                                        if ($size !== false && ($size[0] !== 64 || $size[1] !== 64)) {
+                                            return back()->with('danger', 'Favicon harus berukuran tepat 64x64 piksel.');
+                                        }
+
                                         $destination = public_path('favicon.ico');
                                         if (file_exists($destination)) {
                                             unlink($destination);
@@ -985,6 +996,19 @@ class PanelController extends Controller implements HasMiddleware
                     $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
+            foreach ($data['google_drive'] as $row) {
+                $key = $row[1];
+                $value = $request->$key;
+                if ($value !== null) {
+                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
+                } else {
+                    $option->where('name', $key)->delete();
+                }
+            }
+            if (empty($request->google_drive_client_id) || empty($request->google_drive_client_secret)) {
+                $option->where('name', 'google_drive_refresh_token')->delete();
+            }
+
             if (is_main_domain()) {
                 foreach ($data['shortcut'] as $row) {
                     $key = $row[1];
@@ -1268,7 +1292,7 @@ class PanelController extends Controller implements HasMiddleware
         }
 
         $domain = request()->getHost();
-        $cloudHost = "https://newlara.test";
+        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
 
         try {
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()
@@ -1302,13 +1326,21 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with('danger', 'Gagal mendaftar ke Cloud Template Host secara otomatis. API Key tidak ditemukan.');
         }
 
-        $cloudHost = "https://newlara.test";
+        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
         $apiUrl = $cloudHost . base64_decode(strrev("9kXZr9VawF2Pu92cq5SZ0FGbw1WZ01CajRXZm9SawF2L")) . $cloudKey;
+
+        $tenantCategory = null;
+        if (config('modules.multisite_enabled', false) && !is_main_domain()) {
+            $tenantCategory = get_option('category');
+        }
 
         if ($request->has('search') && $request->search) {
             $apiUrl .= "&search=" . urlencode($request->search);
         }
-        if ($request->has('category') && $request->category) {
+        
+        if ($tenantCategory) {
+            $apiUrl .= "&category=" . urlencode($tenantCategory);
+        } elseif ($request->has('category') && $request->category) {
             $apiUrl .= "&category=" . urlencode($request->category);
         }
 
@@ -1357,7 +1389,7 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
         }
 
-        $cloudHost = "https://newlara.test";
+        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
         $apiUrl = $cloudHost . "/api/template/" . $id . ".json?api_key=" . $cloudKey;
 
         try {
@@ -1365,6 +1397,14 @@ class PanelController extends Controller implements HasMiddleware
 
             if ($response->successful()) {
                 $template = $response->json();
+
+                if (config('modules.multisite_enabled', false) && !is_main_domain()) {
+                    $tenantCategory = get_option('category');
+                    if ($tenantCategory && isset($template['category']) && $template['category'] !== $tenantCategory) {
+                        return redirect()->route('appearance.template_store')->with('danger', 'Akses ditolak. Kategori template ini tidak sesuai dengan kategori situs Anda.');
+                    }
+                }
+
                 return view('cms::backend.template_store_detail', compact('template'));
             } else {
                 return redirect()->route('appearance.template_store')->with('danger', 'Template tidak ditemukan atau API bermasalah.');
@@ -1588,7 +1628,7 @@ class PanelController extends Controller implements HasMiddleware
                 return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
             }
 
-            $cloudHost = "https://newlara.test";
+            $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
             $verifyUrl = $cloudHost . "/api/verify-purchase?api_key=" . urlencode($cloudKey) . "&slug=" . urlencode($originalSlug);
 
             try {
@@ -1681,7 +1721,7 @@ class PanelController extends Controller implements HasMiddleware
         if ($request->isMethod('post')) {
             switch ($request->type) {
                 case 'export_template':
-                    abort_if(!File::isDirectory($templateRootPath), 404);
+                    abort_if(!File::isDirectory($templateRootPath) && !is_main_domain(), 404);
                     $zipName = $templateSlug . '-template-' . now()->format('YmdHis') . '.zip';
                     $tempDir = storage_path('app/tmp');
                     File::ensureDirectoryExists($tempDir);
@@ -1825,6 +1865,10 @@ class PanelController extends Controller implements HasMiddleware
     function backup_restore(Request $request)
     {
         admin_only();
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            abort(403, 'Akses ditolak. Fitur backup hanya tersedia untuk domain utama.');
+        }
+
         $context = $this->backupTransferContext($request);
 
         $exportStatusKey = $this->backupTransferStatusKey('export', $context);
@@ -1860,16 +1904,55 @@ class PanelController extends Controller implements HasMiddleware
 
             if ($action === 'import') {
                 $request->validate([
-                    'backup_file' => ['required', 'file', 'mimes:zip'],
+                    'backup_file' => ['required'],
                 ]);
 
-                $stored = $request->file('backup_file')->storeAs(
-                    'leazycms-transfer/imports',
-                    'import-' . Str::uuid()->toString() . '.zip',
-                    'local'
-                );
+                $mediaUrl = $request->input('backup_file');
+                if ($request->hasFile('backup_file')) {
+                    $stored = $request->file('backup_file')->storeAs(
+                        'leazycms-transfer/imports',
+                        'import-' . Str::uuid()->toString() . '.zip',
+                        'local'
+                    );
+                    $zipPath = Storage::path($stored);
+                } else if (is_string($mediaUrl)) {
+                    $slug = basename(parse_url($mediaUrl, PHP_URL_PATH));
+                    $mediaFile = \Leazycms\FLC\Models\File::where('file_name', $slug)->first();
+                    
+                    if ($mediaFile && \Illuminate\Support\Facades\Storage::disk($mediaFile->disk)->exists($mediaFile->file_path)) {
+                        $zipPath = \Illuminate\Support\Facades\Storage::disk($mediaFile->disk)->path($mediaFile->file_path);
+                    } else {
+                        $zipPath = storage_path('app/public/' . $slug);
+                    }
+                } else {
+                    return back()->with('danger', 'File tidak valid.');
+                }
 
-                $zipPath = Storage::path($stored);
+                if (!file_exists($zipPath)) {
+                    return back()->with('danger', 'File backup tidak ditemukan di server.');
+                }
+
+                $zip = new \ZipArchive();
+                $sqlPath = '';
+                if ($zip->open($zipPath) === TRUE) {
+                    for ($i = 0; $i < $zip->numFiles; $i++) {
+                        $filename = $zip->getNameIndex($i);
+                        if (str_ends_with($filename, '.sql')) {
+                            $extractDir = storage_path('app/leazycms-transfer/imports');
+                            if (!is_dir($extractDir)) {
+                                mkdir($extractDir, 0755, true);
+                            }
+                            $sqlPath = $extractDir . '/import-' . \Illuminate\Support\Str::uuid()->toString() . '.sql';
+                            file_put_contents($sqlPath, $zip->getFromIndex($i));
+                            break;
+                        }
+                    }
+                    $zip->close();
+                }
+
+                if (empty($sqlPath) || !file_exists($sqlPath)) {
+                    return back()->with('danger', 'File zip tidak valid atau tidak berisi file .sql.');
+                }
 
                 Cache::put($importStatusKey, [
                     'state' => 'queued',
@@ -1880,7 +1963,7 @@ class PanelController extends Controller implements HasMiddleware
 
                 dispatch(new BackupImportJob(
                     statusCacheKey: $importStatusKey,
-                    zipPath: $zipPath,
+                    sqlPath: $sqlPath,
                     host: $context['host'],
                     multisite: $context['multisite'],
                     isTenantScope: $context['is_tenant_scope'],
@@ -1890,6 +1973,9 @@ class PanelController extends Controller implements HasMiddleware
                     overwriteUsers: $request->boolean('overwrite_users'),
                 ));
 
+                if ($request->ajax()) {
+                    return response()->json(['success' => true, 'message' => 'Import sedang diproses di background. Pastikan queue worker berjalan, lalu refresh halaman untuk melihat status.']);
+                }
                 return back()->with('success', 'Import sedang diproses di background. Pastikan queue worker berjalan, lalu refresh halaman untuk melihat status.');
             }
 
@@ -1899,18 +1985,49 @@ class PanelController extends Controller implements HasMiddleware
         $exportStatus = $this->backupTransferAugmentStatusFromQueue($exportStatusKey, BackupExportJob::class);
         $importStatus = $this->backupTransferAugmentStatusFromQueue($importStatusKey, BackupImportJob::class);
 
+        $localBackups = [];
+        $baseDir = storage_path('app/leazycms-transfer/exports');
+        if (is_dir($baseDir)) {
+            $files = \Illuminate\Support\Facades\File::files($baseDir);
+            foreach ($files as $file) {
+                if (str_ends_with($file->getFilename(), '.zip')) {
+                    $localBackups[] = [
+                        'name' => $file->getFilename(),
+                        'size' => $file->getSize(),
+                        'time' => $file->getMTime(),
+                    ];
+                }
+            }
+            usort($localBackups, function($a, $b) { return $b['time'] <=> $a['time']; });
+        }
+
+        $gdriveBackups = [];
+        if (get_option('google_drive_client_id') && get_option('google_drive_client_secret') && get_option('google_drive_refresh_token')) {
+            try {
+                $gDriveService = new \Leazycms\Web\Services\GoogleDriveService();
+                $gdriveBackups = $gDriveService->list();
+            } catch (\Exception $e) {
+                // Fail silently
+            }
+        }
+
         return view('cms::backend.backup-restore', [
             'scope' => $context['is_tenant_scope'] ? 'tenant' : 'induk',
             'host' => $context['host'],
             'tenant' => $context['is_tenant_scope'] ? tenant() : null,
             'exportStatus' => $exportStatus,
             'importStatus' => $importStatus,
+            'localBackups' => $localBackups,
+            'gdriveBackups' => $gdriveBackups,
         ]);
     }
 
     function backup_download(Request $request)
     {
         admin_only();
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            abort(403, 'Akses ditolak. Fitur backup hanya tersedia untuk domain utama.');
+        }
 
         $context = $this->backupTransferContext($request);
         $exportStatusKey = $this->backupTransferStatusKey('export', $context);
@@ -1920,20 +2037,20 @@ class PanelController extends Controller implements HasMiddleware
             return to_route('backup')->with('danger', 'File export belum siap atau sudah kadaluarsa.');
         }
 
-        $storageApp = rtrim(storage_path('app'), DIRECTORY_SEPARATOR);
-        $zipAbs = $storageApp . DIRECTORY_SEPARATOR . ltrim((string) $status['download_rel_path'], DIRECTORY_SEPARATOR);
+        $storageApp = rtrim(storage_path('app'), '/\\');
+        $sqlAbs = $storageApp . DIRECTORY_SEPARATOR . ltrim((string) $status['download_rel_path'], '/\\');
 
         $exportsBase = storage_path('app/leazycms-transfer/exports');
         $exportsReal = realpath($exportsBase);
-        $zipReal = realpath($zipAbs);
-        if (!$exportsReal || !$zipReal || !str_starts_with($zipReal, rtrim($exportsReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+        $sqlReal = realpath($sqlAbs);
+        if (!$exportsReal || !$sqlReal || !str_starts_with($sqlReal, rtrim($exportsReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
             return to_route('backup')->with('danger', 'Lokasi file export tidak valid.');
         }
 
         Cache::forget($exportStatusKey);
 
-        $name = (string) ($status['download_name'] ?? basename($zipReal));
-        return response()->download($zipReal, $name)->deleteFileAfterSend(true);
+        $name = (string) ($status['download_name'] ?? basename($sqlReal));
+        return response()->download($sqlReal, $name)->deleteFileAfterSend(true);
     }
 
     private function backupTransferContext(Request $request): array
@@ -2019,6 +2136,55 @@ class PanelController extends Controller implements HasMiddleware
 
         Cache::put($statusKey, $updated, now()->addHours(6));
         return $updated;
+    }
+
+    public function download_local_backup(\Illuminate\Http\Request $request)
+    {
+        admin_only();
+        $name = $request->query('file');
+        if (!$name) {
+            return back()->with('danger', 'Nama file tidak diberikan.');
+        }
+
+        $baseDir = storage_path('app/leazycms-transfer/exports');
+        $filePath = $baseDir . DIRECTORY_SEPARATOR . $name;
+        $realPath = realpath($filePath);
+        $realBaseDir = realpath($baseDir);
+
+        if (!$realPath || !str_starts_with($realPath, rtrim($realBaseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            return back()->with('danger', 'File tidak ditemukan atau akses ditolak.');
+        }
+
+        if (file_exists($realPath)) {
+            return response()->download($realPath, $name);
+        }
+
+        return back()->with('danger', 'File tidak ditemukan.');
+    }
+
+    public function download_gdrive_backup(\Illuminate\Http\Request $request)
+    {
+        admin_only();
+        $id = $request->query('id');
+        if (!$id) {
+            return back()->with('danger', 'ID file tidak diberikan.');
+        }
+
+        try {
+            $gDriveService = new \Leazycms\Web\Services\GoogleDriveService();
+            $fileData = $gDriveService->download($id);
+
+            if ($fileData) {
+                return response($fileData['content'], 200, [
+                    'Content-Type' => 'application/zip',
+                    'Content-Disposition' => 'attachment; filename="' . $fileData['name'] . '"',
+                ]);
+            }
+        } catch (\Exception $e) {
+            return back()->with('danger', 'Gagal mengunduh dari Google Drive: ' . $e->getMessage());
+        }
+
+        return back()->with('danger', 'Gagal mengunduh file dari Google Drive.');
     }
 
 
@@ -2111,7 +2277,7 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
         }
 
-        $cloudHost = "https://newlara.test";
+        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
         $apiUrl = $cloudHost . base64_decode(strrev("9kXZr9VawF2Pu92cq5SZ0FGbw1WZ01CajRXZm9SawF2L")) . $cloudKey . base64_decode(strrev("ul2Z1xGc9UGc5RnJ"));
 
         if ($request->has('search') && $request->search) {
@@ -2176,7 +2342,7 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi.');
         }
 
-        $cloudHost = "https://newlara.test";
+        $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
         $apiUrl = $cloudHost . "/api/template/" . $id . ".json?api_key=" . $cloudKey;
 
         try {
@@ -2284,5 +2450,83 @@ class PanelController extends Controller implements HasMiddleware
         }
 
         return back()->with('danger', 'Gagal mengekstrak file plugin.');
+    }
+    public function gdriveAuth()
+    {
+        admin_only();
+        $clientId = get_option('google_drive_client_id');
+        $clientSecret = get_option('google_drive_client_secret');
+
+        if (!$clientId || !$clientSecret) {
+            return back()->with('danger', 'Client ID dan Client Secret harus diisi dan disimpan terlebih dahulu sebelum Connect.');
+        }
+
+        $query = http_build_query([
+            'client_id' => $clientId,
+            'redirect_uri' => route('setting.gdrive.callback'),
+            'response_type' => 'code',
+            'scope' => 'https://www.googleapis.com/auth/drive.file',
+            'access_type' => 'offline',
+            'prompt' => 'consent',
+        ]);
+
+        return redirect()->away('https://accounts.google.com/o/oauth2/v2/auth?' . $query);
+    }
+
+    public function gdriveCallback(\Illuminate\Http\Request $request)
+    {
+        admin_only();
+        $clientId = get_option('google_drive_client_id');
+        $clientSecret = get_option('google_drive_client_secret');
+
+        if (!$clientId || !$clientSecret) {
+            return redirect()->route('setting')->with('danger', 'Kredensial tidak lengkap.');
+        }
+
+        if ($request->has('code')) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::asForm()->post('https://oauth2.googleapis.com/token', [
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'code' => $request->code,
+                    'redirect_uri' => route('setting.gdrive.callback'),
+                    'grant_type' => 'authorization_code',
+                ]);
+                
+                $token = $response->json();
+                
+                if (isset($token['refresh_token'])) {
+                    // Save to options
+                    \DB::table('options')->updateOrInsert(
+                        ['name' => 'google_drive_refresh_token'], 
+                        ['value' => $token['refresh_token'], 'autoload' => 1]
+                    );
+                    
+                    if (config('modules.multisite_enabled')) {
+                        \Illuminate\Support\Facades\Cache::forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+                        \Illuminate\Support\Facades\Cache::forget('tenant:' . tenant()->domain . ':options');
+                    }
+                    
+                    return redirect()->route('setting')->with('success', 'Google Drive berhasil terhubung!');
+                } else {
+                    return redirect()->route('setting')->with('danger', 'Gagal mendapatkan Refresh Token. Jika Anda pernah menyambungkan sebelumnya, hapus aplikasi ini di akun Google (Security > Third-party apps), lalu coba hubungkan ulang.');
+                }
+            } catch (\Exception $e) {
+                return redirect()->route('setting')->with('danger', 'Gagal terhubung dengan Google Drive: ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->route('setting')->with('danger', 'Otorisasi dibatalkan atau gagal.');
+    }
+
+    public function gdriveDisconnect()
+    {
+        admin_only();
+        \DB::table('options')->where('name', 'google_drive_refresh_token')->delete();
+        if (config('modules.multisite_enabled')) {
+            \Illuminate\Support\Facades\Cache::forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+            \Illuminate\Support\Facades\Cache::forget('tenant:' . tenant()->domain . ':options');
+        }
+        return redirect()->route('setting')->with('success', 'Google Drive berhasil diputus (Disconnect).');
     }
 }

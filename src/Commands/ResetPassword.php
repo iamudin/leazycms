@@ -15,13 +15,33 @@ class ResetPassword extends Command
         } else {
             $this->info('Username dan Password default : ');
             $user = User::find(1);
-            $username = $user->username;
+            if (!$user) {
+                $user = new User;
+                $user->id = 1;
+                $user->name = 'Administrator';
+                $user->username = str(str()->random(6))->lower();
+                $user->email = 'admin@localhost';
+                $appUrl = config('app.url', 'localhost');
+                $user->host = parse_url($appUrl, PHP_URL_HOST) ?: $appUrl;
+                $user->password = bcrypt('password');
+                $user->level = 'admin';
+                $user->slug = 'admin';
+                $user->status = 'active';
+                if (config('modules.multisite_enabled')) {
+                    $user->tenant_id = 1;
+                }
+                $user->save();
+                $this->info("User Administrator dibuat baru karena belum ada.");
+            }
             $password = str(str()->random(8))->lower();
-            $user->update([
-                'password'=>bcrypt($password)
-            ]);
+            $user->username = $user->username;
+            $user->password = bcrypt($password);
+            if (config('modules.multisite_enabled')) {
+                $user->tenant_id = 1;
+            }
+            $user->save();
             $this->line('url : '.route('login'));
-            $this->line('Username : '.$username);
+            $this->line('Username : '.$user->username);
             $this->line('Password : '.$password);
         }
     }

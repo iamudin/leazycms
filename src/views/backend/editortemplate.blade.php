@@ -6,12 +6,7 @@
                                             <div class="pull-right">
 
                                                 <div class="d-flex" style="gap: 5px;">
-                                                    @if(is_main_domain())
-                                                        <button type="button" class="btn btn-primary btn-sm" onclick="$('#generateModuleModal').modal('show')">
-                                                            <i class="fa fa-plus"></i> Tambah Post Type Baru
-                                                        </button>
-                                                    @endif
-                                                    
+                                                @if(is_main_domain())
                                                     <form method="post" action="{{ route('appearance.editor') }}" style="display:inline; margin: 0;">
                                                         @csrf
                                                         <input type="hidden" name="type" value="export_template">
@@ -19,6 +14,7 @@
                                                             <i class="fa fa-file-archive-o"></i> Export ZIP
                                                         </button>
                                                     </form>
+                                                    @endif
                                                     
                                                     <button type="button" onclick="$('.editorForm').trigger('submit')" class="btn btn-primary btn-sm">
                                                         <i class="fa fa-save"></i> <span class="save-text">Simpan</span>
@@ -156,6 +152,13 @@
                                                             notif(xhr.responseText, 'danger');
                                                         }
                                                     });
+                                                });
+
+                                                $(document).keydown(function(e) {
+                                                    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+                                                        e.preventDefault();
+                                                        $('.editorForm').trigger('submit');
+                                                    }
                                                 });
                                             </script>
                                             <script>
