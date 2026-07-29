@@ -65,16 +65,44 @@
                         </label>
                     </div>
                 </div>
-                <div class="alert alert-dark py-2 text-white"
-                    style="border-left:4px solid #000;font-size:20px; background:#222;">
-                    <small>Untuk memanggil menu di file <code>.blade.php</code><br>
-                        <code>@ php<br> @ foreach(get_menu('{{ $post->slug }}') as $menu)
-                            <br>$menu->name
-                            <br>$menu->sub
-                            <br>$menu->link
-                            <br>@ endforeaceh<br>@ endphp</code>
-                    </small>
-                </div>
+                
+                @if ($module->form->category)
+                    @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category)
+                        <div class="mb-3">
+                            <strong class="d-block mb-2"><small>Kategori {{ $module->title }}</small></strong>
+                            
+                            @php
+                                $dbCategories = config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category;
+                                $defaultCategories = config('modules.default_category.' . $post->type, []);
+                                $dbCategoryNames = $dbCategories->pluck('name')->map(fn($n) => strtolower($n))->toArray();
+                                $unregisteredDefaults = array_filter($defaultCategories, fn($name) => !in_array(strtolower($name), $dbCategoryNames));
+                            @endphp
+
+                            <select class="form-control form-control-sm form-control-select select2-category" name="category_id" id="category_select2">
+                                <option value="">-- Pilih / Tanpa Kategori --</option>
+                                
+                                @if($dbCategories->count() > 0)
+                                        @foreach ($dbCategories as $row)
+                                            <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected' : '' }}>{{ $row->name }}</option>
+                                        @endforeach
+                                @endif
+
+                                @if(count($unregisteredDefaults) > 0)
+                                        @foreach ($unregisteredDefaults as $defCatName)
+                                            <option value="{{ $defCatName }}" {{ (old('category_id') == $defCatName || (isset($post->category_id) && !is_numeric($post->category_id) && $post->category_id == $defCatName)) ? 'selected' : '' }}>
+                                                {{ $defCatName }}
+                                            </option>
+                                        @endforeach
+                                @endif
+                            </select>
+
+                            <div class="text-right mt-2"><small class="text-primary"><a href="{{ route($post->type . '.category') }}"> <i
+                                            class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
+                        </div>
+                    @endif
+                @endif
+                
+       
 
             </div>
         </div>
@@ -568,6 +596,76 @@
                 // Submit form
                 $('.editorForm').submit();
             }
+
+            $(document).ready(function() {
+                if ($.fn.select2) {
+                    $('.select2-category').select2({
+                        placeholder: "-- Pilih / Tanpa Kategori --",
+                        width: '100%',
+                        allowClear: true
+                    });
+                }
+            });
+
+            $('.editorForm').on('submit', function (e) {
+                e.preventDefault();
+                let form = this;
+                let actionUrl = $(form).attr('action');
+                let formData = new FormData(form);
+                formData.append('_method', 'PUT');
+
+                $.ajax({
+                    url: actionUrl,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json'
+                    },
+                    success: function (response) {
+                        notif('Berhasil menyimpan menu!', 'success');
+                        
+                        // Reset status buttons
+                        let val = $('input[name="status"]:checked').val();
+                        if (val) {
+                            let $btn = $('input[name="status"][value="' + val + '"]').parent();
+                            let $icon = $btn.find('i');
+                            $icon.removeClass('fa-spinner fa-spin').addClass(val === 'publish' ? 'fa-globe' : 'fa-archive');
+                            $btn.contents().filter(function () {
+                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                            }).each(function () {
+                                this.nodeValue = val === 'publish' ? ' Publikasikan' : ' Draft';
+                            });
+                            $btn.siblings('label').css('pointer-events', 'auto').fadeTo(200, 1);
+                        }
+                    },
+                    error: function (xhr) {
+                        let errors = xhr.responseJSON ? xhr.responseJSON.errors : null;
+                        if (errors) {
+                            let firstError = Object.values(errors)[0][0];
+                            notif(firstError, 'error');
+                        } else {
+                            notif('Terjadi kesalahan!', 'error');
+                        }
+
+                        // Reset status buttons
+                        let val = $('input[name="status"]:checked').val();
+                        if (val) {
+                            let $btn = $('input[name="status"][value="' + val + '"]').parent();
+                            let $icon = $btn.find('i');
+                            $icon.removeClass('fa-spinner fa-spin').addClass(val === 'publish' ? 'fa-globe' : 'fa-archive');
+                            $btn.contents().filter(function () {
+                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                            }).each(function () {
+                                this.nodeValue = val === 'publish' ? ' Publikasikan' : ' Draft';
+                            });
+                            $btn.siblings('label').css('pointer-events', 'auto').fadeTo(200, 1);
+                        }
+                    }
+                });
+            });
         </script>
     @endpush
 @endsection

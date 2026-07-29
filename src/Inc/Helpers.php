@@ -2656,6 +2656,7 @@ if (!function_exists('clean_url')) {
 if (!function_exists('get_menu')) {
     function get_menu($name)
     {
+        $name = strtolower($name);
         static $menus = [];
         static $recached = [];
         $cacheKey = get_current_host() . ':menu';
@@ -2681,7 +2682,12 @@ if (!function_exists('get_menu')) {
             $menuQuery = \Leazycms\Web\Models\Post::query()
                 ->whereType('menu')
                 ->whereStatus('publish')
-                ->where('slug', $name);
+                ->where(function($q) use ($name) {
+                    $q->where('slug', $name)
+                      ->orWhereHas('category', function($q2) use ($name) {
+                          $q2->where('name', $name);
+                      });
+                });
             if (config('modules.multisite_enabled')) {
                 $menuQuery->whereTenantId(tenant()->id);
             }
@@ -2865,15 +2871,21 @@ if (!function_exists('recache_menu')) {
     function recache_menu()
     {
         $cacheKey = get_current_host() . ':menu';
-        cache()->forget($cacheKey);
-        cache()->rememberForever($cacheKey, function () {
-            $menu = \Leazycms\Web\Models\Post::whereType('menu')->whereStatus('publish')->select('slug', 'data_loop');
+        $menu = \Leazycms\Web\Models\Post::with('category')->whereType('menu')->whereStatus('publish')->select('id', 'category_id', 'slug', 'data_loop');
 
-            if (config('modules.multisite_enabled')) {
-                $menu->whereTenantId(tenant()->id);
-            }
-            $menu = $menu->pluck('data_loop', 'slug')->toArray();
-            return $menu;
+        if (config('modules.multisite_enabled')) {
+            $menu->whereTenantId(tenant()->id);
+        }
+
+        $menuArray = [];
+        foreach ($menu->get() as $item) {
+            $key = $item->category ? strtolower($item->category->name) : strtolower($item->slug);
+            $menuArray[$key] = is_string($item->data_loop) ? json_decode($item->data_loop, true) : $item->data_loop;
+        }
+
+        cache()->forget($cacheKey);
+        return cache()->rememberForever($cacheKey, function () use ($menuArray) {
+            return $menuArray;
         });
     }
 }
@@ -2888,6 +2900,21 @@ function put_image($src, $path)
     });
     $img->save($location . '/' . $name, 60);
     return $path . '/' . $name;
+}
+if (!function_exists('add_default_category')) {
+    function add_default_category(array $categories)
+    {
+        $existing = config('modules.default_category', []);
+        foreach ($categories as $type => $cats) {
+            if (!isset($existing[$type])) {
+                $existing[$type] = [];
+            }
+            if (is_array($cats)) {
+                $existing[$type] = array_unique(array_merge($existing[$type], $cats));
+            }
+        }
+        config(['modules.default_category' => $existing]);
+    }
 }
 if (!function_exists('admin_only')) {
     function admin_only()

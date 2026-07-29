@@ -32,7 +32,7 @@
                             href="{{ $postUrl }}" target="_blank" class="post-url-link"><i
                                 class="url"><u>{{ $showUrl ? str($postUrl)->limit(150, ' ...') : '' }}</u></i> </a><span
                             class="custom-url"></span> <i class="fa fa-edit ml-2 pointer" data-post-url="{{ $postUrl }}"
-                            data-slug="{{ $post->slug }}"></i><span title="Klik Untuk Menyalin alamat URL {{ $module->title }}"
+                            data-slug="{{ $post->slug }}" onclick="enableCustomSlugEdit(this.dataset.postUrl, this.dataset.slug)"></i><span title="Klik Untuk Menyalin alamat URL {{ $module->title }}"
                             data-toggle="tooltip" class="pointer copy pull-right badge badge-primary"
                             data-copy="{{ $postUrl }}"><i class="fa fa-copy" aria-hidden></i> <b>Salin</b></span></div>
                     @push('scripts')
@@ -103,14 +103,6 @@
                                 const slug = inputElement.value;
                                 urlElement.innerHTML = `${baseUrl}${slug}`;
                             }
-
-                            document.querySelectorAll('.fa-edit').forEach(icon => {
-                                icon.addEventListener('click', function () {
-                                    const postUrl = this.dataset.postUrl;
-                                    const slug = this.dataset.slug;
-                                    enableCustomSlugEdit(postUrl, slug);
-                                });
-                            });
 
                         </script>
                     @endpush
@@ -317,13 +309,29 @@
                 @if ($module->form->category)
                     @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category)
                         <small for="">Kategori {{ $module->title }} </small><br>
-                        <select class="form-control form-control-sm" name="category_id">
-                            <option value=""> --pilih-- </option>
-                            @foreach (config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category as $row)
-                                <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected=selected' : '' }}>
-                                    {{ $row->name }}
-                                </option>
-                            @endforeach
+                        @php
+                            $dbCategories = config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category;
+                            $defaultCategories = config('modules.default_category.' . $post->type, []);
+                            $dbCategoryNames = $dbCategories->pluck('name')->map(fn($n) => strtolower($n))->toArray();
+                            $unregisteredDefaults = array_filter($defaultCategories, fn($name) => !in_array(strtolower($name), $dbCategoryNames));
+                        @endphp
+
+                        <select class="form-control form-control-sm form-control-select select2-category" name="category_id" id="category_select2">
+                            <option value="">-- Pilih / Tanpa Kategori --</option>
+                            
+                            @if($dbCategories->count() > 0)
+                                    @foreach ($dbCategories as $row)
+                                        <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected' : '' }}>{{ $row->name }}</option>
+                                    @endforeach
+                            @endif
+
+                            @if(count($unregisteredDefaults) > 0)
+                                    @foreach ($unregisteredDefaults as $defCatName)
+                                        <option value="{{ $defCatName }}" {{ (old('category_id') == $defCatName || (isset($post->category_id) && !is_numeric($post->category_id) && $post->category_id == $defCatName)) ? 'selected' : '' }}>
+                                            {{ $defCatName }}
+                                        </option>
+                                    @endforeach
+                            @endif
                         </select>
                         <div class="text-right"><small class="text-primary"><a href="{{ route($post->type . '.category') }}"> <i
                                         class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
@@ -386,6 +394,16 @@
     @endif
     @push('scripts')
         <script>
+            $(document).ready(function() {
+                if ($.fn.select2) {
+                    $('.select2-category').select2({
+                        placeholder: "-- Pilih / Tanpa Kategori --",
+                        width: '100%',
+                        allowClear: true
+                    });
+                }
+            });
+
             $('.editorForm').on('submit', function (e) {
                 e.preventDefault();
                 $('.text-save').html('Menyimpan...');
@@ -441,7 +459,16 @@
                             let newUrlBar = newDoc.getElementById('post-url-bar');
                             let currentUrlBar = document.getElementById('post-url-bar');
                             if (currentUrlBar && newUrlBar) {
-                                currentUrlBar.innerHTML = newUrlBar.innerHTML;
+                                if (newUrlBar.style.display === 'none' && currentUrlBar.style.display !== 'none') {
+                                    $(currentUrlBar).slideUp('fast', function() {
+                                        currentUrlBar.innerHTML = newUrlBar.innerHTML;
+                                    });
+                                } else if (newUrlBar.style.display !== 'none' && currentUrlBar.style.display === 'none') {
+                                    currentUrlBar.innerHTML = newUrlBar.innerHTML;
+                                    $(currentUrlBar).slideDown('fast');
+                                } else {
+                                    currentUrlBar.innerHTML = newUrlBar.innerHTML;
+                                }
                                 // Update href/data attributes
                                 let newLink = newUrlBar.querySelector('.post-url-link');
                                 if (newLink) {

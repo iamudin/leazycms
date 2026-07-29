@@ -261,14 +261,14 @@ class PostController extends Controller implements HasMiddleware
                 'max:200',
                 function ($attribute, $value, $fail) use ($forbiddenWords) {
 
-                    // cek jumlah kata
-                    if (str_word_count($value) === 1) {
+                    // cek jumlah kata, pastikan angka juga dihitung sebagai kata
+                    if (str_word_count($value, 0, '0123456789') === 1) {
 
-                        $valueLower = strtolower($value);
+                        $valueLower = strtolower(trim($value));
 
                         foreach ($forbiddenWords as $word) {
-                            if (str_contains($valueLower, strtolower($word))) {
-                                $fail("Judul tidak boleh mengandung kata '{$word}'.");
+                            if ($valueLower === strtolower(trim($word))) {
+                                $fail("Judul tidak boleh menggunakan kata tunggal '{$word}'.");
                             }
                         }
 
@@ -454,10 +454,25 @@ class PostController extends Controller implements HasMiddleware
             }
         }
         $data['password'] = $request->password ? (!empty($post->password) ? $post->password : rtrim(enc64(rand(0000, 9999)), '=')) : null;
+
+        if (isset($data['category_id']) && !is_numeric($data['category_id']) && $data['category_id'] !== '') {
+            $catName = $data['category_id'];
+            $newCat = \Leazycms\Web\Models\Category::firstOrCreate([
+                'name' => $catName,
+                'type' => $post->type,
+                'url' => '/'.$post->type.'/'.str($catName)->slug(),
+                'tenant_id' => config('modules.multisite_enabled') ? tenant()->id : null
+            ], [
+                'slug' => str($catName)->slug()
+            ]);
+            $data['category_id'] = $newCat->id;
+        }
+
         $post->update($data);
         Cache::forget(get_current_host() . ':' . $post->type);
         Cache::forget(get_current_host() . ':' . $post->id);
         $this->recache(get_post_type());
+        
         return back()->with('success', $module->title . ' Berhasil diperbarui');
     }
     public function recache($type)
@@ -821,7 +836,7 @@ class PostController extends Controller implements HasMiddleware
                 $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm"> <i class="fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></i></a>';
             }
             $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
-            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? ($row->type == 'menu' && !empty($row->data_loop) ? '' : '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-danger btn-sm pointer"> <i class="fa fa-trash"></i></span>') : '';
+            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-danger btn-sm pointer"> <i class="fa fa-trash"></i></span>' : '';
             $btn .= '</div>';
             return $btn;
         });

@@ -863,7 +863,7 @@ return [
                 'post_parent' => false,
                 'thumbnail' => false,
                 'editor' => false,
-                'category' => false,
+                'category' => true,
                 'tag' => false,
                 'looping_name' => 'Daftar Menu',
                 'looping_data' => array(
