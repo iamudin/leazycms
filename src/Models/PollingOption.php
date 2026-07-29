@@ -1,8 +1,8 @@
 <?php
 namespace Leazycms\Web\Models;
-use Leazycms\Web\Models\BaseModel;
+use Illuminate\Database\Eloquent\Model;
 
-class PollingOption extends BaseModel
+class PollingOption extends Model
 {
    
     protected $fillable = ['name','image','sort','polling_topic_id','status'];
