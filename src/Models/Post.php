@@ -92,8 +92,9 @@ class Post extends BaseModel
         });
 
         static::saving(function ($post) {
-            if (empty($post->media) && !empty($post->content) || $post->media && !media_exists($post->media)) {
-                if (!empty($post->media) && !media_exists($post->media)) {
+            $isExternalMedia = $post->media && str_starts_with($post->media, 'http');
+            if (empty($post->media) && !empty($post->content) || ($post->media && !$isExternalMedia && !media_exists($post->media))) {
+                if (!empty($post->media) && !$isExternalMedia && !media_exists($post->media)) {
                     $post->media = null;
                 }
 
