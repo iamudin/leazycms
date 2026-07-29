@@ -6,7 +6,7 @@
 </h3>
 <div class="pull-right">
     @if(Route::has('polling'))
-    <a href="{{route('polling')}}" class="btn btn-outline-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Batal</a>
+    <a href="{{route('polling')}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Batal</a>
     @endif
 </div>
 </div>
@@ -54,7 +54,7 @@
                   @endforeach
             </div>
             <div class="form-group mt-2  mb-2 text-right">
-                <button type="submit" class="btn btn-outline-primary btn-sm"> <i class="fa fa-save"></i> Simpan</button>
+                <button type="submit" class="btn btn-primary btn-sm"> <i class="fa fa-save"></i> Simpan</button>
             </div>
 </form>
 </div>

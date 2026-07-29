@@ -5,8 +5,13 @@
             <h3 style="font-weight:normal;float:left"><i class="fa fa-poll aria-hidden="true"></i> Polling
             </h3>
             <div class="pull-right">
-
-                <a href="{{route('polling.create')}}" class="btn btn-outline-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
+                @if(isset($showGenerateButton) && $showGenerateButton)
+                    <form action="{{ route('polling.generate_default') }}" method="POST" style="display:inline-block; margin-right: 5px;">
+                        @csrf
+                        <button type="submit" class="btn btn-info btn-sm"> <i class="fa fa-magic" aria-hidden="true"></i> Generate Polling</button>
+                    </form>
+                @endif
+                <a href="{{route('polling.create')}}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah</a>
             </div>
         </div>
 

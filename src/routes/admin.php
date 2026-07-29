@@ -147,6 +147,7 @@ if (config('modules.multisite_enabled')) {
 }
 Route::controller(PollingController::class)->group(function () {
     Route::get('polling', 'index')->name('polling');
+    Route::post('polling/generate-default', 'generateDefault')->name('polling.generate_default');
     Route::get('polling/create', 'create')->name('polling.create');
     Route::post('polling/create', 'store')->name('polling.store');
     Route::post('polling', 'datatable')->name('polling.datatable');

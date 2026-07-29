@@ -21,7 +21,47 @@ class PollingController extends Controller implements HasMiddleware
     }
     public function index()
     {
-        return view('cms::backend.polling.index', ['tag' => null]);
+        $defaults = config('modules.default_polling_topic', []);
+        $showGenerateButton = false;
+        if (!empty($defaults)) {
+            $existingKeywords = PollingTopic::whereIn('keyword', array_keys($defaults))->pluck('keyword')->toArray();
+            foreach (array_keys($defaults) as $kw) {
+                if (!in_array($kw, $existingKeywords)) {
+                    $showGenerateButton = true;
+                    break;
+                }
+            }
+        }
+        return view('cms::backend.polling.index', ['tag' => null, 'showGenerateButton' => $showGenerateButton]);
+    }
+
+    public function generateDefault(Request $request)
+    {
+        $defaults = config('modules.default_polling_topic', []);
+        if (empty($defaults)) {
+            return back()->with('error', 'Tidak ada konfigurasi default polling.');
+        }
+
+        foreach ($defaults as $keyword => $data) {
+            $exists = PollingTopic::where('keyword', $keyword)->exists();
+            if (!$exists) {
+                $topic = PollingTopic::create([
+                    'keyword' => $keyword,
+                    'title' => $data['title'] ?? ucwords(str_replace('_', ' ', $keyword)),
+                    'description' => $data['description'] ?? '',
+                    'status' => $data['status'] ?? 'publish',
+                    'duration' => $data['duration'] ?? 1,
+                ]);
+
+                if (isset($data['option']) && is_array($data['option'])) {
+                    foreach ($data['option'] as $opt) {
+                        $topic->options()->create(['name' => $opt]);
+                    }
+                }
+            }
+        }
+
+        return back()->with('success', 'Default Polling Berhasil Digenerate');
     }
     public function datatable(Request $request)
     {
@@ -32,8 +72,8 @@ class PollingController extends Controller implements HasMiddleware
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                $btn .= '<a href="' . route('polling.edit', $row->id) . '"  class="btn btn-warning btn-sm fa fa-edit"></a>';
-                $btn .=  '<button onclick="deleteAlert(\'' . route('polling.destroy', $row->id) . '\')" class="btn btn-danger btn-sm fa fa-trash"></button>' ;
+                $btn .= '<a href="' . route('polling.edit', $row->id) . '"  class="btn btn-warning btn-sm "><i class="fa fa-edit"></i></a>';
+                $btn .=  '<button onclick="deleteAlert(\'' . route('polling.destroy', $row->id) . '\')" class="btn btn-danger btn-sm "><i class="fa fa-trash"></i></button>' ;
                 $btn .= '</div>';
                 return $btn;
             })

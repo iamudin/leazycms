@@ -849,7 +849,12 @@ if (!function_exists('get_current_host')) {
         return request()->getHost();
     }
 }
-
+if (!function_exists('add_default_polling_topic')) {
+    function add_default_polling_topic($topics) {
+        $existing = config('modules.default_polling_topic', []);
+        config(['modules.default_polling_topic' => array_merge($existing, $topics)]);
+    }
+}
 if (!function_exists('is_main_domain')) {
     function is_main_domain()
     {
