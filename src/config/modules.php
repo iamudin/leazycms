@@ -941,6 +941,12 @@ return [
     ],
     'option' => array(),
     'used' => array(),
+    'cpanel_api' => [
+        'host' => env('CPANEL_HOST',null),
+        'username' => env('CPANEL_USERNAME',null),
+        'api_token' => env('CPANEL_API_TOKEN',null),
+        'default_directory' => env('CPANEL_DEFAULT_DIRECTORY',null),
+    ],
     'admin_path' => env('ADMIN_PATH', 'WVdSdGFXND0'),
     'current' => null,
     'extension_module' => array(),

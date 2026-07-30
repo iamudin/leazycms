@@ -4,7 +4,8 @@
         <div class="col-lg-12 mb-3">
             <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i> Manajemen Tenant</h3>
             <div class="pull-right">
-                <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden></i> Tambah Tenant</a>
+                <button type="button" onclick="openCpanelConfig()" class="btn btn-dark btn-sm"> <i class="fa fa-cogs" aria-hidden="true"></i> API cPanel</button>
+                <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden="true"></i> Tambah Tenant</a>
             </div>
         </div>
         <div class="col-lg-12">
@@ -104,4 +105,97 @@
          <script type="text/javascript">$('#sampleTable').DataTable();</script>
     @endpush
     @include('cms::backend.layout.js')
+    <!-- Modal cPanel API Config -->
+    <div class="modal fade" id="cpanelModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-cogs"></i> Konfigurasi API cPanel</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="cpanelModalBody">
+                    <!-- Form akan dimuat melalui AJAX -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCpanelConfig()">Simpan Konfigurasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openCpanelConfig() {
+            swal({
+                title: "Otorisasi Admin",
+                text: "Masukkan password admin Anda:",
+                type: "input",
+                inputType: "password",
+                showCancelButton: true,
+                closeOnConfirm: false,
+                animation: "slide-from-top",
+                inputPlaceholder: "Password"
+            },
+            function(inputValue){
+                if (inputValue === false) return false;
+                
+                if (inputValue === "") {
+                    swal.showInputError("Password tidak boleh kosong!");
+                    return false;
+                }
+                
+                $.ajax({
+                    url: '{{ route('tenant.cpanel.form') }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        password: inputValue
+                    },
+                    success: function(response) {
+                        if (response.status === 'error') {
+                            swal.showInputError(response.message);
+                        } else {
+                            swal.close();
+                            $('#cpanelModalBody').html(response.html);
+                            $('#cpanelModal').modal('show');
+                        }
+                    },
+                    error: function(xhr) {
+                        swal.showInputError("Gagal menghubungi server.");
+                    }
+                });
+            });
+        }
+
+        function saveCpanelConfig() {
+            var btn = $('#cpanelModal .btn-primary');
+            var originalText = btn.html();
+            btn.html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
+            
+            $.ajax({
+                url: '{{ route('tenant.cpanel.save') }}',
+                type: 'POST',
+                data: $('#cpanelConfigForm').serialize() + '&_token={{ csrf_token() }}',
+                success: function(response) {
+                    btn.html(originalText).prop('disabled', false);
+                    if (response.status === 'success') {
+                        $('#cpanelModal').modal('hide');
+                        swal('Berhasil!', response.message, 'success');
+                    } else {
+                        swal('Gagal!', response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    btn.html(originalText).prop('disabled', false);
+                    var msg = 'Terjadi kesalahan sistem.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    swal('Error!', msg, 'error');
+                }
+            });
+        }
+    </script>
 @endsection

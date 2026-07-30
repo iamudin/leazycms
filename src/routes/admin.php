@@ -112,6 +112,10 @@ Route::controller(TenantController::class)->group(function () {
     Route::get('tenant/{tenant}/edit', 'edit')->name('tenant.edit');
     Route::put('tenant/{tenant}/edit', 'update')->name('tenant.update');
     Route::delete('tenant/{tenant}/edit', 'destroy')->name('tenant.destroy');
+    
+    // cPanel API Configuration
+    Route::post('tenant/cpanel-config/form', 'cpanelApiConfigForm')->name('tenant.cpanel.form');
+    Route::post('tenant/cpanel-config/save', 'cpanelApiConfigSave')->name('tenant.cpanel.save');
 });
 
 if (config('modules.app_master')) {

@@ -174,6 +174,19 @@ class TenantController extends Controller implements HasMiddleware
             $domain = parse_url($domain, PHP_URL_HOST);
         }
 
+        // cPanel API Integration
+        $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
+        if ($cpanelApi->isActive()) {
+            if ($cpanelApi->checkDomainExists($domain)) {
+                return back()->withInput()->withErrors(['domain' => 'Domain sudah digunakan di server cPanel.']);
+            }
+            
+            $createDomain = $cpanelApi->createAliasDomain($domain);
+            if (isset($createDomain['error'])) {
+                return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain di cPanel: ' . $createDomain['error']]);
+            }
+        }
+
         $theme = $request->theme;
 
         $tenant = Tenant::create([
@@ -274,6 +287,27 @@ class TenantController extends Controller implements HasMiddleware
         $domain = $request->domain;
         if (filter_var($domain, FILTER_VALIDATE_URL)) {
             $domain = parse_url($domain, PHP_URL_HOST);
+        }
+
+        if ($oldDomain !== $domain) {
+            $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
+            if ($cpanelApi->isActive()) {
+                if ($cpanelApi->checkDomainExists($domain)) {
+                    return back()->withInput()->withErrors(['domain' => 'Domain baru sudah digunakan di server cPanel.']);
+                }
+                
+                // Delete old domain
+                $deleteOld = $cpanelApi->deleteAliasDomain($oldDomain);
+                if (isset($deleteOld['error'])) {
+                    return back()->withInput()->withErrors(['domain' => 'Gagal menghapus domain lama di cPanel: ' . $deleteOld['error']]);
+                }
+                
+                // Create new domain
+                $createDomain = $cpanelApi->createAliasDomain($domain);
+                if (isset($createDomain['error'])) {
+                    return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error']]);
+                }
+            }
         }
 
         $theme = $request->theme;
@@ -428,5 +462,78 @@ class TenantController extends Controller implements HasMiddleware
             }
         }
         return $availablePlugins;
+    }
+
+    public function cpanelApiConfigForm(Request $request)
+    {
+        $admin = $request->user();
+        if (!\Illuminate\Support\Facades\Hash::check($request->password, $admin->password)) {
+            return response()->json(['status' => 'error', 'message' => 'Password salah.']);
+        }
+
+        $host = config('modules.cpanel_api.host');
+        $username = config('modules.cpanel_api.username');
+        $token = config('modules.cpanel_api.api_token');
+        $default_dir = config('modules.cpanel_api.default_directory');
+
+        try {
+            $host = $host ? \Illuminate\Support\Facades\Crypt::decryptString($host) : '';
+            $username = $username ? \Illuminate\Support\Facades\Crypt::decryptString($username) : '';
+            $token = $token ? \Illuminate\Support\Facades\Crypt::decryptString($token) : '';
+        } catch (\Exception $e) {
+            $host = '';
+            $username = '';
+            $token = '';
+        }
+
+        $html = '
+        <form id="cpanelConfigForm" autocomplete="off">
+            <input type="hidden" name="password" value="'.htmlspecialchars($request->password).'">
+            <div class="form-group mb-2">
+                <label>cPanel Host (ex: https://cpanel.domain.com:2083)</label>
+                <input type="url" name="host" class="form-control" value="'.htmlspecialchars($host).'" autocomplete="off">
+            </div>
+            <div class="form-group mb-2">
+                <label>cPanel Username</label>
+                <input type="text" name="username" class="form-control" value="'.htmlspecialchars($username).'" autocomplete="off">
+            </div>
+            <div class="form-group mb-2">
+                <label>cPanel API Token</label>
+                <input type="password" name="api_token" class="form-control" value="'.htmlspecialchars($token).'" autocomplete="new-password">
+            </div>
+            <div class="form-group mb-2">
+                <label>Default Directory</label>
+                <input type="text" name="default_directory" class="form-control" value="'.htmlspecialchars($default_dir ?: 'public_html').'" autocomplete="off">
+            </div>
+        </form>
+        ';
+
+        return response()->json(['status' => 'success', 'html' => $html]);
+    }
+
+    public function cpanelApiConfigSave(Request $request)
+    {
+        $admin = $request->user();
+        if (!\Illuminate\Support\Facades\Hash::check($request->password, $admin->password)) {
+            return response()->json(['status' => 'error', 'message' => 'Otorisasi gagal, password salah.']);
+        }
+
+        $request->validate([
+            'host' => 'nullable|url',
+            'username' => 'nullable|string',
+            'api_token' => 'nullable|string',
+            'default_directory' => 'nullable|string',
+        ]);
+
+        $envData = [
+            'CPANEL_HOST' => $request->host ? '"' . \Illuminate\Support\Facades\Crypt::encryptString($request->host) . '"' : 'null',
+            'CPANEL_USERNAME' => $request->username ? '"' . \Illuminate\Support\Facades\Crypt::encryptString($request->username) . '"' : 'null',
+            'CPANEL_API_TOKEN' => $request->api_token ? '"' . \Illuminate\Support\Facades\Crypt::encryptString($request->api_token) . '"' : 'null',
+            'CPANEL_DEFAULT_DIRECTORY' => $request->default_directory ? '"' . $request->default_directory . '"' : 'null',
+        ];
+
+        rewrite_env($envData);
+
+        return response()->json(['status' => 'success', 'message' => 'Konfigurasi cPanel API berhasil disimpan!']);
     }
 }
