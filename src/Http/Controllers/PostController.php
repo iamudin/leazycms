@@ -543,6 +543,18 @@ class PostController extends Controller implements HasMiddleware
             ->map(fn($label) => _us($label)) // konversi di sini
             ->values()
             ->all();
+            
+        $badge_fields = collect($current_module->form->custom_field)
+            ->filter(function($field) {
+                $meta = $field[1] ?? null;
+                $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                return is_array($type);
+            })
+            ->pluck(0)
+            ->map(fn($label) => _us($label))
+            ->values()
+            ->all();
+
         if ($customColumns && !is_array($customColumns)) {
             $customColumns = [_us($customColumns)];
         } elseif (is_array($customColumns)) {
@@ -693,7 +705,7 @@ class PostController extends Controller implements HasMiddleware
             return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
         });
         foreach ($customColumns as $field) {
-            $dt->addColumn($field, function ($row) use ($field, $custom_field) {
+            $dt->addColumn($field, function ($row) use ($field, $custom_field, $badge_fields) {
 
                 if (empty($row->data_field) || empty($row->data_field[$field])) {
                     return '<span>-</span>';
@@ -752,10 +764,22 @@ class PostController extends Controller implements HasMiddleware
             </span>';
                     }
 
-                    if (in_array($field, $custom_field)) {
-                        return '<span
+                    if (in_array($field, $badge_fields)) {
+                        // Tampilkan sebagai badge jika tipe datanya array (pilihan)
+                        $badgeColor = 'badge-primary';
+                        $valLower = strtolower(trim($value));
+                        
+                        if (in_array($valLower, ['selesai', 'sukses', 'aktif', 'active', 'success', 'done'])) {
+                            $badgeColor = 'badge-success';
+                        } elseif (in_array($valLower, ['diproses', 'pending', 'menunggu', 'waiting', 'progress'])) {
+                            $badgeColor = 'badge-warning';
+                        } elseif (in_array($valLower, ['batal', 'gagal', 'ditolak', 'cancel', 'failed', 'rejected'])) {
+                            $badgeColor = 'badge-danger';
+                        } elseif (in_array($valLower, ['baru', 'new', 'info'])) {
+                            $badgeColor = 'badge-info';
+                        }
 
-                                    class="badge badge-pill py-1" style="border:1px solid #000;">
+                        return '<span class="badge badge-pill ' . $badgeColor . ' py-1 px-2" style="font-weight: 500;">
                                     ' . e($value) . '
                                 </span>';
                     }

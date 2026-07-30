@@ -925,6 +925,46 @@ return [
             'public' => false,
             'cache' => false,
             'active' => true,
+        ],
+         'report-bug' => [
+            'position' => 11,
+            'name' => 'report-bug',
+            'title' => 'Lapor Admin',
+            'description' => 'Menu Untuk Melihat Laporan Admin',
+            'parent' => false,
+            'icon' => 'fa-bug',
+            'route' => ['index', 'create', 'show', 'update', 'delete'],
+            'datatable' => [
+                'custom_column' => ['Keterangan','Bukti Screenshoot','Status Laporan'],
+                'data_title' => 'Subjek Laporan Masalah',
+            ],
+            'form' => [
+                'unique_title' => false,
+                'post_parent' => false,
+                'thumbnail' => false,
+                'editor' => false,
+                'category' => false,
+                'tag' => false,
+                'looping_name' => 'Daftar Menu',
+                'looping_data' => false,
+                'custom_field' => [
+                    ['Keterangan', ['type'=>'textarea']],
+                    ['Bukti Screenshoot', ['type'=>'file','mime_type'=>'image/png,image/jpeg,image/gif,image/webp']],
+                    ['Status Laporan', ['type'=>['Baru','Diproses','Selesai']]]
+                ],
+            ],
+            'web' => [
+                'api' => false,
+                'archive' => false,
+                'index' => false,
+                'detail' => false,
+                'history' => false,
+                'auto_query' => false,
+                'sortable' => false,
+            ],
+            'public' => false,
+            'cache' => false,
+            'active' => true,
         ]
     ],
     'config' => [
