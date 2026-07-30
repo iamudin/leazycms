@@ -103,6 +103,7 @@ Route::controller(UserController::class)->group(function () {
     Route::match(['get', 'post'], 'account', 'account')->name('user.account');
 });
 
+if(config('modules.multisite_enabled')) {
 Route::controller(TenantController::class)->group(function () {
     Route::get('tenant', 'index')->name('tenant.index');
     Route::post('tenant', 'datatable')->name('tenant.datatable');
@@ -117,7 +118,7 @@ Route::controller(TenantController::class)->group(function () {
     Route::post('tenant/cpanel-config/form', 'cpanelApiConfigForm')->name('tenant.cpanel.form');
     Route::post('tenant/cpanel-config/save', 'cpanelApiConfigSave')->name('tenant.cpanel.save');
 });
-
+}
 if (config('modules.app_master')) {
     Route::controller(AppMasterController::class)->group(function () {
         Route::get('site-monitor', 'index')->name('app.master.index');

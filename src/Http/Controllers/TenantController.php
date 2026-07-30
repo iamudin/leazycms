@@ -88,8 +88,8 @@ class TenantController extends Controller implements HasMiddleware
                 $btn = '<div class="btn-group">';
                 $btn .= '<a target="_blank" href="http://' . $row->domain . '" class="btn btn-info btn-sm" title="Kunjungi Website"><i class="fa fa-globe"></i></a>';
                 $btn .= $row->id !== 1 ? '<a target="_blank" href="' . route('tenant.login', $row->id) . '" class="btn btn-primary btn-sm " title="Auto Login ke Admin"> <i class="fa fa-sign-in"></i> </a>' : '';
-                $btn .= '<a href="' . route('tenant.edit', $row->id) . '" class="btn btn-warning btn-sm fa fa-edit" title="Edit Tenant"></a>';
-                $btn .= $row->id !== 1 ? '<button onclick="deleteAlert(\'' . route('tenant.destroy', $row->id) . '\')" class="btn btn-danger btn-sm " title="Hapus Tenant"><i class="fa fa-trash-o"></i></button>' : '';
+                $btn .= '<a href="' . route('tenant.edit', $row->id) . '" class="btn btn-warning btn-sm" title="Edit Tenant"><i class="fa fa-edit"></i></a>';
+                $btn .= $row->id !== 1 ? '<button onclick="deleteAlert(\'' . route('tenant.destroy', $row->id) . '\')" class="btn btn-danger btn-sm " title="Hapus Tenant"><i class="fa fa-trash"></i></button>' : '';
                 $btn .= '</div>';
                 return $btn;
             })

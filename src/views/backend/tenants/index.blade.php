@@ -4,7 +4,7 @@
         <div class="col-lg-12 mb-3">
             <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i> Manajemen Tenant</h3>
             <div class="pull-right">
-                <button type="button" onclick="openCpanelConfig()" class="btn btn-dark btn-sm"> <i class="fa fa-cogs" aria-hidden="true"></i> API cPanel</button>
+                <button type="button" onclick="event.preventDefault(); openCpanelConfig();" class="btn btn-dark btn-sm"> <i class="fa fa-cogs" aria-hidden="true"></i> API cPanel</button>
                 <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden="true"></i> Tambah Tenant</a>
             </div>
         </div>
@@ -104,9 +104,7 @@
          <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
          <script type="text/javascript">$('#sampleTable').DataTable();</script>
     @endpush
-    @include('cms::backend.layout.js')
-    <!-- Modal cPanel API Config -->
-    <div class="modal fade" id="cpanelModal" tabindex="-1" role="dialog" aria-hidden="true">
+     <div class="modal fade" id="cpanelModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -118,54 +116,62 @@
                 <div class="modal-body" id="cpanelModalBody">
                     <!-- Form akan dimuat melalui AJAX -->
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" id="cpanelModalFooter" style="display: none;">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                     <button type="button" class="btn btn-primary" onclick="saveCpanelConfig()">Simpan Konfigurasi</button>
                 </div>
             </div>
         </div>
     </div>
-
+@push('scripts')
+    @include('cms::backend.layout.js')
+    <!-- Modal cPanel API Config -->
+   
     <script>
         function openCpanelConfig() {
-            swal({
-                title: "Otorisasi Admin",
-                text: "Masukkan password admin Anda:",
-                type: "input",
-                inputType: "password",
-                showCancelButton: true,
-                closeOnConfirm: false,
-                animation: "slide-from-top",
-                inputPlaceholder: "Password"
-            },
-            function(inputValue){
-                if (inputValue === false) return false;
-                
-                if (inputValue === "") {
-                    swal.showInputError("Password tidak boleh kosong!");
-                    return false;
-                }
-                
-                $.ajax({
-                    url: '{{ route('tenant.cpanel.form') }}',
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        password: inputValue
-                    },
-                    success: function(response) {
-                        if (response.status === 'error') {
-                            swal.showInputError(response.message);
-                        } else {
-                            swal.close();
-                            $('#cpanelModalBody').html(response.html);
-                            $('#cpanelModal').modal('show');
-                        }
-                    },
-                    error: function(xhr) {
-                        swal.showInputError("Gagal menghubungi server.");
+            $('#cpanelModalBody').html(`
+                <div id="cpanelAuthSection">
+                    <p>Masukkan password admin Anda untuk mengonfigurasi API cPanel:</p>
+                    <form onsubmit="event.preventDefault(); authCpanelConfig();" autocomplete="off">
+                        <!-- Fake hidden input to trap aggressive browser autofill (preventing it from filling Datatables search) -->
+                        <input type="text" name="fake_username" style="display:none;" aria-hidden="true" autocomplete="username">
+                        
+                        <input type="password" id="cpanelAdminPassword" class="form-control mb-3" placeholder="Password" autocomplete="new-password">
+                        <button type="submit" class="btn btn-primary" id="btnCpanelAuth">Otentikasi</button>
+                    </form>
+                </div>
+            `);
+            $('#cpanelModalFooter').hide();
+            $('#cpanelModal').modal('show');
+        }
+
+        function authCpanelConfig() {
+            var pwd = $('#cpanelAdminPassword').val();
+            if (!pwd) {
+                swal("Peringatan", "Password tidak boleh kosong!", "warning");
+                return;
+            }
+            $('#btnCpanelAuth').html('<i class="fa fa-spinner fa-spin"></i> Memeriksa...').prop('disabled', true);
+            $.ajax({
+                url: '{{ route('tenant.cpanel.form') }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    password: pwd
+                },
+                success: function(response) {
+                    if (response.status === 'error') {
+                        $('#btnCpanelAuth').html('Otentikasi').prop('disabled', false);
+                        swal("Gagal", response.message, "error");
+                    } else {
+                        $('#cpanelModalBody').html(response.html);
+                        $('#cpanelModalFooter').show();
                     }
-                });
+                },
+                error: function(xhr) {
+                    $('#btnCpanelAuth').html('Otentikasi').prop('disabled', false);
+                    swal("Error", "Gagal menghubungi server.", "error");
+                }
             });
         }
 
@@ -198,4 +204,5 @@
             });
         }
     </script>
+    @endpush
 @endsection
