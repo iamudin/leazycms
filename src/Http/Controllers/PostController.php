@@ -592,7 +592,7 @@ class PostController extends Controller implements HasMiddleware
                                     $q->where('name', 'like', $search . '%');
                                 });
                             }
-                            if (config('modules.admin_path') && is_main_domain()) {
+                            if (config('modules.multisite_enabled') && is_main_domain()) {
                                 $q->orWhereHas('tenant', function ($q) use ($search) {
                                     $q->where('domain', 'like', $search . '%');
                                 });
