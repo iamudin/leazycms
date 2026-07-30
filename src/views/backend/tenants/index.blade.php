@@ -2,7 +2,7 @@
 @section('content')
     <div class="row">
         <div class="col-lg-12 mb-3">
-            <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i> Manajemen Tenant</h3>
+            <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i> Tenant</h3>
             <div class="pull-right">
                 <button type="button" onclick="event.preventDefault(); openCpanelConfig();" class="btn btn-dark btn-sm"> <i class="fa fa-cogs" aria-hidden="true"></i> API cPanel</button>
                 <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden="true"></i> Tambah Tenant</a>
@@ -23,16 +23,33 @@
                         'linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)',
                     ];
                 @endphp
+                
+                <!-- Widget Total Keseluruhan -->
+                <div class="col-md-3 col-6 col-sm-6 mb-2" >
+                    <div class="card border-0" onclick="filterCategory('')" style="cursor:pointer; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                        <div class="card-body text-white p-2 d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="text-uppercase font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px; opacity: 0.9;"><i class="fa fa-server mr-1"></i> Semua Tenant</div>
+                                <div class="font-weight-bold" style="font-size: 1.4rem; line-height: 1.2;">{{ $stats->sum('total') }} <span style="font-size: 0.7rem; font-weight: normal; opacity: 0.8;">Websites</span></div>
+                            </div>
+                            <div style="opacity: 0.3;">
+                                <i class="fa fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 @foreach($stats as $index => $stat)
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <div class="card border-0" onclick="filterCategory('{{ $stat->category }}')" style="cursor:pointer; background: {{ $gradients[$index % count($gradients)] }}; border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';">
-                            <div class="card-body text-white">
-                                <h6 class="card-title text-uppercase font-weight-bold mb-2" style="letter-spacing: 1px;"><i class="fa fa-folder-open-o mr-1"></i> {{ $stat->category }}</h6>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h2 class="mb-0 font-weight-bold" style="font-size: 2.2rem;">{{ $stat->total }}</h2>
-                                    <div style="opacity: 0.5;"><i class="fa fa-globe fa-2x"></i></div>
+                    <div class="col-md-3 col-6 col-sm-6 mb-2">
+                        <div class="card border-0" onclick="filterCategory('{{ $stat->category }}')" style="cursor:pointer; background: {{ $gradients[$index % count($gradients)] }}; border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                            <div class="card-body text-white p-2 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-uppercase font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.5px; opacity: 0.9;"><i class="fa fa-folder-open-o mr-1"></i> {{ $stat->category }}</div>
+                                    <div class="font-weight-bold" style="font-size: 1.4rem; line-height: 1.2;">{{ $stat->total }} <span style="font-size: 0.7rem; font-weight: normal; opacity: 0.8;">Websites</span></div>
                                 </div>
-                                <small style="opacity: 0.9;">Total Websites</small>
+                                <div style="opacity: 0.3;">
+                                    <i class="fa fa-globe fa-2x"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
