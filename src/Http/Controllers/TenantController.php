@@ -66,7 +66,22 @@ class TenantController extends Controller implements HasMiddleware
 
     public function index()
     {
-        return view('cms::backend.tenants.index');
+        $stats = \Illuminate\Support\Facades\DB::table('tenants')
+            ->leftJoin('options', function ($join) {
+                $join->on('tenants.id', '=', 'options.tenant_id')
+                     ->where('options.name', '=', 'category');
+            })
+            ->select('options.value as category', \Illuminate\Support\Facades\DB::raw('count(tenants.id) as total'))
+            ->groupBy('options.value')
+            ->get()
+            ->map(function ($item) {
+                if (empty($item->category)) {
+                    $item->category = 'Uncategorized';
+                }
+                return $item;
+            });
+
+        return view('cms::backend.tenants.index', compact('stats'));
     }
 
     public function datatable(Request $request)
@@ -83,6 +98,11 @@ class TenantController extends Controller implements HasMiddleware
             ->addColumn('category', function ($row) {
                 $category = $row->options->where('name', 'category')->first()?->value;
                 return $category ? '<span class="badge badge-info">' . $category . '</span>' : '-';
+            })
+            ->filterColumn('category', function($query, $keyword) {
+                $query->whereHas('options', function($q) use ($keyword) {
+                    $q->where('name', 'category')->where('value', 'like', "%{$keyword}%");
+                });
             })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';

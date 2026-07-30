@@ -8,6 +8,39 @@
                 <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden="true"></i> Tambah Tenant</a>
             </div>
         </div>
+
+        @if(isset($stats) && $stats->count() > 0)
+        <div class="col-lg-12 mb-2">
+            <div class="row">
+                @php
+                    $gradients = [
+                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+                        'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                        'linear-gradient(135deg, #2F80ED 0%, #56CCF2 100%)',
+                        'linear-gradient(135deg, #f2994a 0%, #f2c94c 100%)',
+                        'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)',
+                        'linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)',
+                    ];
+                @endphp
+                @foreach($stats as $index => $stat)
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card border-0" onclick="filterCategory('{{ $stat->category }}')" style="cursor:pointer; background: {{ $gradients[$index % count($gradients)] }}; border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';">
+                            <div class="card-body text-white">
+                                <h6 class="card-title text-uppercase font-weight-bold mb-2" style="letter-spacing: 1px;"><i class="fa fa-folder-open-o mr-1"></i> {{ $stat->category }}</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h2 class="mb-0 font-weight-bold" style="font-size: 2.2rem;">{{ $stat->total }}</h2>
+                                    <div style="opacity: 0.5;"><i class="fa fa-globe fa-2x"></i></div>
+                                </div>
+                                <small style="opacity: 0.9;">Total Websites</small>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         <div class="col-lg-12">
             <table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%;font-size:small">
                 <thead style="text-transform:uppercase;color:#444">
@@ -65,7 +98,7 @@
                     {
                         data: 'category',
                         name: 'category',
-                        searchable: false,
+                        searchable: true,
                         orderable: false
                     },
                     {
@@ -202,6 +235,11 @@
                     swal('Error!', msg, 'error');
                 }
             });
+        }
+        function filterCategory(category) {
+            var table = $('.datatable').DataTable();
+            $('.dataTables_filter input').val(category);
+            table.search(category).draw();
         }
     </script>
     @endpush
