@@ -18,5 +18,5 @@
             theme: "dracula",
             lineWrapping: true
         });
-        $('.CodeMirror').attr('style','height:74vh;border-radius:10px;border:5px solid #111');
+        $('.CodeMirror').attr('style','height:83vh;border-radius:10px;border:5px solid #111');
 </script>

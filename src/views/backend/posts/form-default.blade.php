@@ -255,7 +255,7 @@
 
                 @if ($module->form->thumbnail)
                     <div class="card mt-3">
-                        <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Gambar Unggulan</p>
+                        <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Foto {{current_module()->title}}</p>
                         <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}" />
                         <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
                             class="compress-image form-control-file form-control-sm" name="media" value="">
@@ -271,11 +271,42 @@
                 @endif
 
                 @if ($module->web->detail || $modname = $module->name == 'banner')
-                    <small>Pengalihan URL {!! help('Opsi Jika Ingin Mengalihkan Konten Ini ke suatu halaman web atau url') !!}
-                    </small>
-                    <input type="text" class="form-control form-control-sm" name="redirect_to"
-                        placeholder="URL dimulai https:// atau http://"
-                        value="{{ !empty(old('redirect_to')) ? old('redirect_to') : ($post->redirect_to ?? '') }}">
+                    <div class="form-group mt-1">
+                        <small>Pengalihan URL {!! help('Opsi Jika Ingin Mengalihkan Konten Ini ke suatu halaman web atau url') !!}</small>
+                        <input type="url" id="redirect_to" class="form-control form-control-sm" name="redirect_to"
+                            placeholder="URL dimulai https:// atau http://"
+                            value="{{ !empty(old('redirect_to')) ? old('redirect_to') : ($post->redirect_to ?? '') }}"
+                            oninput="validateRedirectUrl(this)" pattern="https?://.+">
+                        <small class="text-danger" id="redirect_error" style="display:none; margin-top: 5px;">Format URL tidak valid (harus diawali http:// atau https://)</small>
+                    </div>
+                    
+                    <script>
+                        function validateRedirectUrl(input) {
+                            let val = input.value.trim();
+                            
+                            if (val === '') {
+                                $('#redirect_error').hide();
+                                $(input).removeClass('is-invalid');
+                                return;
+                            }
+                            
+                            // Paksa awalan http:// jika user mengetik awalan selain 'h' atau 'http'
+                            if (val.length > 0 && !val.toLowerCase().startsWith('h')) {
+                                input.value = 'http://' + val;
+                                val = input.value; // update nilai untuk divalidasi
+                            }
+
+                            // Regex untuk mengecek apakah dimulai dengan http:// atau https:// dan memiliki format domain/URL
+                            const regex = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+                            if (regex.test(val)) {
+                                $('#redirect_error').hide();
+                                $(input).removeClass('is-invalid');
+                            } else {
+                                $('#redirect_error').show();
+                                $(input).addClass('is-invalid');
+                            }
+                        }
+                    </script>
                     @if(!isset($modname))
                     <div class="card mt-3">
                         <p class="card-header"> <i class="fa fa-search" aria-hidden></i> SEO Meta (Opsional)</p>
@@ -316,25 +347,29 @@
                             $unregisteredDefaults = array_filter($defaultCategories, fn($name) => !in_array(strtolower($name), $dbCategoryNames));
                         @endphp
 
-                        <select class="form-control form-control-sm form-control-select select2-category" name="category_id" id="category_select2">
-                            <option value="">-- Pilih / Tanpa Kategori --</option>
-                            
-                            @if($dbCategories->count() > 0)
-                                    @foreach ($dbCategories as $row)
-                                        <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected' : '' }}>{{ $row->name }}</option>
-                                    @endforeach
-                            @endif
+                        <div class="input-group input-group-sm flex-nowrap">
+                            <select class="form-control form-control-select select2-category" name="category_id" id="category_select2">
+                                <option value="">-- Pilih / Tanpa Kategori --</option>
+                                
+                                @if($dbCategories->count() > 0)
+                                        @foreach ($dbCategories as $row)
+                                            <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected' : '' }}>{{ $row->name }}</option>
+                                        @endforeach
+                                @endif
 
-                            @if(count($unregisteredDefaults) > 0)
-                                    @foreach ($unregisteredDefaults as $defCatName)
-                                        <option value="{{ $defCatName }}" {{ (old('category_id') == $defCatName || (isset($post->category_id) && !is_numeric($post->category_id) && $post->category_id == $defCatName)) ? 'selected' : '' }}>
-                                            {{ $defCatName }}
-                                        </option>
-                                    @endforeach
-                            @endif
-                        </select>
-                        <div class="text-right"><small class="text-primary"><a href="{{ route($post->type . '.category') }}"> <i
-                                        class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
+                                @if(count($unregisteredDefaults) > 0)
+                                        @foreach ($unregisteredDefaults as $defCatName)
+                                            <option value="{{ $defCatName }}" {{ (old('category_id') == $defCatName || (isset($post->category_id) && !is_numeric($post->category_id) && $post->category_id == $defCatName)) ? 'selected' : '' }}>
+                                                {{ $defCatName }}
+                                            </option>
+                                        @endforeach
+                                @endif
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal" title="Tambah Baru"><i class="fa fa-plus"></i></button>
+                                <a href="{{ route($post->type.'.category') }}" class="btn btn-info" title="Kelola Kategori"><i class="fa fa-cog"></i></a>
+                            </div>
+                        </div>
                     @endif
 
                 @else
@@ -443,13 +478,14 @@
                             // Update Custom Fields Container
                             let newCustomFields = newDoc.getElementById('custom-fields-container');
                             if (newCustomFields && document.getElementById('custom-fields-container')) {
-                                document.getElementById('custom-fields-container').innerHTML = newCustomFields.innerHTML;
+                                // Menggunakan jQuery .html() agar tag <script> dieksekusi (native innerHTML tidak mengeksekusi script)
+                                $('#custom-fields-container').html(newCustomFields.innerHTML);
                             }
 
                             // Update Looping Data Container
                             let newLoopingData = newDoc.getElementById('looping-data-container');
                             if (newLoopingData && document.getElementById('looping-data-container')) {
-                                document.getElementById('looping-data-container').innerHTML = newLoopingData.innerHTML;
+                                $('#looping-data-container').html(newLoopingData.innerHTML);
                             }
 
                             // Clear any lingering Gmedia preview wrappers (temporary previews)
@@ -737,5 +773,71 @@
         }
     </script>
 @endif
+
+<!-- Modal Tambah Kategori -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form id="formAddCategory">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addCategoryModalLabel">Tambah Kategori Baru</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div class="form-group">
+            <label for="categoryName">Nama Kategori</label>
+            <input type="text" class="form-control" id="categoryName" name="name" required placeholder="Masukkan nama kategori">
+            <input type="hidden" name="status" value="publish">
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-primary" id="btnSaveCategory">Simpan</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+@push('scripts')
+<script>
+    $('#formAddCategory').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#btnSaveCategory');
+        
+        btn.attr('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+        
+        $.ajax({
+            url: "{{ route($post->type . '.category.store') }}",
+            type: "POST",
+            data: $(this).serialize() + "&_token={{ csrf_token() }}",
+            success: function(res) {
+                if(res.success) {
+                    $('#addCategoryModal').modal('hide');
+                    $('#categoryName').val('');
+                    
+                    let newOption = new Option(res.data.name, res.data.id, true, true);
+                    $('#category_select2').append(newOption).trigger('change');
+                    
+                    btn.attr('disabled', false).html('Simpan');
+                } else {
+                    alert('Gagal menambahkan kategori');
+                    btn.attr('disabled', false).html('Simpan');
+                }
+            },
+            error: function(err) {
+                let msg = 'Terjadi kesalahan.';
+                if(err.responseJSON && err.responseJSON.message) {
+                    msg = err.responseJSON.message;
+                }
+                alert(msg);
+                btn.attr('disabled', false).html('Simpan');
+            }
+        });
+    });
+</script>
+@endpush
 
 @endsection

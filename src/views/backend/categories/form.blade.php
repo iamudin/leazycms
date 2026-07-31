@@ -49,7 +49,7 @@
                 </div>
                 @endif
                 <div class="media-input-wrapper" style="{{ ($category && $category->icon && media_exists($category->icon)) ? 'display:none;' : '' }}">
-                  <input accept="image/png,image/jpeg"   class="compress-image form-control-sm form-control-file " name="icon"  type="file" value="{{$category?->icon}}">
+                  <input accept="image/webp,image/gif"   class="compress-image form-control-sm form-control-file " name="icon"  type="file" value="{{$category?->icon}}">
                 </div>
             </div>
             <div class="form-group mt-2  mb-2">
@@ -67,11 +67,10 @@
                      @endif
                     </button>
                     @if($category)
-                    <a href="{{ route(get_post_type().'.category') }}" class="btn btn-danger btn-sm">
+                    <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">
                         <i class="fa fa-undo"></i> Batal
-
-                       </a>
-                     @endif
+                    </button>
+                    @endif
 
             </div>
 </form>

@@ -259,10 +259,10 @@ class PostController extends Controller implements HasMiddleware
                 'regex:/^([0-9a-zA-Z]{5}|[0-9a-zA-Z\s\p{P}\,\(\)]{6,})$/u',
                 'min:5',
                 'max:200',
-                function ($attribute, $value, $fail) use ($forbiddenWords) {
+                function ($attribute, $value, $fail) use ($forbiddenWords,$post) {
 
                     // cek jumlah kata, pastikan angka juga dihitung sebagai kata
-                    if (str_word_count($value, 0, '0123456789') === 1) {
+                    if (str_word_count($value, 0, '0123456789') === 1 && $post->type=='page') {
 
                         $valueLower = strtolower(trim($value));
 
@@ -390,6 +390,9 @@ class PostController extends Controller implements HasMiddleware
                                 'mime_type' => explode(',', $mimeType ?? allow_mime()),
                                 'is_encrypt' => $isEncrypt,
                             ]) : strip_tags($request->$fieldname);
+                        break;
+                    case 'rich-text':
+                        $custom_field[$fieldname] = isset($request->$fieldname) ? strip_tags($request->$fieldname, $allowed_tags) : null;
                         break;
                     default:
                         $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;
@@ -844,7 +847,7 @@ class PostController extends Controller implements HasMiddleware
                 ->pluck('title')
                 ->implode(' - ');
 
-            return '<a href="' . admin_url($lastParent->type . '/' . $lastParent->id . '/show') . '">'
+            return '<a href="' . admin_url($lastParent->type . '/' . $lastParent->id . '/edit') . '">'
                 . $titles .
                 '</a>';
         });

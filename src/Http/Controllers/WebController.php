@@ -266,6 +266,9 @@ class WebController extends Controller
             'category' => $category,
             'module' => $modul
         );
+        if (View::exists('template.' . template() . '.' . $category->type . '.category.' . $category->slug)) {
+            return view('template.' . template() . '.' . $category->type . '.category.' . $category->slug, $data);
+        }
         return view('cms::layouts.master', $data);
     }
     public function search(Request $request, $slug = null)

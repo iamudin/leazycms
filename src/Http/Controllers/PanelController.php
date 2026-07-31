@@ -1761,9 +1761,11 @@ class PanelController extends Controller implements HasMiddleware
                     }
                     return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Symlink assets berhasil dibuat.' : 'Gagal membuat symlink assets.'));
                 case 'create_dir':
+                    $current_path = $request->current_path ?? '';
                     $dir = str($request->dirname)->slug();
-                    if (!is_dir($path . '/' . $dir)) {
-                        mkdir($path . '/' . $dir);
+                    $fullPath = rtrim($path . $current_path, '/') . '/' . $dir;
+                    if (!is_dir($fullPath)) {
+                        mkdir($fullPath, 0755, true);
                         return response()->json(['msg' => 'success']);
                     }
                     break;
@@ -1776,6 +1778,18 @@ class PanelController extends Controller implements HasMiddleware
                         fclose($myfile);
                         File::put($path . $filepath . '/' . $filename, 'You Script Here');
 
+                        return response()->json(['msg' => 'success']);
+                    }
+                    break;
+                case 'delete_dir':
+                    $dirname = $request->dirname;
+                    $dirPath = $path . $dirname;
+                    if (is_dir($dirPath)) {
+                        $files = array_diff(scandir($dirPath), array('.', '..'));
+                        if (count($files) > 0) {
+                            return response()->json(['error' => 'Gagal: Anda hanya bisa menghapus folder yang kosong!'], 400);
+                        }
+                        File::deleteDirectory($dirPath);
                         return response()->json(['msg' => 'success']);
                     }
                     break;

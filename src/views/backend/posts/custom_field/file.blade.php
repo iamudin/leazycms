@@ -21,4 +21,3 @@
         class="compress-image form-control form-control-file" value="{{ $field[_us($r[0])] ?? null }}" name="{{_us($r[0])}}"
         placeholder="Entri {{$r[0]}}">
     </div>
-<br>

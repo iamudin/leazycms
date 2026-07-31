@@ -11,104 +11,197 @@
 @include('cms::backend.layout.error')
 </div>
 @if(auth()->user()->isAdmin() || (!auth()->user()->isAdmin() && $dothing))
-<div class="col-lg-4">
-@include('cms::backend.categories.form')
+<div class="col-lg-12 mb-3 text-right">
+    <button type="button" class="btn btn-primary btn-sm" onclick="openCreateModal()">
+        <i class="fa fa-plus"></i> Tambah Kategori
+    </button>
+</div>
+
+<!-- Modal Kategori -->
+<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="categoryForm" action="" method="post" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="_method" id="categoryMethod" value="POST">
+            <div class="modal-content" style="border-radius: 10px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title font-weight-bold" id="categoryModalTitle"><i class="fa fa-plus-circle text-primary"></i> Tambah Kategori</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold mb-1">Nama Kategori</label>
+                        <input class="form-control" id="cat_name" name="name" type="text" placeholder="Masukkan Nama Kategori" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold mb-1">Keterangan</label>
+                        <textarea class="form-control" id="cat_description" name="description" rows="3" placeholder="Masukkan Keterangan"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold mb-1">Urutan</label>
+                                @php
+                                    $count = \Leazycms\Web\Models\Category::whereType(current_module()->name)->whereStatus('publish')->count();
+                                @endphp
+                                <select name="sort" id="cat_sort" class="form-control">
+                                    <option value="0">Pilih</option>
+                                    @for($i=1; $i <= $count + 1; $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-bold mb-1">Status</label><br>
+                                <div class="custom-control custom-radio custom-control-inline mt-1">
+                                    <input type="radio" id="statusPublish" name="status" value="publish" class="custom-control-input" checked>
+                                    <label class="custom-control-label" for="statusPublish">Publish</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mt-1">
+                                    <input type="radio" id="statusDraft" name="status" value="draft" class="custom-control-input">
+                                    <label class="custom-control-label" for="statusDraft">Draft</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold mb-1">Ikon Kategori</label>
+                        <div id="iconPreviewContainer" style="display: none;" class="mb-2">
+                            <img id="cat_icon_preview" src="" style="height: 60px; object-fit: contain; background: #f8f9fa; border-radius: 8px; padding: 5px; border: 1px solid #dee2e6;">
+                        </div>
+                        <input accept="image/webp,image/gif,image/png,image/jpeg" class="compress-image form-control-file" name="icon" type="file">
+                        <small class="text-muted">Biarkan kosong jika tidak ingin mengubah ikon.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light shadow-sm" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary shadow-sm"><i class="fa fa-save"></i> Simpan Kategori</button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 @endif
-<div {{auth()->user()->isAdmin() || (!auth()->user()->isAdmin() && $dothing) ? 'class=col-lg-8' : 'class=col-lg-12'}}>
+<div class="col-lg-12">
+    <div class="row">
+        @php
+            $gradients = [
+                'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                'background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%)',
+                'background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)',
+                'background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)',
+                'background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)'
+            ];
+        @endphp
+        @foreach($categories as $index => $cat)
+            @php $bg = $gradients[$index % count($gradients)]; @endphp
+            <div class="col-md-6 mb-3 px-2">
+                <div class="list-group h-100">
+                    <div class="list-group-item d-flex align-items-center shadow-sm text-white border-0 h-100" style="border-radius: 10px; padding: 12px 15px; {{ $bg }};">
+                        
+                        <!-- Icon Paling Kiri -->
+                        <div class="mr-3">
+                            @if($cat->icon && media_exists($cat->icon))
+                                <img src="{{ url($cat->icon) }}" style="height: 45px; width: 45px; object-fit: contain; background: rgba(255,255,255,0.25); border-radius: 8px; padding: 4px;" alt="icon">
+                            @else
+                                <div style="height: 45px; width: 45px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.25); border-radius: 8px;">
+                                    <i class="fa fa-folder-open fa-lg"></i>
+                                </div>
+                            @endif
+                        </div>
 
-<table class="display table table-hover table-bordered datatable" style="background:#f7f7f7;width:100%">
-<thead style="text-transform:uppercase;color:#444">
-  <tr>
+                        <!-- Judul dan Info Kategori -->
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 font-weight-bold" style="letter-spacing: 0.5px;">{{ $cat->name }}</h5>
+                            <small style="opacity: 0.9; font-size: 0.85rem;">
+                                <i class="fa fa-file-text-o mr-1"></i> {{ $cat->posts_count }} Data Terkait
+                            </small>
+                        </div>
 
-    <th style="width:5px;vertical-align: middle">NO</th>
-    <th style="vertical-align: middle;width:60px">Icon</th>
-    <th style="vertical-align: middle">Nama</th>
-    <th style="width:100px;vertical-align: middle">Data</th>
-    <th style="width:100px;vertical-align: middle">Dibuat</th>
-    <th style="width:15px;vertical-align: middle">Aksi</th>
-  </tr>
-</thead>
-<tbody style="background:#fff">
-</tbody>
-</table>
+                        <!-- Status dan Icon Aksi di Paling Kanan -->
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-white {{ $cat->status == 'publish' ? 'text-success' : 'text-secondary' }} px-3 py-2 shadow-sm mr-3" style="border-radius: 20px; font-size: 0.75rem;">
+                                <i class="fa {{ $cat->status == 'publish' ? 'fa-check-circle' : 'fa-archive' }} mr-1"></i> {{ ucfirst($cat->status) }}
+                            </span>
+                            
+                            <div class="btn-group shadow-sm" style="border-radius: 6px; overflow: hidden;">
+                                @if($cat->status == 'publish' && $cat->posts_count > 0)
+                                    <a target="_blank" href="{{ url($cat->url) }}" class="btn btn-light btn-sm" title="Preview"><i class="fa fa-globe text-info"></i></a>
+                                @endif
+                                <button type="button" onclick="openEditModal({{ $cat->id }}, '{{ addslashes($cat->name) }}', '{{ addslashes($cat->description) }}', {{ $cat->sort }}, '{{ $cat->status }}', '{{ $cat->icon && media_exists($cat->icon) ? url($cat->icon) : '' }}')" class="btn btn-light btn-sm" title="Edit"><i class="fa fa-edit text-warning"></i></button>
+                                @if(!$cat->posts()->exists())
+                                    <button onclick="deleteAlert('{{ route(get_post_type() . '.category.destroy', $cat->id) }}')" class="btn btn-light btn-sm" title="Hapus"><i class="fa fa-trash text-danger"></i></button>
+                                @endif
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        @endforeach
+        
+        @if($categories->count() == 0)
+            <div class="col-12 text-center py-5">
+                <div class="text-muted">
+                    <i class="fa fa-folder-open fa-4x mb-3 text-light"></i>
+                    <h5>Belum ada kategori</h5>
+                    <p>Silakan tambah kategori baru dengan menekan tombol Tambah Kategori.</p>
+                </div>
+            </div>
+        @endif
+    </div>
 </div>
 </div>
 <script type="text/javascript">
-    window.addEventListener('DOMContentLoaded', function() {
-        var table = $('.datatable').DataTable({
-            responsive: true,
-            processing: true,
-            serverSide: true,
-            aaSorting: [],
-            ajax: {
-                method: "POST",
-                url: "{{ route(get_post_type() . '.category.datatable') }}",
-                data: function (d) {
-                d._token = "{{ csrf_token() }}";
-                 d.search = $("input[type=search]").val();
-                }
+    const storeRoute = '{{ route(get_post_type() . ".category.store") }}';
+    const updateRouteTemplate = '{{ route(get_post_type() . ".category.update", ":id") }}';
 
-            },
-            lengthMenu: [10, 20],
-            deferRender: true,
-            columns: [
-                {
-                    className: 'text-center',
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'thumbnail',
-                    name: 'thumbnail',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'name',
-                    name: 'name',
-                    orderable: false,
-                    searchable: true
-                },
+    function openCreateModal() {
+        $('#categoryModalTitle').html('<i class="fa fa-plus-circle text-primary"></i> Tambah Kategori');
+        $('#categoryForm').attr('action', storeRoute);
+        $('#categoryMethod').val('POST');
+        
+        $('#cat_name').val('');
+        $('#cat_description').val('');
+        $('#cat_sort').val('0');
+        $('#statusPublish').prop('checked', true);
+        
+        $('#iconPreviewContainer').hide();
+        $('#cat_icon_preview').attr('src', '');
+        
+        $('#categoryModal').modal('show');
+    }
 
-                {
-                    data: 'posts_count',
-                    name: 'posts_count',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'created_at',
-                    name: 'created_at',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    className: 'text-center',
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false
-                },
-            ],
-            responsive: true,
-
-        });
-
-
-    });
+    function openEditModal(id, name, description, sort, status, iconUrl) {
+        $('#categoryModalTitle').html('<i class="fa fa-edit text-warning"></i> Edit Kategori');
+        $('#categoryForm').attr('action', updateRouteTemplate.replace(':id', id));
+        $('#categoryMethod').val('PUT');
+        
+        $('#cat_name').val(name);
+        $('#cat_description').val(description);
+        $('#cat_sort').val(sort || '0');
+        
+        if(status === 'publish') {
+            $('#statusPublish').prop('checked', true);
+        } else {
+            $('#statusDraft').prop('checked', true);
+        }
+        
+        if (iconUrl) {
+            $('#cat_icon_preview').attr('src', iconUrl);
+            $('#iconPreviewContainer').show();
+        } else {
+            $('#iconPreviewContainer').hide();
+            $('#cat_icon_preview').attr('src', '');
+        }
+        
+        $('#categoryModal').modal('show');
+    }
 </script>
-@push('styles')
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.4.1/css/rowReorder.dataTables.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-@endpush
-@push('scripts')
-<script type="text/javascript" src="{{secure_asset('backend/js/plugins/jquery.dataTables.min.js')}}"></script>
-     <script type="text/javascript" src="{{secure_asset('backend/js/plugins/dataTables.bootstrap.min.js')}}"></script>
-     <script type="text/javascript" src="https://cdn.datatables.net/rowreorder/1.4.1/js/dataTables.rowReorder.min.js"></script>
-     <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-@endpush
 @include('cms::backend.layout.js')
 @endsection

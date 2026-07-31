@@ -21,7 +21,18 @@ class CategoryController extends Controller implements HasMiddleware
     {
         $request->user()->hasRole('category' . get_post_type(), __FUNCTION__);
         $dothing = !$request->user()->hasRole('category' . get_post_type(), 'create', 'noredirect') ? true : false;
-        return view('cms::backend.categories.index', ['category' => null, 'dothing' => $dothing]);
+        $categories = Category::whereType(get_post_type())
+            ->withCount('posts')
+            ->orderBy('sort')
+            ->when(config('modules.multisite_enabled'), function ($q) {
+                return $q->withTenant();
+            })
+            ->get();
+        return view('cms::backend.categories.index', [
+            'category' => null,
+            'categories' => $categories,
+            'dothing' => $dothing,
+        ]);
     }
     public function datatable(Request $request)
     {
@@ -46,8 +57,10 @@ class CategoryController extends Controller implements HasMiddleware
             })
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                $btn .= '<a target="_blank" href="' . url($row->url) . '"  class="btn btn-info btn-sm"><i class="fa fa-globe"></i></a>';
-                $btn .= auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . $row->type, 'update', true) ? '<a href="' . route(get_post_type() . '.category.edit', $row->id) . '"  class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>' : null;
+                if ($row->status == 'publish' && $row->posts_count > 0) {
+                    $btn .= '<a target="_blank" href="' . url($row->url) . '"  class="btn btn-info btn-sm"><i class="fa fa-globe"></i></a>';
+                }
+                $btn .= auth()->user()->isAdmin() || !auth()->user()->hasRole('category' . $row->type, 'update', true) ? '<a href="javascript:void(0)" onclick="editCategory(\'' . route(get_post_type() . '.category.edit', $row->id) . '\')" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>' : null;
                 $btn .= !$row->posts()->exists() ? '<button onclick="deleteAlert(\'' . route(get_post_type() . '.category.destroy', $row->id) . '\')" class="btn btn-danger btn-sm"> <i class="fa fa-trash"></i> </button>' : '';
                 $btn .= '</div>';
                 return $btn;
@@ -57,13 +70,15 @@ class CategoryController extends Controller implements HasMiddleware
             })
             ->addColumn('thumbnail', function ($row) {
                 return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
-
+            })
+            ->addColumn('status', function ($row) {
+                return $row->status == 'publish' ? '<span class="badge badge-success">Publish</span>' : '<span class="badge badge-secondary">Draft</span>';
             })
             ->addColumn('created_at', function ($row) use ($isMainDomain) {
                 return "<small>" . $row->created_at->translatedFormat('d F Y H:i') . "</small>" . (config('modules.multisite_enabled') && $isMainDomain ? '<br><small>' . $row->tenant?->domain . '</small>' : '');
 
             })
-            ->rawColumns(['action', 'name', 'thumbnail', 'created_at'])
+            ->rawColumns(['action', 'name', 'thumbnail', 'status', 'created_at'])
             ->toJson();
     }
     public function create(Request $request)
@@ -76,10 +91,13 @@ class CategoryController extends Controller implements HasMiddleware
         $role = config('modules.multisite_enabled') ? Rule::unique('categories')->where('type', get_post_type())->where('tenant_id', tenant()->id) : Rule::unique('categories')->where('type', get_post_type());
         $data = $request->validate([
             'name' => 'required|max:100|min:3|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|' . $role,
-            'icon' => 'nullable|mimetypes:image/jpeg,image/png,image/webp',
+            'icon' => 'nullable|string',
             'sort' => 'nullable|numeric',
             'description' => 'nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u|max:200|',
             'status' => 'required|string|in:publish,draft',
+        ],[
+           
+            'name.unique'=>'Nama Sudah digunakan'
         ]);
         $data['slug'] = $slug = str($request->name)->slug();
         $data['type'] = get_post_type();
@@ -89,11 +107,18 @@ class CategoryController extends Controller implements HasMiddleware
             $fname = $data->addFile([
                 'file' => $request->file('icon'),
                 'puprose' => 'categoryicon_' . $data->id,
-                'mime_type' => ['image/jpeg', 'image/png']
+                'mime_type' => ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
             ]);
             $data->update([
                 'icon' => $fname
 
+            ]);
+        }
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Kategori berhasil ditambahkan'
             ]);
         }
         return back()->with('success', 'Kategori ' . current_module()->title . ' berhasil ditambah');
@@ -102,8 +127,16 @@ class CategoryController extends Controller implements HasMiddleware
     {
         $request->user()->hasRole('category' . get_post_type(), 'update');
         $dothing = !$request->user()->hasRole('category' . get_post_type(), 'update', 'noredirect') ? true : false;
+        
+        $categories = Category::whereType(get_post_type())
+            ->withCount('posts')
+            ->orderBy('sort')
+            ->when(config('modules.multisite_enabled'), function ($q) {
+                return $q->withTenant();
+            })
+            ->get();
 
-        return view('cms::backend.categories.index', ['category' => $category, 'dothing' => $dothing]);
+        return view('cms::backend.categories.index', ['category' => $category, 'dothing' => $dothing, 'categories' => $categories]);
     }
     public function update(Request $request, Category $category)
     {
@@ -111,7 +144,7 @@ class CategoryController extends Controller implements HasMiddleware
         $role = config('modules.multisite_enabled') ? Rule::unique('categories')->where('type', get_post_type())->where('tenant_id', tenant()->id)->ignore($category->id) : Rule::unique('categories')->where('type', get_post_type())->ignore($category->id);
         $data = $request->validate([
             'name' => 'required|max:100|min:3|string|' . $role,
-            'icon' => 'nullable|mimetypes:image/jpeg,image/png,image/webp',
+            'icon' => 'nullable|string',
             'sort' => 'nullable|numeric',
             'description' => 'max:200|nullable|string|regex:/^[a-zA-Z\s\p{P}]+$/u',
             'status' => 'required|string|in:publish,draft',
@@ -123,7 +156,7 @@ class CategoryController extends Controller implements HasMiddleware
             $fname = $category->addFile([
                 'file' => $request->file('icon'),
                 'puprose' => 'categoryicon_' . $category->id,
-                'mime_type' => ['image/jpeg', 'image/png']
+                'mime_type' => ['image/jpeg', 'image/png','image/webp','image/gif']
             ]);
             $data['icon'] = $fname;
         } elseif ($request->has('icon') && is_string($request->icon)) {

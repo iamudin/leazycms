@@ -189,7 +189,7 @@
               <th style="width:10px;vertical-align: middle">#</th>
             @endif
             @if(current_module()->form->thumbnail)
-              <th style="width:55px;vertical-align: middle">Gambar</th>
+              <th style="width:55px;vertical-align: middle;">Gambar</th>
             @endif
             <th style="vertical-align: middle">{{current_module()->datatable->data_title}}</th>
             @if($parent = current_module()->form->post_parent)

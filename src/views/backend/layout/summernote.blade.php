@@ -288,8 +288,12 @@
             $('.modal-backdrop').hide();
         });
 
+        let defaultPlaceholder = 'Tuliskan keterangan tentang {{ current_module()->datatable->data_title }} disini...';
+        let initialTitle = $('input[name="title"]').val();
+        let initPlaceholder = initialTitle ? 'Tuliskan keterangan tentang ' + initialTitle + ' disini...' : defaultPlaceholder;
+
         $("#editor").summernote({
-            placeholder: 'Tulis isi..',
+            placeholder: initPlaceholder,
             height: 600,
             codeviewFilter: true,
             codeviewIframeFilter: false,
@@ -563,6 +567,12 @@
                     .css('borderColor', '#ccc')
                     .css('padding', '5px');
             },
+        });
+
+        $('input[name="title"]').on('input', function() {
+            let val = $(this).val();
+            let newPlaceholder = val ? 'Tuliskan keterangan tentang ' + val + ' disini...' : defaultPlaceholder;
+            $('#editor').next('.note-editor').find('.note-placeholder').html(newPlaceholder);
         });
 
         $('#btnSaveImageEdit').on('click', function () {

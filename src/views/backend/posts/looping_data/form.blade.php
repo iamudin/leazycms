@@ -31,10 +31,6 @@
              @include('cms::backend.posts.looping_data.option')
              @elseif('text' == $r[1])
              @include('cms::backend.posts.looping_data.text')
-             @elseif('date' == $r[1])
-             @include('cms::backend.posts.looping_data.date')
-             @elseif('datetime' == $r[1])
-             @include('cms::backend.posts.looping_data.datetime')
              @elseif('email' == $r[1])
              @include('cms::backend.posts.looping_data.email')
              @elseif('number' == $r[1])
@@ -42,6 +38,7 @@
              @elseif('textarea' == $r[1])
              @include('cms::backend.posts.looping_data.textarea')
              @else
+             <input placeholder="Entri Data {{ucwords(mb_strtolower($r[0]))}}" type="{{$r[1]}}"  class="form-control form-control-sm" style="min-width:80px" name="{{_us($r[0])}}[]" value="{{$l?->$k ??null}}">
              @endif
 
           </td>

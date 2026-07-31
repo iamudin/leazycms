@@ -3049,7 +3049,7 @@ if (!function_exists('renderTemplateFile')) {
                 continue;
             }
             if (isset($item['children']) && !empty($item['children'])) {
-                echo '<li class="folder"> <i class="fa fa-folder"></i> <span class="pull-right text-danger"><i class="fa fa-file-circle-plus   pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> </span>' . htmlspecialchars($item['name']);
+                echo '<li class="folder"> <i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-folder-plus pointer" title="Create Folder" onclick="folderPrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-file-circle-plus pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-trash pointer" title="Delete Folder" onclick="deleteDir(\'' . $currentPath . '\')"></i> </span>';
                 renderTemplateFile($item['children'], $currentPath);
                 echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
@@ -3062,7 +3062,7 @@ if (!function_exists('renderTemplateFile')) {
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {
 
-                echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-file-circle-plus  pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> </span></li>';
+                echo '<li><i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-folder-plus pointer" onclick="folderPrompt(\'' . $currentPath . '\')" title="Create Folder"></i> &nbsp; <i class="fa fa-file-circle-plus pointer" onclick="filePrompt(\'' . $currentPath . '\')" title="Create File"></i> &nbsp; <i class="fa fa-trash pointer" title="Delete Folder" onclick="deleteDir(\'' . $currentPath . '\')"></i> </span></li>';
             }
         }
         echo '</ul>';
