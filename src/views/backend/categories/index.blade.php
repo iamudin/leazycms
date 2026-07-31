@@ -100,7 +100,7 @@
         @endphp
         @foreach($categories as $index => $cat)
             @php $bg = $gradients[$index % count($gradients)]; @endphp
-            <div class="col-md-6 mb-3 px-2">
+            <div class="col-md-4 mb-3 px-2">
                 <div class="list-group h-100">
                     <div class="list-group-item d-flex align-items-center shadow-sm text-white border-0 h-100" style="border-radius: 10px; padding: 12px 15px; {{ $bg }};">
                         
