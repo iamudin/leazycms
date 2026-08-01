@@ -871,7 +871,7 @@ if (!function_exists('main_domain')) {
 if (!function_exists('polling_form')) {
     function polling_form($keyword)
     {
-        $data = clone (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
+        $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
         if ($data) {
             $cookieValue = request()->cookie('polling_' . $keyword);
             if (empty($cookieValue)) {
