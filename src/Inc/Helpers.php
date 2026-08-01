@@ -871,10 +871,23 @@ if (!function_exists('main_domain')) {
 if (!function_exists('polling_form')) {
     function polling_form($keyword)
     {
-        if (empty(request()->cookie('polling_' . $keyword))) {
-            $data = (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
-            if ($data) {
+        $data = clone (new \Leazycms\Web\Models\PollingTopic)->with('options')->whereKeyword($keyword)->whereStatus('publish')->first();
+        if ($data) {
+            $cookieValue = request()->cookie('polling_' . $keyword);
+            if (empty($cookieValue)) {
                 return View::make('cms::backend.polling.web.form', compact('data'));
+            } else {
+                $optionIds = $data->options->pluck('id')->toArray();
+                $totalVotes = \Leazycms\Web\Models\PollingResponse::whereIn('polling_option_id', $optionIds)->count();
+
+                $options = $data->options->map(function($option) use ($totalVotes) {
+                    $votes = \Leazycms\Web\Models\PollingResponse::where('polling_option_id', $option->id)->count();
+                    $option->votes = $votes;
+                    $option->percentage = $totalVotes > 0 ? round(($votes / $totalVotes) * 100, 1) : 0;
+                    return $option;
+                });
+
+                return View::make('cms::backend.polling.web.result', compact('data', 'options', 'totalVotes', 'cookieValue'));
             }
         }
     }
@@ -956,6 +969,28 @@ if (!function_exists('map_by_coordinate')) {
         return $embedUrl;
     }
 }
+
+if (!function_exists('embed_my_profile_coordinate')) {
+    function embed_my_profile_coordinate($styles = 'width: 100%; height: 100%; border: 0;', $zoom = 15)
+    {
+        $lat = get_option('latitude');
+        // fallback in case of typo by user
+        if (!$lat) {
+            $lat = get_option('latitute'); 
+        }
+        $long = get_option('longitude');
+        
+        $url = map_by_coordinate($long, $lat, $zoom);
+        
+        if (!$url) {
+            // Optional: placeholder image or empty string if no coordinates
+            return '';
+        }
+        
+        return '<iframe src="' . htmlspecialchars($url) . '" style="' . htmlspecialchars($styles) . '" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+    }
+}
+
 
 if (!function_exists('this_agent')) {
     function this_agent()

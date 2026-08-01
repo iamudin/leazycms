@@ -44,7 +44,12 @@
           </td>
 
           @endforeach
-          <td class="text-center" >  @if(!Route::is($post->type.'.show')) <i onclick="if(confirm('Hapus Data Baris?')){$('#data-{{$y}}').remove()}" class="fa fa-trash pointer text-danger" style="display:inline" aria-hidden></i> @endif </td>
+          <td class="text-center" style="min-width: 70px;">  
+             @if(!Route::is($post->type.'.show')) 
+                <i class="fa fa-arrows-alt text-muted sort-handle mr-2" style="cursor: move; display:inline;" aria-hidden="true" title="Tarik untuk mengurutkan"></i>
+                <i onclick="if(confirm('Hapus Data Baris?')){$('#data-{{$y}}').remove()}" class="fa fa-trash pointer text-danger" style="display:inline" aria-hidden></i> 
+             @endif 
+          </td>
           </tr>
           @endforeach
 
@@ -78,3 +83,19 @@
        @endif
     </table>
  </div>
+
+@if(!Route::is($post->type.'.show'))
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    (function() {
+        var tbody = document.querySelector('.coldata');
+        if (tbody && typeof Sortable !== 'undefined') {
+            new Sortable(tbody, {
+                animation: 150,
+                handle: '.sort-handle',
+                ghostClass: 'bg-light'
+            });
+        }
+    })();
+</script>
+@endif

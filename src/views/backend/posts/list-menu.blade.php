@@ -159,10 +159,10 @@
             <div class="input-group">
               <input type="text" class="menu form-control iconx" id="menu-icon-input"
                 accept="image/png,image/webp,image/gif,image/jpeg" name="icons" placeholder="fa fa-info atau Url Media"
-                value="-">
+                value="-" onkeyup="document.getElementById('menu-icon-preview').className = this.value || 'fa fa-flag'">
               <div class="input-group-append">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown"
-                  aria-haspopup="true" aria-expanded="false" title="Pilih Icon"><i class="fa fa-flag"></i></button>
+                  aria-haspopup="true" aria-expanded="false" title="Pilih Icon"><i class="fa fa-flag" id="menu-icon-preview"></i></button>
                 <div class="dropdown-menu dropdown-menu-right p-2 shadow"
                   style="width: 250px; max-height: 200px; overflow-y: auto;" id="fa-icon-picker">
                   <!-- Populated by JS -->
@@ -221,42 +221,68 @@
 <script>
   $(function () {
     if ($('#fa-icon-picker').length) {
-      // Increase width to fit more icons nicely
-      $('#fa-icon-picker').css({ 'width': '400px', 'max-height': '300px' });
+      $('#fa-icon-picker').css({ 'width': '350px', 'max-height': '350px' });
 
-      var icons = [
-        'fa-info', 'fa-info-circle', 'fa-question', 'fa-question-circle', 'fa-exclamation', 'fa-exclamation-circle', 'fa-exclamation-triangle',
-        'fa-home', 'fa-user', 'fa-users', 'fa-user-circle', 'fa-user-plus', 'fa-id-badge', 'fa-id-card', 'fa-address-book', 'fa-address-card',
-        'fa-cog', 'fa-cogs', 'fa-wrench', 'fa-envelope', 'fa-envelope-open', 'fa-phone', 'fa-phone-square', 'fa-mobile', 'fa-tablet', 'fa-desktop', 'fa-laptop',
-        'fa-building', 'fa-industry', 'fa-hospital-o', 'fa-university', 'fa-briefcase', 'fa-suitcase', 'fa-plane', 'fa-car', 'fa-bus', 'fa-truck',
-        'fa-file', 'fa-file-text', 'fa-file-pdf-o', 'fa-file-word-o', 'fa-file-excel-o', 'fa-file-powerpoint-o', 'fa-file-archive-o', 'fa-file-image-o', 'fa-file-video-o', 'fa-file-audio-o',
-        'fa-download', 'fa-upload', 'fa-cloud-download', 'fa-cloud-upload', 'fa-save', 'fa-folder', 'fa-folder-open',
-        'fa-camera', 'fa-image', 'fa-picture-o', 'fa-video-camera', 'fa-music', 'fa-headphones', 'fa-microphone',
-        'fa-bell', 'fa-bell-o', 'fa-calendar', 'fa-calendar-check-o', 'fa-clock-o', 'fa-check', 'fa-check-circle', 'fa-check-square', 'fa-times', 'fa-times-circle', 'fa-plus', 'fa-plus-circle', 'fa-minus', 'fa-minus-circle',
-        'fa-search', 'fa-search-plus', 'fa-search-minus', 'fa-globe', 'fa-link', 'fa-external-link', 'fa-paper-plane', 'fa-send',
-        'fa-list', 'fa-list-ul', 'fa-list-ol', 'fa-th', 'fa-th-large', 'fa-th-list', 'fa-table',
-        'fa-chart-bar', 'fa-bar-chart', 'fa-pie-chart', 'fa-line-chart', 'fa-area-chart',
-        'fa-map-marker', 'fa-map', 'fa-location-arrow', 'fa-compass',
-        'fa-star', 'fa-star-o', 'fa-star-half-o', 'fa-heart', 'fa-heart-o', 'fa-thumbs-up', 'fa-thumbs-down',
-        'fa-shopping-cart', 'fa-shopping-bag', 'fa-shopping-basket', 'fa-credit-card', 'fa-money', 'fa-tags', 'fa-ticket',
-        'fa-bullhorn', 'fa-gavel', 'fa-balance-scale', 'fa-graduation-cap', 'fa-book', 'fa-newspaper-o',
-        'fa-angle-right', 'fa-angle-left', 'fa-angle-up', 'fa-angle-down', 'fa-arrow-right', 'fa-arrow-left', 'fa-arrow-up', 'fa-arrow-down',
-        'fa-chevron-right', 'fa-chevron-left', 'fa-chevron-up', 'fa-chevron-down', 'fa-caret-right', 'fa-caret-down',
-        'fa-share', 'fa-share-alt', 'fa-reply', 'fa-refresh', 'fa-sync', 'fa-spinner', 'fa-circle-o-notch',
-        'fa-lock', 'fa-unlock', 'fa-key', 'fa-shield', 'fa-eye', 'fa-eye-slash',
-        'fa-facebook', 'fa-twitter', 'fa-instagram', 'fa-youtube', 'fa-whatsapp', 'fa-telegram', 'fa-github', 'fa-linkedin'
-      ];
-      var html = '<div class="d-flex flex-wrap justify-content-center">';
-      icons.forEach(function (icon) {
-        html += '<button type="button" class="btn btn-light btn-sm m-1 icon-pick-btn" data-icon="fa ' + icon + '" style="width:35px;height:35px;" title="' + icon + '"><i class="fa ' + icon + '"></i></button>';
+      var initialHtml = `
+        <div class="px-2 pb-2">
+            <input type="text" id="fa-search-input" class="form-control form-control-sm" placeholder="Ketik nama icon..." onclick="event.stopPropagation()">
+        </div>
+        <div id="fa-icon-container" style="max-height: 250px; overflow-y: auto;">
+            <div class="text-center w-100 py-3 text-muted" id="fa-loading">
+                <i class="fa fa-spinner fa-spin fa-2x"></i><br><small>Memuat Icon...</small>
+            </div>
+        </div>
+      `;
+      $('#fa-icon-picker').html(initialHtml);
+
+      fetch('https://raw.githubusercontent.com/FortAwesome/Font-Awesome/5.15.4/metadata/icons.json')
+        .then(response => response.json())
+        .then(data => {
+            let iconsList = Object.keys(data).map(key => {
+                let style = 'fa';
+                if (data[key].styles.includes('brands')) style = 'fab';
+                else if (data[key].styles.includes('solid')) style = 'fas';
+                else if (data[key].styles.includes('regular')) style = 'far';
+                
+                return {
+                    class: style + ' fa-' + key,
+                    name: key
+                };
+            });
+
+            let html = '<div class="d-flex flex-wrap justify-content-center">';
+            iconsList.forEach(icon => {
+                html += `
+                <button type="button" class="btn btn-light btn-sm m-1 icon-pick-btn" data-icon="${icon.class}" title="${icon.name}" style="width:35px;height:35px;">
+                    <i class="${icon.class}"></i>
+                </button>`;
+            });
+            html += '</div>';
+            $('#fa-icon-container').html(html);
+        })
+        .catch(err => {
+            console.error('Gagal memuat API icon', err);
+            $('#fa-loading').html('<div class="text-center text-danger py-3"><p style="font-size:12px;">Gagal memuat icon.</p></div>');
+        });
+
+      $(document).on('keyup', '#fa-search-input', function() {
+          var filter = $(this).val().toLowerCase();
+          var nodes = document.querySelectorAll('#fa-icon-container .icon-pick-btn');
+          for (var i = 0; i < nodes.length; i++) {
+              if (nodes[i].getAttribute('title').toLowerCase().includes(filter) || nodes[i].getAttribute('data-icon').toLowerCase().includes(filter)) {
+                  nodes[i].style.display = "inline-block";
+              } else {
+                  nodes[i].style.display = "none";
+              }
+          }
       });
-      html += '</div>';
-      $('#fa-icon-picker').html(html);
 
       $(document).off('click', '.icon-pick-btn').on('click', '.icon-pick-btn', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        $('#menu-icon-input').val($(this).data('icon'));
+        var selectedIcon = $(this).data('icon');
+        $('#menu-icon-input').val(selectedIcon);
+        $('#menu-icon-preview').attr('class', selectedIcon);
         $(this).closest('.dropdown-menu').removeClass('show');
       });
 

@@ -26,9 +26,15 @@ class WebController extends Controller
                 'reference' => $request->headers->get('referer') ?? '',
             ]);
             $cookieName = 'polling_' . $polling->keyword;
-            $cookieValue = 'voted';
+            $cookieValue = $request->answer;
             $duration = $polling->duration;
-            return response('')
+
+            // Set cookie in request so polling_form can read it
+            $request->cookies->set($cookieName, $cookieValue);
+            
+            $html = polling_form($polling->keyword);
+
+            return response($html)
                 ->cookie($cookieName, $cookieValue, $duration);
         }
     }

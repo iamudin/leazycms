@@ -800,7 +800,7 @@
     </div>
   </div>
 </div>
-
+@if(current_module()->form->category)
 @push('scripts')
 <script>
     $('#formAddCategory').on('submit', function(e) {
@@ -839,5 +839,6 @@
     });
 </script>
 @endpush
+@endif
 
 @endsection

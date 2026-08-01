@@ -654,7 +654,9 @@ class PanelController extends Controller implements HasMiddleware
             'instagram',
             'twitter',
             'whatsapp',
-            'jam_kerja'
+            'jam_kerja',
+            'visi',
+            'misi'
         ];
         if ($request->isMethod('put')) {
             foreach ($data as $row) {
@@ -677,8 +679,10 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 } else {
                     $value = $request->$key;
-                    if ($key == 'jam_kerja') {
+                    if ($key == 'jam_kerja' || $key == 'visi') {
                         $value = nl2br(strip_tags($value));
+                    } elseif ($key == 'misi') {
+                        $value = strip_tags($value, '<p><br><ul><ol><li><b><strong><i><em><u>');
                     } else {
                         $value = strip_tags($value);
                     }

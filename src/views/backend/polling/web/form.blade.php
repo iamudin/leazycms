@@ -38,11 +38,26 @@
 }
 
 /* Styling untuk tombol kirim */
-
+.polling-footer .btn-submit-polling {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%); /* Tailwind Gray-700 to Gray-800 */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.2);
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 5px;
+}
 
 /* Efek hover pada tombol kirim */
 .polling-footer .btn-submit-polling:hover {
-    background-color: #2980b9; /* Warna biru lebih gelap */
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%); /* Tailwind Gray-600 to Gray-700 */
+    box-shadow: 0 6px 16px rgba(31, 41, 55, 0.3);
+    transform: translateY(-2px);
 }
 
 /* Menyembunyikan tombol kirim secara default */
@@ -185,7 +200,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     showConfirmButton: false
                 });
 
-                $('.polling-form-{{ $data->id }}').hide();
+                if(response) {
+                    $('.polling-form-{{ $data->id }}').replaceWith(response);
+                } else {
+                    $('.polling-form-{{ $data->id }}').hide();
+                }
             },
 
             error: function (xhr) {

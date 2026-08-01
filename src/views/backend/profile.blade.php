@@ -128,6 +128,46 @@
                                                     Gunakan tombol Enter untuk baris baru.
                                                 </small>
                                             </div>
+
+                                            <div class="form-group mt-3">
+                                                <small>Visi</small>
+                                                @php
+                                                    $visi = get_option('visi');
+                                                    $visi = preg_replace('/<br\s*\/?>/i', "&#10;", $visi);
+                                                @endphp
+                                                <textarea class="form-control form-control-sm" name="visi" rows="3" placeholder="Masukkan Visi Organisasi">{!! old('visi', $visi) !!}</textarea>
+                                            </div>
+
+                                            <div class="form-group mt-3">
+                                                <small>Misi</small>
+                                                <!-- Quill CSS -->
+                                                <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+                                                
+                                                <div id="misi-editor" style="height: 150px; background: #fff; border-radius: 0 0 4px 4px;">{!! old('misi', get_option('misi')) !!}</div>
+                                                <input type="hidden" name="misi" id="misi-input" value="{{ old('misi', get_option('misi')) }}">
+                                                
+                                                <!-- Quill JS -->
+                                                <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+                                                <script>
+                                                    document.addEventListener('DOMContentLoaded', function() {
+                                                        var quill = new Quill('#misi-editor', {
+                                                            theme: 'snow',
+                                                            modules: {
+                                                                toolbar: [
+                                                                    ['bold', 'italic', 'underline'],
+                                                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                                                    ['clean']
+                                                                ]
+                                                            }
+                                                        });
+                                                        quill.on('text-change', function() {
+                                                            var html = quill.root.innerHTML;
+                                                            if (html === '<p><br></p>') html = '';
+                                                            document.getElementById('misi-input').value = html;
+                                                        });
+                                                    });
+                                                </script>
+                                            </div>
                                             <div class="form-group">
                                                 <small class="mb-5">Informasi Statis<br></small>
                                                 @foreach (array_merge(['Sejarah', 'Visi dan Misi', 'Struktur Organisasi'], config('modules.static_menu_profile')) as $key => $page)
