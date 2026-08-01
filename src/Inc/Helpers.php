@@ -132,7 +132,6 @@ if (!function_exists('forbidden_keyword')) {
             'slot',
             'judi',
             'casino',
-            'bet',
             'togel',
             'gacor',
             'maxwin',
