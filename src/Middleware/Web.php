@@ -227,7 +227,7 @@ class Web
         |--------------------------------------------------------------------------
         */
 
-        $cacheEnabled = app()->routesAreCached();
+        $cacheEnabled = config('modules.multisite_enabled') ? true : app()->routesAreCached();
 
         $isCacheableRequest =
             $request->isMethod('GET')
