@@ -131,10 +131,14 @@ class Web
                     $attributes .= ' alt="' . formatFilename(htmlspecialchars($altValue, ENT_QUOTES)) . '"';
                 }
 
+                // Tambahkan onerror untuk fallback ke noimage jika gagal memuat
+                if (!preg_match('/\bonerror=["\']/', $attributes)) {
+                    $attributes .= ' onerror="this.onerror=null;this.src=\'/noimage.webp\';"';
+                }
+
                 // Cache jika class mengandung lz-thumbnail
 
-
-                return '<img ' . $attributes . ' src="/shimmer.gif">';
+                return '<img ' . $attributes . ' src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">';
             }, $content);
             if (!is_custom_web_route_matched()) {
                 $footer = '';
@@ -151,9 +155,24 @@ class Web
                     $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>';
                 }
 
+                $footer .= '<script>
+document.addEventListener("lazybeforeunveil", function(e){
+    var img = e.target;
+    setTimeout(function(){
+        if(img.classList.contains("lazyloading")){
+            img.src = "/noimage.webp";
+            img.classList.remove("lazyloading");
+            img.classList.add("lazyloaded");
+        }
+    }, 5000);
+});
+</script>';
+
+                $styleInjection = '<style>img.lazyload, img.lazyloading { background: url("/shimmer.gif") no-repeat center center; background-size: cover; color: transparent; }</style>';
+                $content = preg_replace('/<\/head>/i', $styleInjection . '</head>', $content, 1);
 
                 $content = preg_replace(
-                    '/<\/body>/',
+                    '/<\/body>/i',
                     $footer . '</body>',
                     $content
                 );

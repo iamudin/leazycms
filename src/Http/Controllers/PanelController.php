@@ -740,6 +740,7 @@ class PanelController extends Controller implements HasMiddleware
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
             ['Accesibility Widget', 'accessibility_widget'],
+            ['Single Page Application (SPA)', 'use_spa'],
             ['Sub App Enabled', 'sub_app_enabled'],
         );
         $data['security'] = array(

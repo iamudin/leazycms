@@ -166,9 +166,13 @@ class LoginController extends Controller
                     'active_session' => md5(md5($request->session()->id())),
                 ]);
 
-                if ($request->ajax())
-                    return response()->json(['status' => 'success', 'redirect' => url('/' . admin_path())]);
-                return redirect()->intended('/' . admin_path());
+                $intendedUrl = redirect()->intended('/' . admin_path())->getTargetUrl();
+
+                if ($request->ajax()) {
+                    return response()->json(['status' => 'success', 'redirect' => $intendedUrl]);
+                }
+                
+                return redirect($intendedUrl);
             }
 
             Auth::logout();
