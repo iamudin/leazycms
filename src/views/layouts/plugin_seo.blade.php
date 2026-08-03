@@ -7,7 +7,11 @@
 <title>{{$title}}</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+@if(config('modules.multisite_enabled') && function_exists('is_main_domain') && is_main_domain())
+<meta name="robots" content="noindex,nofollow">
+@else
 <meta name="robots" content="index,follow">
+@endif
 <meta name="distribution" content="global" >
 <meta name="rating" content="general">
 <meta property="og:site_name" content="Aplikasi {{ get_option('site_title') }}">

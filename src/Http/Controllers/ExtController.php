@@ -151,6 +151,7 @@ class ExtController extends Controller
 
     public function sitemap_xml()
     {
+        abort_if(config('modules.multisite_enabled') && function_exists('is_main_domain') && is_main_domain(), 404);
         abort_if(function_exists('is_custom_web_route_matched') && is_custom_web_route_matched(), 404);
         $this->cleanupPublicSitemaps();
 
@@ -173,6 +174,7 @@ class ExtController extends Controller
 
     public function sitemap_part($part)
     {
+        abort_if(config('modules.multisite_enabled') && function_exists('is_main_domain') && is_main_domain(), 404);
         abort_if(function_exists('is_custom_web_route_matched') && is_custom_web_route_matched(), 404);
         $this->cleanupPublicSitemaps();
 
