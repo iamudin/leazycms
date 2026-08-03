@@ -89,15 +89,7 @@ class LoginController extends Controller
         $data['description'] = get_option('site_description');
         $data['loginsubmit'] = url(admin_path());
         $data['logo'] = get_option('logo');
-        if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled')) {
-            if (!is_main_domain()) {
-                $getApp = collect(config('modules.extension_module'))->where('url', '=', 'http://' . $request->getHost())->first();
-                $data['title'] = $getApp['title'];
-                $data['description'] = $getApp['description'];
-                $data['loginsubmit'] = url('login');
-                $data['logo'] = $getApp['logo'];
-            }
-        }
+
         $viewContent = view('cms::auth.login', ['captcha' => $captchaUrl, 'data' => $data])->render();
 
         // Minimize output for performance

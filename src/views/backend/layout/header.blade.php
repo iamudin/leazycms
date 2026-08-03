@@ -98,8 +98,14 @@
 <!-- Navbar-->
 <header class="app-header"><a href="{{ route('panel.dashboard') }}" class="app-header__logo"
         style="color: var(--header-font, #fff) !important; background:transparent">
-            @if(get_option('logo_title') && get_option('logo_description') && get_option('logo_image')) <img src="{{ url('logo.webp')}}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo">  @else Admin<b>Panel</b> @endif
 
+            @if(get_option('logo') && media(get_option('logo'))->isExists())
+            <img src="{{get_option('logo') }}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo"> 
+             @elseif(get_option('logo_title') && get_option('logo_description') && get_option('logo_image')) 
+            <img src="{{ url('logo.webp')}}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo"> 
+            @else
+             Admin<b>Panel</b>
+            @endif
     </a>
     <!-- Sidebar toggle button--><a class="app-sidebar__toggle" href="#" data-toggle="sidebar"
         aria-label="Hide Sidebar" style="color: var(--header-font, #fff) !important;"></a>

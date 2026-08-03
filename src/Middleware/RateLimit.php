@@ -36,18 +36,6 @@ class RateLimit
     public function handle(Request $request, Closure $next)
     {
 
-        if (!config('modules.multisite_enabled')) {
-            if (get_option('sub_app_enabled') && get_option('sub_app_enabled') == 'Y' && collect(config('modules.extension_module'))->count()) {
-                foreach (collect(config('modules.extension_module'))->pluck('path')->toArray() as $module) {
-                    if ($request->getHost() == parse_url(config('app.url'), PHP_URL_HOST)) {
-                        config([$module . '.route' => 'panel.' . $module . '.']);
-                        config([$module . '.path_url' => $module]);
-                    }
-                }
-
-            }
-        }
-
         $adminPath = admin_path();
         $isAdminRoute = $request->is($adminPath) || $request->is($adminPath . '/*');
 
