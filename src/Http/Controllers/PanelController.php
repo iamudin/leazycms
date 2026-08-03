@@ -654,6 +654,7 @@ class PanelController extends Controller implements HasMiddleware
             'instagram',
             'twitter',
             'whatsapp',
+            'pengaduan',
             'jam_kerja',
             'visi',
             'misi'

@@ -276,6 +276,20 @@
                                                     placeholder="Masukkan nomor telepon">
                                             </div>
                                         </div>
+                                        <div class="col-md-6">
+                                          <div class="form-group">
+                                        <small>WhatsApp</small>
+                                        <input type="number" class="form-control form-control-sm" name="whatsapp"
+                                            value="{{ old('whatsapp', get_option('whatsapp')) }}" placeholder="Nomor WhatsApp">
+                                    </div>
+                                    </div>
+                                        <div class="col-md-6">
+                                          <div class="form-group">
+                                        <small>Pengaduan</small>
+                                        <input type="number" class="form-control form-control-sm" name="pengaduan"
+                                            value="{{ old('pengaduan', get_option('pengaduan')) }}" placeholder="Nomor Pengaduan">
+                                    </div>
+                                    </div>
                                     </div>
 
 
@@ -311,11 +325,7 @@
                                             placeholder="Link channel YouTube">
                                     </div>
 
-                                    <div class="form-group">
-                                        <small>WhatsApp</small>
-                                        <input type="number" class="form-control form-control-sm" name="whatsapp"
-                                            value="{{ old('whatsapp', get_option('whatsapp')) }}" placeholder="Nomor WhatsApp">
-                                    </div>
+                                  
                                     <button type="submit" class="btn-submit" style="display: none"></button>
                                 </div>
 
