@@ -388,7 +388,7 @@ return [
                 'index' => true,
                 'detail' => true,
                 'history' => true,
-                'auto_query' => false,
+                'auto_query' => true,
                 'sortable' => false,
             ],
             'public' => true,

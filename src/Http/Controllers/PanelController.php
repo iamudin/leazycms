@@ -258,8 +258,14 @@ class PanelController extends Controller implements HasMiddleware
     }
     function get_comments(Request $request, Post $post)
     {
-        $data = $post->load('comments');
-        return $data;
+        $comments = $post->comments()->latest()->paginate(2);
+        return response()->json([
+            'title' => $post->title,
+            'comments' => $comments->items(),
+            'current_page' => $comments->currentPage(),
+            'last_page' => $comments->lastPage(),
+            'total' => $comments->total()
+        ]);
     }
     function comments(Request $request, Comment $comment)
     {
@@ -654,7 +660,6 @@ class PanelController extends Controller implements HasMiddleware
             'instagram',
             'twitter',
             'whatsapp',
-            'pengaduan',
             'jam_kerja',
             'visi',
             'misi'

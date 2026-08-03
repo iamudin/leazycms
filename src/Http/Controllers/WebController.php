@@ -162,14 +162,42 @@ class WebController extends Controller
             ]);
             if (Session::get('captcha') == $request->captcha) {
 
-                $detail->addComment([
+                $meta = [];
+                if (is_array($request->input('comment_meta'))) {
+                    foreach ($request->input('comment_meta') as $key => $val) {
+                        if (is_string($val)) {
+                            $meta[$key] = strip_tags($val);
+                        }
+                    }
+                }
+
+                $comment = $detail->addComment([
                     'name' => strip_tags(substr($request->name, 0, 20)),
                     'email' => strip_tags(substr($request->email, 0, 50) ?? null),
                     'ip' => get_client_ip(),
                     'content' => nl2br(strip_tags(substr($request->comment_content, 0, 500) ?? null)),
                     'link' => strip_tags($request->link ?? null),
-                    'comment_meta' => $request->comment_meta ? cleanArrayValues($request->comment_meta) : [],
+                    'comment_meta' => $meta,
                 ]);
+
+                if (is_array($request->file('comment_meta'))) {
+                    $hasFiles = false;
+                    foreach ($request->file('comment_meta') as $key => $file) {
+                        if ($file && $file->isValid()) {
+                            $savedPath = $comment->addFile([
+                                'file' => $file,
+                                'purpose' => $key,
+                                'mime_type'=>['image/webp','application/pdf'],
+                                'random_name' => true
+                            ]);
+                            $meta[$key] = $savedPath;
+                            $hasFiles = true;
+                        }
+                    }
+                    if ($hasFiles) {
+                        $comment->update(['comment_meta' => $meta]);
+                    }
+                }
                 $request->session()->regenerateToken();
                 return response()->json(['error' => 'None'], 200);
             } else {

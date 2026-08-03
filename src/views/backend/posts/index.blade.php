@@ -247,7 +247,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Komentar <span id="modalPostId"></span></h5>
+          <h5 class="modal-title">Respon <span id="modalPostId"></span></h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -262,6 +262,9 @@
 
           <!-- Daftar komentar -->
           <ul id="commentList" class="list-group"></ul>
+          
+          <!-- Paginasi komentar -->
+          <div id="commentPagination" class="mt-3 d-flex justify-content-center"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
@@ -360,16 +363,17 @@
       });
     </script>
     <script>
-      function show_comment(post_id) {
-
-        $("#commentList").empty();
+    document.addEventListener("DOMContentLoaded", function () {
+      function showComments(postId, page = 1) {
         $("#commentLoader").show();
-
+        $("#commentList").empty();
+        $("#commentPagination").empty();
+        $("#modalPostId").text("");
         $("#commentModal").modal("show");
 
         $.ajax({
-          url: "{{ route('comments.get', null) }}/" + post_id,
-          type: "GET",
+          url: `{{ route('comments.get', '') }}/${postId}?page=${page}`,
+          method: "GET",
           success: function (res) {
             $("#commentLoader").hide();
             $("#modalPostId").text(res.title);
@@ -379,26 +383,76 @@
               $("#commentList").append(`<li class="list-group-item text-muted">Belum ada komentar</li>`);
             } else {
               comments.forEach(c => {
+                let metaHtml = '';
+                try {
+                    let metaObj = typeof c.comment_meta === 'string' ? JSON.parse(c.comment_meta) : c.comment_meta;
+                    if (metaObj && typeof metaObj === 'object' && Object.keys(metaObj).length > 0) {
+                        metaHtml += '<div class="mt-2 p-2 bg-light border rounded" style="font-size:0.85em;"><strong class="text-muted d-block mb-1">Informasi Tambahan:</strong><ul class="list-unstyled mb-0">';
+                        for (let key in metaObj) {
+                            let val = metaObj[key];
+                            let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            
+                            if (val && typeof val === 'string' && (val.match(/\.(webp|pdf)$/i) || val.startsWith('/media') || val.startsWith('/storage/'))) {
+                                if (val.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                                    metaHtml += `<li><strong>${displayKey}:</strong> <br><a href="${val}" target="_blank"><img src="${val}" style="max-height: 80px; max-width: 100%;" class="img-thumbnail mt-1"></a></li>`;
+                                } else {
+                                    metaHtml += `<li><strong>${displayKey}:</strong> <a href="${val}" target="_blank" class="badge badge-info"><i class="fa fa-download"></i> Unduh Lampiran</a></li>`;
+                                }
+                            } else {
+                                metaHtml += `<li><strong>${displayKey}:</strong> ${val}</li>`;
+                            }
+                        }
+                        metaHtml += '</ul></div>';
+                    }
+                } catch(e) { console.error('Error parsing comment meta', e); }
+
+                let contactHtml = '';
+                if (c.email) contactHtml += `<i class="fa fa-envelope"></i> ${c.email}`;
+                if (c.link) contactHtml += `<a href="${c.link}" target="_blank" class="text-muted ml-1" title="${c.link}"><i class="fa fa-link"></i></a>`;
+
                 $("#commentList").append(`
-                                                                                                                                                                                                                                                                                                                                    <li class="list-group-item">
-                                                                                                                                                                                                                                                                                                                                      <strong>
-                                                                                                                                                                                                                                                                                                                                        <i class="fa fa-user"></i> ${c.name}
-                                                                                                                                                                                                                                                                                                                                        <code>${new Date(c.created_at).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric"
-                }) + " " +
-                  new Date(c.created_at).toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                  })
-                  }</code>
-                                                                                                                                                                                                                                                                                                                                      </strong>
-                                                                                                                                                                                                                                                                                                                                      <br>
-                                                                                                                                                                                                                                                                                                                                      <small>${c.content}</small>
-                                                                                                                                                                                                                                                                                                                                    </li>
-                                                                                                                                                                                                                                                                                                                                  `);
+                  <li class="list-group-item">
+                    <strong>
+                      <i class="fa fa-user"></i> ${c.name} ${contactHtml}
+                      <span class="float-right ml-2"> <code><i class="fa fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString("id-ID", {
+                        day: "numeric", month: "long", year: "numeric"
+                      }) + " " + new Date(c.created_at).toLocaleTimeString("id-ID", {
+                        hour: "2-digit", minute: "2-digit"
+                      })}</code></span>
+                    </strong>
+                    <br>
+                    <div style="font-size:0.9em; margin-top:5px;">${c.content}</div>
+                    ${metaHtml}
+                  </li>
+                `);
               });
+              
+              // Render pagination
+              if (res.last_page > 1) {
+                  let paginationHtml = '<ul class="pagination pagination-sm">';
+                  
+                  // Prev
+                  if (res.current_page > 1) {
+                      paginationHtml += `<li class="page-item"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${res.current_page - 1})">Prev</a></li>`;
+                  } else {
+                      paginationHtml += `<li class="page-item disabled"><a class="page-link">Prev</a></li>`;
+                  }
+                  
+                  // Pages
+                  for (let p = 1; p <= res.last_page; p++) {
+                      paginationHtml += `<li class="page-item ${p === res.current_page ? 'active' : ''}"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${p})">${p}</a></li>`;
+                  }
+                  
+                  // Next
+                  if (res.current_page < res.last_page) {
+                      paginationHtml += `<li class="page-item"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${res.current_page + 1})">Next</a></li>`;
+                  } else {
+                      paginationHtml += `<li class="page-item disabled"><a class="page-link">Next</a></li>`;
+                  }
+                  
+                  paginationHtml += '</ul>';
+                  $("#commentPagination").html(paginationHtml);
+              }
 
             }
           },
@@ -408,6 +462,9 @@
           }
         });
       }
+      
+      window.show_comment = showComments;
+    });
     </script>
     <script>
       $(function () {
