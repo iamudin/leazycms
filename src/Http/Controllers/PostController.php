@@ -736,7 +736,7 @@ class PostController extends Controller implements HasMiddleware
                                 $ext = strtolower(pathinfo($value, PATHINFO_EXTENSION));
 
                                 return '<span
-        data-media="' . e($value) . '"
+        data-media="' . e(media($value)->url()) . '"
         data-ext="' . e($ext) . '"
         class="badge badge-pill py-1 btn-view-media text-primary"
         style="border:1px solid green; cursor:pointer;">

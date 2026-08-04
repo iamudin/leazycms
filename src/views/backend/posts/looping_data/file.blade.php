@@ -6,7 +6,7 @@
 </div>
 @if(!empty($l?->$k) && media_exists($l?->$k))
     <div class="media-preview-wrapper">
-    <a target="_blank"  class="file-{{_us($r[0])}}-{{$y}} btn btn-sm btn-outline-info btn-view-media" data-ext="{{ str(media_extension($l?->$k))->lower() }}" data-media="{{$l?->$k}} "> {{strtoupper(get_ext($l?->$k))}} </a>
+    <a target="_blank"  class="file-{{_us($r[0])}}-{{$y}} btn btn-sm btn-outline-info btn-view-media" data-ext="{{ str(media_extension($l?->$k))->lower() }}" data-media="{{media($l?->$k)->url() }} "> {{strtoupper(get_ext($l?->$k))}} </a>
     @if(!Route::is($post->type . '.show'))
     <a class="fa fa-trash pointer text-danger edit-{{_us($r[0])}}-{{$y}} btn-remove-media" style="display: none" onclick="$(this).closest('.media-preview-wrapper').hide().prev('.media-input-wrapper').show().find('input[type=hidden]').val('nofile')" aria-hidden></a>
     @endif

@@ -4,7 +4,7 @@
     <div class="media-preview-wrapper">
     <input type="hidden" name="{{_us($r[0])}}" value="{{ $field[_us($r[0])]}}">
     <span class="btn btn-outline-info btn-sm btn-view-media"
-        data-ext="{{ str(media_extension($post->field->$key))->lower() }}" data-media="{{$post->field->$key }} "
+        data-ext="{{ str(media_extension($post->field->$key))->lower() }}" data-media="{{media($post->field->$key)->url() }} "
         style="margin-top:4px">Lihat {{$r[0]}} (.{{ str(get_ext($field[_us($r[0])]))->upper() }})</span>
     @if(!Route::is($post->type . '.show')) <a title="Hapus dokumen untuk mengganti" data-toggle="tooltip"
         class="fa fa-trash text-danger pointer btn-remove-media" data-field="{{ _us($r[0]) }}"></a>
