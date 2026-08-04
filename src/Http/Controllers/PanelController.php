@@ -2216,62 +2216,22 @@ class PanelController extends Controller implements HasMiddleware
     public function uploadPlugin(Request $request)
     {
         abort_if(!is_main_domain(), 403);
-
         $request->validate([
-            'plugin_file' => 'required|file|mimes:zip|max:50000',
+            'plugin_file' => 'required|string',
         ]);
 
-        $file = $request->file('plugin_file');
-        $zip = new ZipArchive;
-        if ($zip->open($file->getRealPath()) === true) {
-            $extractPath = storage_path('app/temp_plugins/' . time());
-            if (!File::exists($extractPath)) {
-                File::makeDirectory($extractPath, 0755, true);
-            }
-            $zip->extractTo($extractPath);
-            $zip->close();
+        try {
+            $path = media($request->plugin_file)->path();
 
-            // Validate that the ZIP has exactly one root folder
-            $extractedDirs = File::directories($extractPath);
-            if (count($extractedDirs) !== 1) {
-                File::deleteDirectory($extractPath);
-                return back()->with('danger', 'Format ZIP tidak valid. ZIP harus berisi tepat satu folder utama plugin.');
+            if (!File::exists($path) || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'zip') {
+                return back()->with('danger', 'File tidak ditemukan atau bukan file ZIP yang valid.');
             }
 
-            $pluginFolder = $extractedDirs[0];
-            $pluginName = basename($pluginFolder);
-
-            // Deteksi nama asli dari plugin.json jika tersedia
-            $jsonPath = $pluginFolder . '/plugin.json';
-            if (File::exists($jsonPath)) {
-                $jsonString = File::get($jsonPath);
-                $jsonString = preg_replace('/^\xEF\xBB\xBF/', '', $jsonString);
-                $json = json_decode($jsonString, true);
-                if ($json && isset($json['name'])) {
-                    $pluginName = $json['name'];
-                }
-            }
-            if (!File::isDirectory(resource_path('plugins'))) {
-                File::makeDirectory(resource_path('plugins'), 0755, true);
-            }
-
-            $targetPath = resource_path('plugins/' . $pluginName);
-
-            // Jika plugin sudah ada, timpa
-            if (File::exists($targetPath)) {
-                File::deleteDirectory($targetPath);
-            }
-
-            File::moveDirectory($extractedDirs[0], $targetPath);
-            File::deleteDirectory($extractPath);
-
-            // Run migration if any new ones were added
-            Artisan::call('migrate', ['--force' => true]);
-
-            return back()->with('success', 'Plugin berhasil diinstal.');
+            $file = new \Illuminate\Http\File($path);
+            return $this->plugin_uploader($file);
+        } catch (\Exception $e) {
+            return back()->with('danger', 'Gagal install plugin: ' . $e->getMessage());
         }
-
-        return back()->with('danger', 'Gagal mengekstrak file plugin.');
     }
 
     public function updatePlugin(Request $request)
