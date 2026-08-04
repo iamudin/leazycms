@@ -66,24 +66,29 @@
                     </div>
                 </div>
                 
-                @if ($module->form->category)
-                    @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category)
-                        <div class="mb-3">
-                            <strong class="d-block mb-2"><small>Kategori {{ $module->title }}</small></strong>
-                            
-                            @php
-                                $dbCategories = config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category;
-                                $defaultCategories = config('modules.default_category.' . $post->type, []);
-                                $dbCategoryNames = $dbCategories->pluck('name')->map(fn($n) => strtolower($n))->toArray();
-                                $unregisteredDefaults = array_filter($defaultCategories, fn($name) => !in_array(strtolower($name), $dbCategoryNames));
-                            @endphp
+                    @if ($module->form->category)
+                        <small for="">Kategori {{ $module->title }} </small><br>
+                        @php
+                            $dbCategories = config('modules.multisite_enabled') ? (is_main_domain() ? $category->load('tenant') : $category->where('tenant_id', tenant()->id)) : $category;
+                            $defaultCategories = config('modules.default_category.' . $post->type, []);
+                            $dbCategoryNames = $dbCategories->pluck('name')->map(fn($n) => strtolower($n))->toArray();
+                            $unregisteredDefaults = array_filter($defaultCategories, fn($name) => !in_array(strtolower($name), $dbCategoryNames));
+                        @endphp
 
-                            <select class="form-control form-control-sm form-control-select select2-category" name="category_id" id="category_select2">
+                        <div class="input-group input-group-sm flex-nowrap">
+                            <select class="form-control form-control-select select2-category" name="category_id" id="category_select2">
                                 <option value="">-- Pilih / Tanpa Kategori --</option>
                                 
                                 @if($dbCategories->count() > 0)
                                         @foreach ($dbCategories as $row)
-                                            <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected' : '' }}>{{ $row->name }}</option>
+                                            <option value="{{ $row->id }}" 
+                                                {{ $row->id == $post->category_id ? 'selected' : '' }}
+                                                {{ config('modules.multisite_enabled') && is_main_domain() && $row->tenant_id !== $post->tenant_id ? 'disabled' : '' }}>
+                                                {{ $row->name }}
+                                                @if(config('modules.multisite_enabled') && is_main_domain() && $row->tenant_id)
+                                                    - [{{ $row->tenant->domain ?? 'Unknown Domain' }}]
+                                                @endif
+                                            </option>
                                         @endforeach
                                 @endif
 
@@ -95,11 +100,13 @@
                                         @endforeach
                                 @endif
                             </select>
-
-                            <div class="text-right mt-2"><small class="text-primary"><a href="{{ route($post->type . '.category') }}"> <i
-                                            class="fa fa-plus" aria-hidden></i> Tambah Baru</a></small></div>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal" title="Tambah Baru"><i class="fa fa-plus"></i></button>
+                                <a href="{{ route($post->type.'.category') }}" class="btn btn-info" title="Kelola Kategori"><i class="fa fa-cog"></i></a>
+                            </div>
                         </div>
-                    @endif
+
+
                 @endif
                 
        
@@ -668,4 +675,69 @@
             });
         </script>
     @endpush
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form id="formAddCategory">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addCategoryModalLabel">Tambah Kategori Baru</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div class="form-group">
+            <label for="categoryName">Nama Kategori</label>
+            <input type="text" class="form-control" id="categoryName" name="name" required placeholder="Masukkan nama kategori">
+            <input type="hidden" name="status" value="publish">
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-primary" id="btnSaveCategory">Simpan</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+@if(current_module()->form->category)
+@push('scripts')
+<script>
+    $('#formAddCategory').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#btnSaveCategory');
+        
+        btn.attr('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+        
+        $.ajax({
+            url: "{{ route($post->type . '.category.store') }}",
+            type: "POST",
+            data: $(this).serialize() + "&_token={{ csrf_token() }}",
+            success: function(res) {
+                if(res.success) {
+                    $('#addCategoryModal').modal('hide');
+                    $('#categoryName').val('');
+                    
+                    let newOption = new Option(res.data.name, res.data.id, true, true);
+                    $('#category_select2').append(newOption).trigger('change');
+                    
+                    btn.attr('disabled', false).html('Simpan');
+                } else {
+                    alert('Gagal menambahkan kategori');
+                    btn.attr('disabled', false).html('Simpan');
+                }
+            },
+            error: function(err) {
+                let msg = 'Terjadi kesalahan.';
+                if(err.responseJSON && err.responseJSON.message) {
+                    msg = err.responseJSON.message;
+                }
+                alert(msg);
+                btn.attr('disabled', false).html('Simpan');
+            }
+        });
+    });
+</script>
+@endpush
+@endif
 @endsection

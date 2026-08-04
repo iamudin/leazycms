@@ -338,10 +338,9 @@
 
                 @endif
                 @if ($module->form->category)
-                    @if((config('modules.multisite_enabled') && $post->tenant_id == tenant()->id || is_main_domain() && $post->tenant_id == null) || !config('modules.multisite_enabled') && $module->form->category)
                         <small for="">Kategori {{ $module->title }} </small><br>
                         @php
-                            $dbCategories = config('modules.multisite_enabled') ? $category->where('tenant_id', tenant()->id) : $category;
+                            $dbCategories = config('modules.multisite_enabled') ? (is_main_domain() ? $category->load('tenant') : $category->where('tenant_id', tenant()->id)) : $category;
                             $defaultCategories = config('modules.default_category.' . $post->type, []);
                             $dbCategoryNames = $dbCategories->pluck('name')->map(fn($n) => strtolower($n))->toArray();
                             $unregisteredDefaults = array_filter($defaultCategories, fn($name) => !in_array(strtolower($name), $dbCategoryNames));
@@ -353,7 +352,14 @@
                                 
                                 @if($dbCategories->count() > 0)
                                         @foreach ($dbCategories as $row)
-                                            <option value="{{ $row->id }}" {{ $row->id == $post->category_id ? 'selected' : '' }}>{{ $row->name }}</option>
+                                            <option value="{{ $row->id }}" 
+                                                {{ $row->id == $post->category_id ? 'selected' : '' }}
+                                                {{ config('modules.multisite_enabled') && is_main_domain() && $row->tenant_id !== $post->tenant_id ? 'disabled' : '' }}>
+                                                {{ $row->name }}
+                                                @if(config('modules.multisite_enabled') && is_main_domain() && $row->tenant_id)
+                                                    - [{{ $row->tenant->domain ?? 'Unknown Domain' }}]
+                                                @endif
+                                            </option>
                                         @endforeach
                                 @endif
 
@@ -370,9 +376,7 @@
                                 <a href="{{ route($post->type.'.category') }}" class="btn btn-info" title="Kelola Kategori"><i class="fa fa-cog"></i></a>
                             </div>
                         </div>
-                    @endif
 
-                @else
 
                 @endif
                 @if ($module->web->sortable)
