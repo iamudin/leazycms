@@ -30,10 +30,11 @@
         "intervention/image-laravel": "*",
         "stevebauman/location":"*",
         "nesbot/carbon": "*",
-        "maatwebsite/excel":"^3.1",
         "spatie/laravel-backup":"*",
         "league/flysystem-aws-s3-v3": "*",
-        "opcodesio/log-viewer":"*"
+        "opcodesio/log-viewer":"*",
+        "setasign/fpdf": "*",
+        "setasign/fpdi":"*"
     }
 
 }
