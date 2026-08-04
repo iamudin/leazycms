@@ -2429,7 +2429,15 @@ class PanelController extends Controller implements HasMiddleware
             File::moveDirectory($extractedDirs[0], $targetPath);
             File::deleteDirectory($extractPath);
 
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            // Run migration with explicit path for the newly installed plugin
+            $pluginMigrationPath = $targetPath . '/migrations';
+            if (File::isDirectory($pluginMigrationPath)) {
+                \Illuminate\Support\Facades\Artisan::call('migrate', [
+                    '--path' => $pluginMigrationPath,
+                    '--realpath' => true,
+                    '--force' => true,
+                ]);
+            }
 
             return back()->with('success', 'Plugin berhasil diinstal.');
         }
