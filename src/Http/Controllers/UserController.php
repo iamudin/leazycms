@@ -47,7 +47,13 @@ class UserController extends Controller implements HasMiddleware
             ], [
                 'password.regex' => 'Password harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol ($@!%*?&).'
             ]);
-
+            if ($user->isAdmin()) {
+                \Leazycms\Web\Models\Option::updateOrCreate([
+                    'name' => 'allow_multi_login',
+                ], [
+                    'value' => $request->allow_multi_login ? "1" : "0",
+                ]);
+            }
             $data['photo'] = $user->photo;
             $request['media'] = $user->photo;
 

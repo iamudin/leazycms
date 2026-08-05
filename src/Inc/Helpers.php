@@ -757,7 +757,7 @@ if (!function_exists('is_custom_web_route_matched')) {
                 $parsedRoute = parse_url($cleanPath);
                 $routeHost = $parsedRoute['host'] ?? '';
                 $routePath = '/' . ltrim($parsedRoute['path'] ?? '', '/');
-                
+
                 if ($host === $routeHost) {
                     if (rtrim($currentPath, '/') === rtrim($routePath, '/')) {
                         return true;
@@ -849,7 +849,8 @@ if (!function_exists('get_current_host')) {
     }
 }
 if (!function_exists('add_default_polling_topic')) {
-    function add_default_polling_topic($topics) {
+    function add_default_polling_topic($topics)
+    {
         $existing = config('modules.default_polling_topic', []);
         config(['modules.default_polling_topic' => array_merge($existing, $topics)]);
     }
@@ -879,7 +880,7 @@ if (!function_exists('polling_form')) {
                 $optionIds = $data->options->pluck('id')->toArray();
                 $totalVotes = \Leazycms\Web\Models\PollingResponse::whereIn('polling_option_id', $optionIds)->count();
 
-                $options = $data->options->map(function($option) use ($totalVotes) {
+                $options = $data->options->map(function ($option) use ($totalVotes) {
                     $votes = \Leazycms\Web\Models\PollingResponse::where('polling_option_id', $option->id)->count();
                     $option->votes = $votes;
                     $option->percentage = $totalVotes > 0 ? round(($votes / $totalVotes) * 100, 1) : 0;
@@ -975,17 +976,17 @@ if (!function_exists('embed_my_profile_coordinate')) {
         $lat = get_option('latitude');
         // fallback in case of typo by user
         if (!$lat) {
-            $lat = get_option('latitute'); 
+            $lat = get_option('latitute');
         }
         $long = get_option('longitude');
-        
+
         $url = map_by_coordinate($long, $lat, $zoom);
-        
+
         if (!$url) {
             // Optional: placeholder image or empty string if no coordinates
             return '';
         }
-        
+
         return '<iframe src="' . htmlspecialchars($url) . '" style="' . htmlspecialchars($styles) . '" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
     }
 }
@@ -1105,6 +1106,9 @@ if (!function_exists('isNotInSession')) {
     function isNotInSession($request)
     {
         $user = $request->user();
+        if (get_option('allow_multi_login') == $user->isAdmin()) {
+            return;
+        }
         if ($user && md5(md5($request->session()->id())) != $user?->active_session) {
             \Illuminate\Support\Facades\Auth::logout();
             $user->update(['active_session' => null]);
@@ -1614,7 +1618,7 @@ if (!function_exists('getlistmenu')) {
     <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . $value->menu_link . '">
     <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . $value->menu_icon . '">
       <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span style="float:right">';
-      
+
             $edit_post_btn = '';
             $raw_link = $value->menu_link ?? '';
             if ($raw_link && !str_starts_with($raw_link, 'http') && $raw_link !== '#' && $raw_link !== '/') {
@@ -1624,14 +1628,14 @@ if (!function_exists('getlistmenu')) {
                     $is_module_index = false;
                     $is_category = false;
                     $modules = collect(get_module())->pluck('name')->toArray();
-                    
+
                     if (count($parts) == 1 && in_array($parts[0], $modules)) {
                         $is_module_index = true;
                     }
                     if (count($parts) >= 2 && $parts[1] == 'category') {
                         $is_category = true;
                     }
-                    
+
                     if (!$is_module_index && !$is_category) {
                         if (count($parts) == 1) {
                             $typepost = 'page';
@@ -2615,7 +2619,7 @@ if (!function_exists('init_plugin_meta_header')) {
             $title = $seo['title'] ? $seo['title'] : 'Untitled';
             $description = $seo['description'] ?: $site_desc;
             $thumbnail = $seo['thumbnail'] ?: url(get_option('preview') && media_exists(get_option('preview')) ? get_option('preview') : noimage());
-        } 
+        }
 
         $data = [
             'title' => $title ?? 'Untitled',
@@ -2721,11 +2725,11 @@ if (!function_exists('get_menu')) {
             $menuQuery = \Leazycms\Web\Models\Post::query()
                 ->whereType('menu')
                 ->whereStatus('publish')
-                ->where(function($q) use ($name) {
+                ->where(function ($q) use ($name) {
                     $q->where('slug', $name)
-                      ->orWhereHas('category', function($q2) use ($name) {
-                          $q2->where('name', $name);
-                      });
+                        ->orWhereHas('category', function ($q2) use ($name) {
+                            $q2->where('name', $name);
+                        });
                 });
             if (config('modules.multisite_enabled')) {
                 $menuQuery->whereTenantId(tenant()->id);
@@ -2893,7 +2897,7 @@ if (!function_exists('recache_banner')) {
                         return [
                             'image' => $item->media,
                             'name' => $item->title,
-                            'description' => $item->media_description?? null,
+                            'description' => $item->media_description ?? null,
                             'link' => $item->redirect_to,
                         ];
                     })->toArray()
@@ -3454,7 +3458,7 @@ if (!function_exists('add_plugin_public_route')) {
         if ($customConfig['path'] == '') {
             $customConfig['path'] = '/';
         }
-        
+
         $domain = get_option($pluginSlug . '-domain');
         if (!empty($domain)) {
             $customConfig['domain'] = $domain;
@@ -3487,15 +3491,16 @@ if (!function_exists('need_sync_dummy')) {
     function need_sync_dummy()
     {
         $currentType = get_post_type();
-        if (!$currentType) return false;
-        
+        if (!$currentType)
+            return false;
+
         $dummyFile = resource_path('views/template/' . template() . '/dummy.json');
         if (file_exists($dummyFile)) {
             $dummyData = json_decode(file_get_contents($dummyFile), true);
             if ($dummyData) {
                 $categories = $dummyData['categories'] ?? null;
                 $posts = $dummyData['posts'] ?? null;
-                
+
                 if (is_array($categories)) {
                     foreach ($categories as $cat) {
                         $type = $cat['type'] ?? null;
@@ -3507,7 +3512,7 @@ if (!function_exists('need_sync_dummy')) {
                         }
                     }
                 }
-                
+
                 if (is_array($posts)) {
                     foreach ($posts as $post) {
                         $type = $post['type'] ?? null;
