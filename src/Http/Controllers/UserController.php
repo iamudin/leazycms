@@ -51,8 +51,11 @@ class UserController extends Controller implements HasMiddleware
                 \Leazycms\Web\Models\Option::updateOrCreate([
                     'name' => 'allow_multi_login',
                 ], [
-                    'value' => $request->allow_multi_login ? "1" : "0",
+                    'value' => $request->has('allow_multi_login') ? "1" : "0",
                 ]);
+                if (config('modules.multisite_enabled')) {
+                    \Cache::forget('tenant:' . tenant()->domain . ':options');
+                }
             }
             $data['photo'] = $user->photo;
             $request['media'] = $user->photo;
