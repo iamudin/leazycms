@@ -2439,6 +2439,9 @@ class PanelController extends Controller implements HasMiddleware
                 ]);
             }
 
+            // Restart queue worker so it can autoload new plugin classes
+            \Illuminate\Support\Facades\Artisan::call('queue:restart');
+
             return back()->with('success', 'Plugin berhasil diinstal.');
         }
 
