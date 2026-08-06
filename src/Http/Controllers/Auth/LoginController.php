@@ -41,29 +41,8 @@ class LoginController extends Controller
 
         return redirect('/' . admin_path());
     }
-    public function codeCaptcha(): void
-    {
-        Session::put('captcha', Str::random(6));
-    }
 
-    public function generateCaptcha(Request $request, $session)
-    {
-        abort_if($session != md5($request->session()->id()), '404');
-        $image = imagecreatetruecolor(120, 40);
-        $bgColor = imagecolorallocate($image, 255, 255, 255);
-        $textColor = imagecolorallocate($image, 0, 0, 0);
 
-        imagefilledrectangle($image, 0, 0, 120, 40, $bgColor);
-        imagettftext($image, 20, 0, 10, 30, $textColor, public_path('backend/fonts/captcha.ttf'), Session::get('captcha'));
-
-        ob_start();
-        imagepng($image);
-        $captchaImage = ob_get_clean();
-        imagedestroy($image);
-
-        // $request->session()->regenerateToken();
-        return response($captchaImage)->header('Content-Type', 'image/png');
-    }
 
     public function loginForm(Request $request)
     {
@@ -79,9 +58,9 @@ class LoginController extends Controller
             return to_route('panel.dashboard');
         }
 
-        $this->codeCaptcha();
+      
 
-        $captchaUrl = route('captcha', md5($request->session()->id()));
+      
         $data = null;
 
 
@@ -90,7 +69,7 @@ class LoginController extends Controller
         $data['loginsubmit'] = url(admin_path());
         $data['logo'] = get_option('logo');
 
-        $viewContent = view('cms::auth.login', ['captcha' => $captchaUrl, 'data' => $data])->render();
+        $viewContent = view('cms::auth.login', ['data' => $data])->render();
 
         // Minimize output for performance
         $compressedOutput = preg_replace('/\s+/', ' ', $viewContent);
@@ -114,7 +93,7 @@ class LoginController extends Controller
             'captcha' => 'required',
         ]);
 
-        if ($request->captcha !== Session::get('captcha')) {
+        if (!captcha_check($request->captcha)) {
             $request->session()->regenerateToken();
 
             if ($request->ajax())

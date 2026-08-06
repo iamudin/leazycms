@@ -308,10 +308,7 @@ body {
           </div>
 
           <div class="form-group mb-4">
-            <div class="captcha-wrapper">
-              <img src="{{ $captcha }}" alt="Captcha">
-              <input type="text" name="captcha" placeholder="Kode Captcha" required maxlength="6">
-            </div>
+            {!!captcha_field('captcha')!!}
           </div>
 
           <div class="form-group mb-4">

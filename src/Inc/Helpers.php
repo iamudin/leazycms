@@ -18,30 +18,38 @@ if (!function_exists('query')) {
 if (!function_exists('captcha_src')) {
     function captcha_src()
     {
-        return url('captcha/image') . '?v=' . time();
+        $token = session('captcha_token');
+        if (!$token) {
+            $token = Str::random(16);
+            session(['captcha_token' => $token]);
+        }
+        return url('captcha-image/' . $token . '.webp');
     }
 }
 
 if (!function_exists('captcha_img')) {
-    function captcha_img($id = 'captcha-img', $class = 'captcha-img', $style = 'cursor:pointer; height:38px; border-radius:4px; object-fit:contain;')
+    function captcha_img($id = 'captcha-img', $class = 'captcha-img', $style = 'height:38px; width:130px; object-fit:contain; cursor:pointer; border-radius:4px; border:1px solid #ccc; background-color:#fff; vertical-align:middle;')
     {
         $src = captcha_src();
-        return '<img src="' . $src . '" id="' . $id . '" class="' . $class . '" style="' . $style . '" onclick="this.src=\'' . url('captcha/image') . '?v=\'+Math.random()" title="Klik untuk refresh captcha" alt="Captcha">';
+        $refreshUrl = url('captcha/refresh');
+        $jsClick = "var img=this.tagName=='IMG'?this:this.parentNode.querySelector('img');fetch('" . $refreshUrl . "',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json()}).then(function(d){if(img&&d.url)img.src=d.url})";
+
+        return '<img src="' . $src . '" id="' . $id . '" class="' . $class . '" style="' . $style . '" onclick="' . $jsClick . '" title="Klik untuk refresh captcha" alt="Captcha">';
     }
 }
 
 if (!function_exists('captcha_field')) {
     function captcha_field($name = 'captcha', $placeholder = 'Kode Captcha')
     {
-        $id = 'captcha_img_' . uniqid();
-        $img = captcha_img($id, 'captcha-img-field', 'cursor:pointer; height:38px; border-radius:4px; border:1px solid #444;');
+        $refreshUrl = url('captcha/refresh');
+        $jsClick = "var img=this.tagName=='IMG'?this:this.parentNode.querySelector('img');fetch('" . $refreshUrl . "',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json()}).then(function(d){if(img&&d.url)img.src=d.url})";
+        $img = captcha_img('captcha_img_' . uniqid(), 'captcha-img-field');
+        $svgIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>';
         return '
-        <div class="captcha-form-wrapper d-flex align-items-center gap-2 my-2">
+        <div class="captcha-form-wrapper" style="display:inline-flex; align-items:center; gap:8px; margin:8px 0; font-family:inherit;">
             ' . $img . '
-            <button type="button" class="btn btn-sm btn-outline-secondary py-2 px-2" onclick="document.getElementById(\'' . $id . '\').src=\'' . url('captcha/image') . '?v=\'+Math.random()" title="Refresh Captcha">
-                <i class="fa fa-sync-alt fa-fw"></i>
-            </button>
-            <input type="text" name="' . $name . '" class="form-control form-control-sm" placeholder="' . $placeholder . '" required autocomplete="off" style="height:38px;">
+            <button type="button" onclick="' . $jsClick . '" title="Refresh Captcha" style="height:38px; width:38px; display:inline-flex; align-items:center; justify-content:center; background:#f8f9fa; border:1px solid #ccc; border-radius:4px; cursor:pointer; color:#333; padding:0; outline:none;">' . $svgIcon . '</button>
+            <input type="text" name="' . $name . '" style="height:38px; width:130px; padding:6px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; outline:none; box-sizing:border-box; background-color:#fff; color:#333;" placeholder="' . $placeholder . '" required autocomplete="off" maxlength="5" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,\'\')">
         </div>';
     }
 }
@@ -58,7 +66,7 @@ if (!function_exists('captcha_verify')) {
             return false;
         }
 
-        $isValid = strtolower(trim((string)$inputCode)) === strtolower(trim((string)$sessionCode));
+        $isValid = trim((string)$inputCode) === trim((string)$sessionCode);
 
         if ($flush) {
             session()->forget('captcha_code');

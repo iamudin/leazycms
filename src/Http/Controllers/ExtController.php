@@ -250,9 +250,33 @@ class ExtController extends Controller
         return Response::json(['success' => true]);
     }
 
-    public function generate_captcha()
+    public function refresh_captcha()
     {
-        $characters = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        if(!request()->ajax()){
+            abort('404');
+        }
+        $newToken = \Illuminate\Support\Str::random(16);
+        session(['captcha_token' => $newToken]);
+        return Response::json([
+            'status' => 'success',
+            'token' => $newToken,
+            'url' => url('captcha-image/' . $newToken . '.webp')
+        ]);
+    }
+
+    public function generate_captcha($session = null)
+    {
+        if(!request()->headers->get('referer')){
+            abort('404');
+        }
+        $validToken = session('captcha_token');
+
+        // Jika token tidak cocok / file webp sembarang dipanggil, tolak dengan 404!
+        if (empty($session) || empty($validToken) || $session !== $validToken) {
+            abort(404);
+        }
+
+        $characters = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         $code = '';
         for ($i = 0; $i < 5; $i++) {
             $code .= $characters[rand(0, strlen($characters) - 1)];

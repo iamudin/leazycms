@@ -177,7 +177,6 @@ var _0x6ccad=_0x18eb;function _0x18eb(_0x1c83a7,_0x27d790){var _0x4b32d6=_0x4b32
 </style>
   @endif
 <style>
-  
     img.share-button:hover{
         cursor: pointer;
     }
