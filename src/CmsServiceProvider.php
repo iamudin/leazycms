@@ -219,6 +219,31 @@ class CmsServiceProvider extends ServiceProvider
         $this->app->singleton('public', Web::class);
         $this->app->singleton('admin', Panel::class);
         $this->app->singleton(ExceptionHandler::class, NotFoundHandler::class);
+        $this->registerSafeViewEngine();
+    }
+    protected function registerSafeViewEngine()
+    {
+        $registerEngines = function ($resolver) {
+            foreach (['blade', 'php', 'file'] as $engineName) {
+                try {
+                    $originalEngine = $resolver->resolve($engineName);
+                    if (!($originalEngine instanceof \Leazycms\Web\Engines\SafeViewEngine)) {
+                        $resolver->register($engineName, function () use ($originalEngine) {
+                            return new \Leazycms\Web\Engines\SafeViewEngine($originalEngine);
+                        });
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
+        };
+
+        if ($this->app->resolved('view.engine.resolver')) {
+            $registerEngines($this->app->make('view.engine.resolver'));
+        } else {
+            $this->app->resolving('view.engine.resolver', function ($resolver) use ($registerEngines) {
+                $registerEngines($resolver);
+            });
+        }
     }
     public function defineAssetPublishing()
     {
@@ -233,6 +258,7 @@ class CmsServiceProvider extends ServiceProvider
 
         Schema::defaultStringLength(191);
         load_default_module();
+        $this->registerSafeViewEngine();
         if (config('modules.multisite_enabled')) {
             $kernel->prependMiddlewareToGroup('web', IdentifyTenant::class);
         }
