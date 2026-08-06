@@ -1226,11 +1226,15 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Template Berhasil diupdate' : 'Gagal update template'));
         }
         if ($request->isMethod('post')) {
-            if ($file = $request->file('template')) {
+            if ($request->hasFile('template')) {
+                $file = $request->file('template');
                 $request->validate([
                     'template' => 'required|file|mimes:zip',
                 ]);
                 return $this->template_uploader($file);
+            } elseif ($request->filled('template')) {
+                $templatePath = $request->input('template');
+                return $this->template_uploader($templatePath);
             }
             if ($request->template_setting) {
                 $ar_ta = config('modules.config.option.template') ?? [];
@@ -1458,8 +1462,29 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function template_uploader($file)
     {
-        // Simpan file zip secara sementara
-        $zipFilePath = $file->getRealPath();
+        if ($file instanceof \Illuminate\Http\UploadedFile) {
+            $zipFilePath = $file->getRealPath();
+        } elseif (is_string($file)) {
+            $fileStr = trim($file);
+            if (str_starts_with($fileStr, 'http://') || str_starts_with($fileStr, 'https://')) {
+                $fileStr = parse_url($fileStr, PHP_URL_PATH);
+            }
+
+            if (file_exists($fileStr)) {
+                $zipFilePath = $fileStr;
+            } elseif (file_exists(public_path(ltrim($fileStr, '/')))) {
+                $zipFilePath = public_path(ltrim($fileStr, '/'));
+            } elseif (file_exists(public_path('media/' . basename($fileStr)))) {
+                $zipFilePath = public_path('media/' . basename($fileStr));
+            } elseif (media_exists($fileStr)) {
+                $mediaObj = media($fileStr);
+                $zipFilePath = $mediaObj->path() ?? public_path(ltrim($mediaObj->url(), '/'));
+            } else {
+                return back()->with('danger', 'File template tidak ditemukan.');
+            }
+        } else {
+            return back()->with('danger', 'File template tidak valid.');
+        }
 
         $zip = new ZipArchive;
         if ($zip->open($zipFilePath) === TRUE) {

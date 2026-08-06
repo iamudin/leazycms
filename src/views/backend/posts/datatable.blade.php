@@ -55,6 +55,9 @@ window.addEventListener('DOMContentLoaded', function () {
 
         columns: [
             { data: 'checkbox', orderable: false, searchable: false, className: 'text-center' },
+            @if(current_module()->web->sortable ?? false)
+            { data: 'drag_handle', orderable: false, searchable: false, className: 'text-center drag-handle-cell' },
+            @endif
             @if(isset(current_module()->datatable?->index_column) && current_module()->datatable?->index_column == true)
             { data: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center' },
             @endif
@@ -94,9 +97,22 @@ window.addEventListener('DOMContentLoaded', function () {
             { data: 'status', orderable: false, searchable: false },
             { data: 'action', orderable: false, searchable: false },
         ],
-@if((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
+@if(current_module()->web->sortable ?? false)
+        aaSorting: [],
+        order: [],
+@elseif((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
         order: [[ sort_col, 'desc' ]],
 @endif
+        createdRow: function (row, data, dataIndex) {
+            let id = data.id || $(row).find('.dt-checkbox').val();
+            if (id) {
+                $(row).attr('data-id', id);
+                @if(current_module()->web->sortable ?? false)
+                $(row).attr('draggable', 'true');
+                $(row).css('cursor', 'move');
+                @endif
+            }
+        },
     });
 
     function initToggle() {
@@ -145,6 +161,118 @@ window.addEventListener('DOMContentLoaded', function () {
         });
 
     });
+
+@if(current_module()->web->sortable ?? false)
+    const postReorderRoute = '{{ route(get_post_type() . ".reorder") }}';
+
+    function initPostDragAndDrop() {
+        const tbody = document.querySelector('.datatable tbody');
+        if (!tbody) return;
+
+        let draggedRow = null;
+
+        tbody.querySelectorAll('tr[draggable="true"]').forEach(row => {
+            row.addEventListener('dragstart', function (e) {
+                draggedRow = this;
+                this.style.opacity = '0.4';
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', function () {
+                this.style.opacity = '1';
+                this.classList.remove('dragging');
+                draggedRow = null;
+                savePostOrder();
+            });
+
+            row.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const afterElement = getRowDragAfterElement(tbody, e.clientY);
+                if (afterElement == null) {
+                    tbody.appendChild(draggedRow);
+                } else {
+                    tbody.insertBefore(draggedRow, afterElement);
+                }
+            });
+        });
+    }
+
+    function getRowDragAfterElement(tbody, y) {
+        const draggableElements = [...tbody.querySelectorAll('tr[draggable="true"]:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function savePostOrder() {
+        const rows = document.querySelectorAll('.datatable tbody tr');
+        const order = [];
+
+        rows.forEach(row => {
+            let id = row.getAttribute('data-id');
+            if (!id) {
+                const cb = row.querySelector('.dt-checkbox');
+                if (cb) id = cb.value;
+            }
+            if (id) {
+                row.setAttribute('data-id', id);
+                order.push(id);
+            }
+        });
+
+        let startOffset = 0;
+        if (typeof table !== 'undefined' && table.page) {
+            startOffset = table.page.info().start;
+        }
+
+        // Instantly update visual row numbers in DOM
+        rows.forEach((row, idx) => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach(td => {
+                if (!td.querySelector('input') && !td.classList.contains('drag-handle-cell') && td.innerText && /^\d+$/.test(td.innerText.trim())) {
+                    td.innerText = (startOffset + idx + 1);
+                }
+            });
+        });
+
+        if (order.length > 0) {
+            $.ajax({
+                url: postReorderRoute,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    order: order,
+                    start_offset: startOffset
+                },
+                success: function (res) {
+                    if (typeof notif === 'function') {
+                        notif('Urutan data berhasil diperbarui!', 'success');
+                    }
+                    if (typeof table !== 'undefined') {
+                        table.ajax.reload(null, false);
+                    }
+                },
+                error: function () {
+                    if (typeof notif === 'function') {
+                        notif('Gagal memperbarui urutan data.', 'danger');
+                    }
+                }
+            });
+        }
+    }
+
+    table.on('draw.dt', function () {
+        initPostDragAndDrop();
+    });
+@endif
 
 });
 </script>

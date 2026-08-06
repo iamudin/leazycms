@@ -185,6 +185,9 @@
                 </label>
               </div>
             </th>
+            @if(current_module()->web->sortable ?? false)
+              <th style="width:10px;vertical-align: middle" title="Tarik &amp; Lepas untuk mengubah urutan"><i class="fa fa-bars"></i></th>
+            @endif
             @if(isset(current_module()->datatable?->index_column) && current_module()->datatable?->index_column == true)
               <th style="width:10px;vertical-align: middle">#</th>
             @endif

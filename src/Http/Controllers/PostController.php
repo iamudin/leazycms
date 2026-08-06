@@ -659,13 +659,17 @@ class PostController extends Controller implements HasMiddleware
                     }
                 }
             })
-            ->order(function ($query) use ($req) {
-                if ($req->has('order')) {
+            ->order(function ($query) use ($req, $current_module) {
+                if ($current_module->web->sortable ?? false) {
+                    $query->orderBy('sort', 'asc')->orderBy('id', 'desc');
+                } elseif ($req->has('order') && !empty($req->order)) {
                     $columns = $req->columns;
                     foreach ($req->order as $order) {
-                        $column = $columns[$order['column']]['data'];
+                        $column = $columns[$order['column']]['data'] ?? null;
                         $dir = $order['dir'];
-                        $query->orderBy($column, $dir);
+                        if ($column && !in_array($column, ['checkbox', 'drag_handle', 'action'])) {
+                            $query->orderBy($column, $dir);
+                        }
                     }
                 }
             });
@@ -908,6 +912,7 @@ class PostController extends Controller implements HasMiddleware
         }
         $rawColumns = array_merge(
             [
+                'id',
                 'status',
                 'checkbox',
                 'created_at',
@@ -920,6 +925,20 @@ class PostController extends Controller implements HasMiddleware
             ],
             $customColumns // sudah bersih snake_case
         );
+
+        if ($current_module->web->sortable ?? false) {
+            $dt->addColumn('drag_handle', function ($row) {
+                return '<span class="drag-handle text-secondary" style="cursor:move;" title="Tarik &amp; Lepas untuk mengubah urutan"><i class="fa fa-bars fa-lg"></i></span>';
+            });
+            $rawColumns[] = 'drag_handle';
+            $dt->setRowAttr([
+                'data-id' => function ($row) {
+                    return $row->id;
+                },
+                'draggable' => 'true',
+                'style' => 'cursor: move;'
+            ]);
+        }
 
         $dt->rawColumns($rawColumns);
         $dt->orderColumn('visited', '-visited $1');
@@ -940,18 +959,16 @@ class PostController extends Controller implements HasMiddleware
                 SUM(deleted_at IS NOT NULL) as trash
             ")->first();
 
+        $categoryCount = \Leazycms\Web\Models\Category::onType($postType)->count();
+
         $dt->with('counts', [
             'publish' => $counts->publish ?? 0,
             'draft' => $counts->draft ?? 0,
             'trash' => $counts->trash ?? 0,
-            'category' => \Leazycms\Web\Models\Category::whereType($postType)->count()
+            'category' => $categoryCount
         ]);
 
-        return $dt
-            ->orderColumn('visited', '-visited $1')
-            ->orderColumn('updated_at', '-updated_at $1')
-            ->orderColumn('created_at', '-created_at $1')
-            ->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+        return $dt->toJson();
     }
 
     public function updateStatus(Request $request)
@@ -966,42 +983,55 @@ class PostController extends Controller implements HasMiddleware
     function bulkaction(Request $request)
     {
         $ids = $request->id;
+        $action = $request->action;
 
-        if (!empty($ids)) {
-            if ($action = $request->action) {
-                switch ($action) {
-                    case 'delete':
-                        $request->user()->hasRole(get_post_type(), 'delete');
-                        foreach (query()->whereIn('id', $ids)->withTrashed()->onType(get_post_type())->get() as $post) {
-                            if ($post->trashed() && $request->user()->isAdmin()) {
-                                $post->forceDelete();
-                            }
-                            if ($request->user()->isAdmin() || ($request->user()->isOperator() && $post->user_id != $request->user()->id)) {
-                                if (empty($post->title) && $post->status == 'draft') {
-                                    $post->forceDelete();
-                                } else {
-                                    $post->delete();
-                                }
-                            }
+        if (is_array($ids) && count($ids) > 0) {
+            switch ($action) {
+                case 'delete':
+                    $posts = query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->get();
+                    foreach ($posts as $post) {
+                        if (empty($post->title) && $post->status == 'draft') {
+                            $post->forceDelete();
+                        } else {
+                            $post->delete();
                         }
-                        break;
-                    case 'draft':
-                        query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->update(['status' => 'draft', 'deleted_at' => null]);
-                        break;
-                    case 'publish':
-                        query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->update(['status' => 'publish', 'deleted_at' => null]);
-                        break;
-                    default:
-                        break;
-                }
-                return response()->json(['message' => 'Success'], 200);
-
+                    }
+                    break;
+                case 'draft':
+                    query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->update(['status' => 'draft', 'deleted_at' => null]);
+                    break;
+                case 'publish':
+                    query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->update(['status' => 'publish', 'deleted_at' => null]);
+                    break;
+                default:
+                    break;
             }
+            return response()->json(['message' => 'Success'], 200);
 
-            return response()->json(['message' => 'No files selected.'], 400);
         }
 
+        return response()->json(['message' => 'No files selected.'], 400);
     }
+
+    public function reorder(Request $request)
+    {
+        $postType = get_post_type();
+        $request->user()->hasRole($postType, 'update');
+        $order = $request->input('order');
+        $startOffset = (int) $request->input('start_offset', 0);
+
+        if (is_array($order) && count($order) > 0) {
+            foreach ($order as $index => $id) {
+                Post::where('id', $id)->update(['sort' => $startOffset + $index + 1]);
+            }
+            if ($postType) {
+                $this->recache($postType);
+            }
+            return response()->json(['success' => true, 'message' => 'Urutan data berhasil diperbarui']);
+        }
+        return response()->json(['success' => false, 'message' => 'Data order tidak valid'], 400);
+    }
+
     public function syncDummy(Request $request)
     {
         $dummyFile = resource_path('views/template/' . template() . '/dummy.json');

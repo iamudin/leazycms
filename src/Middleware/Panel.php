@@ -94,6 +94,22 @@ class Panel
                     ]
                 ]);
             }
+            if ($request->is($admin_path . '/' . $modul->name . '/reorder')) {
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Reorder ' . $modul->title,
+                    ]
+                ]);
+            }
+            if ($request->is($admin_path . '/' . $modul->name . '/category/reorder')) {
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Reorder Kategori ' . $modul->title,
+                    ]
+                ]);
+            }
             if ($request->is($admin_path . '/' . $modul->name . '/sync-dummy')) {
 
                 config([

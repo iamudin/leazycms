@@ -289,6 +289,7 @@ class DummyGenerator
                                 'type' => $type,
                                 'name' => $cat['name'],
                                 'slug' => $slug,
+                                'sort'=>isset($cat['sort'])?$cat['sort']:0,
                                 'url' => $type . '/category/' . $slug,
                                 'status' => 'publish',
                                 'description' => $cat['description'] ?? null,

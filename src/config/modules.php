@@ -37,42 +37,7 @@ return [
             'public' => true,
             'active' => true,
         ],
-        'docs' => [
-            'position' => 7,
-            'name' => 'docs',
-            'title' => 'Docs',
-            'description' => 'Menu Untuk Mengelola Pengumuman',
-            'parent' => false,
-            'icon' => 'fa-hourglass',
-            'route' => ['index', 'create', 'show', 'update', 'delete'],
-            'datatable' => [
-                'custom_column' => false,
-                'data_title' => 'Docs Name',
-
-            ],
-            'form' => [
-                'unique_title' => false,
-                'post_parent' => false,
-                'thumbnail' => false,
-                'editor' => true,
-                'category' => false,
-                'tag' => false,
-                'looping_name' => false,
-                'looping_data' => false,
-                'custom_field' => false,
-            ],
-            'web' => [
-                'api' => false,
-                'archive' => false,
-                'index' => false,
-                'detail' => false,
-                'history' => false,
-                'auto_query' => false,
-                'sortable' => false,
-            ],
-            'public' => true,
-            'active' => true,
-        ],
+        
         'pengumuman' => [
             'position' => 3,
             'name' => 'pengumuman',

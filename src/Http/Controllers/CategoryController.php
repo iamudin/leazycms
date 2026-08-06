@@ -172,5 +172,27 @@ class CategoryController extends Controller implements HasMiddleware
             $category->forceDelete();
         }
     }
+
+    public function reorder(Request $request)
+    {
+        $postType = get_post_type();
+        $request->user()->hasRole('category' . $postType, 'update');
+        $order = $request->input('order');
+        $startOffset = (int) $request->input('start_offset', 0);
+
+        if (is_array($order) && count($order) > 0) {
+            foreach ($order as $index => $id) {
+                Category::where('id', $id)->update(['sort' => $startOffset + $index + 1]);
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Urutan kategori berhasil diperbarui'
+            ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Data order tidak valid'
+        ], 400);
+    }
 }
 

@@ -5,11 +5,11 @@
   <h3 style="font-weight:normal;float:left"><i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i> {{get_post_type('title_crud')}}
 </h3>
 <div class="pull-right">
-
     <a href="{{route(get_post_type())}}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i> Kembali</a>
 </div>
 @include('cms::backend.layout.error')
 </div>
+
 @if(auth()->user()->isAdmin() || (!auth()->user()->isAdmin() && $dothing))
 <div class="col-lg-12 mb-3 text-right">
     <button type="button" class="btn btn-primary btn-sm" onclick="openCreateModal()">
@@ -86,8 +86,9 @@
     </div>
 </div>
 @endif
+
 <div class="col-lg-12">
-    <div class="row">
+    <div class="row" id="sortable-category-list">
         @php
             $gradients = [
                 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -98,13 +99,19 @@
                 'background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)'
             ];
         @endphp
+
         @foreach($categories as $index => $cat)
             @php $bg = $gradients[$index % count($gradients)]; @endphp
-            <div class="col-md-4 mb-3 px-2">
+            <div class="col-md-6 mb-3 px-2 category-sort-item" data-id="{{ $cat->id }}" draggable="true" style="cursor: move;">
                 <div class="list-group h-100">
                     <div class="list-group-item d-flex align-items-center shadow-sm text-white border-0 h-100" style="border-radius: 10px; padding: 12px 15px; {{ $bg }};">
                         
-                        <!-- Icon Paling Kiri -->
+                        <!-- Drag Handle Handle Icon -->
+                        <div class="mr-3 text-white-50 drag-handle" style="cursor: move;" title="Tarik & Lepas untuk mengubah urutan kategori">
+                            <i class="fa fa-bars fa-lg"></i>
+                        </div>
+
+                        <!-- Icon Kategori -->
                         <div class="mr-3">
                             @if($cat->icon && media_exists($cat->icon))
                                 <img src="{{ url($cat->icon) }}" style="height: 45px; width: 45px; object-fit: contain; background: rgba(255,255,255,0.25); border-radius: 8px; padding: 4px;" alt="icon">
@@ -123,8 +130,12 @@
                             </small>
                         </div>
 
-                        <!-- Status dan Icon Aksi di Paling Kanan -->
+                        <!-- Badge Sort Order & Status -->
                         <div class="d-flex align-items-center">
+                            <span class="badge bg-white text-dark px-3 py-2 shadow-sm mr-2 sort-number-badge" style="border-radius: 20px; font-size: 0.75rem; font-weight: bold;" title="Urutan Kolom Sort">
+                                <i class="fa fa-sort text-primary mr-1"></i> #<span class="sort-val">{{ $cat->sort ?? ($index + 1) }}</span>
+                            </span>
+
                             <span class="badge bg-white {{ $cat->status == 'publish' ? 'text-success' : 'text-secondary' }} px-3 py-2 shadow-sm mr-3" style="border-radius: 20px; font-size: 0.75rem;">
                                 <i class="fa {{ $cat->status == 'publish' ? 'fa-check-circle' : 'fa-archive' }} mr-1"></i> {{ ucfirst($cat->status) }}
                             </span>
@@ -157,9 +168,11 @@
     </div>
 </div>
 </div>
+
 <script type="text/javascript">
     const storeRoute = '{{ route(get_post_type() . ".category.store") }}';
     const updateRouteTemplate = '{{ route(get_post_type() . ".category.update", ":id") }}';
+    const reorderRoute = '{{ route(get_post_type() . ".category.reorder") }}';
 
     function openCreateModal() {
         $('#categoryModalTitle').html('<i class="fa fa-plus-circle text-primary"></i> Tambah Kategori');
@@ -202,6 +215,86 @@
         
         $('#categoryModal').modal('show');
     }
+
+    // Drag & Drop Sorting Handler
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('sortable-category-list');
+        if (!container) return;
+
+        let draggedItem = null;
+
+        container.querySelectorAll('.category-sort-item').forEach(attachDragEvents);
+
+        function attachDragEvents(item) {
+            item.addEventListener('dragstart', function (e) {
+                draggedItem = this;
+                this.style.opacity = '0.4';
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            item.addEventListener('dragend', function () {
+                this.style.opacity = '1';
+                this.classList.remove('dragging');
+                draggedItem = null;
+                updateCategoryOrder();
+            });
+
+            item.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const afterElement = getDragAfterElement(container, e.clientY);
+                if (afterElement == null) {
+                    container.appendChild(draggedItem);
+                } else {
+                    container.insertBefore(draggedItem, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.category-sort-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateCategoryOrder() {
+            const items = container.querySelectorAll('.category-sort-item');
+            const order = [];
+
+            items.forEach((item, idx) => {
+                order.push(item.getAttribute('data-id'));
+                const sortValSpan = item.querySelector('.sort-val');
+                if (sortValSpan) sortValSpan.innerText = (idx + 1);
+            });
+
+            $.ajax({
+                url: reorderRoute,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    order: order
+                },
+                success: function (res) {
+                    if (typeof notif === 'function') {
+                        notif('Urutan kategori berhasil diperbarui!', 'success');
+                    }
+                },
+                error: function () {
+                    if (typeof notif === 'function') {
+                        notif('Gagal memperbarui urutan kategori.', 'danger');
+                    }
+                }
+            });
+        }
+    });
 </script>
 @include('cms::backend.layout.js')
 @endsection

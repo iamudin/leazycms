@@ -148,20 +148,52 @@
           <ul class="list-group mb-3">
             {{template_info()}}
                 <div class="">
-    <form  class="list-group-item" action="{{ URL::full() }}" method="post" enctype="multipart/form-data">
-      @csrf
-      <label>Upload Template :</label>
-      <input onchange="if(confirm('Yakin utk mengganti template ?')) this.form.submit()" type="file"
-        accept="application/zip,x-zip-compressed" class="template" name="template" >
-       
- 
-
-    </form>
+    
     
   
   </div>
       </ul>
       @endif
+      <form action="{{ URL::full() }}" method="post" enctype="multipart/form-data" id="formUploadTemplate" class="mb-2">
+        @csrf
+        <label class="font-weight-bold mb-1">Upload Template :</label>
+        <input type="file" accept="application/zip,x-zip-compressed,.zip" class="template mb-2" name="template" id="inputTemplateFile">
+        <button type="submit" id="btnUploadTemplate" class="btn btn-sm btn-warning w-100 mt-2" style="display: none;">
+          <i class="fa fa-upload"></i> Upload
+        </button>
+      </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const form = document.getElementById('formUploadTemplate');
+          const fileInput = document.getElementById('inputTemplateFile');
+          const btnSubmit = document.getElementById('btnUploadTemplate');
+          
+          if (!form || !btnSubmit) return;
+
+          function checkTemplateSelected() {
+            const hasHiddenInput = form.querySelector('input.gmedia-hidden[value]') !== null;
+            const hasFileSelected = fileInput && fileInput.files && fileInput.files.length > 0;
+
+            if (hasHiddenInput || hasFileSelected) {
+              btnSubmit.style.display = 'block';
+            } else {
+              btnSubmit.style.display = 'none';
+            }
+          }
+
+          if (fileInput) {
+            fileInput.addEventListener('change', checkTemplateSelected);
+          }
+
+          const observer = new MutationObserver(function () {
+            checkTemplateSelected();
+          });
+          observer.observe(form, { childList: true, subtree: true });
+
+          checkTemplateSelected();
+        });
+      </script>
   <a href="{{ route('appearance.template_store') }}" class="btn btn-info btn-sm w-100">
         <i class="fa fa-cloud-download-alt"></i> Pilih dari Cloud
     </a>
