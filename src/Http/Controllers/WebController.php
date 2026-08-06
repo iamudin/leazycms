@@ -158,10 +158,13 @@ class WebController extends Controller
 
         if ($request->ajax() && $request->isMethod('post')) {
             $request->validate([
-                'name' => 'required'
+                'name' => 'required',
+                'captcha' => 'required|min:5|max:5'
             ]);
-            if (Session::get('captcha') == $request->captcha) {
-
+            if($request->captcha && !captcha_check($request->captcha)){
+                 $request->session()->regenerateToken();
+                return response()->json(['error' => 'Captcha'], 200);
+            }
                 $meta = [];
                 if (is_array($request->input('comment_meta'))) {
                     foreach ($request->input('comment_meta') as $key => $val) {
@@ -200,10 +203,7 @@ class WebController extends Controller
                 }
                 $request->session()->regenerateToken();
                 return response()->json(['error' => 'None'], 200);
-            } else {
-                $request->session()->regenerateToken();
-                return response()->json(['error' => 'Captcha'], 200);
-            }
+             
         }
         if ($detail->slug != $name) {
             if ($detail->shortcut == $slug) {

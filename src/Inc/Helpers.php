@@ -28,7 +28,7 @@ if (!function_exists('captcha_src')) {
 }
 
 if (!function_exists('captcha_img')) {
-    function captcha_img($id = 'captcha-img', $class = 'captcha-img', $style = 'height:38px; width:130px; object-fit:contain; cursor:pointer; border-radius:4px; border:1px solid #ccc; background-color:#fff; vertical-align:middle;')
+    function captcha_img($id = 'captcha-img', $class = 'captcha-img', $style = 'height:38px !important; min-height:38px !important; width:130px !important; object-fit:contain !important; cursor:pointer !important; border-radius:4px !important; border:1px solid #ccc !important; background-color:#fff !important; margin:0 !important; padding:0 !important; box-sizing:border-box !important; vertical-align:middle !important; display:inline-block !important;')
     {
         $src = captcha_src();
         $refreshUrl = url('captcha/refresh');
@@ -46,10 +46,10 @@ if (!function_exists('captcha_field')) {
         $img = captcha_img('captcha_img_' . uniqid(), 'captcha-img-field');
         $svgIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>';
         return '
-        <div class="captcha-form-wrapper" style="display:inline-flex; align-items:center; gap:8px; margin:8px 0; font-family:inherit;">
+        <div class="captcha-form-wrapper" style="display:inline-flex !important; align-items:center !important; flex-wrap:nowrap !important; gap:8px !important; margin:8px 0 !important; font-family:inherit !important; vertical-align:middle !important;">
             ' . $img . '
-            <button type="button" onclick="' . $jsClick . '" title="Refresh Captcha" style="height:38px; width:38px; display:inline-flex; align-items:center; justify-content:center; background:#f8f9fa; border:1px solid #ccc; border-radius:4px; cursor:pointer; color:#333; padding:0; outline:none;">' . $svgIcon . '</button>
-            <input type="text" name="' . $name . '" style="height:38px; width:130px; padding:6px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; outline:none; box-sizing:border-box; background-color:#fff; color:#333;" placeholder="' . $placeholder . '" required autocomplete="off" maxlength="5" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,\'\')">
+            <button type="button" onclick="' . $jsClick . '" title="Refresh Captcha" style="height:38px !important; min-height:38px !important; width:38px !important; min-width:38px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; background:#f8f9fa !important; border:1px solid #ccc !important; border-radius:4px !important; cursor:pointer !important; color:#333 !important; padding:0 !important; margin:0 !important; outline:none !important; box-sizing:border-box !important; vertical-align:middle !important; line-height:1 !important;">' . $svgIcon . '</button>
+            <input type="text" name="' . $name . '" style="height:38px !important; min-height:38px !important; width:130px !important; padding:6px 10px !important; border:1px solid #ccc !important; border-radius:4px !important; font-size:14px !important; line-height:1.4 !important; outline:none !important; box-sizing:border-box !important; background-color:#fff !important; color:#333 !important; margin:0 !important; vertical-align:middle !important; display:inline-block !important;" placeholder="' . $placeholder . '" required autocomplete="off" maxlength="5" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,\'\')">
         </div>';
     }
 }
