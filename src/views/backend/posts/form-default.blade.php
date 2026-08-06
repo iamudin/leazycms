@@ -445,6 +445,9 @@
 
             $('.editorForm').on('submit', function (e) {
                 e.preventDefault();
+                if (typeof window.editor !== 'undefined' && window.editor.save) {
+                    window.editor.save();
+                }
                 $('.text-save').html('Menyimpan...');
                 $('.btn-primary').attr('disabled', 'disabled');
                 let form = this;

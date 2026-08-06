@@ -2350,25 +2350,24 @@ if (!function_exists('isPrePanel')) {
 
     function isPrePanel($content)
     {
-        $parts = preg_split('/(<textarea\b[^>]*class="custom_html"[^>]*>.*?<\/textarea>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
-        $beforeEditor = '';
-        $insideEditor = '';
-        $afterEditor = '';
-        $insideEditorFound = false;
+        if (strpos($content, '<textarea') === false) {
+            return minify_all_one_line($content);
+        }
+
+        $parts = preg_split('/(<textarea\b[^>]*>[\s\S]*?<\/textarea>)/i', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if (!$parts || count($parts) <= 1) {
+            return minify_all_one_line($content);
+        }
+
+        $result = '';
         foreach ($parts as $part) {
-            if ($insideEditorFound) {
-                $afterEditor .= $part;
-            } elseif (strpos($part, 'class="custom_html"') !== false) {
-                $insideEditor .= $part;
-                $insideEditorFound = true;
+            if (preg_match('/^<textarea\b/i', ltrim($part))) {
+                $result .= $part;
             } else {
-                $beforeEditor .= $part;
+                $result .= minify_all_one_line($part);
             }
         }
-        $beforeEditor = minify_all_one_line($beforeEditor);
-        $afterEditor = minify_all_one_line($afterEditor);
-        $content = $beforeEditor . $insideEditor . $afterEditor;
-        return $content;
+        return $result;
     }
 }
 if (!function_exists('not_allow_adminpath')) {

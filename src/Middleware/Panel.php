@@ -143,7 +143,7 @@ class Panel
                     return '<img ' . $attributes . ' src="/shimmer.gif">';
                 }, $content);
             }
-            if (in_array($request->segment(2), ['docs', 'appearance'])) {
+            if (in_array($request->segment(2), ['docs', 'appearance']) || strpos($content, '<textarea') !== false) {
                 $content = isPrePanel($content);
             } else {
                 $content = minify_all_one_line($content);
