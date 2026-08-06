@@ -209,35 +209,6 @@ document.addEventListener("lazybeforeunveil", function(e){
 
         return $response;
     }
-
-    // function securityHeaders($response, $request)
-    // {
-    //     $cacheEnabled = app()->routesAreCached();
-    //     $isCacheableRequest = $request->isMethod('GET') && !$request->expectsJson();
-
-    //     $noCacheRoutes = config('modules.no_cache_for_route', []);
-
-    //     $isExcludedRoute = collect($noCacheRoutes)
-    //         ->contains(fn($pattern) => $request->is($pattern));
-
-    //     if ($cacheEnabled && get_option('cache_web') == 'Y' && $isCacheableRequest && !$isExcludedRoute) {
-    //         $response->setPublic();
-    //         $response->setMaxAge(86400);
-    //         $response->setSharedMaxAge(86400);
-    //     } else {
-    //         $response->headers->set(
-    //             'Cache-Control',
-    //             'no-cache, no-store, must-revalidate'
-    //         );
-    //     }
-    //     $response->headers->set('X-Content-Type-Options', 'nosniff');
-    //     if (get_option('frame_embed') == 'N' && !Auth::check()) {
-    //         $response->headers->set('X-Frame-Options', 'DENY');
-    //     }
-    //     $response->headers->set('X-XSS-Protection', '1; mode=block');
-    //     $response->headers->set('Content-Security-Policy', " base-uri 'self'; form-action 'self';");
-    // }
-
     protected function securityHeaders($response, Request $request): void
     {
         /*

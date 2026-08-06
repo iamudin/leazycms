@@ -249,4 +249,61 @@ class ExtController extends Controller
 
         return Response::json(['success' => true]);
     }
+
+    public function generate_captcha()
+    {
+        $characters = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $code = '';
+        for ($i = 0; $i < 5; $i++) {
+            $code .= $characters[rand(0, strlen($characters) - 1)];
+        }
+
+        session(['captcha_code' => $code]);
+
+        $width = 130;
+        $height = 40;
+        $image = imagecreatetruecolor($width, $height);
+
+        $bgColor = imagecolorallocate($image, 245, 247, 250);
+        $textColor = imagecolorallocate($image, 229, 9, 20);
+        $noiseColor = imagecolorallocate($image, 180, 190, 200);
+        $lineColor = imagecolorallocate($image, 220, 100, 110);
+
+        imagefilledrectangle($image, 0, 0, $width, $height, $bgColor);
+
+        for ($i = 0; $i < 80; $i++) {
+            imagesetpixel($image, rand(0, $width), rand(0, $height), $noiseColor);
+        }
+
+        for ($i = 0; $i < 4; $i++) {
+            imageline($image, rand(0, $width), rand(0, $height), rand(0, $width), rand(0, $height), $lineColor);
+        }
+
+        $fontPath = public_path('backend/fonts/captcha.ttf');
+        if (file_exists($fontPath)) {
+            for ($i = 0; $i < strlen($code); $i++) {
+                $angle = rand(-15, 15);
+                $x = 12 + ($i * 22);
+                $y = rand(26, 32);
+                @imagettftext($image, 18, $angle, $x, $y, $textColor, $fontPath, $code[$i]);
+            }
+        } else {
+            for ($i = 0; $i < strlen($code); $i++) {
+                $x = 15 + ($i * 22);
+                $y = rand(10, 14);
+                imagestring($image, 5, $x, $y, $code[$i], $textColor);
+            }
+        }
+
+        ob_start();
+        imagepng($image);
+        $imageData = ob_get_clean();
+        imagedestroy($image);
+
+        return Response::make($imageData)
+            ->header('Content-Type', 'image/png')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
 }

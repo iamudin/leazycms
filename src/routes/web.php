@@ -45,6 +45,7 @@ Route::match(['get', 'post'], 'sitemap.xml', [ExtController::class, 'sitemap_xml
 Route::match(['get', 'post'], 'sitemap_{part}.xml', [ExtController::class, 'sitemap_part'])->whereNumber('part')->name('sitemap.part');
 Route::match(['get', 'post'], 'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');
 Route::match(['get', 'post'], 'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
+Route::get('captcha/image', [ExtController::class, 'generate_captcha'])->name('captcha.image');
 // AJAX validation route removed, now handled by WebController
 
 

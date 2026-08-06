@@ -14,6 +14,66 @@ if (!function_exists('query')) {
         return new \Leazycms\Web\Models\Post;
     }
 }
+
+if (!function_exists('captcha_src')) {
+    function captcha_src()
+    {
+        return url('captcha/image') . '?v=' . time();
+    }
+}
+
+if (!function_exists('captcha_img')) {
+    function captcha_img($id = 'captcha-img', $class = 'captcha-img', $style = 'cursor:pointer; height:38px; border-radius:4px; object-fit:contain;')
+    {
+        $src = captcha_src();
+        return '<img src="' . $src . '" id="' . $id . '" class="' . $class . '" style="' . $style . '" onclick="this.src=\'' . url('captcha/image') . '?v=\'+Math.random()" title="Klik untuk refresh captcha" alt="Captcha">';
+    }
+}
+
+if (!function_exists('captcha_field')) {
+    function captcha_field($name = 'captcha', $placeholder = 'Kode Captcha')
+    {
+        $id = 'captcha_img_' . uniqid();
+        $img = captcha_img($id, 'captcha-img-field', 'cursor:pointer; height:38px; border-radius:4px; border:1px solid #444;');
+        return '
+        <div class="captcha-form-wrapper d-flex align-items-center gap-2 my-2">
+            ' . $img . '
+            <button type="button" class="btn btn-sm btn-outline-secondary py-2 px-2" onclick="document.getElementById(\'' . $id . '\').src=\'' . url('captcha/image') . '?v=\'+Math.random()" title="Refresh Captcha">
+                <i class="fa fa-sync-alt fa-fw"></i>
+            </button>
+            <input type="text" name="' . $name . '" class="form-control form-control-sm" placeholder="' . $placeholder . '" required autocomplete="off" style="height:38px;">
+        </div>';
+    }
+}
+
+if (!function_exists('captcha_verify')) {
+    function captcha_verify($inputCode = null, $flush = true)
+    {
+        if ($inputCode === null) {
+            $inputCode = request('captcha');
+        }
+
+        $sessionCode = session('captcha_code');
+        if (empty($inputCode) || empty($sessionCode)) {
+            return false;
+        }
+
+        $isValid = strtolower(trim((string)$inputCode)) === strtolower(trim((string)$sessionCode));
+
+        if ($flush) {
+            session()->forget('captcha_code');
+        }
+
+        return $isValid;
+    }
+}
+
+if (!function_exists('captcha_check')) {
+    function captcha_check($inputCode = null, $flush = true)
+    {
+        return captcha_verify($inputCode, $flush);
+    }
+}
 if (!function_exists('forbidden_keyword')) {
     function forbidden_keyword()
     {
