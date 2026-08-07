@@ -95,11 +95,11 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    width: 100%;
     position: relative;
     z-index: 10;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .glass-panel {
@@ -116,6 +116,33 @@ body {
     overflow: hidden;
     transform: translateZ(0);
     margin: auto;
+}
+
+/* Mobile Landscape & Short Screens support scroll */
+@media (max-height: 650px), (orientation: landscape) and (max-height: 750px) {
+    html, body {
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .login-content {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px 15px;
+    }
+    .glass-panel {
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+    .brand-desc {
+        margin-bottom: 15px !important;
+    }
+    .form-group.mb-4 {
+        margin-bottom: 1rem !important;
+    }
 }
 
 /* Subtle inner shine */
