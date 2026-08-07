@@ -12,6 +12,11 @@ class SafeViewEngine implements Engine
     protected $originalEngine;
 
     /**
+     * @var Engine
+     */
+    protected $engine;
+
+    /**
      * Cache memori statis untuk jalur file yang sudah diperiksa dalam 1 request lifecycle.
      *
      * @var array<string, bool>
@@ -33,6 +38,7 @@ class SafeViewEngine implements Engine
     public function __construct(Engine $originalEngine)
     {
         $this->originalEngine = $originalEngine;
+        $this->engine = $originalEngine;
     }
 
     /**
