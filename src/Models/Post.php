@@ -171,7 +171,7 @@ class Post extends BaseModel
     }
     public function user()
     {
-        return $this->belongsTo(User::class)->select(['id', 'name', 'url', 'photo']);
+        return $this->belongsTo(User::class)->select(['id', 'name', 'url', 'photo','level']);
     }
 
     public function tags()

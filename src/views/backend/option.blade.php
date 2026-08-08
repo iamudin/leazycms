@@ -38,9 +38,7 @@
                             @elseif($field[1] == 'textarea')
                                 <small>{{ str($field[0])->headline() }}</small><br>
 
-                                <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">
-                                    {{ get_option(_us($field[0])) }}
-                                </textarea>
+                                <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">{{ get_option(_us($field[0])) }}</textarea>
 
                             @elseif($field[1] == 'break')
                                 <span style="font-weight:bold;margin-bottom:0;line-height:0px;">{{ str($field[0])->headline() }}</span><br>

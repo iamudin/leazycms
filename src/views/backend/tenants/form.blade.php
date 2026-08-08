@@ -42,8 +42,7 @@
                             <small class="text-muted">Biarkan kosong atau isi 0 jika tidak ingin membatasi (unmetered).</small>
                         </div>
                         <div class="form-group mt-2 mb-2">
-
-                            <label for="">Module</label>
+                            <label for="">Nonaktifkan Modul (Disallow Modules)</label>
                             <select name="modules[]" id="select2" class="form-control form-control-sm form-control-select"
                                 multiple id="">
                                 @foreach($modules as $k => $row)
@@ -51,6 +50,7 @@
                                         {{ $row }}</option>
                                 @endforeach
                             </select>
+                            <small class="text-muted d-block mt-1">Pilih modul dari sistem (config modules.menu) yang <strong>TIDAK DIIZINKAN / Nonaktif</strong> untuk tenant ini.</small>
                         </div>
 
                         @if(isset($availablePlugins) && count($availablePlugins) > 0)

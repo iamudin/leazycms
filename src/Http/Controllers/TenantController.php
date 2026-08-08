@@ -166,7 +166,7 @@ class TenantController extends Controller implements HasMiddleware
     public function create()
     {
         $themes = Theme::where('status', 'active')->get();
-        $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
+        $modules = collect(config('modules.menu', []))->pluck('title', 'name');
         $availablePlugins = $this->getAvailablePlugins();
         return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules, 'availablePlugins' => $availablePlugins]);
     }
@@ -271,7 +271,7 @@ class TenantController extends Controller implements HasMiddleware
     {
         $themes = Theme::where('status', 'active')->get();
         $admin = User::where('host', $tenant->domain)->where('level', 'admin')->first();
-        $modules = collect(get_module())->whereNotIn("name", default_menu())->pluck('title', 'name');
+        $modules = collect(config('modules.menu', []))->pluck('title', 'name');
         $availablePlugins = $this->getAvailablePlugins();
         $options = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->pluck('value', 'name')->toArray();
         return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules', 'availablePlugins'));

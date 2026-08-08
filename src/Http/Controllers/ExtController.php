@@ -86,8 +86,13 @@ class ExtController extends Controller
             ->where('web.detail', true);
 
         if (config('modules.multisite_enabled')) {
-            $tenantModules = app()->bound('tenant') ? (app('tenant')->modules ?? []) : [];
-            $type = $type->whereIn('name', array_merge($tenantModules, default_menu()));
+            $disallowedModules = app()->bound('tenant') ? (app('tenant')->modules ?? []) : [];
+            if (is_string($disallowedModules)) {
+                $disallowedModules = json_decode($disallowedModules, true) ?? [];
+            }
+            if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                $type = $type->whereNotIn('name', $disallowedModules);
+            }
         }
 
         $typeNames = $type->pluck('name')->filter()->values()->all();

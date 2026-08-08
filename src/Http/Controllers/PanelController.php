@@ -379,7 +379,13 @@ class PanelController extends Controller implements HasMiddleware
 
         $type_list = collect(get_module())->where('name', '!=', 'media')->pluck('name')->toArray();
         if (config('modules.multisite_enabled') && app()->has('tenant')) {
-            $type_list = array_intersect($type_list, array_merge(default_menu(), tenant()->modules ?? []));
+            $disallowedModules = tenant()->modules ?? [];
+            if (is_string($disallowedModules)) {
+                $disallowedModules = json_decode($disallowedModules, true) ?? [];
+            }
+            if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                $type_list = array_diff($type_list, $disallowedModules);
+            }
         }
 
         $posts = $user->isAdmin()
@@ -606,7 +612,7 @@ class PanelController extends Controller implements HasMiddleware
     {
 
         $data = config('modules.config.option.' . _us($slug));
-        if (empty($data) || $data && $slug == 'template' || !is_main_domain()) {
+        if (empty($data) || $data && $slug == 'template') {
             return abort('404');
         }
 
@@ -632,7 +638,9 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 }
             }
-            Cache::forget('tenant:' . tenant()->domain . ':options');
+            if (config('modules.multisite_enabled')) {
+                Cache::forget('tenant:' . tenant()->domain . ':options');
+            }
 
             return back()->with('success', 'Berhasil Diupdate');
         }

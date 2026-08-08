@@ -19,8 +19,13 @@
         @php
             $modules = collect(get_module())->whereNotIn('name', ['media', 'menu','sites']);
             if(config('modules.multisite_enabled')){
-                $allowed = array_merge(default_menu(), tenant()->modules ?? []);
-                $modules = $modules->whereIn('name', $allowed);
+                $disallowedModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
+                if (is_string($disallowedModules)) {
+                    $disallowedModules = json_decode($disallowedModules, true) ?? [];
+                }
+                if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                    $modules = $modules->whereNotIn('name', $disallowedModules);
+                }
             }
         @endphp
         @foreach($modules as $row)

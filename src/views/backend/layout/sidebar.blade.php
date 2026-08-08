@@ -46,11 +46,13 @@
             @php
                 $modulesForSidebar = collect(get_module())->sortBy('position');
                 if (config('modules.multisite_enabled')) {
-                    $tenantModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
-                    $modulesForSidebar = $modulesForSidebar->whereIn(
-                        'name',
-                        array_merge($tenantModules, default_menu()),
-                    );
+                    $disallowedModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
+                    if (is_string($disallowedModules)) {
+                        $disallowedModules = json_decode($disallowedModules, true) ?? [];
+                    }
+                    if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                        $modulesForSidebar = $modulesForSidebar->whereNotIn('name', $disallowedModules);
+                    }
                 }
 
                 if (!$userprofile->isAdmin()) {
@@ -124,7 +126,6 @@
                         <span class="app-menu__label">Polling</span></a>
                 </li>
             @endif
-            @if (is_main_domain())
                 @foreach (array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template', ARRAY_FILTER_USE_BOTH) as $k => $row)
                     <li>
                         <a class="app-menu__item {{ Request::is(admin_path() . '/option/' . str($k)->slug()) ? 'active' : '' }}"
@@ -133,7 +134,6 @@
                             <span class="app-menu__label">{{ str($k)->headline() }}</span></a>
                     </li>
                 @endforeach
-            @endif
             @if (Auth::user()->isAdmin())
                 @if ($custom = config('modules.custom_menu'))
                   <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">

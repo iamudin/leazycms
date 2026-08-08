@@ -134,8 +134,13 @@
                     @php
                         $activeModules = collect(get_module());
                         if (config('modules.multisite_enabled')) {
-                            $tenantModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
-                            $activeModules = $activeModules->whereIn('name', array_merge(is_array($tenantModules) ? $tenantModules : [], function_exists('default_menu') ? default_menu() : []));
+                            $disallowedModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
+                            if (is_string($disallowedModules)) {
+                                $disallowedModules = json_decode($disallowedModules, true) ?? [];
+                            }
+                            if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                                $activeModules = $activeModules->whereNotIn('name', $disallowedModules);
+                            }
                         }
                     @endphp
                     @foreach($activeModules->filter(function($m) { return isset($m->web->index) && $m->web->index; }) as $mod)

@@ -122,32 +122,87 @@
         @includeIf(config('modules.view_stats'))
       </div>
     @endif
-    <div class="col-lg-12 mb-3">
-      <div class="card" style="padding:15px">
-        <h4 for="" style="margin-bottom:20px"><i class="fa fa-pencil" aria-hidden="true"></i> 5 Terakhir Dibuat</h4>
+    <div class="col-lg-12 mb-4">
+      <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 14px; border: 1px solid #e2e8f0; background: #ffffff;">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-bottom: 1px solid #f1f5f9;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: rgba(13, 110, 253, 0.08); color: #0d6efd; font-size: 16px;">
+              <i class="fa fa-pencil-square-o"></i>
+            </div>
+            <div>
+              <h5 class="m-0 font-weight-bold" style="font-weight: 700; color: #0f172a; font-size: 15px;">5 Konten Terakhir Dibuat</h5>
+              <small class="text-muted" style="font-size: 11px;">Aktivitas penulisan dan pembaruan konten terbaru oleh tim editor.</small>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('panel.dashboard') }}" class="btn btn-sm btn-light border text-secondary" style="font-size: 11px; font-weight: 600; border-radius: 8px; padding: 5px 12px;" title="Refresh Data">
+              <i class="fa fa-refresh mr-1"></i> Refresh
+            </a>
+          </div>
+        </div>
         <div class="table-responsive">
-          <table class="table" style="font-size:small">
-            <thead>
+          <table class="table table-hover align-middle mb-0" style="font-size: 12px;">
+            <thead style="background-color: #f8fafc; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: #64748b;">
               <tr>
-                <th width="150px">Waktu</th>
-                <th width="100px">Modul</th>
-                <th>Judul</th>
-                <th width="100px">Author</th>
-                <th width="50px">Status</th>
+                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 140px;">Waktu</th>
+                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 130px;">Modul</th>
+                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0;">Judul Konten</th>
+                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 140px;">Pembuat</th>
+                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 100px; text-align: center;">Status</th>
               </tr>
             </thead>
             <tbody>
-              @foreach($latest as $row)
+              @forelse($latest as $row)
+                @php
+                  $modInfo = get_module($row->type);
+                  $icon = $modInfo->icon ?? 'fa-file-text-o';
+                  $editRoute = Route::has($row->type . '.show') ? route($row->type . '.show', $row->id) : (Route::has($row->type) ? route($row->type) : '#');
+                @endphp
+                <tr style="transition: background-color 0.15s ease-in-out;">
+                  <td style="padding: 12px 16px; vertical-align: middle;">
+                    <span class="badge bg-light text-dark border" style="font-weight: 500; font-size: 11px; padding: 5px 8px; border-radius: 6px;" title="{{ $row->created_at->format('d M Y H:i') }}">
+                      <i class="fa fa-clock-o text-muted mr-1"></i> {{ $row->created_at->diffForHumans() }}
+                    </span>
+                  </td>
+                  <td style="padding: 12px 16px; vertical-align: middle;">
+                    <span class="d-inline-flex align-items-center gap-1 font-weight-bold" style="font-size: 11px; color: #334155; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; border: 1px solid #e2e8f0;">
+                      <i class="fa {{ $icon }} text-primary mr-1"></i> {{ str($row->type)->headline() }}
+                    </span>
+                  </td>
+                  <td style="padding: 12px 16px; vertical-align: middle;">
+                    <span  class="font-weight-bold text-decoration-none" style="font-weight: 600; color: #0f172a; text-decoration: none;" onmouseover="this.style.color='#0d6efd';" onmouseout="this.style.color='#0f172a';" >
+                      {{ $row->title }}
+                    </span>
+                  </td>
+                  <td style="padding: 12px 16px; vertical-align: middle;">
+                    <div class="d-flex align-items-center gap-2">
+                     
+                      <span class="text-truncate" style="max-width: 110px; color: #334155; font-weight: 500;">
+                        {{ $row->user?->name ?? 'Admin' }}<br><small class="badge badge-success">{{ ucfirst($row->user->level) }}</small>
+                      </span>
+                    </div>
+                  </td>
+                  <td style="padding: 12px 16px; vertical-align: middle; text-align: center;">
+                    @if($row->status == 'draft')
+                      <span class="badge" style="background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">
+                        <i class="fa fa-circle text-warning mr-1" style="font-size: 7px;"></i> Draft
+                      </span>
+                    @else
+                      <span class="badge" style="background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;">
+                        <i class="fa fa-check-circle text-success mr-1"></i> Publish
+                      </span>
+                    @endif
+                  </td>
+             
+                </tr>
+              @empty
                 <tr>
-                  <td><code>{{ $row->created_at->diffForHumans() }}</code></td>
-                  <td>{{ str($row->type)->headline() }}</td>
-                  <td><span class="text-primary">{{$row->title }}</span></td>
-                  <td>{{ $row->user?->name }}</td>
-                  <td>
-                    {!! $row->status == 'draft' ? '<badge class="badge badge-warning">Draft</badge>' : '<badge class="badge badge-success">Publish</badge>' !!}
+                  <td colspan="6" class="text-center py-4 text-muted">
+                    <i class="fa fa-folder-open-o fa-2x mb-2 d-block opacity-50"></i>
+                    Belum ada konten yang dibuat.
                   </td>
                 </tr>
-              @endforeach
+              @endforelse
             </tbody>
           </table>
         </div>

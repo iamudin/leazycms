@@ -122,8 +122,14 @@ class Panel
 
         }
         if (config('modules.multisite_enabled')) {
-            if (config('modules.current.post_type') && !in_array(config('modules.current.post_type'), array_merge(default_menu(), tenant()->modules ?? []))) {
-                abort(404);
+            $disallowedModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
+            if (is_string($disallowedModules)) {
+                $disallowedModules = json_decode($disallowedModules, true) ?? [];
+            }
+            if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                if (config('modules.current.post_type') && in_array(config('modules.current.post_type'), $disallowedModules)) {
+                    abort(404);
+                }
             }
         }
         isNotInSession($request);
