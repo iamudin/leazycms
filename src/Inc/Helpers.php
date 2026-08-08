@@ -692,6 +692,18 @@ if (!function_exists('get_disabled_plugins')) {
 if (!function_exists('add_route')) {
     function add_route($type, $array)
     {
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 7);
+            foreach ($trace as $step) {
+                if (isset($step['file'])) {
+                    $callerFile = str_replace('\\', '/', $step['file']);
+                    if (strpos($callerFile, 'views/template/') !== false && strpos($callerFile, 'modules.blade.php') !== false) {
+                        return false;
+                    }
+                }
+            }
+        }
+
         if ($type == 'admin') {
             $requiredKeys = ['title', 'name', 'icon', 'path', 'method', 'function', 'controller', 'show_in_sidebar'];
         } elseif ($type == 'public') {
