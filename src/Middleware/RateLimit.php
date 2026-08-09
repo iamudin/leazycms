@@ -275,7 +275,7 @@ class RateLimit
                     } else {
                         $content .= $jsSnippet;
                     }
-
+                    $content = minify_all_one_line($content);
                 } catch (\Exception $e) {
                     // Ignore view render error if any
                 }
