@@ -2413,7 +2413,11 @@ if (!function_exists('is_day')) {
 if (!function_exists('minify_all_one_line')) {
     function minify_all_one_line($html)
     {
-        $html = preg_replace_callback(
+        if (empty($html) || !is_string($html)) {
+            return $html;
+        }
+
+        $replaced = @preg_replace_callback(
             '/<script\b[^>]*>.*?<\/script>/is',
             function ($matches) {
                 $script = $matches[0];
@@ -2422,6 +2426,12 @@ if (!function_exists('minify_all_one_line')) {
             },
             $html
         );
+
+        if ($replaced !== null) {
+            $html = $replaced;
+        }
+
+        $html = preg_replace('/[\r\n\t]+/', ' ', $html);
         $html = preg_replace('/\s+/', ' ', $html);
         return trim($html);
     }
