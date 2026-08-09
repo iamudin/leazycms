@@ -67,7 +67,7 @@ class Web
                                 $content
                             );
                         }
-                        $response->setContent($content);
+                        $response->setContent(minify_all_one_line($content));
                     }
                     return $response;
                 }
