@@ -116,6 +116,11 @@ class Web
                 }
             }
             $content = preg_replace_callback('/<img\s+([^>]*?)src=["\']([^"\']*?)["\']([^>]*?)>/', function ($matches) use ($request) {
+                $fullTag = $matches[0];
+                if (strpos($fullTag, 'no-lazy') !== false || strpos($fullTag, 'eager') !== false || strpos($fullTag, 'fetchpriority') !== false) {
+                    return $fullTag;
+                }
+
                 $attributes = $matches[1] . 'data-src="' . $matches[2] . '" ' . $matches[3];
 
                 // Tambahkan class lazyload
