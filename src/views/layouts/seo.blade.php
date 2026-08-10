@@ -11,9 +11,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 @php
-    $allowIndexing = get_option('allow_search_engine', 'N') === 'Y';
+    $ase = get_option('allow_search_engine');
+    $allowIndexing = empty($ase)  || $ase &&  $ase == 'Y' ? 'Y' : 'N';
 @endphp
-@if($allowIndexing)
+@if($allowIndexing=='Y')
 <meta name="robots" content="index,follow">
 @else
 <meta name="robots" content="noindex,nofollow">
