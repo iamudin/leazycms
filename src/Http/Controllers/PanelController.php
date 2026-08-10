@@ -882,6 +882,9 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 }
             }
+            $allowSearchEngine = $request->has('allow_search_engine') ? 'Y' : 'N';
+            $option->updateOrCreate(['name' => 'allow_search_engine'], ['value' => $allowSearchEngine, 'autoload' => 1]);
+
             foreach ($data['site_attribute'] as $row) {
                 $key = $row[1];
                 if ($row[2] == 'file') {

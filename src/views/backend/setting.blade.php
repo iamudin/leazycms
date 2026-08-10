@@ -39,7 +39,14 @@
                     <div class="tab-content pt-2" id="myTabContent">
 
                         <div class="tab-pane fade  active show" id="profile">
-
+                            <div class="form-group mb-3 pb-2" style="border-bottom:1px dashed #ccc;">
+                                <small class="text-muted d-block font-weight-bold mb-1">Indeks Mesin Pencari (Search Engine Indexing)</small>
+                                <label class="d-flex align-items-center gap-2 mb-1" style="cursor: pointer;">
+                                    <input type="checkbox" name="allow_search_engine" value="Y" {{ get_option('allow_search_engine', (config('modules.multisite_enabled') && function_exists('is_main_domain') && is_main_domain() ? 'N' : 'Y')) == 'Y' ? 'checked' : '' }}>
+                                    <span>Izinkan mesin pencari mengindeks website ini (Google, Bing, Yahoo, dll.)</span>
+                                </label>
+                                <small class="text-muted d-block" style="font-size: 11px;">Jika diaktifkan, meta robots bernilai <code>index, follow</code>. Jika tidak diaktifkan, meta robots bernilai <code>noindex, nofollow</code> agar website tidak masuk ke pencarian mesin pencari.</small>
+                            </div>
 
                             @foreach ($site_attribute as $r)
                                 @if ($r[2] == 'file')

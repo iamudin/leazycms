@@ -25,8 +25,17 @@
         <h6>Modul</h6>
         <div class="accordion mb-3" id="accordionExample" >
           @php 
-          $module = collect(get_module())->where('public', true)->where('web.detail', true);
-          $data = query()->selectedColumn()->whereIn('type',$module->pluck('name')->toArray())->with('category')->get();
+            $module = collect(get_module())->where('public', true)->where('web.detail', true);
+            if (config('modules.multisite_enabled')) {
+                $disallowedModules = app()->bound('tenant') ? app('tenant')->modules ?? [] : [];
+                if (is_string($disallowedModules)) {
+                    $disallowedModules = json_decode($disallowedModules, true) ?? [];
+                }
+                if (is_array($disallowedModules) && count($disallowedModules) > 0) {
+                    $module = $module->whereNotIn('name', $disallowedModules);
+                }
+            }
+            $data = query()->selectedColumn()->whereIn('type', $module->pluck('name')->toArray())->with('category')->get();
           @endphp
             @foreach($module as $row)
             <div class="card">

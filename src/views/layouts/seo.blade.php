@@ -10,10 +10,13 @@
 <title>{{$title}} {{ get_option('site_title') && get_option('show_site_title_after_page_name') && !request()->is('/') ? ' - ' . get_option('site_title') : null }}</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-@if(config('modules.multisite_enabled') && function_exists('is_main_domain') && is_main_domain())
-<meta name="robots" content="noindex,nofollow">
-@else
+@php
+    $allowIndexing = get_option('allow_search_engine', 'N') === 'Y';
+@endphp
+@if($allowIndexing)
 <meta name="robots" content="index,follow">
+@else
+<meta name="robots" content="noindex,nofollow">
 @endif
 <meta name="distribution" content="global" >
 <meta name="rating" content="general">
