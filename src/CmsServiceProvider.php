@@ -219,7 +219,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->app->singleton('public', Web::class);
         $this->app->singleton('admin', Panel::class);
         $this->app->singleton(ExceptionHandler::class, NotFoundHandler::class);
-        $this->registerSafeViewEngine();
+        // $this->registerSafeViewEngine();
     }
     protected function registerSafeViewEngine()
     {
