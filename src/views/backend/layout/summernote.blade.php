@@ -660,9 +660,97 @@
                         }
 
                         if (uploadPromises.length > 0) {
+                            var totalImgs = uploadPromises.length;
+                            var completedImgs = 0;
+
+                       
+
+                            $('#word-paste-progress').remove();
+                            var $progressAlert = $('<div id="word-paste-progress" class="alert alert-info d-flex align-items-center justify-content-between mb-2 py-2 px-3" style="font-size: 13px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">' +
+                                '<div><i class="fa fa-spinner fa-spin mr-2 text-primary"></i> <span id="word-paste-progress-text">Mengonversi & mengunggah <b>0 / ' + totalImgs + '</b> gambar dari MS Word...</span></div>' +
+                                '<div class="progress" style="width: 140px; height: 10px; margin: 0; border-radius: 5px;"><div id="word-paste-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 0%;"></div></div>' +
+                                '</div>');
+
+                            var $targetEditor = window.currentSummernoteObj && window.currentSummernoteObj.context ? window.currentSummernoteObj.context.next('.note-editor') : $('.note-editor').first();
+                            if ($targetEditor.length) {
+                                $targetEditor.before($progressAlert);
+                            }
+
+                            function updateProgress() {
+                                completedImgs++;
+                                var percent = Math.round((completedImgs / totalImgs) * 100);
+                                $('#word-paste-progress-bar').css('width', percent + '%');
+                                $('#word-paste-progress-text').html('Mengonversi & mengunggah <b>' + completedImgs + ' / ' + totalImgs + '</b> gambar dari MS Word...');
+                            }
+
+                            imgElements.forEach(function(imgEl) {
+                                var src = imgEl.getAttribute('src') || '';
+
+                                if (src.startsWith('data:image/')) {
+                                    var promise = new Promise(function(resolve) {
+                                        try {
+                                            var fileObj = dataURLtoFile(src, 'word_img_' + Math.random().toString(36).substr(2, 7));
+                                            uploadSummernoteImage(fileObj, function(uploadedUrl) {
+                                                imgEl.setAttribute('src', uploadedUrl);
+                                                updateProgress();
+                                                resolve();
+                                            }, function() {
+                                                imgEl.remove();
+                                                updateProgress();
+                                                resolve();
+                                            }, src);
+                                        } catch(err) {
+                                            imgEl.remove();
+                                            updateProgress();
+                                            resolve();
+                                        }
+                                    });
+                                    uploadPromises.push(promise);
+                                } else if (src.startsWith('file://') || src.includes('file:///')) {
+                                    var fileObj = null;
+                                    var cacheSrc = null;
+
+                                    if (rtfImages && rtfImages[fileImgIndex]) {
+                                        cacheSrc = rtfImages[fileImgIndex];
+                                        fileObj = dataURLtoFile(cacheSrc, 'word_img_' + Math.random().toString(36).substr(2, 7));
+                                    } else if (itemBlobs && itemBlobs[fileImgIndex]) {
+                                        fileObj = itemBlobs[fileImgIndex];
+                                    }
+
+                                    fileImgIndex++;
+
+                                    if (fileObj) {
+                                        var promise = new Promise(function(resolve) {
+                                            uploadSummernoteImage(fileObj, function(uploadedUrl) {
+                                                imgEl.setAttribute('src', uploadedUrl);
+                                                updateProgress();
+                                                resolve();
+                                            }, function() {
+                                                imgEl.remove();
+                                                updateProgress();
+                                                resolve();
+                                            }, cacheSrc);
+                                        });
+                                        uploadPromises.push(promise);
+                                    } else {
+                                        imgEl.remove();
+                                    }
+                                }
+                            });
+
                             Promise.all(uploadPromises).then(function() {
+                                $('#word-paste-progress').removeClass('alert-info').addClass('alert-success').html('<i class="fa fa-check-circle mr-2 text-success"></i> <b>' + totalImgs + ' gambar dari MS Word berhasil dikonversi & diunggah!</b>');
+                                setTimeout(function() {
+                                    $('#word-paste-progress').fadeOut(400, function() { $(this).remove(); });
+                                }, 3000);
+
+                                if (typeof notif === 'function') {
+                                    notif(totalImgs + ' gambar dari Word berhasil dikonversi & diunggah!', 'success');
+                                }
+
                                 pasteFinalHtml();
                             }).catch(function() {
+                                $('#word-paste-progress').fadeOut(300, function() { $(this).remove(); });
                                 pasteFinalHtml();
                             });
                         } else {
