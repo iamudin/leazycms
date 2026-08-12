@@ -101,15 +101,7 @@ class RateLimit
             $redirectUrl = 'https://' . $host . $uri;
         }
         // 3. Validasi domain jika sub_app_enabled diaktifkan
-        elseif (get_option('sub_app_enabled') == 'Y' && !config('modules.multisite_enabled') && !is_main_domain()) {
-
-            $allowedHosts = collect(config('modules.extension_module'))->pluck('url')->map(function ($url) {
-                return parse_url($url, PHP_URL_HOST);
-            })->toArray();
-            if (!in_array($host, $allowedHosts, true)) {
-                $redirectUrl = $scheme . '://' . $appUrlHost . $uri;
-            }
-        } elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
+       elseif ($host !== $appUrlHost && !config('modules.multisite_enabled')) {
             // Jika host bukan domain utama, cek apakah ini adalah domain khusus plugin yang valid
             $isPluginDomain = is_plugin_domain($host);
             $isCustomRoute = function_exists('is_custom_web_route_matched') ? is_custom_web_route_matched() : false;

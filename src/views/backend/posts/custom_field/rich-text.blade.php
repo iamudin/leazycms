@@ -1,5 +1,5 @@
 <small for="{{_us($r[0])}}">{{$r[0]}}</small>
-<textarea id="editor_{{_us($r[0])}}" class="form-control" name="{{_us($r[0])}}">{{ !empty(old(_us($r[0]))) ? old(_us($r[0])) :  (isset($field[_us($r[0])]) && !empty($field[_us($r[0])])  ? $field[_us($r[0])] : '')}}</textarea>
+<textarea id="editor_{{_us($r[0])}}" data-no-media="true" class="form-control" name="{{_us($r[0])}}">{{ !empty(old(_us($r[0]))) ? old(_us($r[0])) :  (isset($field[_us($r[0])]) && !empty($field[_us($r[0])])  ? $field[_us($r[0])] : '')}}</textarea>
 
 @push('styles')
     @if(!defined('SUMMERNOTE_CSS_CUSTOM_FIELD'))
@@ -33,7 +33,86 @@
                         ['para', ['paragraph','ul', 'ol' ]],
                         ['insert', ['link']],
                         ['view',['codeview']]
-                    ]
+                    ],
+                    callbacks: {
+                        onPaste: function (e) {
+                            var event = e.originalEvent || e;
+                            var clipboardData = event.clipboardData || window.clipboardData;
+                            if (!clipboardData) return;
+
+                            var html = clipboardData.getData('text/html');
+                            if (html && html.trim().length > 0) {
+                                e.preventDefault();
+
+                                var clean = html
+                                    .replace(/<!--[\s\S]*?-->/gi, '')
+                                    .replace(/<xml[\s\S]*?<\/xml>/gi, '')
+                                    .replace(/<style[\s\S]*?<\/style>/gi, '')
+                                    .replace(/<script[\s\S]*?<\/script>/gi, '')
+                                    .replace(/<meta[^>]*>/gi, '')
+                                    .replace(/<link[^>]*>/gi, '')
+                                    .replace(/<\/?\w+:[^>]*>/gi, '')
+                                    .replace(/<img[^>]*\/?>/gi, '');
+
+                                var container = document.createElement('div');
+                                container.innerHTML = clean;
+
+                                function sanitizeNode(node) {
+                                    if (!node) return;
+                                    if (node.nodeType === 1) {
+                                        var tagName = node.tagName.toLowerCase();
+
+                                        if (tagName === 'img' || tagName === 'font' || tagName === 'center' || tagName === 'o:p' || tagName === 'w:sdt') {
+                                            var parent = node.parentNode;
+                                            if (parent) {
+                                                while (node.firstChild) {
+                                                    parent.insertBefore(node.firstChild, node);
+                                                }
+                                                parent.removeChild(node);
+                                            }
+                                            return;
+                                        }
+
+                                        var attrs = Array.from(node.attributes);
+                                        for (var i = 0; i < attrs.length; i++) {
+                                            var attrName = attrs[i].name.toLowerCase();
+                                            if (tagName === 'a') {
+                                                if (attrName !== 'href' && attrName !== 'target') {
+                                                    node.removeAttribute(attrs[i].name);
+                                                }
+                                            } else {
+                                                node.removeAttribute(attrs[i].name);
+                                            }
+                                        }
+
+                                        if (tagName === 'div') {
+                                            var p = document.createElement('p');
+                                            while (node.firstChild) {
+                                                p.appendChild(node.firstChild);
+                                            }
+                                            if (node.parentNode) {
+                                                node.parentNode.replaceChild(p, node);
+                                                node = p;
+                                            }
+                                        }
+
+                                        var children = Array.from(node.childNodes);
+                                        for (var j = 0; j < children.length; j++) {
+                                            sanitizeNode(children[j]);
+                                        }
+                                    }
+                                }
+
+                                var rootNodes = Array.from(container.childNodes);
+                                for (var k = 0; k < rootNodes.length; k++) {
+                                    sanitizeNode(rootNodes[k]);
+                                }
+
+                                var finalCleanHtml = container.innerHTML;
+                                $('#editor_{{_us($r[0])}}').summernote('pasteHTML', finalCleanHtml);
+                            }
+                        }
+                    }
                 });
             }
         } else {

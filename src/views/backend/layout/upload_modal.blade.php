@@ -548,11 +548,15 @@
             setTimeout(function () {
                 $('.note-toolbar').each(function () {
                     let $toolbar = $(this);
+                    let $textarea = $toolbar.closest('.note-editor').prev('textarea');
+
+                    if ($textarea.length && ($textarea.data('no-media') || $textarea.attr('id')?.indexOf('editor_') === 0)) {
+                        $toolbar.find('.btn-summernote-gmedia').closest('.note-btn-group').remove();
+                        return;
+                    }
 
                     /* Hide default summernote insert buttons to avoid confusion */
                     $toolbar.find('button[data-original-title="Picture"], .note-icon-picture').closest('button').hide();
-                    // $toolbar.find('button[data-original-title="Video"], .note-icon-video').closest('button').hide();
-                    // $toolbar.find('button[data-original-title="Link"], .note-icon-link').closest('button').hide();
 
                     if ($toolbar.find('.btn-summernote-gmedia').length > 0) return;
 
