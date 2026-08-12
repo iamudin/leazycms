@@ -1479,22 +1479,54 @@ class PanelController extends Controller implements HasMiddleware
     {
         if ($file instanceof \Illuminate\Http\UploadedFile) {
             $zipFilePath = $file->getRealPath();
+        } elseif ($file instanceof \Illuminate\Http\File) {
+            $zipFilePath = $file->getRealPath();
         } elseif (is_string($file)) {
             $fileStr = trim($file);
             if (str_starts_with($fileStr, 'http://') || str_starts_with($fileStr, 'https://')) {
                 $fileStr = parse_url($fileStr, PHP_URL_PATH);
             }
 
-            if (file_exists($fileStr)) {
-                $zipFilePath = $fileStr;
-            } elseif (file_exists(public_path(ltrim($fileStr, '/')))) {
-                $zipFilePath = public_path(ltrim($fileStr, '/'));
-            } elseif (file_exists(public_path('media/' . basename($fileStr)))) {
-                $zipFilePath = public_path('media/' . basename($fileStr));
-            } elseif (media_exists($fileStr)) {
-                $mediaObj = media($fileStr);
-                $zipFilePath = $mediaObj->path() ?? public_path(ltrim($mediaObj->url(), '/'));
-            } else {
+            $cleanRelative = ltrim($fileStr, '/\\');
+            $fileName = basename($fileStr);
+
+            // 1. Cek di database table files (Leazycms\FLC\Models\File)
+            $mediaFile = \Leazycms\FLC\Models\File::where('file_name', $fileName)
+                ->orWhere('file_path', $cleanRelative)
+                ->orWhere('file_path', '/' . $cleanRelative)
+                ->first();
+
+            if ($mediaFile) {
+                $disk = $mediaFile->disk ?? 'public';
+                if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($mediaFile->file_path)) {
+                    $zipFilePath = \Illuminate\Support\Facades\Storage::disk($disk)->path($mediaFile->file_path);
+                } elseif (file_exists(public_path($mediaFile->file_path))) {
+                    $zipFilePath = public_path($mediaFile->file_path);
+                } elseif (file_exists(storage_path('app/' . ltrim($mediaFile->file_path, '/')))) {
+                    $zipFilePath = storage_path('app/' . ltrim($mediaFile->file_path, '/'));
+                } elseif (file_exists(storage_path('app/public/' . ltrim($mediaFile->file_path, '/')))) {
+                    $zipFilePath = storage_path('app/public/' . ltrim($mediaFile->file_path, '/'));
+                }
+            }
+
+            // 2. Jika tidak ditemukan di database files, cek lokasi fisik publik & storage
+            if (empty($zipFilePath)) {
+                if (!empty($cleanRelative) && file_exists(public_path($cleanRelative))) {
+                    $zipFilePath = public_path($cleanRelative);
+                } elseif (file_exists(public_path('media/' . $fileName))) {
+                    $zipFilePath = public_path('media/' . $fileName);
+                } elseif (
+                    str_starts_with($fileStr, base_path()) || 
+                    str_starts_with($fileStr, storage_path()) || 
+                    str_starts_with($fileStr, sys_get_temp_dir())
+                ) {
+                    if (file_exists($fileStr)) {
+                        $zipFilePath = $fileStr;
+                    }
+                }
+            }
+
+            if (empty($zipFilePath) || !file_exists($zipFilePath)) {
                 return back()->with('danger', 'File template tidak ditemukan.');
             }
         } else {
