@@ -215,6 +215,168 @@
     <script src="https://js.puter.com/v2/"></script>
 @endpush
 <script type="text/javascript">
+    function dataURLtoFile(dataurl, filename) {
+        var arr = dataurl.split(','),
+            mimeMatch = arr[0].match(/:(.*?);/),
+            mime = mimeMatch ? mimeMatch[1] : 'image/png',
+            bstr = atob(arr[1]),
+            n = bstr.length,
+            u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        var ext = (mime.split('/')[1] || 'png').replace('+xml', '');
+        if (!filename.includes('.')) filename += '.' + ext;
+        return new File([u8arr], filename, { type: mime });
+    }
+
+    var SN_LOADING_SVG = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22120%22%20height%3D%2280%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%23f3f4f6%22%20rx%3D%226%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%239ca3af%22%20font-family%3D%22sans-serif%22%3E%E2%8F%B3%20Mengunggah...%3C%2Ftext%3E%3C%2Fsvg%3E";
+
+    function cleanWordHtml(html) {
+        if (!html) return '';
+
+        var clean = html
+            .replace(/<!--[\s\S]*?-->/gi, '')
+            .replace(/<xml[\s\S]*?<\/xml>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi, '')
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<meta[^>]*>/gi, '')
+            .replace(/<link[^>]*>/gi, '')
+            .replace(/<\/?\w+:[^>]*>/gi, '')
+            .replace(/<img[^>]*src=["']?file:\/\/[^"'>\s]+["']?[^>]*\/?>/gi, '');
+
+        var container = document.createElement('div');
+        container.innerHTML = clean;
+
+        function sanitizeNode(node) {
+            if (!node) return;
+            if (node.nodeType === 1) {
+                var tagName = node.tagName.toLowerCase();
+
+                if (tagName === 'font' || tagName === 'center' || tagName === 'o:p' || tagName === 'w:sdt') {
+                    var parent = node.parentNode;
+                    if (parent) {
+                        while (node.firstChild) {
+                            parent.insertBefore(node.firstChild, node);
+                        }
+                        parent.removeChild(node);
+                    }
+                    return;
+                }
+
+                var attrs = Array.from(node.attributes);
+                for (var i = 0; i < attrs.length; i++) {
+                    var attrName = attrs[i].name.toLowerCase();
+                    if (tagName === 'img') {
+                        if (attrName !== 'src' && attrName !== 'id' && attrName !== 'data-uploading' && attrName !== 'alt' && attrName !== 'title') {
+                            node.removeAttribute(attrs[i].name);
+                        }
+                    } else if (tagName === 'a') {
+                        if (attrName !== 'href' && attrName !== 'target') {
+                            node.removeAttribute(attrs[i].name);
+                        }
+                    } else {
+                        node.removeAttribute(attrs[i].name);
+                    }
+                }
+
+                if (tagName === 'div') {
+                    var p = document.createElement('p');
+                    while (node.firstChild) {
+                        p.appendChild(node.firstChild);
+                    }
+                    if (node.parentNode) {
+                        node.parentNode.replaceChild(p, node);
+                        node = p;
+                    }
+                }
+
+                if (tagName === 'span' && node.attributes.length === 0) {
+                    var parentSpan = node.parentNode;
+                    if (parentSpan) {
+                        while (node.firstChild) {
+                            parentSpan.insertBefore(node.firstChild, node);
+                        }
+                        parentSpan.removeChild(node);
+                        return;
+                    }
+                }
+
+                var children = Array.from(node.childNodes);
+                for (var j = 0; j < children.length; j++) {
+                    sanitizeNode(children[j]);
+                }
+            }
+        }
+
+        var rootNodes = Array.from(container.childNodes);
+        for (var k = 0; k < rootNodes.length; k++) {
+            sanitizeNode(rootNodes[k]);
+        }
+
+        return container.innerHTML;
+    }
+
+    function getBase64Key(src) {
+        if (!src) return '';
+        var len = src.length;
+        if (len < 500) return src;
+        var mid = Math.floor(len / 2);
+        return len + '_' + src.substring(0, 100) + '_' + src.substring(mid, mid + 100) + '_' + src.substring(len - 100);
+    }
+
+    var base64UploadCache = {};
+
+    function uploadSummernoteImage(file, successCallback, errorCallback, base64Src) {
+        var cacheKey = base64Src ? getBase64Key(base64Src) : null;
+
+        if (cacheKey && base64UploadCache[cacheKey]) {
+            var cached = base64UploadCache[cacheKey];
+            if (typeof cached === 'string') {
+                if (typeof successCallback === 'function') successCallback(cached);
+                return;
+            } else if (cached && typeof cached.then === 'function') {
+                cached.then(function(url) {
+                    if (url && typeof successCallback === 'function') successCallback(url);
+                });
+                return;
+            }
+        }
+
+        let formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', '{{ csrf_token() }}');
+        @if(isset($edit) && isset($edit->post_id))
+            formData.append('post', '{{ $edit->post_id }}');
+        @elseif(isset($post) && isset($post->id))
+            formData.append('post', '{{ $post->id }}');
+        @endif
+
+        var promise = $.ajax({
+            url: "{{ route('upload_image_summernote') }}",
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false
+        }).then(function(res) {
+            if (res && res.status === 'success' && res.url) {
+                if (cacheKey) base64UploadCache[cacheKey] = res.url;
+                if (typeof successCallback === 'function') successCallback(res.url);
+                return res.url;
+            } else {
+                if (cacheKey) delete base64UploadCache[cacheKey];
+                if (typeof errorCallback === 'function') errorCallback(res);
+            }
+        }, function(err) {
+            if (cacheKey) delete base64UploadCache[cacheKey];
+            if (typeof errorCallback === 'function') errorCallback(err);
+        });
+
+        if (cacheKey) {
+            base64UploadCache[cacheKey] = promise;
+        }
+    }
+
     var _tblStyleTarget = { table: null, tr: null, td: null };
     let currentImage = null;
 
@@ -224,6 +386,19 @@
             $(this).addClass('selected-img');
             currentImage = $(this);
         });
+
+        $('form').on('submit', function () {
+            if ($('#editor').length) {
+                var code = $('#editor').summernote('code');
+                if (code && code.includes('data:image/')) {
+                    var cleanCode = code
+                        .replace(/<img[^>]*src=["']data:image\/svg\+xml[^"']*["'][^>]*\/?>/gi, '')
+                        .replace(/<img[^>]*src=["']data:image\/[^"']+["'][^>]*\/?>/gi, '');
+                    $('#editor').summernote('code', cleanCode);
+                }
+            }
+        });
+
         let firstRequest = true;
 
         function aiButton(context) {
@@ -300,15 +475,95 @@
             disableDragAndDrop: true,
             callbacks: {
                 onChange: function (contents, $editable) {
-                    let sanitized = contents
-                        .replace(/<script[^>]*>.*?<\/script>/gi, '')
-                        .replace(/<style[^>]*>.*?<\/style>/gi, '')
-                        .replace(/javascript:/gi, '')
-                        .replace(/on\w+="[^"]*"/gi, '')
-                        .replace(/on\w+='[^']*'/gi, '');
+                    if ($editable && $editable.length) {
+                        $editable.find('img[src^="data:image/"]').each(function() {
+                            var $img = $(this);
+                            var src = $img.attr('src');
+                            if (src.includes('svg+xml') || $img.attr('data-uploading') || $img.attr('id')) return;
+                            $img.attr('data-uploading', '1').attr('src', SN_LOADING_SVG);
 
-                    if (sanitized !== contents) {
-                        $('#editor').summernote('code', sanitized);
+                            try {
+                                var fileObj = dataURLtoFile(src, 'img_' + Math.random().toString(36).substr(2, 7));
+                                uploadSummernoteImage(fileObj, function(uploadedUrl) {
+                                    $img.attr('src', uploadedUrl).removeAttr('data-uploading');
+                                }, function() {
+                                    $img.removeAttr('data-uploading');
+                                }, src);
+                            } catch(e) {
+                                $img.removeAttr('data-uploading');
+                            }
+                        });
+                    }
+                },
+
+                onPaste: function (e) {
+                    var event = e.originalEvent || e;
+                    var clipboardData = event.clipboardData || window.clipboardData;
+                    if (!clipboardData) return;
+
+                    var html = clipboardData.getData('text/html');
+                    var files = clipboardData.files;
+
+                    if ((!html || html.trim().length === 0) && files && files.length > 0) {
+                        e.preventDefault();
+                        for (var i = 0; i < files.length; i++) {
+                            if (files[i].type && files[i].type.startsWith('image/')) {
+                                uploadSummernoteImage(files[i], function(uploadedUrl) {
+                                    $('#editor').summernote('insertImage', uploadedUrl);
+                                });
+                            }
+                        }
+                        return;
+                    }
+
+                    if (html && html.trim().length > 0) {
+                        e.preventDefault();
+                        window.isPastingHtml = true;
+                        setTimeout(function() { window.isPastingHtml = false; }, 500);
+
+                        var cleanedHtml = cleanWordHtml(html);
+
+                        var base64Regex = /<img([^>]*)src=["'](data:image\/[^;]+;base64,[^"']+)["']([^>]*)>/gi;
+                        var matches = [];
+
+                        cleanedHtml = cleanedHtml.replace(base64Regex, function(fullTag, p1, base64Src, p2) {
+                            var tempId = 'sn-img-' + Math.random().toString(36).substr(2, 9);
+                            matches.push({ id: tempId, base64: base64Src });
+                            return '<img id="' + tempId + '" data-uploading="1"' + p1 + 'src="' + SN_LOADING_SVG + '"' + p2 + '>';
+                        });
+
+                        document.execCommand('insertHTML', false, cleanedHtml);
+
+                        if (matches.length > 0) {
+                            matches.forEach(function(item) {
+                                try {
+                                    var fileObj = dataURLtoFile(item.base64, 'word_img_' + item.id);
+                                    uploadSummernoteImage(fileObj, function(uploadedUrl) {
+                                        var $img = $('#' + item.id);
+                                        if ($img.length) {
+                                            $img.attr('src', uploadedUrl).removeAttr('id').removeAttr('data-uploading');
+                                        } else {
+                                            $('.note-editable img[id="' + item.id + '"]').attr('src', uploadedUrl).removeAttr('id').removeAttr('data-uploading');
+                                        }
+                                    }, function() {
+                                        $('.note-editable img[id="' + item.id + '"]').removeAttr('data-uploading');
+                                    }, item.base64);
+                                } catch(err) {
+                                    console.error('Base64 upload error:', err);
+                                }
+                            });
+                        }
+                    }
+                },
+
+                onImageUpload: function(files) {
+                    if (window.isPastingHtml) return;
+                    if (files && files.length > 0) {
+                        for (var i = 0; i < files.length; i++) {
+                            uploadSummernoteImage(files[i], function(uploadedUrl) {
+                                $('#editor').summernote('insertImage', uploadedUrl);
+                            });
+                        }
                     }
                 },
 

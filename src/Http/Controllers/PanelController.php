@@ -190,10 +190,15 @@ class PanelController extends Controller implements HasMiddleware
                     $disabledPlugins = array_diff($disabledPlugins, [$pluginName]);
                 }
 
-                DB::table('options')->updateOrInsert(
-                    ['name' => 'disabled_plugins', 'tenant_id' => null],
-                    ['value' => json_encode(array_values($disabledPlugins)), 'autoload' => 1]
-                );
+                $match = ['name' => 'disabled_plugins'];
+                $updateData = ['value' => json_encode(array_values($disabledPlugins)), 'autoload' => 1];
+
+                if (config('modules.multisite_enabled') || app()->has('tenant')) {
+                    $match['tenant_id'] = null;
+                    $updateData['tenant_id'] = null;
+                }
+
+                DB::table('options')->updateOrInsert($match, $updateData);
 
                 cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
                 return back()->with('success', 'Status plugin berhasil diubah secara global.');

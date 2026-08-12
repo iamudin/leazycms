@@ -8,15 +8,59 @@ $(document).ready(function() {
       placeholder: 'Tulis isi..',
             height: 600,
             callbacks: {
-              onFileUpload: function(file) {
-          fileupload(file[0]);
-      },
-        onMediaDelete: function(target) {
-            deleteImage(target[0].src);
-        }
+                onChange: function (contents, $editable) {
+                    let sanitized = contents
+                        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+                        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+                        .replace(/javascript:/gi, '')
+                        .replace(/on\w+="[^"]*"/gi, '')
+                        .replace(/on\w+='[^']*'/gi, '')
+                        .replace(/<img[^>]*src=["']?data:image\/[^"'>\s]+["']?[^>]*\/?>/gi, '')
+                        .replace(/<img[^>]*src=["']?file:\/\/[^"'>\s]+["']?[^>]*\/?>/gi, '');
 
+                    if (sanitized !== contents) {
+                        $('#editor').summernote('code', sanitized);
+                    }
+                },
+                onPaste: function (e) {
+                    var event = e.originalEvent || e;
+                    var clipboardData = event.clipboardData || window.clipboardData;
+                    if (!clipboardData) return;
 
-    },
+                    var html = clipboardData.getData('text/html');
+                    if (html) {
+                        var hasBase64 = /data:image\/[^;]+;base64,/i.test(html) || /file:\/\/\//i.test(html);
+                        var hasMsWord = /schemas-microsoft-com/i.test(html) || /mso-/i.test(html) || /<!--\[if/i.test(html);
+
+                        if (hasBase64 || hasMsWord) {
+                            e.preventDefault();
+
+                            var cleanedHtml = html
+                                .replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '')
+                                .replace(/<v:[^>]*>[\s\S]*?<\/v:[^>]*>/gi, '')
+                                .replace(/<o:[^>]*>[\s\S]*?<\/o:[^>]*>/gi, '')
+                                .replace(/<img[^>]*src=["']?data:image\/[^"'>\s]+["']?[^>]*\/?>/gi, '')
+                                .replace(/<img[^>]*src=["']?file:\/\/[^"'>\s]+["']?[^>]*\/?>/gi, '');
+
+                            document.execCommand('insertHTML', false, cleanedHtml);
+
+                            if (hasBase64) {
+                                alert("Perhatian: Gambar base64 / dari MS Word tidak diizinkan.");
+                            }
+                        }
+                    }
+                },
+                onImageUpload: function(files) {
+                    alert("Perhatian: Unggah/paste gambar langsung (base64) tidak diizinkan.");
+                    return false;
+                },
+                onFileUpload: function(file) {
+                    fileupload(file[0]);
+                },
+                onMediaDelete: function(target) {
+                    deleteImage(target[0].src);
+                }
+            },
     imageAttributes: {
            icon: '<i class="note-icon-pencil"></i>',
          figureClass: 'figureClass',

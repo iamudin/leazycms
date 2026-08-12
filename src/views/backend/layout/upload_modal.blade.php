@@ -1051,6 +1051,16 @@
                         if (typeof updateDiskSpaceUI === 'function' && res.deleted_size) {
                             updateDiskSpaceUI(-res.deleted_size);
                         }
+                        if (mediaName) {
+                            $('.note-editable img[src*="' + mediaName + '"]').each(function() {
+                                var $fig = $(this).closest('figure');
+                                if ($fig.length) {
+                                    $fig.remove();
+                                } else {
+                                    $(this).remove();
+                                }
+                            });
+                        }
                     } else {
                         alert('Gagal menghapus file.');
                         btn.html('<i class="fa fa-trash"></i>').prop('disabled', false);

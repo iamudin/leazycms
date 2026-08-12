@@ -77,13 +77,92 @@ class PostController extends Controller implements HasMiddleware
     }
     public function uploadImageSummernote(Request $request)
     {
-        $post = Post::findOrFail($request->post);
-        $result = $post->addFile([
-            'file' => $request->file('file'),
-            'purpose' => 'image from summernote',
-            'child_id' => Str::random(6),
-            'mime_type' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        ]);
+        $file = $request->file('file');
+        if (!$file) {
+            return response()->json(['status' => 'error', 'message' => 'No file uploaded'], 400);
+        }
+
+        // Deduplication check: compute visual pixel similarity between incoming and stored files
+        try {
+            $uploadedBytes = file_get_contents($file->getRealPath());
+            $upGd = @imagecreatefromstring($uploadedBytes);
+
+            if ($upGd) {
+                $upW = imagesx($upGd);
+                $upH = imagesy($upGd);
+                $disk = config('filesystems.default');
+                $existingFiles = \Leazycms\FLC\Models\File::latest()->take(100)->get();
+
+                foreach ($existingFiles as $existing) {
+                    $exDisk = $existing->disk ?: $disk;
+                    if (Storage::disk($exDisk)->exists($existing->file_path)) {
+                        $storedBytes = Storage::disk($exDisk)->get($existing->file_path);
+                        $stGd = @imagecreatefromstring($storedBytes);
+                        if ($stGd) {
+                            $stW = imagesx($stGd);
+                            $stH = imagesy($stGd);
+                            if ($stW === $upW && $stH === $upH) {
+                                $stepX = max(1, (int) floor($upW / 10));
+                                $stepY = max(1, (int) floor($upH / 10));
+                                $totalDiff = 0;
+                                $count = 0;
+
+                                for ($x = 0; $x < $upW; $x += $stepX) {
+                                    for ($y = 0; $y < $upH; $y += $stepY) {
+                                        $c1 = imagecolorat($upGd, $x, $y);
+                                        $c2 = imagecolorat($stGd, $x, $y);
+
+                                        $r1 = ($c1 >> 16) & 0xFF;
+                                        $g1 = ($c1 >> 8) & 0xFF;
+                                        $b1 = $c1 & 0xFF;
+
+                                        $r2 = ($c2 >> 16) & 0xFF;
+                                        $g2 = ($c2 >> 8) & 0xFF;
+                                        $b2 = $c2 & 0xFF;
+
+                                        $totalDiff += abs($r1 - $r2) + abs($g1 - $g2) + abs($b1 - $b2);
+                                        $count++;
+                                    }
+                                }
+
+                                imagedestroy($stGd);
+                                $avgDiff = $count > 0 ? ($totalDiff / $count) : 999;
+
+                                if ($avgDiff < 5) {
+                                    imagedestroy($upGd);
+                                    return response()->json([
+                                        'status' => 'success',
+                                        'url' => '/media/' . $existing->file_name,
+                                        'duplicate' => true
+                                    ]);
+                                }
+                            } else {
+                                imagedestroy($stGd);
+                            }
+                        }
+                    }
+                }
+                imagedestroy($upGd);
+            }
+        } catch (\Throwable $e) {
+            // If image decoding fails, proceed with standard upload
+        }
+
+        if ($request->filled('post') && ($post = Post::find($request->post))) {
+            $result = $post->addFile([
+                'file' => $file,
+                'purpose' => 'image from summernote',
+                'child_id' => Str::random(6),
+                'mime_type' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+            ]);
+        } else {
+            $result = (new \Leazycms\FLC\Models\File)->addFile([
+                'file' => $file,
+                'purpose' => 'image from summernote',
+                'self_upload' => true,
+                'mime_type' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+            ]);
+        }
         return response()->json(['status' => 'success', 'url' => $result]);
     }
     public function restore(Request $request)
