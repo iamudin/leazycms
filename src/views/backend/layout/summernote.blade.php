@@ -507,6 +507,15 @@
         let initialTitle = $('input[name="title"]').val();
         let initPlaceholder = initialTitle ? 'Tuliskan keterangan tentang ' + initialTitle + ' disini...' : defaultPlaceholder;
 
+        function setSummernoteEditable(editable) {
+            var $sn = (window.currentSummernoteObj && window.currentSummernoteObj.context) ? window.currentSummernoteObj.context : $('#editor');
+            if ($sn && $sn.length && typeof $sn.summernote === 'function') {
+                try {
+                    $sn.summernote(editable ? 'enable' : 'disable');
+                } catch(e) {}
+            }
+        }
+
         $("#editor").summernote({
             placeholder: initPlaceholder,
             height: 600,
@@ -523,15 +532,23 @@
 
                             if (src.startsWith('data:image/')) {
                                 $img.attr('data-uploading', '1');
+                                setSummernoteEditable(false);
                                 try {
                                     var fileObj = dataURLtoFile(src, 'img_' + Math.random().toString(36).substr(2, 7));
                                     uploadSummernoteImage(fileObj, function(uploadedUrl) {
-                                        $img.attr('src', uploadedUrl).removeAttr('data-uploading');
+                                        $img.attr('src', uploadedUrl)
+                                            .removeAttr('data-uploading')
+                                            .removeAttr('height')
+                                            .removeAttr('width')
+                                            .css({ height: '', width: '' });
+                                        setSummernoteEditable(true);
                                     }, function() {
                                         $img.remove();
+                                        setSummernoteEditable(true);
                                     }, src);
                                 } catch(e) {
                                     $img.remove();
+                                    setSummernoteEditable(true);
                                 }
                             } else {
                                 $img.remove();
@@ -568,10 +585,29 @@
 
                         if (imageFiles.length > 0) {
                             e.preventDefault();
+                            setSummernoteEditable(false);
+                            var pureUploadPromises = [];
                             imageFiles.forEach(function(imgFile) {
-                                uploadSummernoteImage(imgFile, function(uploadedUrl) {
-                                    $('#editor').summernote('insertImage', uploadedUrl);
+                                var p = new Promise(function(resolve) {
+                                    uploadSummernoteImage(imgFile, function(uploadedUrl) {
+                                        var $newImg = $('<img>').attr('src', uploadedUrl);
+                                        setSummernoteEditable(true);
+                                        if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
+                                            window.currentSummernoteObj.context.summernote('insertNode', $newImg[0]);
+                                        } else {
+                                            $('#editor').summernote('insertNode', $newImg[0]);
+                                        }
+                                        resolve();
+                                    }, function() {
+                                        resolve();
+                                    });
                                 });
+                                pureUploadPromises.push(p);
+                            });
+                            Promise.all(pureUploadPromises).then(function() {
+                                setSummernoteEditable(true);
+                            }).catch(function() {
+                                setSummernoteEditable(true);
                             });
                             return;
                         }
@@ -597,29 +633,35 @@
                         tempContainer.innerHTML = cleanedHtml;
                         var imgElements = tempContainer.querySelectorAll('img');
 
-                        var uploadPromises = [];
+                        function pasteFinalHtml() {
+                            tempContainer.querySelectorAll('img').forEach(function(img) {
+                                img.removeAttribute('height');
+                                img.removeAttribute('width');
+                                img.style.height = '';
+                                img.style.width = '';
+                            });
+                            var finalCleanHtml = tempContainer.innerHTML;
+                            setSummernoteEditable(true);
+                            if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
+                                window.currentSummernoteObj.context.summernote('pasteHTML', finalCleanHtml);
+                            } else {
+                                $('#editor').summernote('pasteHTML', finalCleanHtml);
+                            }
+                        }
+
+                        var pendingUploads = [];
                         var fileImgIndex = 0;
 
                         imgElements.forEach(function(imgEl) {
                             var src = imgEl.getAttribute('src') || '';
 
                             if (src.startsWith('data:image/')) {
-                                var promise = new Promise(function(resolve) {
-                                    try {
-                                        var fileObj = dataURLtoFile(src, 'word_img_' + Math.random().toString(36).substr(2, 7));
-                                        uploadSummernoteImage(fileObj, function(uploadedUrl) {
-                                            imgEl.setAttribute('src', uploadedUrl);
-                                            resolve();
-                                        }, function() {
-                                            imgEl.remove();
-                                            resolve();
-                                        }, src);
-                                    } catch(err) {
-                                        imgEl.remove();
-                                        resolve();
-                                    }
-                                });
-                                uploadPromises.push(promise);
+                                try {
+                                    var fileObj = dataURLtoFile(src, 'word_img_' + Math.random().toString(36).substr(2, 7));
+                                    pendingUploads.push({ imgEl: imgEl, fileObj: fileObj, cacheSrc: src });
+                                } catch(err) {
+                                    imgEl.remove();
+                                }
                             } else if (src.startsWith('file://') || src.includes('file:///')) {
                                 var fileObj = null;
                                 var cacheSrc = null;
@@ -634,36 +676,18 @@
                                 fileImgIndex++;
 
                                 if (fileObj) {
-                                    var promise = new Promise(function(resolve) {
-                                        uploadSummernoteImage(fileObj, function(uploadedUrl) {
-                                            imgEl.setAttribute('src', uploadedUrl);
-                                            resolve();
-                                        }, function() {
-                                            imgEl.remove();
-                                            resolve();
-                                        }, cacheSrc);
-                                    });
-                                    uploadPromises.push(promise);
+                                    pendingUploads.push({ imgEl: imgEl, fileObj: fileObj, cacheSrc: cacheSrc });
                                 } else {
                                     imgEl.remove();
                                 }
                             }
                         });
 
-                        function pasteFinalHtml() {
-                            var finalCleanHtml = tempContainer.innerHTML;
-                            if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
-                                window.currentSummernoteObj.context.summernote('pasteHTML', finalCleanHtml);
-                            } else {
-                                $('#editor').summernote('pasteHTML', finalCleanHtml);
-                            }
-                        }
-
-                        if (uploadPromises.length > 0) {
-                            var totalImgs = uploadPromises.length;
+                        if (pendingUploads.length > 0) {
+                            setSummernoteEditable(false);
+                            var totalImgs = pendingUploads.length;
                             var completedImgs = 0;
-
-                       
+                            var uploadPromises = [];
 
                             $('#word-paste-progress').remove();
                             var $progressAlert = $('<div id="word-paste-progress" class="alert alert-info d-flex align-items-center justify-content-between mb-2 py-2 px-3" style="font-size: 13px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">' +
@@ -683,59 +707,23 @@
                                 $('#word-paste-progress-text').html('Mengonversi & mengunggah <b>' + completedImgs + ' / ' + totalImgs + '</b> gambar dari MS Word...');
                             }
 
-                            imgElements.forEach(function(imgEl) {
-                                var src = imgEl.getAttribute('src') || '';
-
-                                if (src.startsWith('data:image/')) {
-                                    var promise = new Promise(function(resolve) {
-                                        try {
-                                            var fileObj = dataURLtoFile(src, 'word_img_' + Math.random().toString(36).substr(2, 7));
-                                            uploadSummernoteImage(fileObj, function(uploadedUrl) {
-                                                imgEl.setAttribute('src', uploadedUrl);
-                                                updateProgress();
-                                                resolve();
-                                            }, function() {
-                                                imgEl.remove();
-                                                updateProgress();
-                                                resolve();
-                                            }, src);
-                                        } catch(err) {
-                                            imgEl.remove();
-                                            updateProgress();
-                                            resolve();
-                                        }
-                                    });
-                                    uploadPromises.push(promise);
-                                } else if (src.startsWith('file://') || src.includes('file:///')) {
-                                    var fileObj = null;
-                                    var cacheSrc = null;
-
-                                    if (rtfImages && rtfImages[fileImgIndex]) {
-                                        cacheSrc = rtfImages[fileImgIndex];
-                                        fileObj = dataURLtoFile(cacheSrc, 'word_img_' + Math.random().toString(36).substr(2, 7));
-                                    } else if (itemBlobs && itemBlobs[fileImgIndex]) {
-                                        fileObj = itemBlobs[fileImgIndex];
-                                    }
-
-                                    fileImgIndex++;
-
-                                    if (fileObj) {
-                                        var promise = new Promise(function(resolve) {
-                                            uploadSummernoteImage(fileObj, function(uploadedUrl) {
-                                                imgEl.setAttribute('src', uploadedUrl);
-                                                updateProgress();
-                                                resolve();
-                                            }, function() {
-                                                imgEl.remove();
-                                                updateProgress();
-                                                resolve();
-                                            }, cacheSrc);
-                                        });
-                                        uploadPromises.push(promise);
-                                    } else {
-                                        imgEl.remove();
-                                    }
-                                }
+                            pendingUploads.forEach(function(item) {
+                                var promise = new Promise(function(resolve) {
+                                    uploadSummernoteImage(item.fileObj, function(uploadedUrl) {
+                                        item.imgEl.setAttribute('src', uploadedUrl);
+                                        item.imgEl.removeAttribute('height');
+                                        item.imgEl.removeAttribute('width');
+                                        item.imgEl.style.height = '';
+                                        item.imgEl.style.width = '';
+                                        updateProgress();
+                                        resolve();
+                                    }, function() {
+                                        item.imgEl.remove();
+                                        updateProgress();
+                                        resolve();
+                                    }, item.cacheSrc);
+                                });
+                                uploadPromises.push(promise);
                             });
 
                             Promise.all(uploadPromises).then(function() {
@@ -762,11 +750,32 @@
                 onImageUpload: function(files) {
                     if (window.isPastingHtml) return;
                     if (files && files.length > 0) {
+                        setSummernoteEditable(false);
+                        var uploadPromises = [];
                         for (var i = 0; i < files.length; i++) {
-                            uploadSummernoteImage(files[i], function(uploadedUrl) {
-                                $('#editor').summernote('insertImage', uploadedUrl);
-                            });
+                            (function(file) {
+                                var p = new Promise(function(resolve) {
+                                    uploadSummernoteImage(file, function(uploadedUrl) {
+                                        var $newImg = $('<img>').attr('src', uploadedUrl);
+                                        setSummernoteEditable(true);
+                                        if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
+                                            window.currentSummernoteObj.context.summernote('insertNode', $newImg[0]);
+                                        } else {
+                                            $('#editor').summernote('insertNode', $newImg[0]);
+                                        }
+                                        resolve();
+                                    }, function() {
+                                        resolve();
+                                    });
+                                });
+                                uploadPromises.push(p);
+                            })(files[i]);
                         }
+                        Promise.all(uploadPromises).then(function() {
+                            setSummernoteEditable(true);
+                        }).catch(function() {
+                            setSummernoteEditable(true);
+                        });
                     }
                 },
 
