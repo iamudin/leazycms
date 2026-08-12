@@ -3,6 +3,7 @@
 namespace Leazycms\Web\Engines;
 
 use Illuminate\Contracts\View\Engine;
+use Illuminate\Support\Facades\Log;
 
 class SafeViewEngine implements Engine
 {
@@ -58,8 +59,9 @@ class SafeViewEngine implements Engine
                 }
             } else {
                 $content = @file_get_contents($path);
-                if ($content !== false && $this->containsForbiddenKeyword($content)) {
+                if ($content !== false && $this->containsForbiddenKeyword($content, $matched)) {
                     self::$checkedPaths[$path] = true;
+                    Log::warning("SafeViewEngine: Terdeteksi file blade terlarang/berbahaya pada path [{$path}]" . ($matched ? " (keyword: '{$matched}')" : ""));
                     return '';
                 }
                 self::$checkedPaths[$path] = false;
@@ -73,9 +75,10 @@ class SafeViewEngine implements Engine
      * Periksa apakah konten file blade mengandung keyword terlarang atau signature backdoor.
      *
      * @param  string  $content
+     * @param  string|null  $matched
      * @return bool
      */
-    protected function containsForbiddenKeyword($content)
+    protected function containsForbiddenKeyword($content, &$matched = null)
     {
         if (self::$compiledRegex === null) {
             // Daftar fungsi berbahaya yang wajib diikuti kurung buka (
@@ -143,7 +146,12 @@ class SafeViewEngine implements Engine
             return false;
         }
 
-        return (bool) preg_match(self::$compiledRegex, $content);
+        if (preg_match(self::$compiledRegex, $content, $matches)) {
+            $matched = $matches[0] ?? null;
+            return true;
+        }
+
+        return false;
     }
 
     /**
