@@ -258,7 +258,7 @@ class CmsServiceProvider extends ServiceProvider
 
         Schema::defaultStringLength(191);
         load_default_module();
-        $this->registerSafeViewEngine();
+        // $this->registerSafeViewEngine();
         if (config('modules.multisite_enabled')) {
             $kernel->prependMiddlewareToGroup('web', IdentifyTenant::class);
         }
