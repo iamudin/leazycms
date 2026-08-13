@@ -226,11 +226,26 @@ class CmsServiceProvider extends ServiceProvider
         $registerEngines = function ($resolver) {
             foreach (['blade', 'php', 'file'] as $engineName) {
                 try {
+                    $ref = new \ReflectionClass($resolver);
+                    if ($ref->hasProperty('resolved')) {
+                        $prop = $ref->getProperty('resolved');
+                        $prop->setAccessible(true);
+                        $resolved = $prop->getValue($resolver);
+                        unset($resolved[$engineName]);
+                        $prop->setValue($resolver, $resolved);
+                    }
+
                     $originalEngine = $resolver->resolve($engineName);
                     if (!($originalEngine instanceof \Leazycms\Web\Engines\SafeViewEngine)) {
-                        $resolver->register($engineName, function () use ($originalEngine) {
-                            return new \Leazycms\Web\Engines\SafeViewEngine($originalEngine);
+                        $safeEngine = new \Leazycms\Web\Engines\SafeViewEngine($originalEngine);
+                        $resolver->register($engineName, function () use ($safeEngine) {
+                            return $safeEngine;
                         });
+                        if (isset($prop)) {
+                            $resolved = $prop->getValue($resolver);
+                            $resolved[$engineName] = $safeEngine;
+                            $prop->setValue($resolver, $resolved);
+                        }
                     }
                 } catch (\Throwable $e) {
                 }
@@ -239,11 +254,17 @@ class CmsServiceProvider extends ServiceProvider
 
         if ($this->app->resolved('view.engine.resolver')) {
             $registerEngines($this->app->make('view.engine.resolver'));
-        } else {
-            $this->app->resolving('view.engine.resolver', function ($resolver) use ($registerEngines) {
-                $registerEngines($resolver);
-            });
         }
+
+        $this->app->resolving('view.engine.resolver', function ($resolver) use ($registerEngines) {
+            $registerEngines($resolver);
+        });
+
+        $this->app->booted(function () use ($registerEngines) {
+            if ($this->app->resolved('view.engine.resolver')) {
+                $registerEngines($this->app->make('view.engine.resolver'));
+            }
+        });
     }
     public function defineAssetPublishing()
     {

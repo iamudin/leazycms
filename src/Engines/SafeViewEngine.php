@@ -25,11 +25,11 @@ class SafeViewEngine implements Engine
     protected static $checkedPaths = [];
 
     /**
-     * Cache pola regex gabungan keyword terlarang/backdoor.
+     * Cache pola regex gabungan keyword terlarang/backdoor per hash opsi keyword.
      *
-     * @var string|null
+     * @var array<string, string>
      */
-    protected static $compiledRegex = null;
+    protected static $compiledRegexes = [];
 
     /**
      * Create a new safe view engine instance.
@@ -51,7 +51,8 @@ class SafeViewEngine implements Engine
      */
     public function get($path, array $data = [])
     {
-        if ($path && file_exists($path)) {
+        // Hanya lakukan pemindaian jika berkas berada dalam direktori template yang sedang aktif (single site & multisite)
+        if ($path && $this->isPathInActiveTemplate($path) && file_exists($path)) {
             // Cek dari cache statis request jika jalur file ini sudah pernah diperiksa sebelumnya
             if (isset(self::$checkedPaths[$path])) {
                 if (self::$checkedPaths[$path] === true) {
@@ -72,6 +73,33 @@ class SafeViewEngine implements Engine
     }
 
     /**
+     * Periksa apakah jalur file berada di dalam folder template yang sedang aktif saat ini.
+     * Berlaku baik untuk Single Site maupun Multisite.
+     *
+     * @param  string  $path
+     * @return bool
+     */
+    protected function isPathInActiveTemplate($path)
+    {
+        // Ambil nama template yang aktif saat ini
+        $activeTemplate = function_exists('template') ? template() : null;
+
+        if (empty($activeTemplate) && function_exists('get_option')) {
+            $activeTemplate = get_option('template');
+        }
+
+        if (empty($activeTemplate)) {
+            $activeTemplate = 'default';
+        }
+
+        // Normalisasi separator path untuk Windows (\) dan Linux (/)
+        $normalizedPath = str_replace('\\', '/', $path);
+        $targetSegment = '/template/' . trim($activeTemplate, '/') . '/';
+
+        return stripos($normalizedPath, $targetSegment) !== false;
+    }
+
+    /**
      * Periksa apakah konten file blade mengandung keyword terlarang atau signature backdoor.
      *
      * @param  string  $content
@@ -81,52 +109,107 @@ class SafeViewEngine implements Engine
     protected function containsForbiddenKeyword($content, &$matched = null)
     {
         // Bersihkan komentar Blade {{-- ... --}} agar tidak memicu false positive
-        $content = preg_replace('/\{\{--.*?--\}\}/s', '', $content);
+        $content = preg_replace('/\{\{--[\s\S]*?--\}\}/', '', $content);
 
-        if (self::$compiledRegex === null) {
+        $extraKeywords = (function_exists('get_option') && get_option('forbidden_keyword'))
+            ? (string) get_option('forbidden_keyword')
+            : '';
+
+        $cacheKey = md5($extraKeywords);
+
+        if (!isset(self::$compiledRegexes[$cacheKey])) {
             // Daftar fungsi berbahaya yang wajib diikuti kurung buka (
             $dangerousFunctions = [
-                'hex2bin(',
-                'exit(',
-                'eval(',
-                'phpinfo(',
-                'exec(',
-                'system(',
-                'passthru(',
-                'shell_exec(',
-                'proc_open(',
-                'popen(',
-                'assert(',
-                'base64_decode(',
-                'file_put_contents(',
-                'fopen(',
-                'unlink(',
-                'mkdir(',
-                'curl_exec(',
-                'create_function(',
-                'file_get_contents(',
-                'gzinflate(',
+                'hex2bin',
+                'exit',
+                'die',
+                'eval',
+                'phpinfo',
+                'exec',
+                'system',
+                'passthru',
+                'shell_exec',
+                'proc_open',
+                'popen',
+                'pcntl_exec',
+                'assert',
+                'base64_decode',
+                'file_put_contents',
+                'fopen',
+                'unlink',
+                'mkdir',
+                'rmdir',
+                'chmod',
+                'chown',
+                'curl_exec',
+                'create_function',
+                'file_get_contents',
+                'gzinflate',
+                'gzuncompress',
+                'str_rot13',
+                'readfile',
+                'show_source',
+                'highlight_file',
+                'symlink',
+                'copy',
+                'move_uploaded_file',
+                'ini_set',
+                'putenv',
+                'call_user_func',
+                'call_user_func_array',
             ];
 
             $patterns = [
+                // Signature Webshell & Backdoor Populer
                 '\bc99shell\b',
                 '\br57shell\b',
                 '\bb374k\b',
                 '\bwso_version\b',
+                '\bFilesMan\b',
+                '\bIndoXploit\b',
+                '\bAlfa\s+Team\b',
+                '\balfa_version\b',
+                '\bmarijuana\b',
+                '\bsec4ever\b',
+
+                // Sensitive System Path & File Reads
                 '\/etc\/passwd',
                 '\/etc\/shadow',
                 'proc\/self\/environ',
+
+                // Direct Database / Schema / Tenant Isolation Bypass in Blade
+                'DB::delete\s*\(',
+                'DB::update\s*\(',
+                'DB::statement\s*\(',
+                'DB::truncate\s*\(',
+                'DB::drop\s*\(',
+                'DB::raw\s*\(',
+                'Schema::drop\s*\(',
+                'Schema::dropIfExists\s*\(',
+                'Artisan::call\s*\(',
+                'withoutGlobalScope\s*\(',
+                'withoutGlobalScopes\s*\(',
+                'mysqli_query\s*\(',
+                'pdo->exec\s*\(',
+                'pdo->query\s*\(',
+
+                // SQL Injection & File Dump Signatures
+                'UNION\s+SELECT',
+                'INTO\s+OUTFILE',
+                'LOAD_FILE\s*\(',
+
+                // Dynamic Payload Executions (misal $_POST['cmd']($_GET['arg']))
+                '\$_(POST|GET|REQUEST|COOKIE|SERVER)\s*\[.+?\]\s*\(',
             ];
 
-            // Wajib diikuti kurung buka \s*\( agar class="update" atau class="delete" tidak dianggap berbahaya
+            // Wajib diikuti kurung buka \s*\( agar class/variabel tidak dianggap berbahaya
             foreach ($dangerousFunctions as $fn) {
-                $cleanFn = rtrim($fn, '(');
-                $patterns[] = '\b' . preg_quote($cleanFn, '/') . '\s*\(';
+                $patterns[] = '\b' . preg_quote($fn, '/') . '\s*\(';
             }
 
             // Tambahkan opsi kustom pengembang jika ada
-            if (function_exists('get_option') && get_option('forbidden_keyword')) {
-                $extra = array_map('trim', explode(',', get_option('forbidden_keyword')));
+            if ($extraKeywords !== '') {
+                $extra = array_map('trim', explode(',', $extraKeywords));
                 $htmlElements = ['<script', 'javascript:', 'onerror=', 'cmd', 'system', 'exec', '.php', '.env', '.git', '.svn'];
                 foreach ($extra as $kw) {
                     if ($kw !== '' && !in_array(strtolower($kw), $htmlElements)) {
@@ -140,14 +223,12 @@ class SafeViewEngine implements Engine
                 }
             }
 
-            self::$compiledRegex = '/' . implode('|', array_unique($patterns)) . '/i';
+            self::$compiledRegexes[$cacheKey] = '/' . implode('|', array_unique($patterns)) . '/i';
         }
 
-        if (!self::$compiledRegex) {
-            return false;
-        }
+        $compiledRegex = self::$compiledRegexes[$cacheKey];
 
-        if (preg_match(self::$compiledRegex, $content, $matches)) {
+        if (preg_match($compiledRegex, $content, $matches)) {
             $matched = $matches[0] ?? null;
             return true;
         }
