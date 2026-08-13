@@ -58,6 +58,7 @@ foreach (get_module() as $value) {
             Route::get($value->name . '/category/{category}/edit', 'edit')->name($value->name . '.category.edit');
             Route::put($value->name . '/category/{category}/edit', 'update')->name($value->name . '.category.update');
             Route::delete($value->name . '/category/{category}/edit', 'destroy')->name($value->name . '.category.destroy');
+            Route::post($value->name . '/category/bulk-delete', 'bulkDelete')->name($value->name . '.category.bulk-delete');
         });
     }
 }

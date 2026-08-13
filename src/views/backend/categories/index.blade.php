@@ -11,10 +11,23 @@
 </div>
 
 @if(auth()->user()->isAdmin() || (!auth()->user()->isAdmin() && $dothing))
-<div class="col-lg-12 mb-3 text-right">
-    <button type="button" class="btn btn-primary btn-sm" onclick="openCreateModal()">
-        <i class="fa fa-plus"></i> Tambah Kategori
-    </button>
+<div class="col-lg-12 mb-3 d-flex justify-content-between align-items-center">
+    <div id="bulkActions" style="display:none;">
+        <div class="d-flex align-items-center" style="gap:8px;">
+            <label class="mb-0 d-flex align-items-center" style="cursor:pointer; gap:6px; font-size:0.85rem;">
+                <input type="checkbox" id="selectAllEmpty" style="width:16px;height:16px;cursor:pointer;">
+                <span class="text-muted">Pilih Semua (0 Data)</span>
+            </label>
+            <button type="button" id="btnBulkDelete" class="btn btn-danger btn-sm" disabled>
+                <i class="fa fa-trash"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    </div>
+    <div class="ml-auto">
+        <button type="button" class="btn btn-primary btn-sm" onclick="openCreateModal()">
+            <i class="fa fa-plus"></i> Tambah Kategori
+        </button>
+    </div>
 </div>
 
 <!-- Modal Kategori -->
@@ -106,6 +119,13 @@
                 <div class="list-group h-100">
                     <div class="list-group-item d-flex align-items-center shadow-sm text-white border-0 h-100" style="border-radius: 10px; padding: 12px 15px; {{ $bg }};">
                         
+                        {{-- Checkbox Bulk Delete (hanya untuk kategori 0 data) --}}
+                        @if($cat->posts_count == 0)
+                        <div class="mr-2" onclick="event.stopPropagation();">
+                            <input type="checkbox" class="bulk-check" value="{{ $cat->id }}" style="width:18px;height:18px;cursor:pointer;accent-color:#dc3545;">
+                        </div>
+                        @endif
+
                         <!-- Drag Handle Handle Icon -->
                         <div class="mr-3 text-white-50 drag-handle" style="cursor: move;" title="Tarik & Lepas untuk mengubah urutan kategori">
                             <i class="fa fa-bars fa-lg"></i>
@@ -173,6 +193,90 @@
     const storeRoute = '{{ route(get_post_type() . ".category.store") }}';
     const updateRouteTemplate = '{{ route(get_post_type() . ".category.update", ":id") }}';
     const reorderRoute = '{{ route(get_post_type() . ".category.reorder") }}';
+    const bulkDeleteRoute = '{{ route(get_post_type() . ".category.bulk-delete") }}';
+
+    // ========== Bulk Delete Logic ==========
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const bulkChecks = document.querySelectorAll('.bulk-check');
+            const selectAll = document.getElementById('selectAllEmpty');
+            const bulkActions = document.getElementById('bulkActions');
+            const btnBulkDelete = document.getElementById('btnBulkDelete');
+            const selectedCount = document.getElementById('selectedCount');
+
+            // Tampilkan toolbar jika ada kategori yang bisa dihapus
+            if (bulkChecks.length > 0 && bulkActions) {
+                bulkActions.style.display = 'block';
+            }
+
+            function updateBulkState() {
+                const checked = document.querySelectorAll('.bulk-check:checked');
+                const total = checked.length;
+                selectedCount.textContent = total;
+                btnBulkDelete.disabled = total === 0;
+
+                // Sync select-all state
+                if (selectAll) {
+                    selectAll.checked = bulkChecks.length > 0 && total === bulkChecks.length;
+                    selectAll.indeterminate = total > 0 && total < bulkChecks.length;
+                }
+            }
+
+            bulkChecks.forEach(function(cb) {
+                cb.addEventListener('change', updateBulkState);
+            });
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    bulkChecks.forEach(function(cb) {
+                        cb.checked = selectAll.checked;
+                    });
+                    updateBulkState();
+                });
+            }
+
+            if (btnBulkDelete) {
+                btnBulkDelete.addEventListener('click', function() {
+                    const checked = document.querySelectorAll('.bulk-check:checked');
+                    const ids = Array.from(checked).map(function(cb) { return cb.value; });
+
+                    if (ids.length === 0) return;
+
+                    swal({
+                        title: 'Hapus ' + ids.length + ' Kategori?',
+                        text: 'Kategori yang dipilih (dengan 0 data terkait) akan dihapus permanen.',
+                        type: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Hapus Semua!',
+                        cancelButtonText: 'Batalkan',
+                        closeOnConfirm: false,
+                        closeOnCancel: true
+                    }, function(isConfirm) {
+                        if (isConfirm) {
+                            $.ajax({
+                                url: bulkDeleteRoute,
+                                type: 'POST',
+                                data: {
+                                    _token: '{{ csrf_token() }}',
+                                    ids: ids
+                                },
+                                success: function(res) {
+                                    swal('Berhasil!', res.message, 'success');
+                                    setTimeout(function() {
+                                        location.reload();
+                                    }, 800);
+                                },
+                                error: function(xhr) {
+                                    var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan.';
+                                    swal('Gagal!', msg, 'error');
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+        });
+    })();
 
     function openCreateModal() {
         $('#categoryModalTitle').html('<i class="fa fa-plus-circle text-primary"></i> Tambah Kategori');

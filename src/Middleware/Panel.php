@@ -110,6 +110,14 @@ class Panel
                     ]
                 ]);
             }
+            if ($request->is($admin_path . '/' . $modul->name . '/category/bulk-delete')) {
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Bulk Delete Kategori ' . $modul->title,
+                    ]
+                ]);
+            }
             if ($request->is($admin_path . '/' . $modul->name . '/sync-dummy')) {
 
                 config([

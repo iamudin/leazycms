@@ -173,6 +173,49 @@ class CategoryController extends Controller implements HasMiddleware
         }
     }
 
+    public function bulkDelete(Request $request)
+    {
+        if ($request->user()->hasRole('category' . get_post_type(), 'delete')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses terbatas.'
+            ], 403);
+        }
+
+        $ids = $request->input('ids', []);
+
+        if (!is_array($ids) || count($ids) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada kategori yang dipilih.'
+            ], 400);
+        }
+
+        $categories = Category::whereIn('id', $ids)
+            ->whereType(get_post_type())
+            ->withCount('posts')
+            ->get();
+
+        $deleted = 0;
+        $skipped = 0;
+
+        foreach ($categories as $category) {
+            if ($category->posts_count == 0 && !$category->posts()->exists()) {
+                $category->forceDelete();
+                $deleted++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+            'skipped' => $skipped,
+            'message' => $deleted . ' kategori berhasil dihapus.' . ($skipped > 0 ? ' ' . $skipped . ' kategori dilewati karena memiliki data terkait.' : '')
+        ]);
+    }
+
     public function reorder(Request $request)
     {
         $postType = get_post_type();
