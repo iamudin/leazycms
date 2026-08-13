@@ -80,6 +80,9 @@ class SafeViewEngine implements Engine
      */
     protected function containsForbiddenKeyword($content, &$matched = null)
     {
+        // Bersihkan komentar Blade {{-- ... --}} agar tidak memicu false positive
+        $content = preg_replace('/\{\{--.*?--\}\}/s', '', $content);
+
         if (self::$compiledRegex === null) {
             // Daftar fungsi berbahaya yang wajib diikuti kurung buka (
             $dangerousFunctions = [
@@ -102,8 +105,6 @@ class SafeViewEngine implements Engine
                 'curl_exec(',
                 'create_function(',
                 'file_get_contents(',
-                'delete(',
-                'update(',
                 'gzinflate(',
             ];
 
