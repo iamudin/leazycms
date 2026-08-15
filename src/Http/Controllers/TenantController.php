@@ -440,6 +440,11 @@ class TenantController extends Controller implements HasMiddleware
                 'pwa_icon_180',
                 'pwa_icon_32',
                 'pwa_icon_16',
+                'preload',
+                'cache_web',
+                'default_jquery',
+                'top_button',
+                'accessibility_widget'
             ])
             ->delete();
     }

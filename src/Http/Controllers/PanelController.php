@@ -358,7 +358,7 @@ class PanelController extends Controller implements HasMiddleware
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
-                    $btn .= '<button onclick="openReplyModal(' . $row->id . ')" class="btn btn-sm btn-info fa fa-reply"></button>';
+                    $btn .= '<button onclick="openReplyModal(' . $row->id . ')" class="btn btn-sm btn-info"> <i class="fas fa-reply" title="Balas Komentar"></i> </button>';
                     $btn .= '<button onclick="toggleCommentStatus(' . $row->id . ')" class="btn btn-sm btn-' . ($row->status === 'publish' ? 'warning' : 'success') . '">';
                     $btn .= $row->status === 'publish' ? 'Draft' : 'Publish';
                     $btn .= '</button>';
@@ -746,27 +746,27 @@ class PanelController extends Controller implements HasMiddleware
             ['Icon (format png ukuran 32px * 32px)', 'pwa_icon_32', 'file'],
             ['Icon (format png ukuran 16px * 16px)', 'pwa_icon_16', 'file'],
         );
-        $data['shortcut'] = array(
-            ['Control + F5', 'ctrl_f5'],
+        
+        $data['shortcut'] = is_main_domain() ? array(['Control + F5', 'ctrl_f5'],
             ['Control + U', 'ctrl_u'],
             ['Control + R', 'ctrl_r'],
             ['Control + P', 'ctrl_p'],
             ['Control + S', 'ctrl_s'],
             ['Right Click', 'right_click'],
-            ['Frame Embed', 'frame_embed'],
+            ['Frame Embed', 'frame_embed']) : [];
+
+        $data['shortcut'] = array_merge($data['shortcut'],array(
             ['Preloader Effect', 'preload'],
             ['Cache Web Pages', 'cache_web'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
-            ['Accesibility Widget', 'accessibility_widget'],
-            ['Single Page Application (SPA)', 'use_spa']
-        );
+            ['Accesibility Widget', 'accessibility_widget']
+        ));
         $data['security'] = array(
 
             ['Allow IP', '0.0.0.0,0.0.1.0,..,..'],
             ['Filter Request Client', 'Aktifkan / Nonaktifkan'],
             ['Forbidden Keyword', 'Judi Online, Gacor, xxx, other'],
-            ['Forbidden Redirect', 'Eg: https://yourpage.url or other'],
             ['Time Limit Login', 'default 10 times'],
             ['Time Limit Reload', 'default 10 times'],
             ['Limit Duration', 'in minute default 1 minute'],
@@ -1035,23 +1035,24 @@ class PanelController extends Controller implements HasMiddleware
                 $option->where('name', 'google_drive_refresh_token')->delete();
             }
 
-            if (is_main_domain()) {
                 foreach ($data['shortcut'] as $row) {
                     $key = $row[1];
                     $value = $request->$key ? 'Y' : 'N';
                     $match = ['name' => $key];
                     if (app()->has('tenant')) {
-                        $match['tenant_id'] = null;
+                        $match['tenant_id'] = tenant()->id;
                     }
                     DB::table('options')
                         ->updateOrInsert(
                             $match,
                             app()->has('tenant')
-                            ? ['value' => $value, 'tenant_id' => null]
+                            ? ['value' => $value, 'tenant_id' => tenant()->id]
                             : ['value' => $value]
 
                         );
                 }
+            if (is_main_domain()) {
+
                 if ($request->site_maintenance) {
                     $match = ['name' => 'site_maintenance'];
                     if (app()->has('tenant')) {

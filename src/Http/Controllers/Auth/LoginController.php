@@ -46,11 +46,7 @@ class LoginController extends Controller
 
     public function loginForm(Request $request)
     {
-
-
-
         if (Auth::check()) {
-
             if (Auth::user()->level != 'admin' && !in_array(Auth::user()->level, (new UserController)->all_role()->toArray())) {
                 Auth::logout();
                 return redirect(admin_path())->with('error', 'Peran Akun tidak tidak valid');
@@ -58,12 +54,27 @@ class LoginController extends Controller
             return to_route('panel.dashboard');
         }
 
-      
+        // Jika multisite aktif dan diakses dari domain/subdomain tenant (bukan main domain)
+        if (config('modules.multisite_enabled')  &&  env('LOGIN_FORM_REDIRECT_TO')) {
+            $redirectSetting = env('LOGIN_FORM_REDIRECT_TO', 'dashboard');
+            if ($redirectSetting !== false && $redirectSetting !== 'false' && $redirectSetting !== '0') {
+                $target = is_string($redirectSetting) ? trim($redirectSetting) : 'dashboard';
+                if (str_starts_with($target, 'http://') || str_starts_with($target, 'https://')) {
+                    $redirectUrl = $target;
+                } else {
+                    $cleanTarget = str_replace(['maindomain/', 'main_domain/', 'maindomain', 'main_domain'], '', $target);
+                    $cleanTarget = ltrim($cleanTarget, '/');
+                    $redirectUrl = main_domain($cleanTarget);
+                }
 
-      
+                $separator = str_contains($redirectUrl, '?') ? '&' : '?';
+                $redirectUrl .= $separator . 'notice=login_required&tenant=' . urlencode($request->getHost());
+
+                return redirect()->away($redirectUrl)->with('info', 'Silakan login terlebih dahulu ke Dashboard untuk mengakses CMS Website.');
+            }
+        }
+
         $data = null;
-
-
         $data['title'] = get_option('site_title');
         $data['description'] = get_option('site_description');
         $data['loginsubmit'] = url(admin_path());
@@ -79,6 +90,29 @@ class LoginController extends Controller
 
     public function loginSubmit(Request $request, RateLimiter $limiter)
     {
+        // Jika multisite aktif dan request submit login ke tenant secara langsung (bukan main domain)
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $redirectSetting = env('LOGIN_FORM_REDIRECT_TO', 'dashboard');
+            if ($redirectSetting !== false && $redirectSetting !== 'false' && $redirectSetting !== '0') {
+                $target = is_string($redirectSetting) ? trim($redirectSetting) : 'dashboard';
+                if (str_starts_with($target, 'http://') || str_starts_with($target, 'https://')) {
+                    $redirectUrl = $target;
+                } else {
+                    $cleanTarget = str_replace(['maindomain/', 'main_domain/', 'maindomain', 'main_domain'], '', $target);
+                    $cleanTarget = ltrim($cleanTarget, '/');
+                    $redirectUrl = main_domain($cleanTarget);
+                }
+
+                $separator = str_contains($redirectUrl, '?') ? '&' : '?';
+                $redirectUrl .= $separator . 'notice=login_required&tenant=' . urlencode($request->getHost());
+
+                if ($request->ajax()) {
+                    return response()->json(['status' => 'error', 'redirect' => $redirectUrl, 'message' => 'Silakan login terlebih dahulu ke Dashboard.']);
+                }
+                return redirect()->away($redirectUrl)->with('info', 'Silakan login terlebih dahulu ke Dashboard untuk mengakses CMS Website.');
+            }
+        }
+
         // Throttle login attempts
         $limiterKey = $request->ip() . '|' . $request->username;
         if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {

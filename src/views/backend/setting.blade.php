@@ -22,11 +22,9 @@
                         <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#profile"> <i
                                     class="fa fa-search"></i>
                                 S E O</a></li>
-                        @if (is_main_domain())
                             <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#keamanan"> <i
                                         class="fa fa-gears"></i>
                                     Lainnya</a></li>
-                        @endif
                         <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pwa"> <i
                                     class="fa fa-mobile-alt"></i>
                                 PWA</a></li>
@@ -117,8 +115,9 @@
                             @endforeach
 
                         </div>
-                        @if (is_main_domain())
                             <div class="tab-pane fade" id="keamanan">
+                        @if (is_main_domain())
+
                                 <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-clock"></i> Zona
                                     Waktu
                                 </h6>
@@ -181,6 +180,7 @@
                                     placeholder="Enter chat ID 12345678"
                                     value="{{ dec64(config('modules.telechatid')) }}" name="telegram_chat_id">
                                 <br>
+                                @endif
                                 <h6 for="" style="border-bottom:1px dashed #000"> <i
                                         class="fa fa-keyboard-o"></i>
                                     Web Control</h6>
@@ -199,6 +199,11 @@
                                         </div>
                                     @endif
                                     @endforeach
+                                      @if (!is_main_domain())
+                                      </div>
+                                      @endif
+                                
+                                      @if (is_main_domain())
                                     <div class="list-group-item py-2">
                                         <strong for="" class="text-muted">Maintenance Status</strong>
                                         <div class="pull-right"><input name="site_maintenance" data-width="100"
@@ -233,8 +238,9 @@
                                             adminpanel
                                         </b> dan lainnya yang familiar.</small>
                                 @endif
-                            </div>
                         @endif
+
+                            </div>
                         <div class="tab-pane fade" id="pwa">
                             <div class="alert alert-info">
                                 <i class="fa fa-info-circle"></i> Untuk semua icon, usahakan sesuai keterangan resolusi

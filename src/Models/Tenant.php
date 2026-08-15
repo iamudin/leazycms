@@ -1,8 +1,12 @@
 <?php
 namespace Leazycms\Web\Models;
 use Illuminate\Database\Eloquent\Model;
+use Leazycms\FLC\Traits\Fileable;
+
 class Tenant extends Model
 {
+    use Fileable;
+
    protected $casts = [
         'modules' => 'array',
         'plugins' => 'array',
