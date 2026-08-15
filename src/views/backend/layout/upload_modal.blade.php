@@ -111,7 +111,25 @@
                 @php
                     $tenantFilesQuery = \Leazycms\FLC\Models\File::query();
                     if (config('modules.multisite_enabled') && !is_main_domain()) {
-                        $tenantFilesQuery->where('host', request()->getHttpHost());
+                        if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+                            $tenantData = tenant();
+                            $parkedDomain = \Illuminate\Support\Facades\Cache::rememberForever("tenant:{$tenantData->id}:parked_domain", function () use ($tenantData) {
+                                return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                                    ->where('tenant_id', $tenantData->id)
+                                    ->where('name', 'parked_domain')
+                                    ->value('value');
+                            });
+                            $allowedHosts = array_values(array_filter([
+                                $tenantData->domain,
+                                $parkedDomain,
+                                $tenantData->getAttribute('matched_parked_domain'),
+                                request()->getHttpHost(),
+                                request()->getHost()
+                            ]));
+                            $tenantFilesQuery->whereIn('host', $allowedHosts);
+                        } else {
+                            $tenantFilesQuery->where('host', request()->getHttpHost());
+                        }
                     }
 
                     $totalFiles = $tenantFilesQuery->count();
@@ -477,10 +495,11 @@
                         let viewBtn = '';
                         let deleteBtn = '<button type="button" class="btn btn-sm btn-danger position-absolute btn-delete-media" data-media="' + fileName + '" style="top: 2px; left: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Hapus File"><i class="fa fa-trash"></i></button>';
 
+                        let mediaViewUrl = '{{ url("media") }}/' + fileName;
                         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'ico'].includes(ext)) {
-                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + media.host + '/media/' + fileName + '" data-ext="' + ext + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + mediaViewUrl + '" data-ext="' + ext + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
                         } else {
-                            viewBtn = '<a href="' + scheme + '://' + media.host + '/media/' + fileName + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
+                            viewBtn = '<a href="' + mediaViewUrl + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
                         }
 
                         let imgWrapper = $('<div class="card-img-top text-center bg-light d-flex align-items-center justify-content-center" style="height: 90px; overflow: hidden;"></div>');
@@ -845,10 +864,11 @@
                         let viewBtn = '';
                         let deleteBtn = '<button type="button" class="btn btn-sm btn-danger position-absolute btn-delete-media" data-media="' + savedFileName + '" style="top: 2px; left: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Hapus File"><i class="fa fa-trash"></i></button>';
 
+                        let mediaViewUrl = '{{ url("media") }}/' + savedFileName;
                         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'ico'].includes(savedExt)) {
-                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + scheme + '://' + host + '/media/' + savedFileName + '" data-ext="' + savedExt + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + mediaViewUrl + '" data-ext="' + savedExt + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
                         } else {
-                            viewBtn = '<a href="' + scheme + '://' + host + '/media/' + savedFileName + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
+                            viewBtn = '<a href="' + mediaViewUrl + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
                         }
 
                         let imgWrapper = $('<div class="card-img-top text-center bg-light d-flex align-items-center justify-content-center" style="height: 90px; overflow: hidden;"></div>');

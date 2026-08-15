@@ -977,5 +977,6 @@ return [
     'labusiam' => env('LOG', false),
     'sub_app_enabled' => env('SUB_APP_ENABLED', false),
     'multitenant_installed' => env('MULTITENANT_INSTALLED', false),
-    'cloud_key' => env('CLOUD_TEMPLATE_KEY', null)
+    'cloud_key' => env('CLOUD_TEMPLATE_KEY', null),
+    'allow_parking_domain' => env('ALLOW_PARKING_DOMAIN', true)
 ];

@@ -33,6 +33,11 @@
                                         class="fab fa-google-drive"></i>
                                     Google Drive</a></li>
                         @endif
+                        @if (config('modules.multisite_enabled') && !is_main_domain() && config('modules.allow_parking_domain'))
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#domain_tab"> <i
+                                        class="fa fa-globe"></i>
+                                    Domain</a></li>
+                        @endif
                     </ul>
                     <div class="tab-content pt-2" id="myTabContent">
 
@@ -310,6 +315,75 @@
                             </div>
                         @endif
 
+                        @if (config('modules.multisite_enabled') && !is_main_domain() && config('modules.allow_parking_domain'))
+                            <div class="tab-pane fade" id="domain_tab">
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle"></i> <strong>Pengaturan Parkir Domain Kustom (Custom Domain):</strong>
+                                    <br>Anda dapat menghubungkan domain kustom Anda sendiri (contoh: <code>namasekolah.sch.id</code> atau <code>domainanda.com</code>) untuk menggantikan subdomain bawaan.
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="font-weight-bold text-muted small mb-1">Subdomain Bawaan Sistem</label>
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fa fa-link"></i></span>
+                                        </div>
+                                        <input type="text" class="form-control" value="{{ tenant()->domain ?? request()->getHost() }}" readonly style="background-color: #f1f5f9;">
+                                    </div>
+                                    <small class="text-muted">Subdomain asli yang diberikan saat pertama kali mendaftar.</small>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="font-weight-bold text-dark small mb-1">Domain Kustom / Parkir Domain (Custom Domain)</label>
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white"><i class="fa fa-globe text-primary"></i></span>
+                                        </div>
+                                        <input type="text" name="parked_domain" class="form-control font-weight-bold" placeholder="contoh: namasekolah.sch.id atau bisnisanda.com" value="{{ get_option('parked_domain') }}">
+                                    </div>
+                                    <small class="text-muted">Masukkan nama domain kustom pribadi tanpa <code>http://</code> atau <code>https://</code>. <em>Dilarang menggunakan subdomain dari {{ parse_url(config('app.url'), PHP_URL_HOST) }}</em>. Kosongkan jika ingin kembali menggunakan subdomain bawaan.</small>
+                                </div>
+
+                                <div class="card bg-light border p-3 rounded mb-3">
+                                    <h6 class="font-weight-bold text-dark mb-2" style="font-size: 13px;">
+                                        <i class="fa fa-server text-danger mr-1"></i> Panduan Konfigurasi DNS di Registrar Domain Anda:
+                                    </h6>
+                                    <p class="small text-muted mb-2">
+                                        Sebelum menyimpan, pastikan Anda telah mengatur <strong>DNS Management</strong> pada domain Anda:
+                                    </p>
+                                    <div class="table-responsive bg-white rounded border">
+                                        <table class="table table-sm table-bordered m-0 small">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th>Tipe Record</th>
+                                                    <th>Nama / Host</th>
+                                                    <th>Nilai / Target Tujuan</th>
+                                                    <th>Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="badge badge-primary">A Record</span></td>
+                                                    <td><code>@</code></td>
+                                                    <td><code>{{ request()->server('SERVER_ADDR') ?? (gethostbyname(parse_url(config('app.url'), PHP_URL_HOST)) ?: 'IP Server') }}</code></td>
+                                                    <td>Mengarahkan domain utama ke server web builder</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge badge-info">CNAME / A</span></td>
+                                                    <td><code>www</code></td>
+                                                    <td><code>{{ parse_url(config('app.url'), PHP_URL_HOST) }}</code></td>
+                                                    <td>Mengarahkan subdomain www</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="alert alert-warning small mt-2 mb-0 py-2">
+                                        <i class="fa fa-exclamation-triangle"></i> <strong>Catatan Otomatis:</strong> Setelah domain tersimpan, pengunjung yang mengakses subdomain bawaan lama akan <strong>otomatis dialihkan (redirect)</strong> ke domain kustom Anda.
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
                 @else
                     <div class="alert alert-danger">
@@ -374,7 +448,7 @@
                         if (typeof response === 'string' && response.includes('<html')) {
                             let newDoc = new DOMParser().parseFromString(response, 'text/html');
                             
-                            ['profile', 'keamanan', 'pwa', 'gdrive'].forEach(function(tabId) {
+                            ['profile', 'keamanan', 'pwa', 'gdrive', 'domain_tab'].forEach(function(tabId) {
                                 let newTab = newDoc.getElementById(tabId);
                                 if (newTab && document.getElementById(tabId)) {
                                     document.getElementById(tabId).innerHTML = newTab.innerHTML;

@@ -124,7 +124,20 @@ class TenantController extends Controller implements HasMiddleware
                 return $badges[$row->status] ?? '-';
             })
             ->addColumn('resource', function ($row) {
-                $fileStats = \Leazycms\FLC\Models\File::where('host', $row->domain)
+                $tenantHosts = [$row->domain];
+                if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                    $parkedDomain = \Illuminate\Support\Facades\Cache::rememberForever("tenant:{$row->id}:parked_domain", function () use ($row) {
+                        return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                            ->where('tenant_id', $row->id)
+                            ->where('name', 'parked_domain')
+                            ->value('value');
+                    });
+                    if (!empty($parkedDomain)) {
+                        $tenantHosts[] = $parkedDomain;
+                    }
+                }
+
+                $fileStats = \Leazycms\FLC\Models\File::whereIn('host', array_values(array_unique($tenantHosts)))
                     ->selectRaw('COUNT(id) as total_files, SUM(file_size) as total_size')
                     ->first();
                 $totalSize = $fileStats->total_size ?? 0;
@@ -392,9 +405,10 @@ class TenantController extends Controller implements HasMiddleware
             }
         }
 
-        // Jika domain berubah, update semua user yang terkait dengan domain lama
+        // Jika domain berubah, update semua user dan file yang terkait dengan domain lama
         if ($oldDomain !== $domain) {
             User::where('host', $oldDomain)->update(['host' => $domain]);
+            \Leazycms\FLC\Models\File::where('host', $oldDomain)->update(['host' => $domain]);
         }
 
         // Save Options
@@ -470,9 +484,28 @@ class TenantController extends Controller implements HasMiddleware
         }
         $domain = $tenant->domain;
         $tenantId = $tenant->id;
+
+        $parkedDomain = null;
+        if (class_exists(\Leazycms\Web\Models\Option::class)) {
+            $parkedDomain = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenantId)
+                ->where('name', 'parked_domain')
+                ->value('value');
+        }
+
+        // Hapus fisik dan database seluruh file milik tenant
+        $tenantFiles = \Leazycms\FLC\Models\File::whereIn('host', array_values(array_filter([$domain, $parkedDomain])))->get();
+        foreach ($tenantFiles as $f) {
+            $f->deleteFile();
+        }
+
         query()->where('tenant_id', $tenantId)->forceDelete();
         Cache::forget("tenant:{$domain}");
         Cache::forget("tenant:{$tenantId}:options");
+        if (!empty($parkedDomain)) {
+            Cache::forget("tenant:{$parkedDomain}");
+            Cache::forget("tenant:{$parkedDomain}:options");
+        }
         $tenant->delete();
         return response()->json(['success' => 'Tenant berhasil dihapus']);
     }

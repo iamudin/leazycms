@@ -31,8 +31,25 @@ class IdentifyTenant
                         return $t->getRawOriginal();
                     }
 
-                    // Fallback: Cek custom domain plugin
+                    // Cek apakah host adalah parked_domain milik tenant
                     if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                        $parkedOption = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                            ->where('name', 'parked_domain')
+                            ->where('value', $host)
+                            ->whereNotNull('tenant_id')
+                            ->first();
+
+                        if ($parkedOption) {
+                            $t = Tenant::where('id', $parkedOption->tenant_id)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
+                            if ($t) {
+                                $data = $t->getRawOriginal();
+                                $data['is_parked_domain'] = true;
+                                $data['matched_parked_domain'] = $host;
+                                return $data;
+                            }
+                        }
+
+                        // Fallback: Cek custom domain plugin
                         $option = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
                             ->where('value', $host)
                             ->where('name', 'like', '%-domain')
@@ -65,6 +82,44 @@ class IdentifyTenant
             }
         }
         $tenant = self::$currentTenant;
+
+        // Jika tenant memiliki parkir domain dan pengunjung mengakses subdomain lama di frontend, alihkan ke parked domain
+        if (
+            config('modules.multisite_enabled')
+            && !is_main_domain()
+            && $tenant
+            && !$tenant->getAttribute('is_plugin_custom_domain')
+            && ($request->isMethod('GET') || $request->isMethod('HEAD'))
+            && !$request->ajax()
+            && !$request->wantsJson()
+            && !$request->isXmlHttpRequest()
+        ) {
+            $adminPrefix = function_exists('admin_path') ? admin_path() : null;
+            $firstSegment = $request->segment(1);
+
+            // Jangan redirect request backend/admin, api, livewire, captcha
+            if (
+                (!$adminPrefix || $firstSegment !== $adminPrefix)
+                && !in_array($firstSegment, ['api', 'captcha', 'livewire', '_debugbar', 'sanctum'])
+            ) {
+                $parkedDomain = Cache::rememberForever(
+                    "tenant:{$tenant->id}:parked_domain",
+                    function () use ($tenant) {
+                        return Option::withoutGlobalScope('tenant')
+                            ->where('tenant_id', $tenant->id)
+                            ->where('name', 'parked_domain')
+                            ->value('value');
+                    }
+                );
+
+                if (!empty($parkedDomain) && $host !== $parkedDomain) {
+                    $scheme = $request->secure() ? 'https://' : 'http://';
+                    $queryString = $request->getQueryString();
+                    $targetUrl = $scheme . $parkedDomain . '/' . ltrim($request->path(), '/') . ($queryString ? '?' . $queryString : '');
+                    return redirect()->away($targetUrl, 301);
+                }
+            }
+        }
 
         // Jika ini adalah domain khusus plugin, blokir akses ke rute utama CMS
         if ($tenant && $tenant->getAttribute('is_plugin_custom_domain')) {

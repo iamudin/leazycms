@@ -40,7 +40,32 @@ class PanelController extends Controller implements HasMiddleware
 
     function globalMediaList(Request $request)
     {
-        return \Leazycms\FLC\Models\File::where('host', $request->getHost())->latest()->paginate(40);
+        $query = \Leazycms\FLC\Models\File::query();
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+                $tenant = tenant();
+                $parkedDomain = \Illuminate\Support\Facades\Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
+                    return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                        ->where('tenant_id', $tenant->id)
+                        ->where('name', 'parked_domain')
+                        ->value('value');
+                });
+                $allowedHosts = array_values(array_filter([
+                    $tenant->domain,
+                    $parkedDomain,
+                    $tenant->getAttribute('matched_parked_domain'),
+                    $request->getHost()
+                ]));
+                $query->whereIn('host', $allowedHosts);
+            } else {
+                $query->where('host', $request->getHost());
+            }
+        } else {
+            $query->where(function ($q) use ($request) {
+                $q->where('host', $request->getHost())->orWhereNull('host');
+            });
+        }
+        return $query->latest()->paginate(40);
     }
 
     function blockedIps(Request $request, BlockedIp $blockedIp = null)
@@ -1035,6 +1060,121 @@ class PanelController extends Controller implements HasMiddleware
                 $option->where('name', 'google_drive_refresh_token')->delete();
             }
 
+            // Parking Domain Handling untuk Tenant (Multisite & Non-Main-Domain)
+            if (config('modules.multisite_enabled') && !is_main_domain() && config('modules.allow_parking_domain')) {
+                if ($request->has('parked_domain')) {
+                    $tenant = tenant();
+                    $oldParkedDomain = get_option('parked_domain');
+                    $rawDomain = trim(strtolower($request->input('parked_domain', '')));
+                    $newParkedDomain = preg_replace('#^https?://#i', '', $rawDomain);
+                    $newParkedDomain = rtrim($newParkedDomain, '/');
+
+                    if (!empty($newParkedDomain)) {
+                        $mainHost = strtolower(parse_url(config('app.url'), PHP_URL_HOST) ?: '');
+
+                        // Cegah penggunaan domain utama
+                        if (!empty($mainHost) && $newParkedDomain === $mainHost) {
+                            $msg = "Tidak dapat menggunakan domain utama ({$mainHost}) sebagai domain parkir.";
+                            if ($request->ajax() || $request->wantsJson()) {
+                                return response()->json(['status' => 'error', 'message' => $msg], 422);
+                            }
+                            return back()->with('danger', $msg);
+                        }
+
+                        // Cegah penggunaan subdomain dari domain utama (*.main_domain)
+                        if (!empty($mainHost) && str_ends_with($newParkedDomain, '.' . $mainHost)) {
+                            $msg = "Tidak dapat menggunakan subdomain dari domain utama (*.{$mainHost}) sebagai domain parkir. Silakan gunakan domain kustom Anda sendiri (contoh: namasekolah.sch.id atau bisnisanda.com).";
+                            if ($request->ajax() || $request->wantsJson()) {
+                                return response()->json(['status' => 'error', 'message' => $msg], 422);
+                            }
+                            return back()->with('danger', $msg);
+                        }
+
+                        if ($newParkedDomain === $tenant->domain) {
+                            $newParkedDomain = '';
+                        } else {
+                            // Validasi format domain dasar
+                            if (!str_contains($newParkedDomain, '.') || str_contains($newParkedDomain, ' ') || str_contains($newParkedDomain, '/')) {
+                                $msg = "Format domain {$newParkedDomain} tidak valid. Contoh: namasekolah.sch.id atau bisnisanda.com";
+                                if ($request->ajax() || $request->wantsJson()) {
+                                    return response()->json(['status' => 'error', 'message' => $msg], 422);
+                                }
+                                return back()->with('danger', $msg);
+                            }
+
+                            $existingTenant = \Leazycms\Web\Models\Tenant::where('domain', $newParkedDomain)->where('id', '<>', $tenant->id)->first();
+                            $existingOption = Option::withoutGlobalScope('tenant')
+                                ->where('name', 'parked_domain')
+                                ->where('value', $newParkedDomain)
+                                ->where('tenant_id', '<>', $tenant->id)
+                                ->first();
+
+                            if ($existingTenant || $existingOption) {
+                                if ($request->ajax() || $request->wantsJson()) {
+                                    return response()->json([
+                                        'status' => 'error',
+                                        'message' => "Domain {$newParkedDomain} sudah digunakan oleh website lain."
+                                    ], 422);
+                                }
+                                return back()->with('danger', "Domain {$newParkedDomain} sudah digunakan oleh website lain.");
+                            }
+                        }
+                    }
+
+                    if ($oldParkedDomain !== $newParkedDomain) {
+                        $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
+
+                        if ($cpanelApi->isActive()) {
+                            // Hapus alias/addon domain lama di cPanel jika ada
+                            if (!empty($oldParkedDomain) && $oldParkedDomain !== $tenant->domain) {
+                                try {
+                                    $cpanelApi->deleteAliasDomain($oldParkedDomain);
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error("Gagal hapus cPanel alias domain {$oldParkedDomain}: " . $e->getMessage());
+                                }
+                            }
+
+                            // Tambahkan alias/addon domain baru ke cPanel
+                            if (!empty($newParkedDomain)) {
+                                try {
+                                    if (!$cpanelApi->checkDomainExists($newParkedDomain)) {
+                                        $createRes = $cpanelApi->createAliasDomain($newParkedDomain);
+                                        if (is_array($createRes) && isset($createRes['error'])) {
+                                            \Illuminate\Support\Facades\Log::error("cPanel create alias domain error: " . $createRes['error']);
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error("Gagal tambah cPanel alias domain {$newParkedDomain}: " . $e->getMessage());
+                                }
+                            }
+                        }
+
+                        if (!empty($newParkedDomain)) {
+                            $option->updateOrCreate(['name' => 'parked_domain'], ['value' => $newParkedDomain, 'autoload' => 1]);
+                        } else {
+                            $option->where('name', 'parked_domain')->delete();
+                        }
+
+                        // Migrasikan file yang mungkin melekat di host parked domain lama ke domain utama tenant
+                        if (!empty($oldParkedDomain) && $oldParkedDomain !== $tenant->domain) {
+                            \Leazycms\FLC\Models\File::where('host', $oldParkedDomain)->update(['host' => $tenant->domain]);
+                        }
+
+                        \Illuminate\Support\Facades\Cache::forget("tenant:{$tenant->domain}");
+                        \Illuminate\Support\Facades\Cache::forget("tenant:{$tenant->domain}:options");
+                        \Illuminate\Support\Facades\Cache::forget("tenant:{$tenant->id}:parked_domain");
+                        if (!empty($oldParkedDomain)) {
+                            \Illuminate\Support\Facades\Cache::forget("tenant:{$oldParkedDomain}");
+                            \Illuminate\Support\Facades\Cache::forget("tenant:{$oldParkedDomain}:options");
+                        }
+                        if (!empty($newParkedDomain)) {
+                            \Illuminate\Support\Facades\Cache::forget("tenant:{$newParkedDomain}");
+                            \Illuminate\Support\Facades\Cache::forget("tenant:{$newParkedDomain}:options");
+                        }
+                    }
+                }
+            }
+
                 foreach ($data['shortcut'] as $row) {
                     $key = $row[1];
                     $value = $request->$key ? 'Y' : 'N';
@@ -1136,6 +1276,15 @@ class PanelController extends Controller implements HasMiddleware
                 }
                 Cache::forget('tenant:' . tenant()->domain . ':options');
             }
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Pengaturan berhasil diperbarui',
+                    'parked_domain' => $newParkedDomain ?? null
+                ]);
+            }
+
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
         return view('cms::backend.setting', $data);
