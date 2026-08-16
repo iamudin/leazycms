@@ -186,10 +186,24 @@
 
                             <div class="form-group mt-2 mb-2">
                                 <label class="mb-0">Kategori</label>
+                                @php
+                                    $categories = [
+                                        'Pendidikan' => ['Sekolah', 'Perguruan Tinggi', 'Pesantren & Madrasah', 'Kursus & Bimbingan Belajar', 'Pendidikan Lainnya'],
+                                        'Pemerintahan' => ['Desa & Kelurahan', 'Kecamatan', 'Dinas & Instansi', 'BUMDes', 'Layanan Publik'],
+                                        'Bisnis' => ['UMKM', 'Perusahaan', 'Toko & E-Commerce', 'Jasa', 'Kuliner', 'Properti', 'Industri', 'Bisnis Lainnya'],
+                                        'Organisasi' => ['Yayasan', 'Komunitas', 'Organisasi Profesi', 'Organisasi Sosial', 'Organisasi Pemuda', 'Organisasi Lainnya'],
+                                        'Publik' => ['Kesehatan', 'Keagamaan', 'Sosial & Kemanusiaan', 'Pariwisata', 'Media & Informasi', 'Layanan Publik'],
+                                        'Personal' => ['Portfolio', 'Personal Branding', 'Blog', 'Profesional', 'Kreator'],
+                                    ];
+                                @endphp
                                 <select name="options[category]" class="form-control form-control-sm">
                                     <option value="">-- Pilih Kategori --</option>
-                                    @foreach(['Sekolah', 'Desa', 'Kecamatan', 'Instansi', 'Blog', 'Masjid', 'Puskesmas', 'Rumah Sakit'] as $cat)
-                                        <option value="{{ $cat }}" {{ (old('options.category', $options['category'] ?? '') == $cat) ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @foreach($categories as $group => $cats)
+                                        <optgroup label="{{ $group }}">
+                                            @foreach($cats as $cat)
+                                                <option value="{{ $cat }}" {{ (old('options.category', $options['category'] ?? '') == $cat) ? 'selected' : '' }}>{{ $cat }}</option>
+                                            @endforeach
+                                        </optgroup>
                                     @endforeach
                                 </select>
                             </div>
@@ -221,43 +235,6 @@
                                 </div>
                             @endforeach
 
-                            @php
-                                $configOptions = array_filter(config('modules.config.option', []), fn($value, $key) => $key !== 'template', ARRAY_FILTER_USE_BOTH);
-                            @endphp
-
-                            @if(count($configOptions) > 0)
-                                <hr>
-                                <h6>Opsi Tambahan Modul</h6>
-                                @foreach($configOptions as $groupName => $fields)
-                                    <div class="mb-3 border p-2 rounded">
-                                        <strong>{{ str($groupName)->headline() }}</strong>
-                                        @foreach($fields as $field)
-                                            @php
-                                                $fieldName = _us($field[0]);
-                                                if (collect($siteAttributes)->pluck(1)->contains($fieldName))
-                                                    continue;
-                                                $fieldType = $field[1];
-                                                $fieldLabel = $field[0];
-                                                $currentValue = old("options.{$fieldName}", $options[$fieldName] ?? '');
-                                            @endphp
-                                            <div class="form-group mt-2 mb-2">
-                                                <label class="mb-0">{{ $fieldLabel }}</label>
-                                                @if($fieldType == 'file')
-                                                    <input class="form-control form-control-sm" name="options[{{ $fieldName }}]" type="text"
-                                                        placeholder="URL File" value="{{ $currentValue }}">
-                                                    <small class="text-muted">Masukkan URL atau path file</small>
-                                                @elseif($fieldType == 'textarea')
-                                                    <textarea class="form-control form-control-sm" name="options[{{ $fieldName }}]"
-                                                        rows="2">{{ $currentValue }}</textarea>
-                                                @else
-                                                    <input class="form-control form-control-sm" name="options[{{ $fieldName }}]"
-                                                        type="{{ $fieldType == 'number' ? 'number' : 'text' }}" value="{{ $currentValue }}">
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endforeach
-                            @endif
                         </div>
                     </div>
                 @endif
