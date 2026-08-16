@@ -913,9 +913,9 @@ return [
                 'looping_name' => 'Daftar Menu',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Keterangan', ['type'=>'textarea']],
-                    ['Bukti Screenshoot', ['type'=>'file','mime_type'=>'image/png,image/jpeg,image/gif,image/webp']],
-                    ['Status Laporan', ['type'=>['Baru','Diproses','Selesai']]]
+                    ['Keterangan', ['type'=>'rich-text','required' => true]],
+                    ['Bukti Screenshoot', ['required' => true,'type'=>'file','mime_type'=>'image/png,image/jpeg,image/gif,image/webp','required' => true]],
+                    ['Status Laporan', ['type'=>['Baru','Diproses','Selesai'], 'only_user_id' => 1]]
                 ],
             ],
             'web' => [

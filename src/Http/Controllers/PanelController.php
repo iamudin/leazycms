@@ -1391,15 +1391,21 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Template Berhasil diupdate' : 'Gagal update template'));
         }
         if ($request->isMethod('post')) {
-            if ($request->hasFile('template')) {
-                $file = $request->file('template');
-                $request->validate([
-                    'template' => 'required|file|mimes:zip',
-                ]);
-                return $this->template_uploader($file);
-            } elseif ($request->filled('template')) {
-                $templatePath = $request->input('template');
-                return $this->template_uploader($templatePath);
+            if ($request->hasFile('template') || $request->filled('template')) {
+                if (!is_main_domain() && get_option('can_upload_template', 'N') !== 'Y') {
+                    return back()->with('danger', 'Anda tidak memiliki akses untuk upload template.');
+                }
+
+                if ($request->hasFile('template')) {
+                    $file = $request->file('template');
+                    $request->validate([
+                        'template' => 'required|file|mimes:zip',
+                    ]);
+                    return $this->template_uploader($file);
+                } elseif ($request->filled('template')) {
+                    $templatePath = $request->input('template');
+                    return $this->template_uploader($templatePath);
+                }
             }
             if ($request->template_setting) {
                 $ar_ta = config('modules.config.option.template') ?? [];

@@ -163,6 +163,7 @@
   </div>
       </ul>
       @endif
+      @if(is_main_domain() || get_option('can_upload_template', 'N') === 'Y')
       <form action="{{ URL::full() }}" method="post" enctype="multipart/form-data" id="formUploadTemplate" class="mb-2">
         @csrf
         <label class="font-weight-bold mb-1">Upload Template :</label>
@@ -171,6 +172,7 @@
           <i class="fa fa-upload"></i> Upload
         </button>
       </form>
+      @endif
 
       <script>
         document.addEventListener('DOMContentLoaded', function () {

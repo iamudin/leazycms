@@ -829,7 +829,7 @@ class PostController extends Controller implements HasMiddleware
                 }
 
                 // Default
-                return '<span>' . e($value) . '</span>';
+                return '<span>' . e(Str::limit(strip_tags($value), 30)) . '</span>';
             });
         }
 

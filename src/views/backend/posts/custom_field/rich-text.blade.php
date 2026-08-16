@@ -29,10 +29,8 @@
                     disableDragAndDrop: true, // Nonaktifkan fitur drop gambar/file
                     toolbar: [
                         // Tampilan sangat simple
-                        ['style', ['bold', 'italic', 'underline', 'clear']],
-                        ['para', ['paragraph','ul', 'ol' ]],
-                        ['insert', ['link']],
-                        ['view',['codeview']]
+                        ['style', ['bold', 'italic', 'underline']],
+                        ['para', ['paragraph','ul', 'ol' ]]
                     ],
                     callbacks: {
                         onPaste: function (e) {

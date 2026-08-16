@@ -179,6 +179,12 @@
                             </div>
 
                             <div class="form-group mt-2 mb-2">
+                                <label class="mb-0">Dapat Upload Template ?</label><br>
+                                <input name="options[can_upload_template]" type="radio" value="Y" {{ (old('options.can_upload_template', $options['can_upload_template'] ?? 'N') == 'Y') ? 'checked' : '' }}> Iya &nbsp; &nbsp;
+                                <input name="options[can_upload_template]" type="radio" value="N" {{ (old('options.can_upload_template', $options['can_upload_template'] ?? 'N') == 'N') ? 'checked' : '' }}> Tidak
+                            </div>
+
+                            <div class="form-group mt-2 mb-2">
                                 <label class="mb-0">Kategori</label>
                                 <select name="options[category]" class="form-control form-control-sm">
                                     <option value="">-- Pilih Kategori --</option>

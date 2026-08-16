@@ -58,7 +58,7 @@
                                             </div>
                                         @endif
                                         <div class="col-lg-2">
-                                            <h6> <i class="fa fa-folder"></i> /{{ template() }}/ <span class="pull-right text-danger"><i
+                                            <h6 class="clearfix"> <span class="pull-right text-danger"><i
                                                         class="fa fa-folder-plus pointer" onclick="folderPrompt('')" title="Create Folder"></i> &nbsp; <i
                                                         class="fa fa-file-circle-plus  pointer" onclick="filePrompt('')" title="Create File"></i> </span></h6>
                                             <div style="max-height: 74vh;overflow:auto;padding-right:10px">
