@@ -15,6 +15,23 @@
     <meta property="og:url" content="">
     <meta property="og:image" content="">
     <meta property="og:description" content="">
+    @if(config('modules.multisite_enabled'))
+    @if(get_option('favicon') && media_exists(get_option('favicon')))
+        <link rel="icon" href="{{ route('favicon') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ route('favicon') }}" type="image/x-icon">
+    @elseif(file_exists(public_path('favicon.ico')))
+        <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+    @endif
+@else
+    @if(get_option('favicon') && media_exists(get_option('favicon')))
+        <link rel="icon" href="{{ media(get_option('favicon'))->url() }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ media(get_option('favicon'))->url() }}" type="image/x-icon">
+    @elseif(file_exists(public_path('favicon.ico')))
+        <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+    @endif
+@endif
     <title>
         {{ isset($title) ? $title . ' › Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '') : ('Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '')) }}
     </title>

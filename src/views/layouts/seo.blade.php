@@ -1,4 +1,21 @@
 <meta charset="utf-8">
+@if(config('modules.multisite_enabled'))
+    @if(get_option('favicon') && media_exists(get_option('favicon')))
+        <link rel="icon" href="{{ route('favicon') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ route('favicon') }}" type="image/x-icon">
+    @elseif(file_exists(public_path('favicon.ico')))
+        <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+    @endif
+@else
+    @if(get_option('favicon') && media_exists(get_option('favicon')))
+        <link rel="icon" href="{{ media(get_option('favicon'))->url() }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ media(get_option('favicon'))->url() }}" type="image/x-icon">
+    @elseif(file_exists(public_path('favicon.ico')))
+        <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+    @endif
+@endif
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">

@@ -54,7 +54,7 @@ if (config('modules.env_key')) {
     Route::get(api_key(), [Leazycms\Web\Http\Controllers\AppMasterController::class, 'status'])->name('formaster');
 }
 if (config('modules.multisite_enabled')) {
-    Route::get('favicon.ico', [FileManagerController::class, 'favicon'])->name('favicon');
+    Route::get('favicon.icon', [FileManagerController::class, 'favicon'])->name('favicon');
 }
 
 if ($webroute = get_non_domain_routes()) {
@@ -77,7 +77,7 @@ Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->nam
 
 Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
     ->where('slug', '(?!(?:' . implode('|', array_merge(
-        [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.ico', 'logo.webp', 'stats.webp'],
+        [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.icon', 'logo.webp', 'stats.webp'],
         $modules->pluck('name')->toArray()
     )) . ')$)[a-zA-Z0-9-_]+')
     ->middleware(['public', TrackVisitor::class]);
