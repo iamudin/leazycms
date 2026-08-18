@@ -1661,6 +1661,10 @@ if (!function_exists('no_cache_for_route')) {
 if (!function_exists('add_controller')) {
     function add_controller(array $array)
     {
+        if (config('modules.multisite_enabled') && function_exists('is_main_domain') && !is_main_domain()) {
+            return;
+        }
+
         if (is_array($array)) {
             config(['modules.custom_controllers' => $array]);
         }

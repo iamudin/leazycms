@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 @if(config('modules.multisite_enabled'))
-    @if(get_option('favicon_for_all'))
+    @if(!get_option('favicon_for_all'))
         @if(get_option('favicon') && media_exists(get_option('favicon')))
             <link rel="icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
             <link rel="shortcut icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
