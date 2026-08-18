@@ -99,8 +99,11 @@ class ExtController extends Controller
 
         $post = Post::whereIn('type', $typeNames)
             ->published()
-            ->select('updated_at', 'url', 'type')
-            ->get();
+            ->select('updated_at', 'url', 'type');
+        if (config('modules.multisite_enabled') && is_main_domain()) {
+            $post = $post->where('tenant_id', app('tenant')->id);
+        }
+            $post = $post->get();
 
         $lastmod = $post->max('updated_at');
         $lastmodIso = $lastmod ? $lastmod->toIso8601String() : now()->toIso8601String();
