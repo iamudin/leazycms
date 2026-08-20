@@ -71,6 +71,8 @@ class ThemeController extends Controller implements HasMiddleware
             'path' => 'required|string|max:100|unique:themes,path',
             'git' => 'required|url',
             'status' => 'required|in:active,inactive',
+            'preview' => 'nullable|string',
+            'demo_url' => 'nullable|url',
         ]);
 
         $theme = Theme::create($request->all());
@@ -92,6 +94,8 @@ class ThemeController extends Controller implements HasMiddleware
             'path' => 'required|string|max:100|unique:themes,path,' . $theme->id,
             'git' => 'required|url',
             'status' => 'required|in:active,inactive',
+              'preview' => 'nullable|string',
+            'demo_url' => 'nullable|url'
         ]);
 
         $theme->update($request->all());

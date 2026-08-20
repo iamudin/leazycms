@@ -33,7 +33,20 @@
                         </div>
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Preview URL (Optional)</label>
-                            <input class="form-control form-control-sm" name="preview" type="text" placeholder="https://demo.tema.com" value="{{ $theme ? $theme->preview : old('preview') }}">
+                            <div class="input-group input-group-sm">
+                                <input class="form-control" id="preview-url-input" name="preview" type="text" placeholder="https://demo.tema.com/preview.jpg" value="{{ $theme ? $theme->preview : old('preview') }}">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-primary btn-text-gmedia" data-target="#preview-url-input" accept="image/*">
+                                        <i class="fa fa-folder-open"></i> Media
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted">Pilih gambar dari Media Library atau masukkan URL. Pastikan gambar berukuran minimal 1920x1080 dan berformat JPG</small>
+                        </div>
+                           <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Demo URL (Optional)</label>
+                            <input class="form-control form-control-sm" name="demo_url" type="url" placeholder="https://demo.tema.com" value="{{ $theme ? $theme->demo_url : old('demo_url') }}">
+                            <small class="text-muted">Masukkan URL Demo</small>
                         </div>
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Status</label><br>
