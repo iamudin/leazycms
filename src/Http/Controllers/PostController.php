@@ -878,7 +878,7 @@ class PostController extends Controller implements HasMiddleware
                 $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm"> <i class="fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></i></a>';
             }
             $titledelete = $row->trashed() ? 'Hapus Permanent' : 'Hapus Data';
-            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-danger btn-sm pointer"> <i class="fa fa-trash"></i></span>' : '';
+            $btn .= Route::has($row->type . '.destroyer') && empty($row->childs_count) ? '<span title="' . $titledelete . '" onclick="deleteAlert(\'' . route($row->type . '.destroyer', $row->id) . '\')" class="btn btn-danger btn-sm pointer"> <i class="fa fa-trash-alt"></i></span>' : '';
             $btn .= '</div>';
             return $btn;
         });

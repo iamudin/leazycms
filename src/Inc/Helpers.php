@@ -1688,7 +1688,7 @@ if (!function_exists('_field')) {
 }
 
 if (!function_exists('getlistmenu')) {
-    function getlistmenu($menu, $menulist)
+    function getlistmenu($menu, $menulist, $level = 2)
     {
         $me = $menu;
         $m = '';
@@ -1697,11 +1697,11 @@ if (!function_exists('getlistmenu')) {
     <li class="dd-item dd3-item menu-id-' . $value->menu_id . '" data-id="' . $value->menu_id . '">
     <input type="hidden" name="menu_id[]" value="' . $value->menu_id . '">
     <input type="hidden" name="menu_parent[]" value="' . $value->menu_parent . '">
-    <input type="hidden" class="name-' . $value->menu_id . '" name="menu_name[]" value="' . $value->menu_name . '">
-    <input type="hidden" class="desc-' . $value->menu_id . '" name="menu_description[]" value="' . $value->menu_description . '">
-    <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . $value->menu_link . '">
-    <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . $value->menu_icon . '">
-      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . $value->menu_name . ' <i class="fa fa-angle-right" aria-hidden></i>  <code><a href="' . link_menu($value->menu_link) . '"  title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span style="float:right">';
+    <input type="hidden" class="name-' . $value->menu_id . '" name="menu_name[]" value="' . htmlspecialchars($value->menu_name ?? '', ENT_QUOTES) . '">
+    <input type="hidden" class="desc-' . $value->menu_id . '" name="menu_description[]" value="' . htmlspecialchars($value->menu_description ?? '', ENT_QUOTES) . '">
+    <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . htmlspecialchars($value->menu_link ?? '', ENT_QUOTES) . '">
+    <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . htmlspecialchars($value->menu_icon ?? '', ENT_QUOTES) . '">
+      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content"><span class="menu-label-title">' . $value->menu_name . '</span> <i class="fa fa-angle-right menu-sep-icon" aria-hidden="true"></i> <code class="menu-link-url"><a href="' . link_menu($value->menu_link) . '" title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span class="menu-action-buttons">';
 
             $edit_post_btn = '';
             $raw_link = $value->menu_link ?? '';
@@ -1730,13 +1730,18 @@ if (!function_exists('getlistmenu')) {
                         }
                         if (strlen($slug) >= 5 && in_array($typepost, $modules)) {
                             $edit_url = url(admin_path() . '/' . $typepost . '/create?slug=' . $slug);
-                            $edit_post_btn = '<a href="' . $edit_url . '" target="_blank" class="text-primary" title="Edit Konten Target"> <i class="fa fa-external-link" aria-hidden="true"></i> </a> &nbsp; ';
+                            $edit_post_btn = '<a href="' . $edit_url . '" target="_blank" class="text-primary" title="Edit Konten Target"> <i class="fa fa-external-link" aria-hidden="true"></i> </a>';
                         }
                     }
                 }
             }
-            $m .= $edit_post_btn . '<a href="javascript:void(0)" onclick="$(\'.link\').val(\'' . $value->menu_link . '\');$(\'.description\').val(\'' . $value->menu_description . '\');$(\'.name\').val(\'' . $value->menu_name . '\');$(\'.iconx\').val(\'' . $value->menu_icon . '\');$(\'#type\').val(\'' . $value->menu_id . '\');$(\'#menuFormModal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden=""></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden=""></i> </a></span></div>
-      ' . ceksubmenu($me, $value->menu_id) . '
+            $safeName = addslashes($value->menu_name ?? '');
+            $addSubBtn = '';
+            if ($level <= 4) {
+                $addSubBtn = '<a href="javascript:void(0)" onclick="open_add_menu(\'' . $value->menu_id . '\', \'' . $safeName . '\')" class="text-success btn-add-sub " title="Tambah Sub Menu"> <i class="fa fa-plus-circle" aria-hidden="true"></i> </a>';
+            }
+            $m .= $edit_post_btn . $addSubBtn . '<a href="javascript:void(0)" onclick="open_edit_menu(\'' . $value->menu_id . '\')" class="text-warning btn-edit-menu " title="Edit Menu"> <i class="fa fa-edit" aria-hidden="true"></i> </a><a href="javascript:void(0)" onclick="del_menu(\'' . $value->menu_id . '\')" class="text-danger btn-delete-menu" title="Hapus Menu"> <i class="fa fa-trash-alt" aria-hidden="true"></i> </a></span></div>
+      ' . ceksubmenu($me, $value->menu_id, $level + 1) . '
     </li>
     ';
         }
@@ -1757,12 +1762,12 @@ if (!function_exists('rnd')) {
     }
 }
 if (!function_exists('ceksubmenu')) {
-    function ceksubmenu($menu, $id)
+    function ceksubmenu($menu, $id, $level = 2)
     {
         $cek = $menu->where('menu_parent', $id);
         if (count($cek) > 0) {
             $m = '<ol class="dd-list">';
-            $m .= getlistmenu($menu, $cek);
+            $m .= getlistmenu($menu, $cek, $level);
             $m .= '</ol>';
             return $m;
         } else {
@@ -1931,17 +1936,28 @@ if (!function_exists('use_module')) {
 if (!function_exists('processMenu')) {
     function processMenu($menu, $datanya, &$mnews, $parent = 0)
     {
+        if (!is_array($menu)) {
+            return;
+        }
         foreach ($menu as $value) {
+            if (!isset($value['id'])) {
+                continue;
+            }
             $b = collect($datanya)->where('menu_id', $value['id'])->first();
-            array_push($mnews, [
-                'menu_id' => $b['menu_id'],
-                'menu_parent' => $parent,
-                'menu_name' => $b['menu_name'],
-                'menu_description' => $b['menu_description'],
-                'menu_link' => $b['menu_link'],
-                'menu_icon' => $b['menu_icon']
-            ]);
-            if (isset($value['children'])) {
+            if ($b && !empty($b['menu_name'])) {
+                $existingIds = array_column($mnews, 'menu_id');
+                if (!in_array($b['menu_id'], $existingIds)) {
+                    array_push($mnews, [
+                        'menu_id' => $b['menu_id'],
+                        'menu_parent' => $parent,
+                        'menu_name' => $b['menu_name'],
+                        'menu_description' => $b['menu_description'] ?? null,
+                        'menu_link' => $b['menu_link'] ?? null,
+                        'menu_icon' => $b['menu_icon'] ?? null
+                    ]);
+                }
+            }
+            if (isset($value['children']) && is_array($value['children'])) {
                 processMenu($value['children'], $datanya, $mnews, $value['id']);
             }
         }
@@ -3180,7 +3196,7 @@ if (!function_exists('renderTemplateFile')) {
                 continue;
             }
             if (isset($item['children']) && !empty($item['children'])) {
-                echo '<li class="folder"> <i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-folder-plus pointer" title="Create Folder" onclick="folderPrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-file-circle-plus pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-trash pointer" title="Delete Folder" onclick="deleteDir(\'' . $currentPath . '\')"></i> </span>';
+                echo '<li class="folder"> <i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-folder-plus pointer" title="Create Folder" onclick="folderPrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-file-circle-plus pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-trash-alt pointer" title="Delete Folder" onclick="deleteDir(\'' . $currentPath . '\')"></i> </span>';
                 renderTemplateFile($item['children'], $currentPath);
                 echo '</li>';
             } elseif (strtolower(substr(strrchr($item['name'], '.'), 1))) {
@@ -3629,3 +3645,88 @@ if (!function_exists('need_sync_dummy')) {
         return false;
     }
 }
+
+if (!function_exists('tenant_post_publish_limit')) {
+    /**
+     * Mendapatkan batas maksimal publish post untuk tenant multisite.
+     * Hanya berlaku pada multisite (bukan main domain).
+     * 
+     * @param string|null $type
+     * @return int 0 jika UNLIMITED (atau single-site/main domain), atau angka > 0 jika dibatasi.
+     */
+    function tenant_post_publish_limit($type = null)
+    {
+        // Pembatasan HANYA berlaku di mode multisite dan bukan di domain utama
+        if (!config('modules.multisite_enabled') || is_main_domain()) {
+            return 0; // Unlimited untuk main domain atau non-multisite
+        }
+
+        // Tipe menu dikecualikan dari pembatasan kuota
+        if ($type === 'menu') {
+            return 0;
+        }
+
+        // Jika tenant memiliki opsi unlimited_posts = '1', maka tanpa batasan
+        if ((string) get_option('unlimited_posts', '0') === '1') {
+            return 0;
+        }
+
+        // Ambil opsi limit_publish dari options tenant
+        $limit = get_option('limit_publish');
+
+        // Jika tidak diset atau bernilai 0 / negatif, maka unlimited
+        if ($limit === null || $limit === '' || (int) $limit <= 0) {
+            return 0;
+        }
+
+        return (int) $limit;
+    }
+}
+
+if (!function_exists('check_tenant_post_publish_limit')) {
+    /**
+     * Memeriksa apakah tenant melebihi batas limit publikasi post.
+     *
+     * @param string $type Tipe post
+     * @param int|array|null $excludeId ID post yang sedang diedit (diabaikan dari hitungan)
+     * @param int $addingCount Jumlah post yang akan dipublish
+     * @return array ['allowed' => bool, 'limit' => int, 'current' => int, 'message' => string]
+     */
+    function check_tenant_post_publish_limit($type, $excludeId = null, $addingCount = 1)
+    {
+        if ($type === 'menu') {
+            return ['allowed' => true, 'limit' => 0, 'current' => 0, 'message' => ''];
+        }
+
+        $limit = tenant_post_publish_limit($type);
+        if ($limit <= 0) {
+            return ['allowed' => true, 'limit' => 0, 'current' => 0, 'message' => ''];
+        }
+
+        $currentCount = \Leazycms\Web\Models\Post::onType($type)
+            ->where('status', 'publish')
+            ->when($excludeId, function ($q) use ($excludeId) {
+                if (is_array($excludeId)) {
+                    $q->whereNotIn('id', $excludeId);
+                } else {
+                    $q->where('id', '!=', $excludeId);
+                }
+            })
+            ->count();
+
+        if (($currentCount + $addingCount) > $limit) {
+            $moduleInfo = function_exists('get_module') ? get_module($type) : null;
+            $typeTitle = $moduleInfo->title ?? ucfirst($type);
+            $msg = "Batas publikasi untuk {$typeTitle} telah mencapai kuota maksimal ({$limit} post). Silakan upgrade paket Anda di Dashboard untuk membuka akses posting tanpa batas.";
+            return [
+                'allowed' => false,
+                'limit' => $limit,
+                'current' => $currentCount,
+                'message' => $msg
+            ];
+        }
+
+        return ['allowed' => true, 'limit' => $limit, 'current' => $currentCount, 'message' => ''];
+    }
+}
+

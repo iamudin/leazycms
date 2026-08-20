@@ -41,6 +41,7 @@
                                 value="{{ $tenant ? $tenant->disk_space : old('disk_space') }}">
                             <small class="text-muted">Biarkan kosong atau isi 0 jika tidak ingin membatasi (unmetered).</small>
                         </div>
+                
                         <div class="form-group mt-2 mb-2">
                             <label for="">Nonaktifkan Modul (Disallow Modules)</label>
                             <select name="modules[]" id="select2" class="form-control form-control-sm form-control-select"
@@ -94,6 +95,13 @@
                             <input name="custom_theme" id="custom-theme-check" type="checkbox" value="1" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? 'checked' : '' }}> <small
                                 class="text-muted">Ceklis jika ingin menduplikasi tema terpilih khusus untuk tenant ini agar
                                 bisa diedit secara terpisah.</small>
+                        </div>
+
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Izinkan Parkir Domain ?</label><br>
+                            <input type="hidden" name="options[allow_park_domain]" value="0">
+                            <input name="options[allow_park_domain]" id="allow-park-domain-check" type="checkbox" value="1" {{ (old('options.allow_park_domain') == '1' || ($options['allow_park_domain'] ?? '0') == '1') ? 'checked' : '' }}> <small
+                                class="text-muted">Ceklis jika ingin mengizinkan tenant ini melakukan parkir custom domain melalui menu Setting -> Domain di panel mereka.</small>
                         </div>
 
                         <script>

@@ -33,7 +33,7 @@
                                         class="fab fa-google-drive"></i>
                                     Google Drive</a></li>
                         @endif
-                        @if (config('modules.multisite_enabled') && !is_main_domain() && config('modules.allow_parking_domain'))
+                        @if (config('modules.multisite_enabled') && !is_main_domain() && (config('modules.allow_parking_domain') && get_option('allow_park_domain') == '1'))
                             <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#domain_tab"> <i
                                         class="fa fa-globe"></i>
                                     Domain</a></li>
@@ -315,7 +315,7 @@
                             </div>
                         @endif
 
-                        @if (config('modules.multisite_enabled') && !is_main_domain() && config('modules.allow_parking_domain'))
+                        @if (config('modules.multisite_enabled') && !is_main_domain() && (config('modules.allow_parking_domain') || get_option('allow_park_domain') == '1'))
                             <div class="tab-pane fade" id="domain_tab">
                                 <div class="alert alert-info">
                                     <i class="fa fa-info-circle"></i> <strong>Pengaturan Parkir Domain Kustom (Custom Domain):</strong>

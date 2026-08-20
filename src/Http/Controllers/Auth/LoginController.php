@@ -70,7 +70,7 @@ class LoginController extends Controller
                 $separator = str_contains($redirectUrl, '?') ? '&' : '?';
                 $redirectUrl .= $separator . 'notice=login_required&tenant=' . urlencode($request->getHost());
 
-                return redirect()->away($redirectUrl)->with('info', 'Silakan login terlebih dahulu ke Dashboard untuk mengakses CMS Website.');
+                return redirect()->away($redirectUrl);
             }
         }
 

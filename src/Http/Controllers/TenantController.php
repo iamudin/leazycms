@@ -181,7 +181,7 @@ class TenantController extends Controller implements HasMiddleware
         $themes = Theme::where('status', 'active')->get();
         $modules = collect(config('modules.menu', []))->pluck('title', 'name');
         $availablePlugins = $this->getAvailablePlugins();
-        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'themes' => $themes, 'modules' => $modules, 'availablePlugins' => $availablePlugins]);
+        return view('cms::backend.tenants.form', ['tenant' => null, 'admin' => null, 'options' => [], 'themes' => $themes, 'modules' => $modules, 'availablePlugins' => $availablePlugins]);
     }
 
     public function store(Request $request)

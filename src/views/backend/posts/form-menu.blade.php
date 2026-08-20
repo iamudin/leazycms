@@ -179,17 +179,18 @@
             .dd-placeholder {
                 display: block;
                 position: relative;
-                margin: 0;
+                margin: 6px 0;
                 padding: 0;
-                min-height: 20px;
+                min-height: 40px;
                 font-size: 13px;
                 line-height: 20px;
             }
 
             .dd-handle {
                 display: block;
-                height: 30px;
-                margin: 5px 0;
+                height: 40px;
+                line-height: 28px;
+                margin: 0;
                 padding: 5px 10px;
                 color: #333;
                 text-decoration: none;
@@ -212,46 +213,77 @@
 
             .dd-item>button {
                 display: block;
-                position: relative;
-                cursor: pointer;
-                float: left;
-                width: 25px;
-                height: 20px;
-                margin: 5px 0;
-                padding: 0;
-                text-indent: 100%;
-                white-space: nowrap;
-                overflow: hidden;
-                border: 0;
-                background: transparent;
-                font-size: 12px;
-                line-height: 1;
-                text-align: center;
-                font-weight: bold;
+                position: absolute !important;
+                left: 42px !important;
+                top: 10px !important;
+                width: 20px !important;
+                height: 20px !important;
+                line-height: 18px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                text-indent: 100% !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                border: 1px solid #cbd5e1 !important;
+                background: #f8fafc !important;
+                border-radius: 4px !important;
+                color: #475569 !important;
+                font-size: 0 !important;
+                text-align: center !important;
+                cursor: pointer !important;
+                z-index: 6 !important;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+                float: none !important;
+                box-sizing: border-box !important;
+            }
+
+            .dd-item>button[style*="display: none"],
+            .dd-item>button[style*="display:none"] {
+                display: none !important;
+            }
+
+            .dd-item>button:hover {
+                background: #e2e8f0 !important;
+                color: #0f172a !important;
+                border-color: #94a3b8 !important;
             }
 
             .dd-item>button:before {
-                content: '+';
-                display: block;
-                position: absolute;
-                width: 100%;
-                text-align: center;
-                text-indent: 0;
+                content: '+' !important;
+                display: block !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                line-height: 18px !important;
+                text-align: center !important;
+                text-indent: 0 !important;
+                font-size: 13px !important;
+                font-weight: bold !important;
+                color: #475569 !important;
+                font-family: inherit !important;
             }
 
             .dd-item>button[data-action="collapse"]:before {
-                content: '-';
+                content: '−' !important;
+                font-size: 15px !important;
+                line-height: 16px !important;
+            }
+
+            .dd3-item > button ~ .dd3-content {
+                padding-left: 70px !important;
             }
 
             .dd-placeholder,
             .dd-empty {
-                margin: 5px 0;
+                margin: 6px 0;
                 padding: 0;
-                min-height: 30px;
+                min-height: 40px;
                 background: #f2fbff;
                 border: 1px dashed #b6bcbf;
+                border-radius: 3px;
                 box-sizing: border-box;
-                -moz-box-sizing: border-box;
             }
 
             .dd-empty {
@@ -349,21 +381,21 @@
 
             .dd3-content {
                 display: block;
-                height: 30px;
-                margin: 5px 0;
-                padding: 5px 10px 5px 40px;
+                height: 40px;
+                line-height: 28px;
+                margin: 0 !important;
+                padding: 5px 12px 5px 46px;
                 color: #333;
                 text-decoration: none;
-                font-weight: bold;
+                font-weight: 600;
                 border: 1px solid #ccc;
                 background: #fafafa;
                 background: -webkit-linear-gradient(top, #fafafa 0%, #eee 100%);
                 background: -moz-linear-gradient(top, #fafafa 0%, #eee 100%);
                 background: linear-gradient(top, #fafafa 0%, #eee 100%);
-                -webkit-border-radius: 3px;
                 border-radius: 3px;
                 box-sizing: border-box;
-                -moz-box-sizing: border-box;
+                font-size: 13.5px;
             }
 
             .dd3-content:hover {
@@ -376,16 +408,18 @@
             }
 
             .dd3-item>button {
-                margin-left: 30px;
+                margin-left: 36px;
             }
 
+            .dd3-item > .dd-handle,
             .dd3-handle {
                 position: absolute;
-                margin: 0;
+                margin: 0 !important;
                 left: 0;
                 top: 0;
-                cursor: pointer;
-                width: 30px;
+                cursor: move;
+                width: 36px;
+                height: 40px;
                 text-indent: 100%;
                 white-space: nowrap;
                 overflow: hidden;
@@ -394,8 +428,12 @@
                 background: -webkit-linear-gradient(top, #ddd 0%, #bbb 100%);
                 background: -moz-linear-gradient(top, #ddd 0%, #bbb 100%);
                 background: linear-gradient(top, #ddd 0%, #bbb 100%);
+                border-top-left-radius: 3px;
+                border-bottom-left-radius: 3px;
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
+                box-sizing: border-box;
+                padding: 0 !important;
             }
 
             .dd3-handle:before {
@@ -403,7 +441,9 @@
                 display: block;
                 position: absolute;
                 left: 0;
-                top: 3px;
+                top: 0;
+                height: 38px;
+                line-height: 36px;
                 width: 100%;
                 text-align: center;
                 text-indent: 0;
@@ -414,6 +454,24 @@
 
             .dd3-handle:hover {
                 background: #ddd;
+            }
+
+            .menu-action-buttons {
+                float: right;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                height: 28px;
+                line-height: 28px;
+            }
+
+            .menu-action-buttons a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                text-decoration: none;
+                line-height: 1;
             }
 
 
@@ -467,116 +525,6 @@
             });
         </script>
         <script src="{{asset('backend/js/jquery.nestable.js')}}"></script>
-        <script>
-
-            $(document).ready(function () {
-
-                var updateOutput = function (e) {
-                    var list = e.length ? e : $(e.target),
-                        output = list.data('output');
-                    if (window.JSON) {
-                        output.val(window.JSON.stringify(list.nestable('serialize')));
-                    } else {
-                        output.val('JSON browser support required for this demo.');
-                    }
-                };
-
-
-                $('#nestable3').nestable({
-                    group: 1
-                }
-                )
-                    .on('change', updateOutput);
-                updateOutput($('#nestable3').data('output', $('#nestable3-output')));
-            });
-            function del_menu(id) {
-
-                $('.menu-id-' + id).remove();
-                $('#nestable3').nestable({
-                    group: 1
-                }
-                ).change();
-            }
-            function setmenu() {
-                var name = $('.name').val();
-                var desc = $('.description').val();
-                var link = $('.link').val();
-                var icon = $('.iconx').val();
-
-                var type = $('#type').val();
-
-                var escapedDesc = desc.replace(/'/g, "\\'");
-                var escapedLink = link.replace(/'/g, "\\'");
-                var escapedName = name.replace(/'/g, "\\'");
-                var escapedIcon = icon.replace(/'/g, "\\'");
-
-                function formatLinkMenu(menuUrl) {
-                    if (!menuUrl) return '';
-                    if (menuUrl.indexOf('http') !== -1 || menuUrl.indexOf('javascript:') === 0 || menuUrl === '#') {
-                        return menuUrl;
-                    }
-                    var cleanLink = menuUrl.charAt(0) === '/' ? menuUrl.substring(1) : menuUrl;
-                    return "{{ url('') }}/" + cleanLink;
-                }
-                var formattedLink = formatLinkMenu(link);
-
-                if (type != 'add') {
-                    // Update hidden inputs
-                    $('.name-' + type).val(name);
-                    $('.desc-' + type).val(desc);
-                    $('.link-' + type).val(link);
-                    $('.icon-' + type).val(icon);
-
-                    // Update UI text in nested list
-                    var $content = $('.menu-id-' + type + ' > .dd3-content');
-                    if ($content.length) {
-                        // Update text node
-                        if ($content[0].childNodes[0].nodeType === 3) {
-                            $content[0].childNodes[0].nodeValue = name + " ";
-                        }
-
-                        // Update the link text and href if present
-                        var $linkCode = $content.find('code a');
-                        if ($linkCode.length) {
-                            $linkCode.attr('href', formattedLink).find('i').text(formattedLink.substring(0, 60) + (formattedLink.length > 60 ? '...' : ''));
-                        }
-
-                        // Update onclick on edit button
-                        var $editBtn = $content.find('.text-warning');
-                        if ($editBtn.length) {
-                            $editBtn.attr('onclick', "$('.description').val('" + escapedDesc + "');$('.link').val('" + escapedLink + "');$('.name').val('" + escapedName + "');$('.iconx').val('" + escapedIcon + "');$('#type').val('" + type + "');$('#menuFormModal').modal('show')");
-                        }
-                    }
-                } else {
-                    var newId = Math.floor(Math.random() * 900000) + 100000;
-                    var $newItem = $($('.newmenu').html());
-
-                    $newItem.attr('data-id', newId).addClass('menu-id-' + newId);
-
-                    $newItem.find('input[name="menu_id[]"]').val(newId);
-                    $newItem.find('input[name="menu_name[]"]').val(name).addClass('name-' + newId);
-                    $newItem.find('input[name="menu_description[]"]').val(desc).addClass('desc-' + newId);
-                    $newItem.find('input[name="menu_link[]"]').val(link).addClass('link-' + newId);
-                    $newItem.find('input[name="menu_icon[]"]').val(icon).addClass('icon-' + newId);
-
-                    // Remove IDs from cloned inputs to avoid duplicates
-                    $newItem.find('input').removeAttr('id');
-                    $newItem.removeAttr('id'); // li element
-
-                    var buttonsHtml = '<span style="float:right"><a href="javascript:void(0)" onclick="$(\'.description\').val(\'' + escapedDesc + '\');$(\'.link\').val(\'' + escapedLink + '\');$(\'.name\').val(\'' + escapedName + '\');$(\'.iconx\').val(\'' + escapedIcon + '\');$(\'#type\').val(\'' + newId + '\');$(\'#menuFormModal\').modal(\'show\')" class="text-warning"> <i class="fa fa-edit" aria-hidden></i> </a> &nbsp; <a href="javascript:void(0)" onclick="del_menu(\'' + newId + '\')" class="text-danger"> <i class="fa fa-trash" aria-hidden></i> </a></span>';
-
-                    $newItem.find('.dd3-content').html(name + ' <i class="fa fa-angle-right" aria-hidden></i> <code><a href="' + formattedLink + '"><i>' + formattedLink.substring(0, 60) + (formattedLink.length > 60 ? '...' : '') + '</i></a></code>' + buttonsHtml).removeAttr('id');
-
-                    $('.main-list').append($newItem);
-
-                    $('#nestable3').nestable({
-                        group: 1
-                    }).change();
-                }
-
-                $('.add').click();
-            }
-        </script>
         @include('cms::backend.layout.js')
         <script>
             function handleStatusSubmit(btn) {
@@ -652,9 +600,9 @@
                         let errors = xhr.responseJSON ? xhr.responseJSON.errors : null;
                         if (errors) {
                             let firstError = Object.values(errors)[0][0];
-                            notif(firstError, 'error');
+                            notif(firstError, 'danger');
                         } else {
-                            notif('Terjadi kesalahan!', 'error');
+                            notif('Terjadi kesalahan!', 'danger');
                         }
 
                         // Reset status buttons

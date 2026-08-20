@@ -240,8 +240,9 @@ class ExtController extends Controller
 
         // 2. Validasi Spesifik (Atribut Accept) telah dipindahkan ke sisi client-side
         // untuk menghemat bandwidth. Server hanya fokus pada keamanan global.
-        // 3. Validasi Ukuran (Skip isi teks jika lebih dari 5MB)
-        if ($file->getSize() > 5 * 1024 * 1024) {
+        // 3. Validasi Ukuran & Tipe File (Skip isi teks jika lebih dari 5MB atau file biner)
+        $binaryExts = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mp3', 'zip', 'rar', 'doc', 'docx', 'xls', 'xlsx'];
+        if ($file->getSize() > 5 * 1024 * 1024 || in_array($ext, $binaryExts)) {
             return Response::json(['success' => true]);
         }
 
