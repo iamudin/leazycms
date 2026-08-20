@@ -3,7 +3,7 @@ namespace Leazycms\Web\Models;
 use Illuminate\Database\Eloquent\Model;
 class Theme extends Model
 {
-    protected $fillable = ['path', 'name', 'status','preview','git'];
+    protected $fillable = ['path', 'name', 'status','preview','git','demo_url'];
 
     function tenants(){
         return $this->hasMany(Tenant::class,'theme','path');
