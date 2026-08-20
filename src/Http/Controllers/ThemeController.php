@@ -55,6 +55,9 @@ class ThemeController extends Controller implements HasMiddleware
             ->addColumn('status', function ($row) {
                 return $row->status == 'active' ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>';
             })
+            ->addColumn('category', function ($row) {
+                return $row->category ?: 'Universal';
+            })
             ->addColumn('preview', function ($row) {
                 if ($row->preview) {
                     // Cek jika preview adalah URL absolut atau path media
@@ -69,7 +72,7 @@ class ThemeController extends Controller implements HasMiddleware
                 }
                 return '-';
             })
-            ->rawColumns(['action', 'status', 'tenants', 'preview', 'demo_url'])
+            ->rawColumns(['action', 'status', 'tenants', 'preview', 'demo_url', 'category'])
             ->toJson();
     }
 

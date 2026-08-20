@@ -13,6 +13,7 @@
                     <tr>
                         <th style="width:5px;vertical-align: middle">No</th>
                         <th style="vertical-align: middle">Nama Tema</th>
+                        <th style="vertical-align: middle">Kategori</th>
                         <th style="vertical-align: middle">Preview</th>
                         <th style="vertical-align: middle">Demo</th>
                         <th style="vertical-align: middle">Path</th>
@@ -50,6 +51,11 @@
                     {
                         data: 'name',
                         name: 'name',
+                        searchable: true
+                    },
+                    {
+                        data: 'category',
+                        name: 'category',
                         searchable: true
                     },
                     {
