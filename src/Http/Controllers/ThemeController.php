@@ -55,7 +55,21 @@ class ThemeController extends Controller implements HasMiddleware
             ->addColumn('status', function ($row) {
                 return $row->status == 'active' ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>';
             })
-            ->rawColumns(['action', 'status', 'tenants'])
+            ->addColumn('preview', function ($row) {
+                if ($row->preview) {
+                    // Cek jika preview adalah URL absolut atau path media
+                    $url = filter_var($row->preview, FILTER_VALIDATE_URL) ? $row->preview : url($row->preview);
+                    return '<a href="' . $url . '" target="_blank"><img src="' . $url . '" style="height:35px; border-radius:4px; object-fit:cover;"></a>';
+                }
+                return '-';
+            })
+            ->addColumn('demo_url', function ($row) {
+                if ($row->demo_url) {
+                    return '<a href="' . $row->demo_url . '" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa fa-external-link"></i> Demo</a>';
+                }
+                return '-';
+            })
+            ->rawColumns(['action', 'status', 'tenants', 'preview', 'demo_url'])
             ->toJson();
     }
 
@@ -73,6 +87,8 @@ class ThemeController extends Controller implements HasMiddleware
             'status' => 'required|in:active,inactive',
             'preview' => 'nullable|string',
             'demo_url' => 'nullable|url',
+            'category' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         $theme = Theme::create($request->all());
@@ -95,7 +111,9 @@ class ThemeController extends Controller implements HasMiddleware
             'git' => 'required|url',
             'status' => 'required|in:active,inactive',
               'preview' => 'nullable|string',
-            'demo_url' => 'nullable|url'
+            'demo_url' => 'nullable|url',
+            'category' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         $theme->update($request->all());

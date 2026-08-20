@@ -22,6 +22,46 @@
                             <input class="form-control form-control-sm" name="name" type="text" placeholder="Masukkan Nama Tema" value="{{ $theme ? $theme->name : old('name') }}" required>
                         </div>
                         <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Kategori</label>
+                            <select class="form-control form-control-sm" name="category" required>
+                                <option value="Universal" {{ ($theme && $theme->category == 'Universal') || old('category') == 'Universal' ? 'selected' : '' }}>Universal (General)</option>
+                                <optgroup label="Pendidikan">
+                                    @foreach(['Sekolah', 'Perguruan Tinggi', 'Pesantren & Madrasah', 'Kursus & Bimbingan Belajar', 'Pendidikan Lainnya'] as $cat)
+                                        <option value="{{ $cat }}" {{ ($theme && $theme->category == $cat) || old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Pemerintahan">
+                                    @foreach(['Desa & Kelurahan', 'Kecamatan', 'Dinas & Instansi', 'BUMDes', 'Layanan Publik'] as $cat)
+                                        <option value="{{ $cat }}" {{ ($theme && $theme->category == $cat) || old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Bisnis">
+                                    @foreach(['UMKM', 'Perusahaan', 'Toko & E-Commerce', 'Jasa', 'Kuliner', 'Properti', 'Industri', 'Bisnis Lainnya'] as $cat)
+                                        <option value="{{ $cat }}" {{ ($theme && $theme->category == $cat) || old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Organisasi">
+                                    @foreach(['Yayasan', 'Komunitas', 'Organisasi Profesi', 'Organisasi Sosial', 'Organisasi Pemuda', 'Organisasi Lainnya'] as $cat)
+                                        <option value="{{ $cat }}" {{ ($theme && $theme->category == $cat) || old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Publik">
+                                    @foreach(['Kesehatan', 'Keagamaan', 'Sosial & Kemanusiaan', 'Pariwisata', 'Media & Informasi', 'Layanan Publik'] as $cat)
+                                        <option value="{{ $cat }}" {{ ($theme && $theme->category == $cat) || old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Personal">
+                                    @foreach(['Portfolio', 'Personal Branding', 'Blog', 'Profesional', 'Kreator'] as $cat)
+                                        <option value="{{ $cat }}" {{ ($theme && $theme->category == $cat) || old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Deskripsi</label>
+                            <textarea class="form-control form-control-sm" name="description" rows="3" placeholder="Deskripsi singkat tentang tema ini (opsional)">{{ $theme ? $theme->description : old('description') }}</textarea>
+                        </div>
+                        <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Path (Folder Name)</label>
                             <input class="form-control form-control-sm" name="path" type="text" placeholder="Contoh: tema-baru" value="{{ $theme ? $theme->path : old('path') }}" required {{ $theme ? 'readonly' : '' }}>
                             <small class="text-muted">Folder akan dibuat di <code>resource_path('views/template/')</code></small>
