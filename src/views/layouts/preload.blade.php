@@ -55,7 +55,7 @@
   <div id="page-preloader">
     <div class="circular-spinner" id="circular-spinner">
       <div class="spinner-circle" id="spinner-circle"></div>
-      <img src="{{ url('favicon.ico') }}" alt="Logo" class="spinner-logo">
+      <img src="{{ get_option('favicon') ? get_option('favicon') : noimage() }}" alt="Logo" class="spinner-logo">
     </div>
   </div>
 
