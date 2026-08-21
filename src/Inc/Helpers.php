@@ -3926,3 +3926,34 @@ if (!function_exists('send_mail')) {
     }
 }
 
+if (!function_exists('mask_email')) {
+    /**
+     * Sensor / Masking alamat email untuk privasi dan keamanan (contoh: indogoit@gmail.com -> in****it@gmail.com)
+     *
+     * @param string|null $email
+     * @return string
+     */
+    function mask_email($email)
+    {
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return (string)$email;
+        }
+
+        $parts = explode('@', $email);
+        $name = $parts[0];
+        $domain = $parts[1] ?? '';
+
+        $len = strlen($name);
+        if ($len <= 2) {
+            $maskedName = substr($name, 0, 1) . '*';
+        } elseif ($len <= 4) {
+            $maskedName = substr($name, 0, 1) . str_repeat('*', $len - 2) . substr($name, -1);
+        } else {
+            $maskedName = substr($name, 0, 2) . str_repeat('*', max(3, $len - 4)) . substr($name, -2);
+        }
+
+        return $maskedName . '@' . $domain;
+    }
+}
+
+
