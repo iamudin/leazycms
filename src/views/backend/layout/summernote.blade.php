@@ -502,6 +502,7 @@
             }
             $('#aiModal').hide();
             $('.modal-backdrop').hide();
+            
             updateSummernoteCounter();
         });
 
