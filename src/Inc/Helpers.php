@@ -3862,57 +3862,67 @@ if (!function_exists('send_mail')) {
      * @param string $content Konten email (HTML string atau nama view blade)
      * @param array $data Data variabel jika menggunakan template blade
      * @param bool $isHtmlString Set true jika $content adalah HTML raw
-     * @return bool True jika berhasil terkirim
+     * @param bool $defer Set true untuk mengeksekusi pengiriman di latar belakang setelah response dikirim (instan tanpa loading)
+     * @return bool True jika berhasil terkirim atau berhasil dijadwalkan
      */
-    function send_mail($to, $subject, $content, $data = [], $isHtmlString = true)
+    function send_mail($to, $subject, $content, $data = [], $isHtmlString = true, $defer = false)
     {
-        try {
-            $smtpHost = get_option('wb_smtp_host') ?: get_option('smtp_host') ?: config('mail.mailers.smtp.host');
-            $smtpPort = get_option('wb_smtp_port') ?: get_option('smtp_port') ?: config('mail.mailers.smtp.port');
-            $smtpEnc  = get_option('wb_smtp_encryption') ?: get_option('smtp_encryption') ?: config('mail.mailers.smtp.encryption', 'tls');
-            $smtpUser = get_option('wb_smtp_user') ?: get_option('smtp_user') ?: config('mail.mailers.smtp.username');
-            $smtpPass = get_option('wb_smtp_pass') ?: get_option('smtp_pass') ?: config('mail.mailers.smtp.password');
-            $fromAddr = get_option('wb_smtp_from_address') ?: get_option('smtp_from_address') ?: config('mail.from.address') ?: ('no-reply@' . (request()->getHost() ?: 'webbuilder.id'));
-            $fromName = get_option('wb_smtp_from_name') ?: get_option('smtp_from_name') ?: get_option('site_name') ?: config('mail.from.name') ?: 'Web Builder Indonesia';
+        $sendCallback = function () use ($to, $subject, $content, $data, $isHtmlString) {
+            try {
+                $smtpHost = get_option('wb_smtp_host') ?: get_option('smtp_host') ?: config('mail.mailers.smtp.host');
+                $smtpPort = get_option('wb_smtp_port') ?: get_option('smtp_port') ?: config('mail.mailers.smtp.port');
+                $smtpEnc  = get_option('wb_smtp_encryption') ?: get_option('smtp_encryption') ?: config('mail.mailers.smtp.encryption', 'tls');
+                $smtpUser = get_option('wb_smtp_user') ?: get_option('smtp_user') ?: config('mail.mailers.smtp.username');
+                $smtpPass = get_option('wb_smtp_pass') ?: get_option('smtp_pass') ?: config('mail.mailers.smtp.password');
+                $fromAddr = get_option('wb_smtp_from_address') ?: get_option('smtp_from_address') ?: config('mail.from.address') ?: ('no-reply@' . (request()->getHost() ?: 'webbuilder.id'));
+                $fromName = get_option('wb_smtp_from_name') ?: get_option('smtp_from_name') ?: get_option('site_name') ?: config('mail.from.name') ?: 'Web Builder Indonesia';
 
-            if (!empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass)) {
-                config([
-                    'mail.default' => 'smtp',
-                    'mail.mailers.smtp.host' => $smtpHost,
-                    'mail.mailers.smtp.port' => (int) ($smtpPort ?: 587),
-                    'mail.mailers.smtp.encryption' => ($smtpEnc === 'none' || empty($smtpEnc)) ? null : $smtpEnc,
-                    'mail.mailers.smtp.username' => $smtpUser,
-                    'mail.mailers.smtp.password' => $smtpPass,
-                    'mail.from.address' => $fromAddr,
-                    'mail.from.name' => $fromName,
-                ]);
+                if (!empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass)) {
+                    config([
+                        'mail.default' => 'smtp',
+                        'mail.mailers.smtp.host' => $smtpHost,
+                        'mail.mailers.smtp.port' => (int) ($smtpPort ?: 587),
+                        'mail.mailers.smtp.encryption' => ($smtpEnc === 'none' || empty($smtpEnc)) ? null : $smtpEnc,
+                        'mail.mailers.smtp.username' => $smtpUser,
+                        'mail.mailers.smtp.password' => $smtpPass,
+                        'mail.from.address' => $fromAddr,
+                        'mail.from.name' => $fromName,
+                    ]);
+                }
+
+                if ($isHtmlString || (is_string($content) && (str_contains($content, '<html') || str_contains($content, '<table') || str_contains($content, '<div')))) {
+                    \Illuminate\Support\Facades\Mail::html($content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                        $message->to($to)
+                                ->subject($subject)
+                                ->from($fromAddr, $fromName);
+                    });
+                } elseif (is_string($content) && view()->exists($content)) {
+                    \Illuminate\Support\Facades\Mail::send($content, $data, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                        $message->to($to)
+                                ->subject($subject)
+                                ->from($fromAddr, $fromName);
+                    });
+                } else {
+                    \Illuminate\Support\Facades\Mail::raw((string)$content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                        $message->to($to)
+                                ->subject($subject)
+                                ->from($fromAddr, $fromName);
+                    });
+                }
+
+                return true;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Send Mail Error: ' . $e->getMessage());
+                return false;
             }
+        };
 
-            if ($isHtmlString || (is_string($content) && (str_contains($content, '<html') || str_contains($content, '<table') || str_contains($content, '<div')))) {
-                \Illuminate\Support\Facades\Mail::html($content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
-                    $message->to($to)
-                            ->subject($subject)
-                            ->from($fromAddr, $fromName);
-                });
-            } elseif (is_string($content) && view()->exists($content)) {
-                \Illuminate\Support\Facades\Mail::send($content, $data, function ($message) use ($to, $subject, $fromAddr, $fromName) {
-                    $message->to($to)
-                            ->subject($subject)
-                            ->from($fromAddr, $fromName);
-                });
-            } else {
-                \Illuminate\Support\Facades\Mail::raw((string)$content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
-                    $message->to($to)
-                            ->subject($subject)
-                            ->from($fromAddr, $fromName);
-                });
-            }
-
+        if ($defer && function_exists('defer')) {
+            defer($sendCallback);
             return true;
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Send Mail Error: ' . $e->getMessage());
-            return false;
         }
+
+        return $sendCallback();
     }
 }
 
