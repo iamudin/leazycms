@@ -498,13 +498,15 @@
                     .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
                 current += processed;
                 $('#editor').summernote('code', current);
+                updateSummernoteCounter();
             }
             $('#aiModal').hide();
             $('.modal-backdrop').hide();
+            updateSummernoteCounter();
         });
 
         let defaultPlaceholder = 'Tuliskan keterangan tentang {{ current_module()->datatable->data_title }} disini...';
-        let initialTitle = $('input[name="title"]').val();
+        let initialTitle = $('[name="title"]').val();
         let initPlaceholder = initialTitle ? 'Tuliskan keterangan tentang ' + initialTitle + ' disini...' : defaultPlaceholder;
 
         function setSummernoteEditable(editable) {
@@ -516,6 +518,51 @@
             }
         }
 
+        function updateSummernoteCounter() {
+            var $editor = $('#editor');
+            if (!$editor.length) return;
+
+            var $noteEditor = $editor.next('.note-editor');
+            var text = '';
+
+            if ($noteEditor.length && $noteEditor.hasClass('codeview')) {
+                var codeText = $noteEditor.find('.note-codable').val() || '';
+                var temp = document.createElement('div');
+                temp.innerHTML = codeText;
+                text = temp.innerText || temp.textContent || '';
+            } else if ($noteEditor.length && $noteEditor.find('.note-editable').length) {
+                var $editable = $noteEditor.find('.note-editable');
+                text = $editable[0].innerText || $editable[0].textContent || '';
+            } else {
+                var code = $editor.val() || '';
+                var temp = document.createElement('div');
+                temp.innerHTML = code;
+                text = temp.innerText || temp.textContent || '';
+            }
+
+            // Clean up zero-width spaces and control chars
+            var cleanText = text.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+
+            if (!cleanText || cleanText === '\n') {
+                $('#sn-word-count').text('0');
+                $('#sn-char-count').text('0');
+                $('#sn-char-no-space-count').text('0');
+                $('#sn-reading-time').text('0');
+                return;
+            }
+
+            var totalChars = cleanText.length;
+            var charsNoSpace = cleanText.replace(/\s+/g, '').length;
+            var words = cleanText.split(/\s+/).filter(function (w) { return w.length > 0; });
+            var wordCount = words.length;
+            var readingTime = wordCount > 0 ? Math.ceil(wordCount / 200) : 0;
+
+            $('#sn-word-count').text(wordCount.toLocaleString('id-ID'));
+            $('#sn-char-count').text(totalChars.toLocaleString('id-ID'));
+            $('#sn-char-no-space-count').text(charsNoSpace.toLocaleString('id-ID'));
+            $('#sn-reading-time').text(readingTime);
+        }
+
         $("#editor").summernote({
             placeholder: initPlaceholder,
             height: 600,
@@ -523,7 +570,36 @@
             codeviewIframeFilter: false,
             disableDragAndDrop: true,
             callbacks: {
+                onInit: function () {
+                    var $editor = $('#editor');
+                    var $noteEditor = $editor.next('.note-editor');
+                    if ($noteEditor.length && !$noteEditor.find('.note-counter-bar').length) {
+                        var counterHtml = `
+                            <div class="note-counter-bar d-flex justify-content-between align-items-center px-3 py-1 bg-light border-top" style="font-size: 12px; color: #6c757d; user-select: none;">
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <span class="mr-3 sn-stat-words"><i class="fa fa-file-text-o mr-1"></i> <strong id="sn-word-count">0</strong> Kata</span>
+                                    <span class="mr-3 sn-stat-chars"><i class="fa fa-font mr-1"></i> <strong id="sn-char-count">0</strong> Karakter</span>
+                                    <span class="mr-3 sn-stat-chars-nospace text-muted">(<strong id="sn-char-no-space-count">0</strong> tanpa spasi)</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="sn-stat-reading-time"><i class="fa fa-clock-o mr-1"></i> Estimasi baca: ~<strong id="sn-reading-time">0</strong> menit</span>
+                                </div>
+                            </div>
+                        `;
+                        var $statusbar = $noteEditor.find('.note-statusbar');
+                        if ($statusbar.length) {
+                            $statusbar.before(counterHtml);
+                        } else {
+                            $noteEditor.append(counterHtml);
+                        }
+                    }
+                    updateSummernoteCounter();
+                },
+                onKeyup: function () {
+                    updateSummernoteCounter();
+                },
                 onChange: function (contents, $editable) {
+                    updateSummernoteCounter();
                     if ($editable && $editable.length) {
                         $editable.find('img[src^="data:image/"], img[src^="file://"]').each(function() {
                             var $img = $(this);
@@ -1036,10 +1112,14 @@
             },
         });
 
-        $('input[name="title"]').on('input', function() {
+        $('[name="title"]').on('input', function() {
             let val = $(this).val();
             let newPlaceholder = val ? 'Tuliskan keterangan tentang ' + val + ' disini...' : defaultPlaceholder;
             $('#editor').next('.note-editor').find('.note-placeholder').html(newPlaceholder);
+        });
+
+        $(document).on('input keyup change paste', '.note-editable, .note-codable', function () {
+            updateSummernoteCounter();
         });
 
         $('#btnSaveImageEdit').on('click', function () {

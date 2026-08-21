@@ -272,10 +272,15 @@ class PostController extends Controller implements HasMiddleware
                 'regex:/^([0-9a-zA-Z]{5}|[0-9a-zA-Z\s\p{P}\,\(\)]{6,})$/u',
                 'min:5',
                 'max:200',
-                function ($attribute, $value, $fail) use ($forbiddenWords,$post) {
+                function ($attribute, $value, $fail) use ($forbiddenWords, $post, $module) {
+                    $nonSpace = preg_replace('/\s+/u', '', (string)$value);
+                    if (mb_strlen($nonSpace) < 5) {
+                        $fail(($module->datatable->data_title ?? 'Judul') . ' minimal 5 karakter di luar spasi.');
+                        return;
+                    }
 
                     // cek jumlah kata, pastikan angka juga dihitung sebagai kata
-                    if (str_word_count($value, 0, '0123456789') === 1 && $post->type=='page') {
+                    if (str_word_count($value, 0, '0123456789') === 1 && $post->type == 'page') {
 
                         $valueLower = strtolower(trim($value));
 
@@ -357,7 +362,7 @@ class PostController extends Controller implements HasMiddleware
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         }
-        $allowed_tags = '<p><s><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
+        $allowed_tags = '<small><h1><h2><h3><h4><h5><h6><p><s><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
         $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content']) : null;
 
         if (!config('modules.multisite_enabled') ? Post::onType($post->type)->whereNotIn('id', [$post->id])->whereSlug($slug)->count() > 0 : Post::onType($post->type)->whereNotIn('id', [$post->id])->whereTenantId($post->tenant_id)->whereSlug($slug)->count() > 0) {

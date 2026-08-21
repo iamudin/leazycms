@@ -128,9 +128,18 @@
             <div class="col-lg-9">
                 <div class="form-group">
                     @if(isset($module->form?->editable_title) && $module->form?->editable_title == true || !isset($module->form?->editable_title))
-                        <input data-toggle="tooltip" title="Masukkan {{ $module->datatable->data_title }}" required name="title"
-                            type="text" value="{{ !empty(old('title')) ? old('title') : ($post->title ?? null) }}"
-                            placeholder="Masukkan {{ $module->datatable->data_title }}" class="form-control form-control-lg">
+                        <textarea data-toggle="tooltip" minlength="5"  maxlength="200" title="Masukkan {{ $module->datatable->data_title }}" required name="title"
+                            placeholder="Masukkan {{ $module->datatable->data_title }}" rows="1"
+                            class="form-control form-control-lg autosize-title"
+                            style="resize: none; overflow: hidden; min-height: 48px; line-height: 1.4;">{{ !empty(old('title')) ? old('title') : ($post->title ?? null) }}</textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="text-muted title-info-text">
+                                <i class="fa fa-info-circle"></i> Minimal 5 karakter (diluar spasi) & maksimal 200 karakter
+                            </small>
+                            <small id="title-char-counter" class="text-muted">
+                                <span id="title-char-count">0</span>/200
+                            </small>
+                        </div>
                     @else
                         <input type="hidden" name="title" value="{{ $post->title ?? null }}">
                         <label for="">{{ $module->datatable->data_title }}</label>
@@ -142,7 +151,7 @@
                 @if ($module->form->editor)
                     <div class="form-group">
                         @if (isset($module->form->ai_generator) && $module->form->ai_generator)
-                        <button type="button" class="btn btn-sm btn-outline-primary mb-2" data-toggle="modal" data-target="#promptGeneratorModal" onclick="$('#prompt_topic').val($('input[name=title]').val())">
+                        <button type="button" class="btn btn-sm btn-outline-primary mb-2" data-toggle="modal" data-target="#promptGeneratorModal" onclick="$('#prompt_topic').val($('[name=title]').val())">
                             <i class="fa fa-magic"></i> AI Prompt Generator
                         </button>
                         @endif
@@ -255,17 +264,121 @@
 
                 @if ($module->form->thumbnail)
                     <div class="card mt-3">
-                        <p class="card-header"> <i class="fa fa-image" aria-hidden></i> Foto {{current_module()->title}}</p>
-                        <img class="img-responsive" style="border:none" id="thumb" src="{{ $post->thumbnail }}" />
-                        <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
-                            class="compress-image form-control-file form-control-sm" name="media" value="">
+                        <div class="card-header font-weight-bold"> <i class="fa fa-image" aria-hidden></i> Foto {{current_module()->title}}</div>
+                        <div class="position-relative" style="background: #f8f9fa;">
+                            <img class="img-responsive w-100" style="border:none; min-height: 150px; object-fit: cover;" id="thumb" src="{{ $post->thumbnail }}" />
+                            <div class="upload-overlay">
+                                <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
+                                    class="compress-image form-control-file form-control-sm" name="media" value="" style="width: 100%;">
+                            </div>
+                        </div>
+                        <style>
+                            .upload-overlay .global-file-wrapper {
+                                position: absolute;
+                                top: 15px;
+                                right: 15px;
+                                margin: 0;
+                                display: flex;
+                                z-index: 10;
+                            }
+                            .upload-overlay .btn-open-gmedia {
+                                width: 40px;
+                                height: 40px;
+                                border-radius: 50%;
+                                padding: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0; /* Hides text */
+                                background: rgba(255, 255, 255, 0.9);
+                                border: 1px solid #ddd;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                color: #333;
+                                transition: all 0.2s;
+                                cursor: pointer;
+                            }
+                            .upload-overlay .btn-open-gmedia:hover {
+                                background: #fff;
+                                color: #000;
+                            }
+                            .upload-overlay .btn-open-gmedia i {
+                                font-size: 16px;
+                                margin: 0;
+                            }
+                            .upload-overlay .btn-open-gmedia i.fa-folder-open::before {
+                                content: "\f040"; /* Pencil icon */
+                            }
+                            
+                            .upload-overlay .btn-clear-gmedia {
+                                width: 40px;
+                                height: 40px;
+                                border-radius: 50%;
+                                padding: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                background: rgba(255, 255, 255, 0.9);
+                                border: 1px solid #ddd;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                margin-left: 8px !important;
+                                transition: all 0.2s;
+                                cursor: pointer;
+                            }
+                            .upload-overlay .btn-clear-gmedia:hover {
+                                background: #fff;
+                            }
+                            
+                            .upload-overlay .media-preview-area {
+                                display: none !important; /* Hide duplicate preview */
+                            }
+                        </style>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function() {
+                                // Simpan URL asli ke dalam attribute data
+                                $('#thumb').data('original-src', $('#thumb').attr('src'));
+                                
+                                $('.upload-overlay').on('change', 'input[type="file"]', function() {
+                                    if (this.files && this.files.length > 0) {
+                                        let file = this.files[0];
+                                        if (file.type.startsWith('image/')) {
+                                            $('#thumb').attr('src', URL.createObjectURL(file));
+                                        }
+                                    }
+                                });
+                                
+                                $('.upload-overlay').on('click', '.btn-clear-gmedia', function() {
+                                    // Kembalikan ke URL asli dari attribute data
+                                    $('#thumb').attr('src', $('#thumb').data('original-src'));
+                                });
+                                
+                                let observer = new MutationObserver(function(mutations) {
+                                    mutations.forEach(function(mutation) {
+                                        if (mutation.addedNodes) {
+                                            mutation.addedNodes.forEach(function(node) {
+                                                if (node.tagName === 'INPUT' && node.classList.contains('gmedia-hidden')) {
+                                                    let val = node.value;
+                                                    let ext = val.split('.').pop().toLowerCase();
+                                                    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext)) {
+                                                        $('#thumb').attr('src', val);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                                
+                                let overlayNode = document.querySelector('.upload-overlay');
+                                if (overlayNode) {
+                                    observer.observe(overlayNode, { childList: true, subtree: true });
+                                }
+                            });
+                        </script>
                         @if ($module->web->detail || $module->name == 'banner')
-                            <span style="padding:10px;padding-top:0px">
+                            <div class="p-3 border-top">
                                 <textarea maxlength="200" placeholder="Keterangan Gambar" type="text" class="form-control form-control-sm"
                                     name="media_description">{{ !empty(old('media_description')) ? old('media_description') : ($post->media_description ?? '') }}</textarea>
-                            </span>
+                            </div>
                         @endif
-
                     </div>
 
                 @endif
@@ -433,7 +546,69 @@
     @endif
     @push('scripts')
         <script>
+            function updateTitleInfo() {
+                let el = document.querySelector('textarea[name="title"]');
+                if (!el) return;
+
+                // Auto resize
+                el.style.height = 'auto';
+                let borderOffset = el.offsetHeight - el.clientHeight;
+                el.style.height = (el.scrollHeight + borderOffset) + 'px';
+
+                // Character count & validation info
+                let val = el.value || '';
+                let totalLen = val.length;
+                let nonSpaceLen = val.replace(/\s+/g, '').length;
+
+                let counterEl = document.getElementById('title-char-count');
+                let helperEl = document.querySelector('.title-info-text');
+
+                if (counterEl) {
+                    counterEl.textContent = totalLen;
+                    if (totalLen >= 200) {
+                        $('#title-char-counter').removeClass('text-muted text-success').addClass('text-danger font-weight-bold');
+                    } else {
+                        $('#title-char-counter').removeClass('text-danger font-weight-bold').addClass('text-muted');
+                    }
+                }
+
+                if (helperEl) {
+                    if (totalLen === 0) {
+                        helperEl.className = 'text-muted title-info-text';
+                        helperEl.innerHTML = '<i class="fa fa-info-circle"></i> Minimal 5 karakter (diluar spasi) & maksimal 200 karakter';
+                    } else if (nonSpaceLen < 5) {
+                        helperEl.className = 'text-danger title-info-text';
+                        helperEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Minimal 5 karakter diluar spasi (saat ini: ' + nonSpaceLen + ' karakter)';
+                    } else if (totalLen >= 200) {
+                        helperEl.className = 'text-warning title-info-text';
+                        helperEl.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Mencapai batas maksimal 200 karakter';
+                    } else {
+                        helperEl.className = 'text-muted title-info-text';
+                        helperEl.innerHTML = '<i class="fa fa-info-circle"></i> Minimal 5 karakter (diluar spasi) & maksimal 200 karakter';
+                    }
+                }
+            }
+
             $(document).ready(function() {
+                updateTitleInfo();
+
+                $(document).on('input', 'textarea[name="title"]', function() {
+                    updateTitleInfo();
+                });
+
+                $(window).on('resize', function() {
+                    updateTitleInfo();
+                });
+
+                $(document).on('keydown', 'textarea[name="title"]', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if ($('#editor').length && $.fn.summernote) {
+                            $('#editor').summernote('focus');
+                        }
+                    }
+                });
+
                 if ($.fn.select2) {
                     $('.select2-category').select2({
                         placeholder: "-- Pilih / Tanpa Kategori --",
@@ -445,6 +620,41 @@
 
             $('.editorForm').on('submit', function (e) {
                 e.preventDefault();
+
+                let $titleInput = $('[name="title"]');
+                if ($titleInput.length && $titleInput.attr('type') !== 'hidden') {
+                    let titleVal = $titleInput.val() || '';
+                    let nonSpaceLen = titleVal.replace(/\s+/g, '').length;
+                    if (nonSpaceLen < 5) {
+                        notif('{{ $module->datatable->data_title }} minimal 5 karakter di luar spasi!', 'danger');
+                        $titleInput.focus();
+                        $('.btn-group-toggle label').each(function () {
+                            let $label = $(this);
+                            let $input = $label.find('input');
+                            let val = $input.val();
+                            $label.css('pointer-events', 'auto').fadeTo(200, 1);
+                            let $icon = $label.find('i');
+                            $icon.removeClass('fa-spinner fa-spin');
+                            if (val === 'publish') {
+                                $icon.addClass('fa-globe');
+                                $label.contents().filter(function () {
+                                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                }).each(function () {
+                                    this.nodeValue = ' Publikasikan';
+                                });
+                            } else if (val === 'draft') {
+                                $icon.addClass('fa-archive');
+                                $label.contents().filter(function () {
+                                    return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                                }).each(function () {
+                                    this.nodeValue = ' Draft';
+                                });
+                            }
+                        });
+                        return false;
+                    }
+                }
+
                 if (typeof window.editor !== 'undefined' && window.editor.save) {
                     window.editor.save();
                 }
@@ -479,6 +689,7 @@
                             let newThumb = newDoc.getElementById('thumb');
                             if (newThumb && document.getElementById('thumb')) {
                                 document.getElementById('thumb').src = newThumb.src;
+                                $('#thumb').data('original-src', newThumb.src);
                                 $('input[name="media"]').val('');
                             }
 
