@@ -3755,3 +3755,164 @@ if (!function_exists('check_tenant_post_publish_limit')) {
     }
 }
 
+if (!function_exists('build_email_html')) {
+    /**
+     * Membangun format template HTML email responsif standar Web Builder dengan identitas resmi
+     */
+    function build_email_html($data = [])
+    {
+        $siteName = $data['brand_name'] ?? get_option('site_name') ?? config('app.name', 'Web Builder Indonesia');
+        $title = $data['title'] ?? 'Pemberitahuan Sistem';
+        $subtitle = $data['subtitle'] ?? '';
+        $body = $data['body'] ?? '';
+        $infoTable = $data['info_table'] ?? [];
+        $actionUrl = $data['action_url'] ?? null;
+        $actionText = $data['action_text'] ?? 'Buka Tautan';
+        $caution = $data['caution'] ?? null;
+        $footerNotes = $data['footer_notes'] ?? 'Email ini dibuat dan dikirim otomatis oleh sistem Web Builder. Harap jangan membalas email ini secara langsung.';
+        
+        $tableHtml = '';
+        if (!empty($infoTable) && is_array($infoTable)) {
+            $tableHtml .= '<table style="width:100%;border-collapse:collapse;margin:20px 0;background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">';
+            foreach ($infoTable as $label => $val) {
+                $tableHtml .= '<tr>';
+                $tableHtml .= '<td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;width:35%;">' . e($label) . '</td>';
+                $tableHtml .= '<td style="padding:10px 16px;border-bottom:1px solid #e2e8f0;color:#0f172a;font-size:13px;font-weight:600;">' . $val . '</td>';
+                $tableHtml .= '</tr>';
+            }
+            $tableHtml .= '</table>';
+        }
+
+        $buttonHtml = '';
+        if ($actionUrl) {
+            $buttonHtml = '
+            <div style="text-align:center;margin:28px 0 16px 0;">
+                <a href="' . e($actionUrl) . '" target="_blank" style="display:inline-block;padding:13px 30px;background:linear-gradient(135deg,#de1b1b 0%,#e11d48 50%,#be123c 100%);color:#ffffff;text-decoration:none;font-weight:800;font-size:14px;border-radius:12px;box-shadow:0 4px 14px rgba(225,29,72,0.35);letter-spacing:0.3px;">
+                    ' . e($actionText) . ' &rarr;
+                </a>
+            </div>';
+        }
+
+        $cautionHtml = '';
+        if ($caution) {
+            $cautionHtml = '
+            <div style="background-color:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:8px;margin:20px 0;font-size:12px;color:#92400e;line-height:1.6;">
+                <strong>⚠️ Keamanan Akun:</strong> ' . $caution . '
+            </div>';
+        }
+
+        return '
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>' . e($title) . '</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;line-height:1.6;">
+    <table style="width:100%;border-collapse:collapse;background-color:#f1f5f9;padding:30px 15px;">
+        <tr>
+            <td align="center">
+                <table style="max-width:600px;width:100%;background-color:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,0.06);border:1px solid #e2e8f0;margin:20px auto;text-align:left;">
+                    <!-- Top Flag Accent -->
+                    <tr>
+                        <td style="height:6px;background:linear-gradient(90deg, #de1b1b 0%, #de1b1b 50%, #ffffff 50%, #ffffff 100%);"></td>
+                    </tr>
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding:28px 32px 20px 32px;background-color:#ffffff;border-bottom:1px solid #f1f5f9;text-align:center;">
+                            <span style="display:inline-block;padding:4px 14px;background-color:#fff1f2;color:#be123c;font-size:11px;font-weight:800;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:12px;border:1px solid #ffe4e6;">
+                                🇮🇩 ' . e($siteName) . '
+                            </span>
+                            <h1 style="margin:0;font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.3px;">' . e($title) . '</h1>
+                            ' . ($subtitle ? '<p style="margin:6px 0 0 0;font-size:13px;color:#64748b;">' . e($subtitle) . '</p>' : '') . '
+                        </td>
+                    </tr>
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding:28px 32px;font-size:14px;color:#334155;line-height:1.7;">
+                            ' . $body . '
+                            ' . $tableHtml . '
+                            ' . $buttonHtml . '
+                            ' . $cautionHtml . '
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#94a3b8;line-height:1.6;">
+                            <p style="margin:0 0 4px 0;">' . e($footerNotes) . '</p>
+                            <p style="margin:0;font-weight:700;color:#64748b;">&copy; ' . date('Y') . ' ' . e($siteName) . ' &bull; Seluruh Hak Cipta Dilindungi.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>';
+    }
+}
+
+if (!function_exists('send_mail')) {
+    /**
+     * Mengirim email dengan konfigurasi SMTP dinamis (dari database options atau .env)
+     *
+     * @param string|array $to Email penerima
+     * @param string $subject Judul email
+     * @param string $content Konten email (HTML string atau nama view blade)
+     * @param array $data Data variabel jika menggunakan template blade
+     * @param bool $isHtmlString Set true jika $content adalah HTML raw
+     * @return bool True jika berhasil terkirim
+     */
+    function send_mail($to, $subject, $content, $data = [], $isHtmlString = true)
+    {
+        try {
+            $smtpHost = get_option('wb_smtp_host') ?: get_option('smtp_host') ?: config('mail.mailers.smtp.host');
+            $smtpPort = get_option('wb_smtp_port') ?: get_option('smtp_port') ?: config('mail.mailers.smtp.port');
+            $smtpEnc  = get_option('wb_smtp_encryption') ?: get_option('smtp_encryption') ?: config('mail.mailers.smtp.encryption', 'tls');
+            $smtpUser = get_option('wb_smtp_user') ?: get_option('smtp_user') ?: config('mail.mailers.smtp.username');
+            $smtpPass = get_option('wb_smtp_pass') ?: get_option('smtp_pass') ?: config('mail.mailers.smtp.password');
+            $fromAddr = get_option('wb_smtp_from_address') ?: get_option('smtp_from_address') ?: config('mail.from.address') ?: ('no-reply@' . (request()->getHost() ?: 'webbuilder.id'));
+            $fromName = get_option('wb_smtp_from_name') ?: get_option('smtp_from_name') ?: get_option('site_name') ?: config('mail.from.name') ?: 'Web Builder Indonesia';
+
+            if (!empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass)) {
+                config([
+                    'mail.default' => 'smtp',
+                    'mail.mailers.smtp.host' => $smtpHost,
+                    'mail.mailers.smtp.port' => (int) ($smtpPort ?: 587),
+                    'mail.mailers.smtp.encryption' => ($smtpEnc === 'none' || empty($smtpEnc)) ? null : $smtpEnc,
+                    'mail.mailers.smtp.username' => $smtpUser,
+                    'mail.mailers.smtp.password' => $smtpPass,
+                    'mail.from.address' => $fromAddr,
+                    'mail.from.name' => $fromName,
+                ]);
+            }
+
+            if ($isHtmlString || (is_string($content) && (str_contains($content, '<html') || str_contains($content, '<table') || str_contains($content, '<div')))) {
+                \Illuminate\Support\Facades\Mail::html($content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                    $message->to($to)
+                            ->subject($subject)
+                            ->from($fromAddr, $fromName);
+                });
+            } elseif (is_string($content) && view()->exists($content)) {
+                \Illuminate\Support\Facades\Mail::send($content, $data, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                    $message->to($to)
+                            ->subject($subject)
+                            ->from($fromAddr, $fromName);
+                });
+            } else {
+                \Illuminate\Support\Facades\Mail::raw((string)$content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                    $message->to($to)
+                            ->subject($subject)
+                            ->from($fromAddr, $fromName);
+                });
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Send Mail Error: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
