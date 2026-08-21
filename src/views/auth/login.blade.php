@@ -21,7 +21,7 @@
 html, body {
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
     margin: 0;
     padding: 0;
 }
@@ -95,11 +95,15 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     position: relative;
     z-index: 10;
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .glass-panel {
@@ -118,30 +122,56 @@ body {
     margin: auto;
 }
 
+/* Mobile Screens responsiveness */
+@media (max-width: 576px) {
+    html, body {
+        height: auto;
+        min-height: 100%;
+        overflow-y: auto;
+    }
+    .login-content {
+        padding: 16px 12px;
+    }
+    .glass-panel {
+        padding: 26px 16px;
+        border-radius: 20px;
+    }
+    .brand-title {
+        font-size: 20px !important;
+    }
+    .brand-desc {
+        font-size: 13px !important;
+        margin-bottom: 20px !important;
+    }
+    .form-control-custom {
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+    }
+    .btn-primary-custom {
+        padding: 12px !important;
+        font-size: 15px !important;
+    }
+}
+
 /* Mobile Landscape & Short Screens support scroll */
 @media (max-height: 650px), (orientation: landscape) and (max-height: 750px) {
     html, body {
         height: auto;
         min-height: 100%;
-        overflow-x: hidden;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
     }
     .login-content {
-        height: auto;
-        min-height: 100vh;
-        min-height: 100dvh;
-        padding: 20px 15px;
+        padding: 16px 12px;
     }
     .glass-panel {
-        padding: 24px 20px;
+        padding: 20px 16px;
         border-radius: 16px;
     }
     .brand-desc {
-        margin-bottom: 15px !important;
+        margin-bottom: 12px !important;
     }
     .form-group.mb-4 {
-        margin-bottom: 1rem !important;
+        margin-bottom: 0.75rem !important;
     }
 }
 
@@ -213,34 +243,124 @@ body {
     letter-spacing: 0.3px;
 }
 
-.captcha-wrapper {
-    display: flex;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(15, 23, 42, 0.6);
+/* Captcha styling - 100% No Wrap on Mobile */
+.captcha-form-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
 }
 
-.captcha-wrapper img {
-    height: 48px;
-    width: 120px;
-    object-fit: cover;
+.captcha-form-wrapper img,
+.captcha-form-wrapper img.captcha-img-field {
+    height: 44px !important;
+    min-height: 44px !important;
+    width: 110px !important;
+    min-width: 85px !important;
+    max-width: 115px !important;
+    flex-shrink: 0 !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background: #ffffff !important;
+    object-fit: cover !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    transition: transform 0.2s ease !important;
 }
 
-.captcha-wrapper input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: white;
-    padding: 0 16px;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    outline: none;
+.captcha-form-wrapper img:hover {
+    transform: scale(1.02);
 }
 
-.captcha-wrapper input:focus {
-    background: rgba(15, 23, 42, 0.8);
+.captcha-form-wrapper span {
+    height: 44px !important;
+    min-height: 44px !important;
+    width: 40px !important;
+    min-width: 36px !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    color: #94a3b8 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+}
+
+.captcha-form-wrapper span:hover {
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+}
+
+.captcha-form-wrapper span svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.captcha-form-wrapper input {
+    height: 44px !important;
+    min-height: 44px !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px !important;
+    color: #f8fafc !important;
+    padding: 0 10px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    text-align: center !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    transition: all 0.3s ease !important;
+}
+
+.captcha-form-wrapper input:focus {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+    outline: none !important;
+}
+
+.captcha-form-wrapper input::placeholder {
+    color: #64748b !important;
+    font-size: 12px !important;
+    letter-spacing: normal !important;
+    font-weight: 400 !important;
+}
+
+@media (max-width: 360px) {
+    .captcha-form-wrapper {
+        gap: 5px !important;
+    }
+    .captcha-form-wrapper img,
+    .captcha-form-wrapper img.captcha-img-field {
+        width: 85px !important;
+        min-width: 75px !important;
+    }
+    .captcha-form-wrapper span {
+        width: 34px !important;
+        min-width: 32px !important;
+    }
+    .captcha-form-wrapper input {
+        padding: 0 4px !important;
+        font-size: 13px !important;
+    }
 }
 
 .custom-checkbox {
