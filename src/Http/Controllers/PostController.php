@@ -876,7 +876,7 @@ class PostController extends Controller implements HasMiddleware
         $dt->addColumn('action', function ($row) use ($current_module) {
 
             $btn = '<div class="btn-group float-right">';
-            $btn .= $current_module->web->detail == true && $row->status=="publish"  ? '<a title="Lihat di website" href="' . url($row->url) . '" target="_blank"  class="btn btn-primary btn-sm"> <i class="fa fa-globe"></i></a>' : '';
+            $btn .= $current_module->web->detail == true && $row->status=="publish"  ? '<a title="Lihat di website" href="' . $row->link . '" target="_blank"  class="btn btn-primary btn-sm"> <i class="fa fa-globe"></i></a>' : '';
             if (empty($row->deleted_at)) {
                 $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> </a>' : '';
             } else {
