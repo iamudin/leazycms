@@ -100,51 +100,65 @@
        
                          @if($template_asset && is_array($template_asset))
                  @foreach ($template_asset as $field)
-                  <div class="col-lg-12">
-                    @if(is_array($field[1]))
-                      <small>{{ str($field[0])->headline() }}</small><br>
-                      <select name="{{_us($field[0])}}" class="form-control form-control-sm"  @if (isset($field[2])) required @endif >
-                          <option value="">--pilih--</option>
-                          @foreach($field[1] as $row)
-                          <option value="{{ $row }}" {{ get_option(_us($field[0])) && get_option(_us($field[0])) == $row ? 'selected' : null }}>{{$row }}</option>
+                   <div class="col-lg-12">
+                    @php
+                        $fieldName = $field[0] ?? '';
+                        $fieldType = $field[1] ?? 'text';
+                        $fieldExtra = $field[2] ?? null;
+                        $fieldSlug = _us($fieldName);
+                        $savedVal = get_option($fieldSlug);
+                        $fallbackDefault = (isset($fieldExtra) && is_string($fieldExtra) && $fieldType !== 'file' && $fieldType !== 'break' && !is_array($fieldType)) ? $fieldExtra : null;
+                        $displayVal = ($savedVal !== null && $savedVal !== '') ? $savedVal : $fallbackDefault;
+                    @endphp
+
+                    @if(is_array($fieldType))
+                      <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
+                      <select name="{{ $fieldSlug }}" class="form-control form-control-sm"  @if (isset($fieldExtra)) required @endif >
+                          <option value="">-- Pilih --</option>
+                          @foreach($fieldType as $row)
+                          <option value="{{ $row }}" {{ $displayVal == $row ? 'selected' : '' }}>{{ $row }}</option>
                           @endforeach
                       </select>
-                    @elseif ($field[1] == 'file')
-                          <small>{{ str($field[0])->headline() }}</small><br>
-
-                              @if (media_exists(get_option(_us($field[0]))))
+                    @elseif ($fieldType === 'file')
+                          <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
+                              @if (media_exists($savedVal))
                                   <div class="media-preview-wrapper">
-                                  <a href="{{get_option(_us($field[0])) }}" target="_blank"
-                                      class="btn btn-sm btn-outline-primary mb-2">{{ basename(get_option(_us($field[0]))) }}</a> <i
+                                  <a href="{{ $savedVal }}" target="_blank"
+                                      class="btn btn-sm btn-outline-primary mb-2">{{ basename($savedVal) }}</a> <i
                                       title="Hapus File" class="fa fa-trash text-danger pointer btn-remove-media"
-                                      data-field="{{ _us($field[0]) }}"></i><br>
+                                      data-field="{{ $fieldSlug }}"></i><br>
                                   </div>
                               @endif
-                                  <div class="media-input-wrapper" style="{{ (media_exists(get_option(_us($field[0])))) ? 'display:none;' : '' }}">
-                                  <input @if (isset($field[3])) required @endif type="file" accept="{{ $field[2] ?? null }}"
-                                      class="compress-image form-control-sm form-control-file mb-2" name="{{ _us($field[0]) }}">
+                                  <div class="media-input-wrapper" style="{{ (media_exists($savedVal)) ? 'display:none;' : '' }}">
+                                  <input @if (isset($field[3])) required @endif type="file" accept="{{ $fieldExtra ?? 'image/*' }}"
+                                      class="compress-image form-control-sm form-control-file mb-2" name="{{ $fieldSlug }}">
                                   </div>
-                      @elseif($field[1 ]=='color')
-                 <small>{{ str($field[0])->headline() }}</small><br>
-                  <input type="color" name="{{_us($field[0])}}" class="form-control form-control-sm" value="{{ get_option(_us($field[0])) }}">
-                      @elseif($field[1] == 'textarea')
-
-                          <small>{{ str($field[0])->headline() }}</small><br>
-
-                          <textarea @if (isset($field[2])) required @endif class="form-control form-control-sm" name="{{_us($field[0])}}">
-                              {{ get_option(_us($field[0])) }}
-                          </textarea>
-
-
-                      @else
-                          <small>{{ str($field[0])->headline() }}</small><br>
-
-                              <input @if (isset($field[2])) required @endif type="{{ $field[1]  }}"
-                                  class="form-control form-control-sm mb-2" name="{{ _us($field[0]) }}"
-                                  placeholder="Masukkan {{ $field[0] }}" value="{{ get_option(_us($field[0])) }}">
-                      @endif
+                    @elseif($fieldType === 'break')
+                        <div class="sub-section-header mt-4 mb-3 pt-3 border-top w-100">
+                            <div class="d-flex align-items-center">
+                                <div class="badge badge-primary px-3 py-1.5 mr-2 font-weight-bold text-uppercase" style="font-size: 12px; letter-spacing: 0.5px; border-radius: 6px;">
+                                    <i class="fa fa-layer-group mr-1.5"></i> {{ str($fieldName)->headline() }}
+                                </div>
+                                <div class="flex-grow-1" style="height: 2px; background: linear-gradient(to right, rgba(0,123,255,0.4), rgba(0,123,255,0.05));"></div>
+                            </div>
+                            @if(!empty($fieldExtra))
+                                <small class="text-muted d-block mt-1 pl-1">{{ $fieldExtra }}</small>
+                            @endif
                         </div>
-                @endforeach
+                    @elseif($fieldType === 'color')
+                        <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
+                        <input type="color" name="{{ $fieldSlug }}" class="form-control form-control-sm" style="width: 80px; height: 35px; padding: 2px;" value="{{ $displayVal ?: '#000000' }}">
+                    @elseif($fieldType === 'textarea')
+                          <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
+                          <textarea @if (isset($field[3])) required @endif class="form-control form-control-sm" name="{{ $fieldSlug }}" rows="3" placeholder="Masukkan {{ $fieldName }}">{{ $displayVal }}</textarea>
+                    @else
+                          <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
+                          <input @if (isset($field[3])) required @endif type="{{ $fieldType }}"
+                              class="form-control form-control-sm mb-2" name="{{ $fieldSlug }}"
+                              placeholder="Masukkan {{ $fieldName }}" value="{{ $displayVal }}">
+                    @endif
+                  </div>
+                 @endforeach
         @endif
 
                               </div>

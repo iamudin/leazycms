@@ -649,22 +649,30 @@ class PanelController extends Controller implements HasMiddleware
         if ($request->isMethod('post')) {
             $option = new Option;
             foreach ($data as $field) {
+                if (isset($field[1]) && $field[1] === 'break') {
+                    continue;
+                }
                 $key = _us($field[0]);
-                if ($request->$key) {
-                    if ($field[1] == 'file') {
-                        if ($request->hasFile(_us($field[0]))) {
-                            $value = (new Flc)->addFile([
-                                'file' => $request->file(_us($field[0])),
-                                'purpose' => _us($field[0]),
-                                'mime_type' => explode(',', $field[2]),
-                                'self_upload' => true,
-                            ]);
-                            $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
-                        } elseif ($request->has(_us($field[0])) && is_string($request->$key)) {
-                            $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
-                        }
-                    } else {
-                        $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
+                if (config('modules.multisite_enabled') && !is_main_domain() && function_exists('disallow_option_key') && disallow_option_key($key)) {
+                    continue;
+                }
+
+                if ($field[1] == 'file') {
+                    if ($request->hasFile($key)) {
+                        $value = (new Flc)->addFile([
+                            'file' => $request->file($key),
+                            'purpose' => $key,
+                            'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
+                            'self_upload' => true,
+                        ]);
+                        $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                    } elseif ($request->has($key) && is_string($request->$key)) {
+                        $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
+                    }
+                } else {
+                    if ($request->has($key)) {
+                        $val = $request->input($key);
+                        $option->updateOrCreate(['name' => $key], ['value' => is_string($val) ? trim($val) : $val, 'autoload' => 1]);
                     }
                 }
             }
@@ -830,6 +838,9 @@ class PanelController extends Controller implements HasMiddleware
                     }
 
                     if ($key != 'block_ip') {
+                        if (config('modules.multisite_enabled') && !is_main_domain() && function_exists('disallow_option_key') && disallow_option_key($key)) {
+                            continue;
+                        }
                         $match = ['name' => $key];
                         if (app()->has('tenant')) {
                             $match['tenant_id'] = null;
@@ -1412,24 +1423,31 @@ class PanelController extends Controller implements HasMiddleware
                 if ($ar_ta) {
 
                     foreach ($ar_ta as $field) {
+                        if (isset($field[1]) && $field[1] === 'break') {
+                            continue;
+                        }
                         $key = _us($field[0]);
-                        if ($request->has($key) || $request->hasFile($key)) {
-                            if ($field[1] == 'file') {
-                                if ($request->hasFile(_us($field[0]))) {
-                                    $value = (new Flc)->addFile([
-                                        'file' => $request->file(_us($field[0])),
-                                        'purpose' => _us($field[0]),
-                                        'width' => 1700,
-                                        'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
-                                        'self_upload' => true,
-                                    ]);
+                        if (config('modules.multisite_enabled') && !is_main_domain() && function_exists('disallow_option_key') && disallow_option_key($key)) {
+                            continue;
+                        }
+                        if ($field[1] == 'file') {
+                            if ($request->hasFile($key)) {
+                                $value = (new Flc)->addFile([
+                                    'file' => $request->file($key),
+                                    'purpose' => $key,
+                                    'width' => 1700,
+                                    'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
+                                    'self_upload' => true,
+                                ]);
 
-                                    $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
-                                } elseif ($request->has(_us($field[0])) && is_string($request->$key)) {
-                                    $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
-                                }
-                            } else {
-                                $option->updateOrCreate(['name' => $key], ['value' => $request->$key, 'autoload' => 1]);
+                                $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
+                            } elseif ($request->has($key) && is_string($request->$key)) {
+                                $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
+                            }
+                        } else {
+                            if ($request->has($key)) {
+                                $val = $request->input($key);
+                                $option->updateOrCreate(['name' => $key], ['value' => is_string($val) ? trim($val) : $val, 'autoload' => 1]);
                             }
                         }
                     }

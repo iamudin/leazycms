@@ -260,6 +260,31 @@ if (!function_exists('add_option')) {
     {
         // ambil config saat ini
         $key = _us($key);
+
+        // Jika multisite aktif dan bukan domain utama (lingkungan tenant), saring opsi yang dilarang
+        if (config('modules.multisite_enabled') && function_exists('is_main_domain') && !is_main_domain() && function_exists('disallow_option_key')) {
+            if (disallow_option_key($key)) {
+                return config('modules.config.option', []);
+            }
+
+            if (is_array($array)) {
+                $array = array_values(array_filter($array, function ($field) {
+                    if (is_array($field) && isset($field[0])) {
+                        if (isset($field[1]) && $field[1] === 'break') {
+                            return true;
+                        }
+                        $fieldKey = _us($field[0]);
+                        return !disallow_option_key($fieldKey);
+                    }
+                    return true;
+                }));
+
+                if (empty($array)) {
+                    return config('modules.config.option', []);
+                }
+            }
+        }
+
         $options = config('modules.config.option', []);
 
         // cek apakah sudah ada key tersebut
