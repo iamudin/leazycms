@@ -66,7 +66,7 @@ if (!function_exists('captcha_verify')) {
             return false;
         }
 
-        $isValid = trim((string)$inputCode) === trim((string)$sessionCode);
+        $isValid = trim((string) $inputCode) === trim((string) $sessionCode);
 
         if ($flush) {
             session()->forget('captcha_code');
@@ -1994,21 +1994,33 @@ if (!function_exists('current_module')) {
         return get_module(get_post_type());
     }
 }
+if (!function_exists('current_module_exists')) {
+    function current_module_exists($name)
+    {
+        return get_module($name) !== null;
+    }
+}
+if (!function_exists('module_exists')) {
+    function module_exists($name)
+    {
+        return get_module($name) !== null;
+    }
+}
+if (!function_exists('has_module')) {
+    function has_module($name)
+    {
+        return get_module($name) !== null;
+    }
+}
 if (!function_exists('get_module')) {
     function get_module($name = null)
     {
-        static $modules = null;
-        if ($modules === null) {
-            $modules = collect(config('modules.used', []))->where('active', true);
-        }
+        $used = config('modules.used', []);
+        $modules = collect($used)->where('active', true);
 
         if ($name) {
-            static $singleModules = [];
-            if (!isset($singleModules[$name])) {
-                $module = $modules->where('name', $name)->first();
-                $singleModules[$name] = $module ? json_decode(json_encode($module)) : null;
-            }
-            return $singleModules[$name];
+            $module = $modules->where('name', $name)->first();
+            return $module ? json_decode(json_encode($module)) : null;
         }
 
         return json_decode(json_encode($modules->sort()));
@@ -3770,7 +3782,7 @@ if (!function_exists('build_email_html')) {
         $actionText = $data['action_text'] ?? 'Buka Tautan';
         $caution = $data['caution'] ?? null;
         $footerNotes = $data['footer_notes'] ?? 'Email ini dibuat dan dikirim otomatis oleh sistem Web Builder. Harap jangan membalas email ini secara langsung.';
-        
+
         $tableHtml = '';
         if (!empty($infoTable) && is_array($infoTable)) {
             $tableHtml .= '<table style="width:100%;border-collapse:collapse;margin:20px 0;background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">';
@@ -3871,7 +3883,7 @@ if (!function_exists('send_mail')) {
             try {
                 $smtpHost = get_option('wb_smtp_host') ?: get_option('smtp_host') ?: config('mail.mailers.smtp.host');
                 $smtpPort = get_option('wb_smtp_port') ?: get_option('smtp_port') ?: config('mail.mailers.smtp.port');
-                $smtpEnc  = get_option('wb_smtp_encryption') ?: get_option('smtp_encryption') ?: config('mail.mailers.smtp.encryption', 'tls');
+                $smtpEnc = get_option('wb_smtp_encryption') ?: get_option('smtp_encryption') ?: config('mail.mailers.smtp.encryption', 'tls');
                 $smtpUser = get_option('wb_smtp_user') ?: get_option('smtp_user') ?: config('mail.mailers.smtp.username');
                 $smtpPass = get_option('wb_smtp_pass') ?: get_option('smtp_pass') ?: config('mail.mailers.smtp.password');
                 $fromAddr = get_option('wb_smtp_from_address') ?: get_option('smtp_from_address') ?: config('mail.from.address') ?: ('no-reply@' . (request()->getHost() ?: 'webbuilder.id'));
@@ -3893,20 +3905,20 @@ if (!function_exists('send_mail')) {
                 if ($isHtmlString || (is_string($content) && (str_contains($content, '<html') || str_contains($content, '<table') || str_contains($content, '<div')))) {
                     \Illuminate\Support\Facades\Mail::html($content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
                         $message->to($to)
-                                ->subject($subject)
-                                ->from($fromAddr, $fromName);
+                            ->subject($subject)
+                            ->from($fromAddr, $fromName);
                     });
                 } elseif (is_string($content) && view()->exists($content)) {
                     \Illuminate\Support\Facades\Mail::send($content, $data, function ($message) use ($to, $subject, $fromAddr, $fromName) {
                         $message->to($to)
-                                ->subject($subject)
-                                ->from($fromAddr, $fromName);
+                            ->subject($subject)
+                            ->from($fromAddr, $fromName);
                     });
                 } else {
-                    \Illuminate\Support\Facades\Mail::raw((string)$content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
+                    \Illuminate\Support\Facades\Mail::raw((string) $content, function ($message) use ($to, $subject, $fromAddr, $fromName) {
                         $message->to($to)
-                                ->subject($subject)
-                                ->from($fromAddr, $fromName);
+                            ->subject($subject)
+                            ->from($fromAddr, $fromName);
                     });
                 }
 
@@ -3936,7 +3948,7 @@ if (!function_exists('mask_email')) {
     function mask_email($email)
     {
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return (string)$email;
+            return (string) $email;
         }
 
         $parts = explode('@', $email);
