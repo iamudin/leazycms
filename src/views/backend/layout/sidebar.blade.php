@@ -136,9 +136,6 @@
                 @endforeach
             @if (Auth::user()->isAdmin())
                 @if ($custom = config('modules.custom_menu'))
-                  <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
-                        <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; Plugin
-                    </li>
                     @php
                         $customMenus = collect($custom)->where('show_in_sidebar', true);
                         $groupedPlugins = [];
@@ -154,12 +151,13 @@
                             $segments = explode('/', $cs['path']);
                             $potentialPlugin = $segments[0] ?? null;
 
-                            if ($potentialPlugin && (is_dir(resource_path('plugins/' . $potentialPlugin)) || is_dir(resource_path('plugins/' . $potentialPlugin)))) {                                $disabledPlugins = get_disabled_plugins();
+                            if ($potentialPlugin && is_dir(resource_path('plugins/' . $potentialPlugin))) {
+                                $disabledPlugins = get_disabled_plugins();
                                 if (in_array($potentialPlugin, $disabledPlugins)) {
                                     continue;
                                 }
 
-                                if (config('modules.multisite_enabled') ) {
+                                if (config('modules.multisite_enabled') && !is_main_domain()) {
                                     if (!is_array($tenantPlugins) || !in_array($potentialPlugin, $tenantPlugins)) {
                                         continue;
                                     }
@@ -171,42 +169,48 @@
                         }
                     @endphp
 
-                    @foreach ($standaloneMenus as $cs)
-                        <li title="{{ $cs['title'] }}">
-                            <a class="app-menu__item {{ active_item($cs['path']) }}"
-                                href="{{ admin_url($cs['path']) }}"><i
-                                    class="app-menu__icon fa {{ $cs['icon'] }} "></i>
-                                <span class="app-menu__label">{{ $cs['title'] }}</span></a>
+                    @if (count($standaloneMenus) > 0 || count($groupedPlugins) > 0)
+                        <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
+                            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; Plugin
                         </li>
-                    @endforeach
 
-                    @foreach ($groupedPlugins as $pluginName => $menus)
-                        @php
-                            $isActive = false;
-                            foreach ($menus as $m) {
-                                if (request()->is(admin_path() . '/' . $m['path'] . '*')) {
-                                    $isActive = true;
-                                    break;
+                        @foreach ($standaloneMenus as $cs)
+                            <li title="{{ $cs['title'] }}">
+                                <a class="app-menu__item {{ active_item($cs['path']) }}"
+                                    href="{{ admin_url($cs['path']) }}"><i
+                                        class="app-menu__icon fa {{ $cs['icon'] }} "></i>
+                                    <span class="app-menu__label">{{ $cs['title'] }}</span></a>
+                            </li>
+                        @endforeach
+
+                        @foreach ($groupedPlugins as $pluginName => $menus)
+                            @php
+                                $isActive = false;
+                                foreach ($menus as $m) {
+                                    if (request()->is(admin_path() . '/' . $m['path'] . '*')) {
+                                        $isActive = true;
+                                        break;
+                                    }
                                 }
-                            }
-                        @endphp
-                        <li class="treeview {{ $isActive ? 'is-expanded' : '' }}">
-                            <a class="app-menu__item" href="#" data-toggle="treeview">
-                                <i class="app-menu__icon fa fa-plug "></i>
-                                <span class="app-menu__label">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</span>
-                                <i class="treeview-indicator fa fa-angle-right"></i>
-                            </a>
-                            <ul class="treeview-menu">
-                                @foreach ($menus as $cs)
-                                    <li>
-                                        <a class="treeview-item {{ active_item($cs['path']) }}"
-                                            href="{{ admin_url($cs['path']) }}"><i
+                            @endphp
+                            <li class="treeview {{ $isActive ? 'is-expanded' : '' }}">
+                                <a class="app-menu__item" href="#" data-toggle="treeview">
+                                    <i class="app-menu__icon fa fa-plug "></i>
+                                    <span class="app-menu__label">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</span>
+                                    <i class="treeview-indicator fa fa-angle-right"></i>
+                                </a>
+                                <ul class="treeview-menu">
+                                    @foreach ($menus as $cs)
+                                        <li>
+                                            <a class="treeview-item {{ active_item($cs['path']) }}"
+                                                href="{{ admin_url($cs['path']) }}"><i
                                                 class="icon fa {{ $cs['icon'] }}"></i> {{ $cs['title'] }}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </li>
-                    @endforeach
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </li>
+                        @endforeach
+                    @endif
                 @endif
             @endif
             @if (Auth::user()->isAdmin())
