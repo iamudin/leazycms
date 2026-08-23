@@ -11,11 +11,13 @@ class AssetLink extends Command
 
     public function handle()
     {
-        $slug   = $this->argument('slug');
-        $target = resource_path("views/template/$slug/assets");
-        $link   = public_path("template/$slug/assets");
+        $slug      = $this->argument('slug');
+        $target    = resource_path("views/template/$slug/assets");
+        $link      = public_path("template/$slug/assets");
+        $parentDir = public_path("template/$slug");
+
         if (!File::exists($target)) {
-            $this->info("ℹ️ Folder assets tidak ditemukan. Link asset diabaikan.");
+            $this->info("ℹ️ Folder assets tidak ditemukan di {$target}. Link asset diabaikan.");
             return 0;
         }
 
@@ -24,8 +26,9 @@ class AssetLink extends Command
             return 0;
         }
 
-         if (!File::exists($link)) {
-            File::makeDirectory( public_path("template/$slug"));
+        // Pastikan parent directory public/template/{slug} ada tanpa melempar exception jika sudah ada
+        if (!File::isDirectory($parentDir)) {
+            File::makeDirectory($parentDir, 0755, true, true);
         }
 
         $this->info("🔍 Membersihkan file berbahaya di: $target");
@@ -64,18 +67,37 @@ class AssetLink extends Command
             $this->info("✅ Tidak ada file berbahaya ditemukan.");
         }
 
-        // cek dan buat symlink
-        if (File::exists($link)) {
+        // Cek dan bersihkan link / folder lama jika ada
+        if (is_link($link)) {
             if (!$this->option('force')) {
-                return $this->warn("Link sudah ada di $link. Gunakan --force untuk overwrite.");
+                $this->warn("Link sudah ada di $link. Gunakan --force untuk overwrite.");
+                return 0;
             }
-
-            File::delete($link);
+            @unlink($link);
             $this->warn("Link lama dihapus: $link");
+        } elseif (File::isDirectory($link)) {
+            if (!$this->option('force')) {
+                $this->warn("Folder assets sudah ada di $link. Gunakan --force untuk overwrite.");
+                return 0;
+            }
+            File::deleteDirectory($link);
+            $this->warn("Folder assets lama dihapus: $link");
+        } elseif (File::exists($link)) {
+            if (!$this->option('force')) {
+                $this->warn("File sudah ada di $link. Gunakan --force untuk overwrite.");
+                return 0;
+            }
+            @unlink($link);
+            $this->warn("File lama dihapus: $link");
         }
 
-        File::link($target, $link);
-
-        $this->info("✅ Symlink berhasil dibuat: $link → $target");
+        try {
+            File::link($target, $link);
+            $this->info("✅ Symlink berhasil dibuat: $link → $target");
+            return 0;
+        } catch (\Throwable $e) {
+            $this->error("❌ Gagal membuat symlink: " . $e->getMessage());
+            return 1;
+        }
     }
 }
