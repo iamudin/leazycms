@@ -53,6 +53,12 @@ class UserController extends Controller implements HasMiddleware
             ], [
                 'password.regex' => 'Password harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol ($@!%*?&).'
             ]);
+
+            // Jika user mengganti email lewat form profil akun, null-kan kembali email_verified_at
+            if (strtolower(trim($request->email)) !== strtolower(trim($user->email))) {
+                $data['email_verified_at'] = null;
+            }
+
             if ($user->isAdmin()) {
                 \Leazycms\Web\Models\Option::updateOrCreate([
                     'name' => 'allow_multi_login',

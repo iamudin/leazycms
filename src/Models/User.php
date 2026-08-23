@@ -25,6 +25,7 @@ class User extends BaseUser
         'status',
         'photo',
         'email',
+        'email_verified_at',
         'user_data',
         'host',
         'url',
