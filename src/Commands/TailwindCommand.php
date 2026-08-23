@@ -48,7 +48,7 @@ class TailwindCommand extends Command
         $sourceCssDir = resource_path("views/template/{$slug}/assets/css");
         $sourceInputCss = "{$sourceCssDir}/input.css";
 
-        $publicCssDir = public_path("template/{$slug}/css");
+        $publicCssDir = public_path("template/{$slug}/assets/css");
         $publicOutputCss = "{$publicCssDir}/style.css";
 
         $assetOutputCss = "{$sourceCssDir}/style.css";
@@ -109,7 +109,7 @@ CSS;
         $this->info("🚀 Menjalankan Tailwind CSS [{$modeText}]...");
 
         $inputRelative = "resources/views/template/{$slug}/assets/css/input.css";
-        $outputRelative = "public/template/{$slug}/css/style.css";
+        $outputRelative = "public/template/{$slug}/assets/css/style.css";
 
         $command = "npx @tailwindcss/cli -i {$inputRelative} -o {$outputRelative}";
         if ($isWatch) {
@@ -150,7 +150,7 @@ CSS;
     protected function updateTemplateHeader(string $slug): void
     {
         $headerPath = resource_path("views/template/{$slug}/header.blade.php");
-        
+
         // Fallback jika tidak ada header.blade.php
         if (!File::exists($headerPath)) {
             $fallbacks = ['layout.blade.php', 'index.blade.php', 'main.blade.php'];
@@ -168,10 +168,10 @@ CSS;
         }
 
         $content = File::get($headerPath);
-        $cssTag = '<link rel="stylesheet" href="{{ template_asset(\'css/style.css\') }}">';
+        $cssTag = '<link rel="stylesheet" href="{{ template_asset(\'assets/css/style.css\') }}">';
 
         // 1. Cek apakah sudah ada link stylesheet
-        if (str_contains($content, "template_asset('css/style.css')") || str_contains($content, 'template_asset("css/style.css")')) {
+        if (str_contains($content, "template_asset('assets/css/style.css')") || str_contains($content, 'template_asset("assets/css/style.css")')) {
             // Hapus CDN tailwind jika masih tersisa
             if (preg_match('/<script[^>]*src=["\'][^"\']*cdn\.tailwindcss\.com[^"\']*["\'][^>]*>\s*<\/script>/i', $content)) {
                 $content = preg_replace('/<script[^>]*src=["\'][^"\']*cdn\.tailwindcss\.com[^"\']*["\'][^>]*>\s*<\/script>\s*/i', '', $content);
@@ -189,7 +189,7 @@ CSS;
         if (preg_match($cdnRegex, $content)) {
             $content = preg_replace($cdnRegex, $cssTag, $content, 1);
             $replaced = true;
-        } 
+        }
         // 3. Jika tidak ada CDN, sisipkan sebelum </head>
         elseif (stripos($content, '</head>') !== false) {
             $content = preg_replace('/(<\/head>)/i', "    " . $cssTag . "\n$1", $content, 1);
@@ -199,7 +199,7 @@ CSS;
         if ($replaced) {
             File::put($headerPath, $content);
             $relativePath = str_replace(base_path() . '/', '', $headerPath);
-            $this->info("✅ Berhasil menambahkan <comment><link rel=\"stylesheet\" href=\"{{ template_asset('css/style.css') }}\"></comment> ke <info>{$relativePath}</info>");
+            $this->info("✅ Berhasil menambahkan <comment><link rel=\"stylesheet\" href=\"{{ template_asset('assets/css/style.css') }}\"></comment> ke <info>{$relativePath}</info>");
         }
     }
 
@@ -277,7 +277,7 @@ CSS;
         }
 
         $inputPath = "./resources/views/template/{$slug}/assets/css/input.css";
-        $outputPath = "./public/template/{$slug}/css/style.css";
+        $outputPath = "./public/template/{$slug}/assets/css/style.css";
 
         $devScriptKey = "dev:{$slug}";
         $buildScriptKey = "build:{$slug}";
