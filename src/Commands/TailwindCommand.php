@@ -78,6 +78,11 @@ class TailwindCommand extends Command
 {$extractedThemeVars}
 }
 
+@utility bg-clip-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
 CSS;
             File::put($sourceInputCss, $starterCss);
             $this->info("✅ Berhasil membuat file input: <info>resources/views/template/{$slug}/assets/css/input.css</info>");
@@ -217,9 +222,22 @@ CSS;
         $themeVars = [];
 
         // Cek colors di script tailwind.config
-        if (preg_match('/colors\s*:\s*\{([^}]+)\}/s', $content, $match)) {
+        if (preg_match('/colors\s*:\s*\{(.+?)\}\s*,\s*(?:fontFamily|extend|theme|\})/s', $content, $match) || preg_match('/colors\s*:\s*\{(.+?)\}\s*\}\s*\}\s*<\/script>/s', $content, $match)) {
             $colorBlock = $match[1];
-            if (preg_match_all('/([a-zA-Z0-9_-]+)\s*:\s*[\'"]([#a-zA-Z0-9_-]+)[\'"]/', $colorBlock, $colMatches, PREG_SET_ORDER)) {
+            // Handle nested color objects e.g. merah: { 50: '#fff1f2', ... }
+            if (preg_match_all('/([a-zA-Z0-9_-]+)\s*:\s*\{([^}]+)\}/s', $colorBlock, $nestedMatches, PREG_SET_ORDER)) {
+                foreach ($nestedMatches as $nm) {
+                    $prefix = strtolower($nm[1]);
+                    if (preg_match_all('/([a-zA-Z0-9_-]+)\s*:\s*[\'"]([#a-zA-Z0-9_-]+)[\'"]/', $nm[2], $subMatches, PREG_SET_ORDER)) {
+                        foreach ($subMatches as $sm) {
+                            $themeVars[] = "    --color-{$prefix}-{$sm[1]}: {$sm[2]};";
+                        }
+                    }
+                }
+            }
+            // Handle direct color properties e.g. putih: '#ffffff'
+            $cleanColorBlock = preg_replace('/[a-zA-Z0-9_-]+\s*:\s*\{[^}]+\}/s', '', $colorBlock);
+            if (preg_match_all('/([a-zA-Z0-9_-]+)\s*:\s*[\'"]([#a-zA-Z0-9_-]+)[\'"]/', $cleanColorBlock, $colMatches, PREG_SET_ORDER)) {
                 foreach ($colMatches as $cm) {
                     $key = strtolower($cm[1]);
                     $val = $cm[2];

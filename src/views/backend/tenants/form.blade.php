@@ -104,6 +104,13 @@
                                 class="text-muted">Ceklis jika ingin mengizinkan tenant ini melakukan parkir custom domain melalui menu Setting -> Domain di panel mereka.</small>
                         </div>
 
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Izinkan Kelola Pengguna (Manage User) ?</label><br>
+                            <input type="hidden" name="options[allow_manage_user]" value="0">
+                            <input name="options[allow_manage_user]" id="allow-manage-user-check" type="checkbox" value="1" {{ (old('options.allow_manage_user') == '1' || in_array($options['allow_manage_user'] ?? '0', ['1', 1, 'true', true, 'Y', 'y'], true)) ? 'checked' : '' }}> <small
+                                class="text-muted">Ceklis jika ingin mengizinkan tenant ini mengelola pengguna / menampilkan menu User di sidebar tenant.</small>
+                        </div>
+
                         <script>
                             document.addEventListener('DOMContentLoaded', function () {
                                 const themeSelect = document.getElementById('theme-select');

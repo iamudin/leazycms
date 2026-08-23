@@ -24,6 +24,12 @@ class UserController extends Controller implements HasMiddleware
                 if (!$request->user()->isAdmin() && !Route::is('user.account')) {
                     return redirect()->route('panel.dashboard')->send()->with('danger', 'Akses hanya admin');
                 }
+                if (!Route::is('user.account') && config('modules.multisite_enabled') && !is_main_domain()) {
+                    $allowManageUser = in_array(get_option('allow_manage_user'), ['1', 1, 'true', true, 'Y', 'y'], true);
+                    if (!$allowManageUser) {
+                        return redirect()->route('panel.dashboard')->send()->with('danger', 'Fitur pengelolaan pengguna dinonaktifkan untuk tenant ini.');
+                    }
+                }
                 return $next($request);
             },
         ];

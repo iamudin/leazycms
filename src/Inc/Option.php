@@ -62,7 +62,9 @@ if (!function_exists('disallow_option_key')) {
             'admin_path',
             'site_maintenance',
             'app_env',
-            'app_debug'
+            'app_debug',
+            'allow_manage_user',
+            'allow_park_domain'
         ];
 
         // 1. Jika parameter adalah ARRAY: Daftarkan/tambahkan key secara dinamis

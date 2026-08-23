@@ -267,11 +267,13 @@
                     </ul>
                 </li>
 
-                <li title="Pengguna">
-                    <a class="app-menu__item {{ active_item(['user', 'role']) }}" href="{{ route('user') }}"><i
-                            class="app-menu__icon fa fa-users "></i>
-                        <span class="app-menu__label">User</span></a>
-                </li>
+                @if (is_main_domain() || in_array(get_option('allow_manage_user'), ['1', 1, 'true', true, 'Y', 'y'], true))
+                    <li title="Pengguna">
+                        <a class="app-menu__item {{ active_item(['user', 'role']) }}" href="{{ route('user') }}"><i
+                                class="app-menu__icon fa fa-users "></i>
+                            <span class="app-menu__label">User</span></a>
+                    </li>
+                @endif
                 @if (is_main_domain() && config('modules.multisite_enabled'))
                     <li title="Tenants">
                         <a class="app-menu__item {{ active_item(['tenant']) }}" href="{{ route('tenant.index') }}"><i
