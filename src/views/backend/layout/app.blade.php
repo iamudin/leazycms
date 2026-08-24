@@ -385,10 +385,18 @@
             background-color: var(--theme-primary) !important;
         }
 
-        /* Active Sidebar Menu & Submenu */
+        /* Sidebar Menu & Submenu Hover and Active Border */
+        .app-menu__item {
+            border-left: 3px solid transparent !important;
+            transition: background-color 0.2s ease, border-left-color 0.2s ease !important;
+        }
+
+        .app-menu__item:hover,
+        .app-menu__item:focus,
         .app-menu__item.active,
         .treeview-item.active,
-        .treeview.is-expanded>.app-menu__item {
+        .treeview.is-expanded > .app-menu__item,
+        .treeview:hover > .app-menu__item {
             border-left-color: var(--theme-primary) !important;
         }
 
