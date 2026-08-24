@@ -1,14 +1,18 @@
 <!-- Sidebar menu-->
 <style>
 .app-sidebar {
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
 .app-sidebar::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
     width: 0;
+}
+.sidebar-mini.sidenav-toggled .app-sidebar {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 .app-menu {
     padding-right: 0 !important;
@@ -17,6 +21,230 @@
 }
 .app-menu__item {
     width: 100% !important;
+}
+.sidebar-list-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+.sidebar-list-header i {
+    width: 20px;
+    text-align: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.sidebar-header-label {
+    display: inline-block;
+}
+
+.treeview-header-title {
+    display: none;
+}
+
+/* =========================================================================
+ * DESKTOP ONLY: MINI SIDEBAR (when screen width >= 768px)
+ * ========================================================================= */
+@media (min-width: 768px) {
+    .sidebar-mini.sidenav-toggled .app-sidebar {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .sidebar-list-header {
+        padding: 12px 0 !important;
+        justify-content: center !important;
+        text-align: center !important;
+        width: 50px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar-mini.sidenav-toggled .sidebar-list-header i {
+        width: 50px !important;
+        margin: 0 !important;
+        font-size: 14px !important;
+        display: block !important;
+        text-align: center !important;
+        opacity: 0.85;
+    }
+
+    .sidebar-mini.sidenav-toggled .sidebar-list-header {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .sidebar-mini.sidenav-toggled .sidebar-list-header:hover {
+        background: var(--sidebar-hover-bg, rgba(255, 255, 255, 0.08)) !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .sidebar-header-label {
+        display: none;
+    }
+
+    /* Floating Pill for Sidebar List Header on Hover in Mini Mode */
+    .sidebar-mini.sidenav-toggled .sidebar-list-header:hover .sidebar-header-label {
+        position: fixed !important;
+        left: 50px !important;
+        min-width: 160px !important;
+        max-width: 240px !important;
+        height: 38px !important;
+        line-height: 38px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: flex !important;
+        align-items: center !important;
+        background: var(--sidebar-bg, #1D2327) !important;
+        color: var(--sidebar-font, #ffffff) !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        letter-spacing: 0.8px !important;
+        text-transform: uppercase !important;
+        padding: 0 16px !important;
+        margin: 0 !important;
+        border-radius: 0 6px 6px 0 !important;
+        box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.4) !important;
+        border-left: 3px solid var(--theme-primary, #0d6efd) !important;
+        z-index: 9999 !important;
+        pointer-events: none !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .sidebar-footer-info {
+        display: none !important;
+    }
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu > li {
+        position: relative;
+    }
+
+    /* Mini Sidebar Menu Item Base, Hover, and Active State */
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu__item {
+        background: transparent !important;
+        border-left: 3px solid transparent !important;
+        color: var(--sidebar-font) !important;
+        transition: background-color 0.2s ease, border-left-color 0.2s ease !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu > li:hover > .app-menu__item,
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview:hover > .app-menu__item,
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu__item:hover,
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu__item:focus {
+        background: var(--sidebar-list-bg, var(--sidebar-bg)) !important;
+        border-left-color: var(--theme-primary, #0d6efd) !important;
+        color: var(--sidebar-font, #ffffff) !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu > li:hover > .app-menu__item .app-menu__icon,
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview:hover > .app-menu__item .app-menu__icon,
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu__item:hover .app-menu__icon {
+        color: var(--sidebar-font, #ffffff) !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu__item.active,
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview.is-expanded > .app-menu__item {
+        background: var(--sidebar-hover-bg, rgba(255, 255, 255, 0.1)) !important;
+        border-left-color: var(--theme-primary, #0d6efd) !important;
+        color: var(--sidebar-font, #ffffff) !important;
+    }
+
+    /* Standalone Menu Label (Items without treeview submenu) */
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu > li:not(.treeview):hover > .app-menu__item > .app-menu__label {
+        position: fixed !important;
+        left: 50px !important;
+        min-width: 190px !important;
+        max-width: 280px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: flex !important;
+        align-items: center !important;
+        background: var(--sidebar-list-bg, #111518) !important;
+        color: var(--sidebar-font, #ffffff) !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        padding: 0 18px !important;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        border-radius: 0 8px 8px 0 !important;
+        box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.4) !important;
+        z-index: 9999 !important;
+        pointer-events: auto !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+
+    /* In mini mode, hide the separate floating label for treeview because it is inside the treeview-menu */
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu > li.treeview > .app-menu__item > .app-menu__label {
+        display: none !important;
+    }
+
+    /* Treeview Unified Popup Container (Single Box) */
+    .sidebar-mini.sidenav-toggled .app-sidebar .app-menu > li.treeview:hover > .treeview-menu {
+        position: fixed !important;
+        left: 50px !important;
+        min-width: 220px !important;
+        max-width: 320px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+        background: var(--sidebar-list-bg, #111518) !important;
+        padding: 0 0 6px 0 !important;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        border-top: none !important;
+        border-radius: 0 8px 8px 0 !important;
+        box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.45) !important;
+        z-index: 9999 !important;
+        pointer-events: auto !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    /* Treeview Header Title inside the unified menu */
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview-menu .treeview-header-title {
+        display: block !important;
+        padding: 12px 18px !important;
+        margin: 0 !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        background: var(--sidebar-bg, #1D2327) !important;
+        color: var(--sidebar-font, #ffffff) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        white-space: nowrap !important;
+    }
+
+    /* Submenu Item Links */
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview-menu .treeview-item {
+        padding: 9px 18px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px;
+        color: var(--sidebar-muted, #a0aabf) !important;
+        font-size: 12.5px !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview-menu .treeview-item i {
+        font-size: 11px !important;
+        width: 14px !important;
+        text-align: center;
+        opacity: 0.8;
+    }
+
+    .sidebar-mini.sidenav-toggled .app-sidebar .treeview-menu .treeview-item:hover {
+        background: var(--sidebar-hover-bg, rgba(255, 255, 255, 0.1)) !important;
+        color: var(--sidebar-hover-color, #ffffff) !important;
+        padding-left: 22px !important;
+    }
 }
 </style>
 <div class="app-sidebar__overlay" data-toggle="sidebar"></div>
@@ -40,8 +268,8 @@
                         href="{{ route('panel.dashboard') }}"><i class="app-menu__icon fa fa-dashboard "></i>
                         <span class="app-menu__label">Dahsboard</span></a>
                 </li>
-            <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
-                <i class="fa fa-globe" aria-hidden="true"></i> &nbsp; PUBLIKASI
+            <li class="sidebar-list-header" title="Publikasi">
+                <i class="fa fa-globe" aria-hidden="true"></i> <span class="sidebar-header-label">&nbsp; PUBLIKASI</span>
             </li>
             @php
                 $modulesForSidebar = collect(get_module())->sortBy('position');
@@ -64,8 +292,8 @@
             @endphp
             @foreach ($modulesForSidebar as $row)
                 @if ($row->name == 'menu')
-                    <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
-                        <i class="fa fa-archive" aria-hidden="true"></i> &nbsp; KELOLA
+                    <li class="sidebar-list-header" title="Kelola">
+                        <i class="fa fa-archive" aria-hidden="true"></i> <span class="sidebar-header-label">&nbsp; KELOLA</span>
                     </li>
                 @endif
                 <li class="treeview {{ active_item($row->name) ? 'is-expanded' : '' }}">
@@ -74,6 +302,7 @@
                             class="app-menu__label">{{ $row->title }}</span><i
                             class="treeview-indicator fa fa-chevron-right"></i></a>
                     <ul class="treeview-menu">
+                        <li class="treeview-header-title">{{ $row->title }}</li>
                         @if (in_array('create', $row->route))
                             @if (auth()->user()->isAdmin() || !auth()->user()->hasRole($row->name, 'create', true))
                                 <li>
@@ -170,8 +399,8 @@
                     @endphp
 
                     @if (count($standaloneMenus) > 0 || count($groupedPlugins) > 0)
-                        <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
-                            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> &nbsp; Plugin
+                        <li class="sidebar-list-header" title="Plugin">
+                            <i class="fa fa-puzzle-piece" aria-hidden="true"></i> <span class="sidebar-header-label">&nbsp; Plugin</span>
                         </li>
 
                         @foreach ($standaloneMenus as $cs)
@@ -200,6 +429,7 @@
                                     <i class="treeview-indicator fa fa-angle-right"></i>
                                 </a>
                                 <ul class="treeview-menu">
+                                    <li class="treeview-header-title">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</li>
                                     @foreach ($menus as $cs)
                                         <li>
                                             <a class="treeview-item {{ active_item($cs['path']) }}"
@@ -214,9 +444,8 @@
                 @endif
             @endif
             @if (Auth::user()->isAdmin())
-                                 <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
-
-                    <i class="fa fa-lock" aria-hidden="true"></i> &nbsp; Administrator
+                <li class="sidebar-list-header" title="Administrator">
+                    <i class="fa fa-lock" aria-hidden="true"></i> <span class="sidebar-header-label">&nbsp; Administrator</span>
                 </li>
                 @if (config('modules.app_master') && is_main_domain())
                     <li title="Monitor Situs">
@@ -242,6 +471,7 @@
                     </a>
 
                     <ul class="treeview-menu">
+                        <li class="treeview-header-title">Pengaturan</li>
                         <li>
                             <a class="treeview-item {{ active_item('profile') }}"
                                 href="{{ Route::has('profile') ? route('profile') : '#' }}"><i
@@ -322,12 +552,13 @@
                     <span class="app-menu__label">Keluar</span></a>
             </li>
             @if (is_main_domain())
-                                  <li class="sidebar-list-header" style="padding: 12px 10px; font-size: small;">
-
-                    <small>Build by: </small><b class="text-white">Leazycms</b><sup
-                        class="">{{ current_cms_version() }}</sup>
-                    <a target="_blank" href="https://leazycms.web.id/docs" class="pull-right">
-                        <i class="fa fa-book"></i> Docs</a>
+                <li class="sidebar-list-header sidebar-footer-info">
+                    <span class="sidebar-header-label">
+                        <small>Build by: </small><b class="text-white">Leazycms</b><sup
+                            class="">{{ current_cms_version() }}</sup>
+                        <a target="_blank" href="https://leazycms.web.id/docs" class="pull-right">
+                            <i class="fa fa-book"></i> Docs</a>
+                    </span>
                 </li>
             @endif
         </ul>

@@ -13,7 +13,11 @@
     transition: background-color 0.2s ease-in-out;
 }
 .app-nav .app-nav__item:hover, .app-nav__mobile-toggle:hover, .app-sidebar__toggle:hover {
-    background-color: rgba(128, 128, 128, 0.2) !important;
+    background-color: var(--sidebar-hover-bg, rgba(255, 255, 255, 0.15)) !important;
+}
+.app-sidebar__toggle {
+    background-color: var(--header-bg) !important;
+    color: var(--header-font, #ffffff) !important;
 }
 .app-header__logo {
     display: flex !important;

@@ -63,6 +63,15 @@ window.onload = function() {
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   </head>
   <body id="body" class="app sidebar-mini" >
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('sidebar_collapsed') === '1' && window.innerWidth >= 768) {
+          document.body.classList.add('sidenav-toggled');
+        }
+      } catch(e) {}
+    })();
+  </script>
   @include('views::extension.layout.header')
   @include('views::extension.layout.sidebar')
   <main class="app-content" style="background: #F0F0F1">
