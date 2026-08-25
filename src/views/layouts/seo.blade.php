@@ -84,7 +84,17 @@ $ic16 = get_option('pwa_icon_16'); @endphp
   </script>
 @endif
 @if($gvc = get_option('google_verification_code'))
-  <meta name="google-site-verification" content="{{ $gvc}}">
+  @php
+    $gvc = trim($gvc);
+    if (preg_match('/content=[\'"]([^\'"]+)[\'"]/i', $gvc, $matches)) {
+        $gvc = $matches[1];
+    } else {
+        $gvc = strip_tags($gvc);
+    }
+  @endphp
+  @if(!empty($gvc))
+  <meta name="google-site-verification" content="{{ $gvc }}">
+  @endif
 @endif
 @if($gac = get_option('google_analytics_code'))
   <script async src="https://www.googletagmanager.com/gtag/js?id={{$gac}}"></script>

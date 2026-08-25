@@ -240,6 +240,7 @@
                                     ['SEO Meta Keyword', 'site_meta_keyword', 'text'],
                                     ['SEO Meta Description', 'site_meta_description', 'text'],
                                     ['Google Analytics Code', 'google_analytics_code', 'text'],
+                                    ['Google Verification Code', 'google_verification_code', 'text'],
                                     ['Postingan Perhalaman', 'post_perpage', 'number'],
                                 ];
                             @endphp
@@ -250,6 +251,15 @@
                                     @if($attr[2] == 'textarea')
                                         <textarea class="form-control form-control-sm" name="options[{{ $attr[1] }}]"
                                             rows="2">{{ old("options.{$attr[1]}", $options[$attr[1]] ?? '') }}</textarea>
+                                    @elseif($attr[1] == 'google_verification_code')
+                                        <input class="form-control form-control-sm" name="options[{{ $attr[1] }}]" type="text"
+                                            placeholder="Contoh: aR200GWxv78O3x4u2wYLKnVbtH03bwYdFzO7Fv2x0TI"
+                                            oninput="var m = this.value.match(/content=['&quot;]([^'&quot;]+)['&quot;]/i); if(m && m[1]) this.value = m[1];"
+                                            onpaste="var el = this; setTimeout(function(){ var m = el.value.match(/content=['&quot;]([^'&quot;]+)['&quot;]/i); if(m && m[1]) el.value = m[1]; }, 10);"
+                                            value="{{ old("options.{$attr[1]}", $options[$attr[1]] ?? '') }}">
+                                        <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                                            Contoh: <code>aR200GWxv78O3x4u2wYLKnVbtH03bwYdFzO7Fv2x0TI</code> atau copy-paste full tag: <code>&lt;meta name="google-site-verification" content="aR200GWxv78O3x4u2wYLKnVbtH03bwYdFzO7Fv2x0TI" /&gt;</code> (sistem otomatis hanya mengambil isi kodenya saja).
+                                        </small>
                                     @else
                                         <input class="form-control form-control-sm" name="options[{{ $attr[1] }}]" type="{{ $attr[2] }}"
                                             value="{{ old("options.{$attr[1]}", $options[$attr[1]] ?? '') }}">

@@ -445,6 +445,7 @@ class TenantController extends Controller implements HasMiddleware
                 'instagram',
                 'jam_kerja',
                 'google_analytics_code',
+                'google_verification_code',
                 'pwa_name',
                 'pwa_short_name',
                 'pwa_description',
@@ -470,9 +471,14 @@ class TenantController extends Controller implements HasMiddleware
         }
         $options = $request->input('options', []);
         foreach ($options as $name => $value) {
+            if ($name == 'google_verification_code' && !empty($value)) {
+                if (preg_match('/content=[\'"]([^\'"]+)[\'"]/i', $value, $matches)) {
+                    $value = $matches[1];
+                }
+            }
             DB::table('options')->updateOrInsert(
                 ['name' => $name, 'tenant_id' => $tenant->id],
-                ['value' => $value, 'autoload' => 1]
+                ['value' => is_string($value) ? strip_tags($value) : $value, 'autoload' => 1]
             );
         }
     }

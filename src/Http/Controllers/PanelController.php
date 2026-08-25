@@ -763,6 +763,7 @@ class PanelController extends Controller implements HasMiddleware
             ['SEO Meta Keyword', 'site_meta_keyword', 'text'],
             ['SEO Meta Description', 'site_meta_description', 'text'],
             ['Google Analytics Code', 'google_analytics_code', 'text'],
+            ['Google Verification Code', 'google_verification_code', 'text'],
             ['Postingan Perhalaman', 'post_perpage', 'number'],
             ['Logo', 'logo', 'file'],
             ['Favicon (Gambar PNG/JPG rasio 1:1 maks 2mb)', 'favicon', 'file'],
@@ -1028,6 +1029,11 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 } else {
                     $value = $request->$key;
+                    if ($key == 'google_verification_code' && !empty($value)) {
+                        if (preg_match('/content=[\'"]([^\'"]+)[\'"]/i', $value, $matches)) {
+                            $value = $matches[1];
+                        }
+                    }
                     $option->updateOrCreate(['name' => $key], ['value' => strip_tags($value), 'autoload' => 1]);
                 }
             }
