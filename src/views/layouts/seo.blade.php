@@ -87,13 +87,13 @@ $ic16 = get_option('pwa_icon_16'); @endphp
   @php
     $gvc = trim($gvc);
     if (preg_match('/content=[\'"]([^\'"]+)[\'"]/i', $gvc, $matches)) {
-        $gvc = $matches[1];
+      $gvc = $matches[1];
     } else {
-        $gvc = strip_tags($gvc);
+      $gvc = strip_tags($gvc);
     }
   @endphp
   @if(!empty($gvc))
-  <meta name="google-site-verification" content="{{ $gvc }}">
+    <meta name="google-site-verification" content="{{ $gvc }}">
   @endif
 @endif
 @if($gac = get_option('google_analytics_code'))
@@ -144,7 +144,7 @@ $ic16 = get_option('pwa_icon_16'); @endphp
 @if(file_exists(public_path('template/' . template() . '/styles.css')))
   <link rel="stylesheet" type='text/css' href="{{url('template/' . template() . '/styles.css')}}">
 @endif
-@if(get_option('float_btn_whatsapp') && get_option('whatsapp'))
+@if(get_option('float_btn_whatsapp') == 'Y' && get_option('whatsapp'))
   <style>
     .wa-float {
       position: fixed;
