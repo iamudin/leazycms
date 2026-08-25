@@ -69,7 +69,7 @@ class TenantController extends Controller implements HasMiddleware
         $stats = \Illuminate\Support\Facades\DB::table('tenants')
             ->leftJoin('options', function ($join) {
                 $join->on('tenants.id', '=', 'options.tenant_id')
-                     ->where('options.name', '=', 'category');
+                    ->where('options.name', '=', 'category');
             })
             ->select('options.value as category', \Illuminate\Support\Facades\DB::raw('count(tenants.id) as total'))
             ->groupBy('options.value')
@@ -99,8 +99,8 @@ class TenantController extends Controller implements HasMiddleware
                 $category = $row->options->where('name', 'category')->first()?->value;
                 return $category ? '<span class="badge badge-info">' . $category . '</span>' : '-';
             })
-            ->filterColumn('category', function($query, $keyword) {
-                $query->whereHas('options', function($q) use ($keyword) {
+            ->filterColumn('category', function ($query, $keyword) {
+                $query->whereHas('options', function ($q) use ($keyword) {
                     $q->where('name', 'category')->where('value', 'like', "%{$keyword}%");
                 });
             })
@@ -161,7 +161,7 @@ class TenantController extends Controller implements HasMiddleware
                     // Cap percentage at 100 for the progress bar width, but show actual if over 100%
                     $barWidth = min(100, $percentage);
                     $color = $percentage > 90 ? 'danger' : ($percentage > 75 ? 'warning' : 'success');
-                    
+
                     $html .= '<div class="progress mt-1" style="height: 6px; border-radius: 3px;">';
                     $html .= '<div class="progress-bar bg-' . $color . '" role="progressbar" style="width: ' . $barWidth . '%;"></div>';
                     $html .= '</div>';
@@ -169,7 +169,7 @@ class TenantController extends Controller implements HasMiddleware
                 }
 
                 $html .= '</div>';
-                
+
                 return $html;
             })
             ->rawColumns(['action', 'status', 'theme', 'resource', 'category'])
@@ -213,7 +213,7 @@ class TenantController extends Controller implements HasMiddleware
             if ($cpanelApi->checkDomainExists($domain)) {
                 return back()->withInput()->withErrors(['domain' => 'Domain sudah digunakan di server cPanel.']);
             }
-            
+
             $createDomain = $cpanelApi->createAliasDomain($domain);
             if (isset($createDomain['error'])) {
                 return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain di cPanel: ' . $createDomain['error']]);
@@ -328,13 +328,13 @@ class TenantController extends Controller implements HasMiddleware
                 if ($cpanelApi->checkDomainExists($domain)) {
                     return back()->withInput()->withErrors(['domain' => 'Domain baru sudah digunakan di server cPanel.']);
                 }
-                
+
                 // Delete old domain
                 $deleteOld = $cpanelApi->deleteAliasDomain($oldDomain);
                 if (isset($deleteOld['error'])) {
                     return back()->withInput()->withErrors(['domain' => 'Gagal menghapus domain lama di cPanel: ' . $deleteOld['error']]);
                 }
-                
+
                 // Create new domain
                 $createDomain = $cpanelApi->createAliasDomain($domain);
                 if (isset($createDomain['error'])) {
@@ -546,22 +546,22 @@ class TenantController extends Controller implements HasMiddleware
 
         $html = '
         <form id="cpanelConfigForm" autocomplete="off">
-            <input type="hidden" name="password" value="'.htmlspecialchars($request->password).'">
+            <input type="hidden" name="password" value="' . htmlspecialchars($request->password) . '">
             <div class="form-group mb-2">
                 <label>cPanel Host (ex: https://cpanel.domain.com:2083)</label>
-                <input type="url" name="host" class="form-control" value="'.htmlspecialchars($host).'" autocomplete="off">
+                <input type="url" name="host" class="form-control" value="' . htmlspecialchars($host) . '" autocomplete="off">
             </div>
             <div class="form-group mb-2">
                 <label>cPanel Username</label>
-                <input type="text" name="username" class="form-control" value="'.htmlspecialchars($username).'" autocomplete="off">
+                <input type="text" name="username" class="form-control" value="' . htmlspecialchars($username) . '" autocomplete="off">
             </div>
             <div class="form-group mb-2">
                 <label>cPanel API Token</label>
-                <input type="password" name="api_token" class="form-control" value="'.htmlspecialchars($token).'" autocomplete="new-password">
+                <input type="password" name="api_token" class="form-control" value="' . htmlspecialchars($token) . '" autocomplete="new-password">
             </div>
             <div class="form-group mb-2">
                 <label>Default Directory</label>
-                <input type="text" name="default_directory" class="form-control" value="'.htmlspecialchars($default_dir ?: 'public_html').'" autocomplete="off">
+                <input type="text" name="default_directory" class="form-control" value="' . htmlspecialchars($default_dir ?: 'public_html') . '" autocomplete="off">
             </div>
         </form>
         ';
@@ -593,5 +593,97 @@ class TenantController extends Controller implements HasMiddleware
         rewrite_env($envData);
 
         return response()->json(['status' => 'success', 'message' => 'Konfigurasi cPanel API berhasil disimpan!']);
+    }
+
+    public function brandConfigForm(Request $request)
+    {
+        $masterBrandName = Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->where('name', 'brand_name')->value('value') ?: 'WebProfile.ID';
+        $masterBrandUrl = Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->where('name', 'brand_url')->value('value') ?: (config('app.url') ?: 'https://webprofile.id');
+        $masterBrandLogo = Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->where('name', 'brand_logo')->value('value') ?: (Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->where('name', 'brand_icon')->value('value') ?: null);
+
+        $logoPreviewHtml = '';
+        if ($masterBrandLogo && media_exists($masterBrandLogo)) {
+            $logoUrl = str_starts_with($masterBrandLogo, 'http') ? $masterBrandLogo : url('media/' . $masterBrandLogo);
+            $logoPreviewHtml = '
+            <div class="mb-2 p-2 bg-light rounded text-center" id="brandLogoPreviewWrapper" style="border: 1px dashed #ccc;">
+                <img src="' . e($logoUrl) . '" alt="Brand Logo" style="max-height: 48px; max-width: 150px; object-fit: contain;">
+                <div class="mt-1">
+                    <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeBrandLogo()"><i class="fa fa-trash"></i> Hapus Logo</button>
+                </div>
+            </div>';
+        }
+
+        $html = '
+        <form id="brandConfigForm" enctype="multipart/form-data">
+            <input type="hidden" name="_token" value="' . csrf_token() . '">
+            <input type="hidden" name="remove_logo" id="removeBrandLogoInput" value="0">
+            <div class="form-group mb-2">
+                <label class="font-weight-bold mb-1">Brand Name Master <span class="text-danger">*</span></label>
+                <input type="text" name="brand_name" class="form-control form-control-sm" value="' . htmlspecialchars($masterBrandName) . '" placeholder="Contoh: WebProfile.ID" required>
+                <small class="text-muted">Nama brand yang akan muncul pada watermark "Powered by : [Logo] [Brand Name]".</small>
+            </div>
+            <div class="form-group mb-2">
+                <label class="font-weight-bold mb-1">Brand URL Master</label>
+                <input type="url" name="brand_url" class="form-control form-control-sm" value="' . htmlspecialchars($masterBrandUrl) . '" placeholder="Contoh: https://webprofile.id">
+                <small class="text-muted">URL tujuan saat watermark di footer diklik oleh pengunjung.</small>
+            </div>
+            <div class="form-group mb-2">
+                <label class="font-weight-bold mb-1">Brand Logo / Icon Master</label>
+                ' . $logoPreviewHtml . '
+                <input type="file" name="brand_logo" id="brandLogoFileInput" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/x-icon" class="form-control-file form-control-sm">
+                <small class="text-muted">Format didukung: PNG, JPG, WEBP, SVG, ICO (Rasio 1:1 atau proporsional logo).</small>
+            </div>
+        </form>
+        ';
+
+        return response()->json(['status' => 'success', 'html' => $html]);
+    }
+
+    public function brandConfigSave(Request $request)
+    {
+        $request->validate([
+            'brand_name' => 'required|string|max:100',
+            'brand_url' => 'nullable|url',
+        ]);
+
+        $brandName = strip_tags($request->input('brand_name', 'WebProfile.ID'));
+        $brandUrl = $request->input('brand_url') ? strip_tags($request->input('brand_url')) : config('app.url');
+
+        // Update Brand Name & Brand URL
+        Option::withoutGlobalScope('tenant')->updateOrInsert(
+            ['name' => 'brand_name', 'tenant_id' => null],
+            ['value' => $brandName, 'autoload' => 1]
+        );
+        Option::withoutGlobalScope('tenant')->updateOrInsert(
+            ['name' => 'brand_url', 'tenant_id' => null],
+            ['value' => $brandUrl, 'autoload' => 1]
+        );
+
+        // Handle Logo Removal
+        if ($request->input('remove_logo') == '1') {
+            Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->whereIn('name', ['brand_logo', 'brand_icon'])->delete();
+        } elseif ($request->filled('brand_logo') && is_string($request->input('brand_logo'))) {
+            // Handle Media Library selection from upload_modal
+            $rawVal = $request->input('brand_logo');
+            $cleanVal = preg_replace('/^\/?media\//i', '', ltrim($rawVal, '/'));
+            if ($cleanVal) {
+                Option::withoutGlobalScope('tenant')->updateOrInsert(
+                    ['name' => 'brand_logo', 'tenant_id' => null],
+                    ['value' => $cleanVal, 'autoload' => 1]
+                );
+
+            }
+        }
+
+        // Forget cache
+        $mainHost = parse_url(config('app.url'), PHP_URL_HOST);
+        Cache::forget("tenant:master:{$mainHost}:options");
+        Cache::forget("tenant:master:options");
+        Cache::forget("default:options");
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Konfigurasi Brand Master berhasil disimpan!',
+        ]);
     }
 }

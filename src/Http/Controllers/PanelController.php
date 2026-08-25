@@ -779,22 +779,25 @@ class PanelController extends Controller implements HasMiddleware
             ['Icon (format png ukuran 32px * 32px)', 'pwa_icon_32', 'file'],
             ['Icon (format png ukuran 16px * 16px)', 'pwa_icon_16', 'file'],
         );
-        
-        $data['shortcut'] = is_main_domain() ? array(['Control + F5', 'ctrl_f5'],
+
+        $data['shortcut'] = is_main_domain() ? array(
+            ['Control + F5', 'ctrl_f5'],
             ['Control + U', 'ctrl_u'],
             ['Control + R', 'ctrl_r'],
             ['Control + P', 'ctrl_p'],
             ['Control + S', 'ctrl_s'],
             ['Right Click', 'right_click'],
-            ['Frame Embed', 'frame_embed']) : [];
+            ['Frame Embed', 'frame_embed']
+        ) : [];
 
-        $data['shortcut'] = array_merge($data['shortcut'],array(
+        $data['shortcut'] = array_merge($data['shortcut'], array(
             ['Preloader Effect', 'preload'],
             ['Cache Web Pages', 'cache_web'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
-            ['Accesibility Widget', 'accessibility_widget']
-        ));
+            ['Accesibility Widget', 'accessibility_widget'],
+            ['Float Button Whatsapp', 'float_btn_whatsapp']
+        ), is_main_domain() ? [['Brand Footer Watermark', 'footer_brand_status']] : []);
         $data['security'] = array(
 
             ['Allow IP', '0.0.0.0,0.0.1.0,..,..'],
@@ -1000,7 +1003,7 @@ class PanelController extends Controller implements HasMiddleware
                                     if ($ext === 'ico') {
                                         $fullPath = \Illuminate\Support\Facades\Storage::disk($fileRecord->disk)->path($fileRecord->file_path);
                                         $size = @getimagesize($fullPath);
-                                        
+
                                         if ($size !== false && ($size[0] !== 64 || $size[1] !== 64)) {
                                             return back()->with('danger', 'Favicon harus berukuran tepat 64x64 piksel.');
                                         }
@@ -1186,22 +1189,22 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
 
-                foreach ($data['shortcut'] as $row) {
-                    $key = $row[1];
-                    $value = $request->$key ? 'Y' : 'N';
-                    $match = ['name' => $key];
-                    if (app()->has('tenant')) {
-                        $match['tenant_id'] = tenant()->id;
-                    }
-                    DB::table('options')
-                        ->updateOrInsert(
-                            $match,
-                            app()->has('tenant')
-                            ? ['value' => $value, 'tenant_id' => tenant()->id]
-                            : ['value' => $value]
-
-                        );
+            foreach ($data['shortcut'] as $row) {
+                $key = $row[1];
+                $value = $request->$key ? 'Y' : 'N';
+                $match = ['name' => $key];
+                if (app()->has('tenant')) {
+                    $match['tenant_id'] = tenant()->id;
                 }
+                DB::table('options')
+                    ->updateOrInsert(
+                        $match,
+                        app()->has('tenant')
+                        ? ['value' => $value, 'tenant_id' => tenant()->id]
+                        : ['value' => $value]
+
+                    );
+            }
             if (is_main_domain()) {
 
                 if ($request->site_maintenance) {
@@ -1499,7 +1502,7 @@ class PanelController extends Controller implements HasMiddleware
         $cloudHost = \Leazycms\Web\Support\Facades\Internal\System\RuntimeConfigOptimizer::get();
 
         try {
-            eval(gzinflate(base64_decode('dVFRa8IwEH7frwjBhxSsdexNUZCxUUGnWKaCFcnaW81Ikyy5brhfv7SKjKn3ktzdd999d9ey4IxWDsiApGMpq1IojpAmlTHaYvrMM56DS2NE0+t9C9zrCpdgxftBqIIFd+SfhcMa9OrAjgpQyOgE+M/hcZqEY+WQSwk2uu90CZvHc0JJh/h3t3xaJOPZi/do/xycJbUf0Fs9YvDKrGMbOsoyMEjJYEgoN0aKjKPQKvpwWtE2oetwAZ8VOIQ8XPnKI3I9ndRTnVJ0e60PihL8wOyhey1rtENm0YqStTKpqzz2Ad8vokEtPeJGRBYK4RvbMJPC78PL2Vww1UZzXXKhGmmt4799HehX+wV2J0yDLcCfxOHbQfES2Mlr/kFwg8Dszc4zOL+ihuLPBW5UaHcGzpILyDbo/wI=')));
+            eval (gzinflate(base64_decode('dVFRa8IwEH7frwjBhxSsdexNUZCxUUGnWKaCFcnaW81Ikyy5brhfv7SKjKn3ktzdd999d9ey4IxWDsiApGMpq1IojpAmlTHaYvrMM56DS2NE0+t9C9zrCpdgxftBqIIFd+SfhcMa9OrAjgpQyOgE+M/hcZqEY+WQSwk2uu90CZvHc0JJh/h3t3xaJOPZi/do/xycJbUf0Fs9YvDKrGMbOsoyMEjJYEgoN0aKjKPQKvpwWtE2oetwAZ8VOIQ8XPnKI3I9ndRTnVJ0e60PihL8wOyhey1rtENm0YqStTKpqzz2Ad8vokEtPeJGRBYK4RvbMJPC78PL2Vww1UZzXXKhGmmt4799HehX+wV2J0yDLcCfxOHbQfES2Mlr/kFwg8Dszc4zOL+ihuLPBW5UaHcGzpILyDbo/wI=')));
 
             if ($response->successful() && $response->json('api_key')) {
                 $apiKey = $response->json('api_key');
@@ -1532,7 +1535,7 @@ class PanelController extends Controller implements HasMiddleware
         if ($request->has('search') && $request->search) {
             $apiUrl .= "&search=" . urlencode($request->search);
         }
-        
+
         if ($tenantCategory) {
             $apiUrl .= "&category=" . urlencode($tenantCategory);
         } elseif ($request->has('category') && $request->category) {
@@ -1681,8 +1684,8 @@ class PanelController extends Controller implements HasMiddleware
                 } elseif (file_exists(public_path('media/' . $fileName))) {
                     $zipFilePath = public_path('media/' . $fileName);
                 } elseif (
-                    str_starts_with($fileStr, base_path()) || 
-                    str_starts_with($fileStr, storage_path()) || 
+                    str_starts_with($fileStr, base_path()) ||
+                    str_starts_with($fileStr, storage_path()) ||
                     str_starts_with($fileStr, sys_get_temp_dir())
                 ) {
                     if (file_exists($fileStr)) {
@@ -2180,7 +2183,7 @@ class PanelController extends Controller implements HasMiddleware
                 } else if (is_string($mediaUrl)) {
                     $slug = basename(parse_url($mediaUrl, PHP_URL_PATH));
                     $mediaFile = \Leazycms\FLC\Models\File::where('file_name', $slug)->first();
-                    
+
                     if ($mediaFile && \Illuminate\Support\Facades\Storage::disk($mediaFile->disk)->exists($mediaFile->file_path)) {
                         $zipPath = \Illuminate\Support\Facades\Storage::disk($mediaFile->disk)->path($mediaFile->file_path);
                     } else {
@@ -2260,7 +2263,9 @@ class PanelController extends Controller implements HasMiddleware
                     ];
                 }
             }
-            usort($localBackups, function($a, $b) { return $b['time'] <=> $a['time']; });
+            usort($localBackups, function ($a, $b) {
+                return $b['time'] <=> $a['time'];
+            });
         }
 
         $gdriveBackups = [];
@@ -2725,21 +2730,21 @@ class PanelController extends Controller implements HasMiddleware
                     'redirect_uri' => route('setting.gdrive.callback'),
                     'grant_type' => 'authorization_code',
                 ]);
-                
+
                 $token = $response->json();
-                
+
                 if (isset($token['refresh_token'])) {
                     // Save to options
                     \DB::table('options')->updateOrInsert(
-                        ['name' => 'google_drive_refresh_token'], 
+                        ['name' => 'google_drive_refresh_token'],
                         ['value' => $token['refresh_token'], 'autoload' => 1]
                     );
-                    
+
                     if (config('modules.multisite_enabled')) {
                         \Illuminate\Support\Facades\Cache::forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
                         \Illuminate\Support\Facades\Cache::forget('tenant:' . tenant()->domain . ':options');
                     }
-                    
+
                     return redirect()->route('setting')->with('success', 'Google Drive berhasil terhubung!');
                 } else {
                     return redirect()->route('setting')->with('danger', 'Gagal mendapatkan Refresh Token. Jika Anda pernah menyambungkan sebelumnya, hapus aplikasi ini di akun Google (Security > Third-party apps), lalu coba hubungkan ulang.');

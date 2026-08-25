@@ -120,6 +120,10 @@ Route::controller(TenantController::class)->group(function () {
     // cPanel API Configuration
     Route::post('tenant/cpanel-config/form', 'cpanelApiConfigForm')->name('tenant.cpanel.form');
     Route::post('tenant/cpanel-config/save', 'cpanelApiConfigSave')->name('tenant.cpanel.save');
+
+    // Brand Master Configuration
+    Route::get('tenant/brand-config/form', 'brandConfigForm')->name('tenant.brand.form');
+    Route::post('tenant/brand-config/save', 'brandConfigSave')->name('tenant.brand.save');
 });
 }
 if (config('modules.app_master')) {

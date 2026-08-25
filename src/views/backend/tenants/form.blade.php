@@ -188,6 +188,13 @@
                         <div class="card-header bg-success text-white">Konfigurasi & Opsi Tenant</div>
                         <div class="card-body">
                             <div class="form-group mt-2 mb-2">
+                                <label class="mb-0 font-weight-bold">Tampilkan Brand Master (Watermark Powered By) ?</label><br>
+                                <input type="hidden" name="options[show_master_brand]" value="0">
+                                <input name="options[show_master_brand]" id="show-master-brand-check" type="checkbox" value="1" {{ (old('options.show_master_brand', $options['show_master_brand'] ?? '1') == '1') ? 'checked' : '' }}>
+                                <small class="text-muted">Ceklis jika ingin menampilkan watermark "Powered by : [Logo Master] [Brand Name]" di bagian footer website tenant ini.</small>
+                            </div>
+
+                            <div class="form-group mt-2 mb-2">
                                 <label class="mb-0">Dapat Edit Template ?</label><br>
                                 <input name="options[can_edit_template]" type="radio" value="Y" {{ (old('options.can_edit_template', $options['can_edit_template'] ?? 'N') == 'Y') ? 'checked' : '' }}> Iya &nbsp; &nbsp;
                                 <input name="options[can_edit_template]" type="radio" value="N" {{ (old('options.can_edit_template', $options['can_edit_template'] ?? 'N') == 'N') ? 'checked' : '' }}> Tidak

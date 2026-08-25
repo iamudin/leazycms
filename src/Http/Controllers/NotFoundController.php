@@ -50,12 +50,12 @@ class NotFoundController extends Controller
             if (!$isPluginCustomDomain && View::exists(get_view(get_view())) && (is_main_domain() || config('modules.multisite_enabled'))) {
                 $showspin = true;
                 $view = 'cms::layouts.master';
+                $content = view($view)->render();
             } else {
-                return response(preg_replace('/\s+/', ' ', error404Msg()), 404)
-                    ->header('Content-Type', 'text/html;charset=UTF-8');
-
+                $showspin = false;
+                $content = error404Msg();
             }
-            $content = view($view)->render();
+
             if (strpos($content, '<head>') !== false) {
                 $content = str_replace(
                     '<head>',
@@ -63,8 +63,6 @@ class NotFoundController extends Controller
                     $content
                 );
             }
-
-
 
             if (
                 is_main_domain() && $showspin &&
@@ -77,6 +75,19 @@ class NotFoundController extends Controller
                     $content,
                     1
                 );
+            }
+
+            // Auto Inject Brand Footer directly above </body> on 404 page
+            if (strpos($content, 'master-footer-brand') === false && config('modules.multisite_enabled') && !is_main_domain()) {
+                $brandFooterHtml = init_brand_footer();
+                if (!empty($brandFooterHtml)) {
+                    $content = preg_replace(
+                        '/<\/body>/i',
+                        $brandFooterHtml . '</body>',
+                        $content,
+                        1
+                    );
+                }
             }
 
             $minifiedContent = minify_all_one_line($content);

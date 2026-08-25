@@ -2735,6 +2735,26 @@ if (!function_exists('init_wabutton')) {
         return view()->make('cms::layouts.floatwa')->render();
     }
 }
+if (!function_exists('init_brand_footer')) {
+    function init_brand_footer()
+    {
+        $isMultisite = config('modules.multisite_enabled');
+        $isTenant = $isMultisite && function_exists('is_main_domain') && !is_main_domain();
+
+        if ($isTenant) {
+            if (get_option('show_master_brand', '1') == '0' || empty(get_option('brand_name')) && empty(get_option('brand_url'))) {
+                return '';
+            }
+        }
+
+        if (\Illuminate\Support\Facades\View::exists('cms::layouts.brand_footer')) {
+            return \Illuminate\Support\Facades\View::make('cms::layouts.brand_footer')->render();
+        }
+
+
+    }
+}
+
 if (!function_exists('page_name')) {
     function page_name($name)
     {

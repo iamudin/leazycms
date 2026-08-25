@@ -4,6 +4,7 @@
         <div class="col-lg-12 mb-3">
             <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i> Tenant</h3>
             <div class="pull-right">
+                <button type="button" onclick="event.preventDefault(); openBrandConfig();" class="btn btn-info btn-sm"> <i class="fa fa-tag" aria-hidden="true"></i> Brand Master</button>
                 <button type="button" onclick="event.preventDefault(); openCpanelConfig();" class="btn btn-dark btn-sm"> <i class="fa fa-cogs" aria-hidden="true"></i> API cPanel</button>
                 <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden="true"></i> Tambah Tenant</a>
             </div>
@@ -154,7 +155,8 @@
          <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
          <script type="text/javascript">$('#sampleTable').DataTable();</script>
     @endpush
-     <div class="modal fade" id="cpanelModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Modal cPanel API Config -->
+    <div class="modal fade" id="cpanelModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -173,11 +175,96 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Brand Master Config -->
+    <div class="modal fade" id="brandModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-tag"></i> Konfigurasi Brand Master (Watermark)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="brandModalBody">
+                    <div class="text-center py-4"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Memuat data...</div>
+                </div>
+                <div class="modal-footer" id="brandModalFooter" style="display: none;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBrandConfig()"><i class="fa fa-save"></i> Simpan Brand</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @push('scripts')
     @include('cms::backend.layout.js')
-    <!-- Modal cPanel API Config -->
-   
+    
     <script>
+        function openBrandConfig() {
+            $('#brandModalBody').html('<div class="text-center py-4"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Memuat formulir brand...</div>');
+            $('#brandModalFooter').hide();
+            $('#brandModal').modal('show');
+
+            $.ajax({
+                url: '{{ route('tenant.brand.form') }}',
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#brandModalBody').html(response.html);
+                        $('#brandModalFooter').show();
+                        if (typeof window.initGlobalFilePickers === 'function') {
+                            window.initGlobalFilePickers();
+                        }
+                    } else {
+                        $('#brandModalBody').html('<div class="alert alert-danger">' + (response.message || 'Gagal memuat form.') + '</div>');
+                    }
+                },
+                error: function() {
+                    $('#brandModalBody').html('<div class="alert alert-danger">Gagal menghubungi server.</div>');
+                }
+            });
+        }
+
+        function removeBrandLogo() {
+            $('#removeBrandLogoInput').val('1');
+            $('#brandLogoPreviewWrapper').slideUp();
+        }
+
+        function saveBrandConfig() {
+            var form = document.getElementById('brandConfigForm');
+            if (!form) return;
+
+            var formData = new FormData(form);
+            var btn = $('#brandModal .btn-primary');
+            var originalText = btn.html();
+            btn.html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
+
+            $.ajax({
+                url: '{{ route('tenant.brand.save') }}',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    btn.html(originalText).prop('disabled', false);
+                    if (response.status === 'success') {
+                        $('#brandModal').modal('hide');
+                        swal('Berhasil!', response.message, 'success');
+                    } else {
+                        swal('Gagal!', response.message || 'Gagal menyimpan konfigurasi.', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    btn.html(originalText).prop('disabled', false);
+                    var msg = 'Terjadi kesalahan sistem.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    swal('Error!', msg, 'error');
+                }
+            });
+        }
+
         function openCpanelConfig() {
             $('#cpanelModalBody').html(`
                 <div id="cpanelAuthSection">

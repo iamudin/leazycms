@@ -665,6 +665,7 @@
     @stack('scripts')
 
     <!-- Global Media Modal -->
+    @include('cms::backend.layout.upload_modal')
 
     <script>
     function confirmLogout(event) {

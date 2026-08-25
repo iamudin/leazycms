@@ -67,6 +67,16 @@ class Web
                                 $content
                             );
                         }
+                        if (strpos($content, 'webprofile-footer-brand') === false && get_option('footer_brand_status', 'Y') !== 'N') {
+                            $brandFooterHtml = init_brand_footer();
+                            if (!empty($brandFooterHtml)) {
+                                if (stripos($content, '</footer>') !== false) {
+                                    $content = preg_replace('/<\/footer>/i', $brandFooterHtml . '</footer>', $content, 1);
+                                } else {
+                                    $content = preg_replace('/<\/body>/i', $brandFooterHtml . '</body>', $content, 1);
+                                }
+                            }
+                        }
                         $response->setContent(minify_all_one_line($content));
                     }
                     return $response;
@@ -149,7 +159,7 @@ class Web
                 $footer = '';
 
                 $footer .= $request->is('/') ? init_popup() : null;
-                $footer .= init_wabutton();
+                $footer .= get_option('float_btn_whatsapp') ? init_wabutton() : null;
                 $footer .= get_option('top_button') && get_option('top_button') == 'Y' ? init_goup() : null;
                 $footer .= get_option('accessibility_widget') && get_option('accessibility_widget') == 'Y' ? '<script src="https://cdn.jsdelivr.net/npm/sienna-accessibility@latest/dist/sienna-accessibility.umd.js" defer></script>' : null;
                 $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
@@ -176,15 +186,33 @@ document.addEventListener("lazybeforeunveil", function(e){
                 $styleInjection = '<style>img.lazyload, img.lazyloading { background: url("/shimmer.gif") no-repeat center center; background-size: cover; color: transparent; }</style>';
                 $content = preg_replace('/<\/head>/i', $styleInjection . '</head>', $content, 1);
 
+                // Auto Inject Brand Footer directly above </body>
+                if (strpos($content, 'master-footer-brand') === false && config('modules.multisite_enabled') && !is_main_domain()) {
+                    $brandFooterHtml = init_brand_footer();
+                    if (!empty($brandFooterHtml)) {
+                        $footer = $brandFooterHtml . $footer;
+                    }
+                }
+
                 $content = preg_replace(
                     '/<\/body>/i',
                     $footer . '</body>',
                     $content
                 );
+
             } else {
                 $footer = '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
+
+                // Auto Inject Brand Footer for custom web routes directly above </body>
+                if (strpos($content, 'master-footer-brand') === false && config('modules.multisite_enabled') && !is_main_domain()) {
+                    $brandFooterHtml = init_brand_footer();
+                    if (!empty($brandFooterHtml)) {
+                        $footer = $brandFooterHtml . $footer;
+                    }
+                }
+
                 $content = preg_replace(
-                    '/<\/body>/',
+                    '/<\/body>/i',
                     $footer . '</body>',
                     $content
                 );

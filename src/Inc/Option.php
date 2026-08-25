@@ -23,7 +23,7 @@ if (!function_exists('get_option')) {
 
         // Jika multisite aktif, gunakan static cache untuk menghindari hit app('tenant.options') berulang
         if ($options === null && app()->bound('tenant.options') && app()->bound('default.options')) {
-            $options = array_merge(app('tenant.options'), app('default.options'));
+            $options = array_merge(app('default.options'), app('tenant.options'));
         }
 
         if ($options !== null) {

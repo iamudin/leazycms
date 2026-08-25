@@ -399,6 +399,8 @@
                 });
             });
         }
+        window.initGlobalFilePickers = initGlobalFilePickers;
+        initGlobalFilePickers();
 
         $(document).on('click', '.btn-text-gmedia', function (e) {
             e.preventDefault();
