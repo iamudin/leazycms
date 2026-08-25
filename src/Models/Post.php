@@ -505,6 +505,13 @@ class Post extends BaseModel
      */
     private function serializeForCache($result): array
     {
+        if (is_array($result)) {
+            return [
+                '__type' => 'array',
+                '__data' => $result,
+            ];
+        }
+
         return [
             '__type' => $result instanceof \Illuminate\Database\Eloquent\Collection ? 'collection' : (is_null($result) ? 'null' : 'model'),
             '__class' => $result instanceof \Illuminate\Database\Eloquent\Model ? get_class($result) : ($result instanceof \Illuminate\Database\Eloquent\Collection && $result->isNotEmpty() ? get_class($result->first()) : null),
@@ -522,6 +529,10 @@ class Post extends BaseModel
     {
         if (!is_array($cached) || !isset($cached['__type'])) {
             return $cached;
+        }
+
+        if ($cached['__type'] === 'array') {
+            return $cached['__data'] ?? [];
         }
 
         if ($cached['__type'] === 'null') {
@@ -1005,5 +1016,91 @@ class Post extends BaseModel
                 'thumbnail' => $next->thumbnail
             ] : [],
         ];
+    }
+
+    public function archive_data($type)
+    {
+        $cacheKey = self::getCurrentHost() . ":posts:{$type}:archive_data";
+        $tags = $this->cacheTag($type);
+
+        return $this->getCached($cacheKey, $tags, function () use ($type) {
+            $rows = $this->selectRaw('DATE(created_at) as post_date, COUNT(*) as total')
+                ->onType($type)
+                ->published()
+                ->withTenant()
+                ->whereNotNull('created_at')
+                ->groupBy(\Illuminate\Support\Facades\DB::raw('DATE(created_at)'))
+                ->orderBy('post_date', 'desc')
+                ->get();
+
+            $tree = [];
+            foreach ($rows as $row) {
+                if (empty($row->post_date)) {
+                    continue;
+                }
+
+                $parts = explode('-', $row->post_date);
+                if (count($parts) < 3) {
+                    continue;
+                }
+
+                $year = $parts[0];
+                $month = $parts[1];
+                $day = $parts[2];
+                $total = (int) $row->total;
+
+                if (!isset($tree[$year])) {
+                    $tree[$year] = [
+                        'count' => 0,
+                        'months' => []
+                    ];
+                }
+                $tree[$year]['count'] += $total;
+
+                if (!isset($tree[$year]['months'][$month])) {
+                    $tree[$year]['months'][$month] = [
+                        'count' => 0,
+                        'name' => function_exists('blnindo') ? blnindo($month) : date('F', mktime(0, 0, 0, (int)$month, 10)),
+                        'days' => []
+                    ];
+                }
+                $tree[$year]['months'][$month]['count'] += $total;
+                $tree[$year]['months'][$month]['days'][$day] = $total;
+            }
+
+            return $tree;
+        });
+    }
+
+    public function archive($type)
+    {
+        $tree = $this->archive_data($type);
+        $module = get_module($type);
+
+        return View::make('cms::layouts.archive_tree', [
+            'type' => $type,
+            'module' => $module,
+            'tree' => $tree
+        ]);
+    }
+
+    public function archive_tree($type)
+    {
+        return $this->archive($type);
+    }
+
+    public function archive_list($type)
+    {
+        return $this->archive($type);
+    }
+
+    public function archive_calendar($type)
+    {
+        return $this->archive($type);
+    }
+
+    public function index_archive($type)
+    {
+        return $this->archive($type);
     }
 }
