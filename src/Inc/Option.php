@@ -64,7 +64,8 @@ if (!function_exists('disallow_option_key')) {
             'app_env',
             'app_debug',
             'allow_manage_user',
-            'allow_park_domain'
+            'allow_park_domain',
+            'max_image_width'
         ];
 
         // 1. Jika parameter adalah ARRAY: Daftarkan/tambahkan key secara dinamis

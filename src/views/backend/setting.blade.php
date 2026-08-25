@@ -230,6 +230,24 @@
                                                     data-onstyle="outline-success" data-offstyle="outline-danger" data-size="sm"></div>
                                         </div>
                                     </div>
+                                    <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-image"></i>
+                                        Optimasi Media (Compress & Resize)</h6>
+                                    <small for="" class="text-muted">Resolusi Lebar Maksimal Gambar (Max Width)</small>
+                                    <div class="input-group mb-1">
+                                        <input type="text"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                            class="form-control form-control-sm"
+                                            placeholder="1500"
+                                            name="max_image_width"
+                                            value="{{ get_option('max_image_width', 1500) }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="font-size: 11px;">Pixel (px)</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted d-block mb-3" style="font-size: 11px;">
+                                        Batas resolusi lebar (width) maksimal saat gambar dikompresi otomatis ke format WebP saat upload media. Nilai default: <code>1500</code> px.
+                                    </small>
+
                                     @if (!app()->routesAreCached())
                                         <h6 for="" style="border-bottom:1px dashed #000"> <i class="fa fa-key"></i>
                                             Login

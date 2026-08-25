@@ -459,7 +459,8 @@ class TenantController extends Controller implements HasMiddleware
                 'cache_web',
                 'default_jquery',
                 'top_button',
-                'accessibility_widget'
+                'accessibility_widget',
+                'max_image_width'
             ])
             ->delete();
     }

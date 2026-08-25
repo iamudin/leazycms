@@ -215,13 +215,13 @@
             } else {
                 $(elem).css('border-width', '1px');
             }
-            
+
             let selectedVals = [];
-            $('.media-grid-item.selected-media').each(function() {
+            $('.media-grid-item.selected-media').each(function () {
                 selectedVals.push($(this).data('val'));
             });
             $('#global-library-select').val(selectedVals.join(','));
-            
+
             if (selectedVals.length > 0) {
                 $('#btn-use-selected-media').removeAttr('disabled');
             } else {
@@ -656,7 +656,10 @@
                     img.onload = function () {
                         let width = img.width;
                         let height = img.height;
-                        let maxWidth = 1700;
+                        let maxWidth = {{ (int) (function_exists('get_option') && get_option('max_image_width') ? get_option('max_image_width') : 1500) }};
+                        if (maxWidth <= 0) {
+                            maxWidth = 1500;
+                        }
 
                         if (width > maxWidth) {
                             height = Math.round((height * maxWidth) / width);
@@ -956,7 +959,7 @@
                 let vals = selectedVal.split(',');
                 let previewArea = currentFileWrapper.find('.media-preview-area');
                 previewArea.empty().show();
-                
+
                 // Adjust preview area max-width if multiple
                 if (vals.length > 1) {
                     previewArea.css('max-width', '100%');
@@ -964,7 +967,7 @@
                     previewArea.css('max-width', '200px');
                 }
 
-                vals.forEach(function(val) {
+                vals.forEach(function (val) {
                     /* Add new hidden input */
                     $('<input>').attr({
                         type: 'hidden',
@@ -999,11 +1002,11 @@
                         let faSize = vals.length > 1 ? 'fa-2x' : 'fa-3x';
                         itemDiv.append('<i class="fa ' + icon + ' ' + faSize + ' mb-2 d-block"></i>');
                     }
-                    
-                    let shortName = vals.length > 1 && val.length > 10 ? val.substring(0,8) + '..' : val;
+
+                    let shortName = vals.length > 1 && val.length > 10 ? val.substring(0, 8) + '..' : val;
                     let widthCss = vals.length > 1 ? '60px' : 'auto';
                     itemDiv.append('<div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width:' + widthCss + ';" title="' + val + '">' + shortName + '</div>');
-                    
+
                     previewArea.append(itemDiv);
                 });
 
@@ -1078,7 +1081,7 @@
                             updateDiskSpaceUI(-res.deleted_size);
                         }
                         if (mediaName) {
-                            $('.note-editable img[src*="' + mediaName + '"]').each(function() {
+                            $('.note-editable img[src*="' + mediaName + '"]').each(function () {
                                 var $fig = $(this).closest('figure');
                                 if ($fig.length) {
                                     $fig.remove();

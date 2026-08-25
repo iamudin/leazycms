@@ -1211,8 +1211,25 @@ class PanelController extends Controller implements HasMiddleware
 
                     );
             }
-            if (is_main_domain()) {
 
+            if (is_main_domain()) {
+                if ($request->has('max_image_width')) {
+                    $maxWidth = (int) $request->input('max_image_width', 1500);
+                    if ($maxWidth <= 0) {
+                        $maxWidth = 1500;
+                    }
+                    $match = ['name' => 'max_image_width'];
+                    if (app()->has('tenant')) {
+                        $match['tenant_id'] = null;
+                    }
+                    DB::table('options')
+                        ->updateOrInsert(
+                            $match,
+                            app()->has('tenant')
+                            ? ['value' => $maxWidth, 'tenant_id' => null, 'autoload' => 1]
+                            : ['value' => $maxWidth, 'autoload' => 1]
+                        );
+                }
                 if ($request->site_maintenance) {
                     $match = ['name' => 'site_maintenance'];
                     if (app()->has('tenant')) {
