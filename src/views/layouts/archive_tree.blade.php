@@ -13,7 +13,6 @@
     $defaultMonths = !empty($tree[$defaultYear]['months']) ? array_keys($tree[$defaultYear]['months']) : [];
     rsort($defaultMonths);
     $defaultMonth = !empty($defaultMonths) ? $defaultMonths[0] : date('m');
-
     $monthNames = [
         '01' => 'Januari',
         '02' => 'Februari',
@@ -29,7 +28,6 @@
         '12' => 'Desember'
     ];
 @endphp
-
 <div id="{{ $widgetId }}" class="leazy-archive-calendar"
     style="width: 100%; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.4; color: var(--cal-text);">
     <style>
