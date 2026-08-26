@@ -159,6 +159,7 @@ class Web
                 $footer = '';
 
                 $footer .= $request->is('/') ? init_popup() : null;
+                $footer .= ($request->is('/') && get_option('welcome_speech_active') == 'Y' && get_option('welcome_speech')) ? init_welcome_speech() : null;
                 $footer .= get_option('float_btn_whatsapp') ? init_wabutton() : null;
                 $footer .= get_option('top_button') && get_option('top_button') == 'Y' ? init_goup() : null;
                 $footer .= get_option('accessibility_widget') && get_option('accessibility_widget') == 'Y' ? init_accessibility() : null;

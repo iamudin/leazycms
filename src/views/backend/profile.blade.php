@@ -113,6 +113,24 @@
                                                     rows="3"
                                                     placeholder="Masukkan keterangan organisasi">{{ old('keterangan_organisasi', get_option('keterangan_organisasi')) }}</textarea>
                                             </div>
+
+                                            <div class="form-group mt-3 pb-3" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #f8fafc;">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="font-weight-bold text-dark" style="font-size: 13px;">
+                                                        <i class="fa fa-volume-up text-primary mr-1"></i> Ucapan Selamat Datang (Text-to-Speech Suara)
+                                                    </span>
+                                                    <label class="mb-0 d-flex align-items-center" style="cursor: pointer; gap: 6px;">
+                                                        <input type="checkbox" name="welcome_speech_active" value="Y" {{ get_option('welcome_speech_active', 'N') == 'Y' ? 'checked' : '' }}>
+                                                        <span class="badge badge-success font-weight-bold" style="font-size: 11px;">Aktifkan di Beranda</span>
+                                                    </label>
+                                                </div>
+                                                <textarea class="form-control form-control-sm bg-white" name="welcome_speech" rows="2"
+                                                    placeholder="Contoh: Selamat datang di website resmi {{ get_option('nama_organisasi', 'kami') }}">{{ old('welcome_speech', get_option('welcome_speech')) }}</textarea>
+                                                <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                                                    <i class="fa fa-info-circle"></i> Teks ini akan otomatis dibacakan dengan suara Bahasa Indonesia alami saat pengunjung pertama kali membuka halaman utama website.
+                                                </small>
+                                            </div>
+
                                             <div class="form-group mt-3">
                                                 <small>Jam Kerja</small>
 

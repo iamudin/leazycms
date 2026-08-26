@@ -2741,6 +2741,12 @@ if (!function_exists('init_accessibility')) {
         return view()->make('cms::layouts.accessibility')->render();
     }
 }
+if (!function_exists('init_welcome_speech')) {
+    function init_welcome_speech()
+    {
+        return view()->make('cms::layouts.welcome_speech')->render();
+    }
+}
 if (!function_exists('init_brand_footer')) {
     function init_brand_footer()
     {

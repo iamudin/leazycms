@@ -708,7 +708,9 @@ class PanelController extends Controller implements HasMiddleware
             'whatsapp',
             'jam_kerja',
             'visi',
-            'misi'
+            'misi',
+            'welcome_speech',
+            'welcome_speech_active'
         ];
         if ($request->isMethod('put')) {
             foreach ($data as $row) {
@@ -731,12 +733,14 @@ class PanelController extends Controller implements HasMiddleware
                     }
                 } else {
                     $value = $request->$key;
-                    if ($key == 'jam_kerja' || $key == 'visi') {
+                    if ($key == 'welcome_speech_active') {
+                        $value = $request->has('welcome_speech_active') ? 'Y' : 'N';
+                    } elseif ($key == 'jam_kerja' || $key == 'visi') {
                         $value = nl2br(strip_tags($value));
                     } elseif ($key == 'misi') {
                         $value = strip_tags($value, '<p><br><ul><ol><li><b><strong><i><em><u>');
                     } else {
-                        $value = strip_tags($value);
+                        $value = is_string($value) ? strip_tags($value) : $value;
                     }
                     $fid = $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
                 }

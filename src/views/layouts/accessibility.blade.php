@@ -1154,9 +1154,13 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
     let currentAudio = null;
     let subSentenceQueue = [];
 
+    function isFirefoxBrowser() {
+        return navigator.userAgent.toLowerCase().includes('firefox');
+    }
+
     // Deteksi apakah browser memiliki voice pack asli Bahasa Indonesia
     function getIndonesianVoice() {
-        if (!synth) return null;
+        if (isFirefoxBrowser() || !synth) return null;
         const voices = synth.getVoices() || [];
         return voices.find(v => {
             const lang = (v.lang || '').toLowerCase();
@@ -1237,9 +1241,11 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 
         audio.onerror = () => {
             currentAudio = null;
-            if (synth) {
+            const indVoice = getIndonesianVoice();
+            if (synth && indVoice) {
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = 'id-ID';
+                u.voice = indVoice;
                 u.rate = state.ttsSpeed || 1.0;
                 u.onend = onDone;
                 u.onerror = onDone;
@@ -1250,9 +1256,11 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         };
 
         audio.play().catch(() => {
-            if (synth) {
+            const indVoice = getIndonesianVoice();
+            if (synth && indVoice) {
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = 'id-ID';
+                u.voice = indVoice;
                 u.rate = state.ttsSpeed || 1.0;
                 u.onend = onDone;
                 u.onerror = onDone;
