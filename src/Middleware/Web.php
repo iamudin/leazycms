@@ -161,7 +161,7 @@ class Web
                 $footer .= $request->is('/') ? init_popup() : null;
                 $footer .= get_option('float_btn_whatsapp') ? init_wabutton() : null;
                 $footer .= get_option('top_button') && get_option('top_button') == 'Y' ? init_goup() : null;
-                $footer .= get_option('accessibility_widget') && get_option('accessibility_widget') == 'Y' ? '<script src="https://cdn.jsdelivr.net/npm/sienna-accessibility@latest/dist/sienna-accessibility.umd.js" defer></script>' : null;
+                $footer .= get_option('accessibility_widget') && get_option('accessibility_widget') == 'Y' ? init_accessibility() : null;
                 $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
                 if (file_exists(public_path('template/' . template() . '/scripts.js'))) {
                     $footer .= '<script src="' . url('template/' . template() . '/scripts.js') . '"></script>';

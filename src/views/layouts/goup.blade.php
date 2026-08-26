@@ -8,7 +8,7 @@
 <style>
 .go-up-btn {
     position: fixed;
-    bottom: 80px;
+    bottom: 68px;
     right: 20px;
     z-index: 999;
     width: 44px;

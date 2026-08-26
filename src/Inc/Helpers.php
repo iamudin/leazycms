@@ -2735,6 +2735,12 @@ if (!function_exists('init_wabutton')) {
         return view()->make('cms::layouts.floatwa')->render();
     }
 }
+if (!function_exists('init_accessibility')) {
+    function init_accessibility()
+    {
+        return view()->make('cms::layouts.accessibility')->render();
+    }
+}
 if (!function_exists('init_brand_footer')) {
     function init_brand_footer()
     {
