@@ -63,11 +63,11 @@
                         </button>
                     </div>
 
-                    <!-- TTS Mode Baca Seleksi / Hover -->
+                    <!-- TTS Mode Baca Seleksi Teks -->
                     <div class="lz-a11y-toggle-row" style="margin-top: 10px;">
                         <label class="lz-a11y-toggle-label" for="lzA11yReadSelection">
-                            <span class="lz-a11y-label-title">Baca Teks yang Disorot / Diklik</span>
-                            <span class="lz-a11y-label-desc">Klik atau blok kalimat apa saja untuk mendengarkannya</span>
+                            <span class="lz-a11y-label-title">Baca Teks yang Diseleksi</span>
+                            <span class="lz-a11y-label-desc">Blok / sorot kalimat apa saja untuk mendengarkannya</span>
                         </label>
                         <input type="checkbox" id="lzA11yReadSelection" class="lz-a11y-checkbox">
                     </div>
@@ -1024,6 +1024,7 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         });
 
         readSelectionCheckbox.checked = !!state.readSelection;
+        root.classList.toggle('lz-a11y-read-selection-active', !!state.readSelection);
         applyFontSize();
         updateBadge();
     }
@@ -1073,6 +1074,7 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
     // Selection Read Toggle
     readSelectionCheckbox.addEventListener('change', () => {
         state.readSelection = readSelectionCheckbox.checked;
+        applyFeatures();
         saveState();
     });
 
@@ -1219,7 +1221,7 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         return result;
     }
 
-    // Putar kalimat menggunakan Audio Google TTS Indonesia via local backend endpoint (Khusus Firefox / perangkat tanpa voice Indonesia)
+    // Putar kalimat menggunakan Audio Google TTS Indonesia via local backend endpoint
     function playAudioChunk(text, onDone) {
         if (!isSpeaking || isPaused) return;
         const clean = encodeURIComponent(text.trim());
@@ -1235,7 +1237,6 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 
         audio.onerror = () => {
             currentAudio = null;
-            // Fallback terakhir ke SpeechSynthesis jika audio network error
             if (synth) {
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = 'id-ID';
@@ -1249,7 +1250,6 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         };
 
         audio.play().catch(() => {
-            // Jika autoplay audio diblokir peramban
             if (synth) {
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = 'id-ID';
@@ -1274,7 +1274,6 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         const hasNativeVoice = !!getIndonesianVoice();
 
         if (hasNativeVoice && synth) {
-            // Gunakan Web Speech API jika browser (Chrome/Edge) punya voice Indonesia asli
             const utterance = new SpeechSynthesisUtterance(sentence);
             utterance.lang = 'id-ID';
             utterance.rate = state.ttsSpeed || 1.0;
@@ -1293,7 +1292,6 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
             };
             synth.speak(utterance);
         } else {
-            // Gunakan Audio Stream Bahasa Indonesia (Natural) untuk Firefox / sistem tanpa voice pack ID
             playAudioChunk(sentence, () => {
                 if (isSpeaking && !isPaused) {
                     processSubSentences(onParagraphFinished);
@@ -1328,11 +1326,8 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 
     function extractArticleChunks() {
         const chunks = [];
-        
-        // Cari container artikel utama jika ada
         const articleContainer = document.querySelector('article, .news-content, .post-content, .entry-content, .detail-content, main') || document.body;
         
-        // Ambil judul utama H1
         const mainTitle = document.querySelector('h1');
         if (mainTitle && mainTitle.innerText.trim()) {
             chunks.push({
@@ -1341,10 +1336,8 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
             });
         }
 
-        // Ambil semua paragraf, heading H2-H3, list
         const textElements = articleContainer.querySelectorAll('p, h2, h3, h4, li');
         textElements.forEach(el => {
-            // Abaikan elemen dalam popup, footer, navbar, atau menu aksesibilitas
             if (el.closest('#lzA11yApp, nav, footer, script, style, header')) return;
 
             const text = el.innerText.trim();
@@ -1361,14 +1354,7 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 
     function startFullPageSpeech() {
         stopSpeech();
-
-        // Cek apakah ada seleksi teks
-        const selectedText = window.getSelection().toString().trim();
-        if (selectedText) {
-            ttsQueue = [{ text: selectedText, element: null }];
-        } else {
-            ttsQueue = extractArticleChunks();
-        }
+        ttsQueue = extractArticleChunks();
 
         if (ttsQueue.length === 0) {
             alert('Tidak ditemukan teks artikel yang dapat dibaca di halaman ini.');
@@ -1417,17 +1403,51 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 
     ttsStopBtn.addEventListener('click', stopSpeech);
 
-    // Speak on Selection / Click Text
-    document.addEventListener('mouseup', () => {
-        if (!state.readSelection || isSpeaking) return;
-        const selected = window.getSelection().toString().trim();
-        if (selected.length > 2) {
+    // ---------------------------------------------------------
+    // BACA HANYA TEKS YANG DI-SELECT / DI-BLOK SAJA
+    // ---------------------------------------------------------
+    function readSelectedTextOnly(targetEl) {
+        if (!state.readSelection) return;
+        if (targetEl && targetEl.closest('#lzA11yApp')) return;
+
+        // Ambil teks yang secara nyata di-blok/select oleh pengguna
+        const selection = window.getSelection();
+        const selectedText = selection ? selection.toString().trim() : '';
+
+        // Abaikan jika tidak ada teks yang di-select
+        if (!selectedText || selectedText.length < 2) return;
+
+        stopSpeech();
+        removeHighlight();
+
+        isSpeaking = true;
+        isPaused = false;
+        subSentenceQueue = splitIntoSubSentences(selectedText);
+
+        ttsPlayBtn.style.display = 'none';
+        ttsPauseBtn.style.display = 'inline-flex';
+        ttsStopBtn.style.display = 'inline-flex';
+        ttsStatus.style.display = 'flex';
+        ttsStatusText.textContent = 'Membaca teks terpilih...';
+
+        processSubSentences(() => {
             stopSpeech();
-            isSpeaking = true;
-            subSentenceQueue = splitIntoSubSentences(selected);
-            processSubSentences(() => {
-                isSpeaking = false;
-            });
+        });
+    }
+
+    document.addEventListener('mouseup', (e) => {
+        if (!state.readSelection) return;
+        setTimeout(() => {
+            readSelectedTextOnly(e.target);
+        }, 60);
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (!state.readSelection) return;
+        if (e.key && (e.key.includes('Arrow') || e.key === 'Shift')) {
+            setTimeout(() => {
+                readSelectedTextOnly(document.activeElement);
+            }, 100);
         }
     });
 

@@ -47,18 +47,21 @@ class ExtController extends Controller
             abort('404');
         }
 
-        $text = mb_substr(trim($text), 0, 200);
+        $text = mb_substr(trim($text), 0, 250);
         $url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=id&client=tw-ob&q=' . urlencode($text);
 
         try {
-            $context = stream_context_create([
-                'http' => [
-                    'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n",
-                    'timeout' => 5
-                ]
-            ]);
-            $audio = @file_get_contents($url, false, $context);
-            if ($audio && strlen($audio) > 50) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_REFERER, 'https://translate.google.com/');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            $audio = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $audio && strlen($audio) > 50) {
                 return Response::make($audio, 200, [
                     'Content-Type' => 'audio/mpeg',
                     'Cache-Control' => 'public, max-age=86400'
@@ -66,8 +69,7 @@ class ExtController extends Controller
             }
         } catch (\Throwable $e) {}
 
-            abort('404');
-
+        abort('404');
     }
 
     private function sitemapHostKey(): string
