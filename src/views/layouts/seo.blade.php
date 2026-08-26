@@ -144,73 +144,7 @@ $ic16 = get_option('pwa_icon_16'); @endphp
 @if(file_exists(public_path('template/' . template() . '/styles.css')))
   <link rel="stylesheet" type='text/css' href="{{url('template/' . template() . '/styles.css')}}">
 @endif
-@if(get_option('float_btn_whatsapp') == 'Y' && get_option('whatsapp'))
-  <style>
-    .wa-float {
-      position: fixed;
-      bottom: 15px;
-      right: 15px;
 
-      width: 55px;
-      height: 55px;
-
-      background: #25d366;
-      color: white;
-
-      border-radius: 50%;
-      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.25);
-
-      display: flex;
-      align-items: center;
-
-      cursor: pointer;
-      z-index: 1000;
-
-      transition: all .35s ease;
-
-      overflow: hidden;
-    }
-
-    /* icon whatsapp */
-
-    .wa-float i {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      transition: all .35s ease;
-    }
-
-    /* text */
-
-    .wa-label {
-      margin-left: 55px;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity .3s ease;
-      white-space: nowrap;
-    }
-
-    /* hover */
-
-    .wa-float:hover {
-      width: 130px;
-      border-radius: 30px;
-    }
-
-    /* geser icon saat hover */
-
-    .wa-float:hover i {
-      left: 20px;
-      transform: none;
-    }
-
-    /* tampilkan label */
-
-    .wa-float:hover .wa-label {
-      opacity: 1;
-    }
-  </style>
-@endif
 <style>
   img.share-button:hover {
     cursor: pointer;

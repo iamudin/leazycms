@@ -1,21 +1,106 @@
-@if(get_option('whatsapp'))
+@if(get_option('whatsapp') && get_option('float_btn_whatsapp','N') == 'Y')
 @php
     $waNumber = preg_replace('/[^0-9]/', '', get_option('whatsapp'));
     if (str_starts_with($waNumber, '0')) {
         $waNumber = '62' . substr($waNumber, 1);
     }
 @endphp
-  <div class="wa-float"
-    onclick="location.href='https://wa.me/{{ $waNumber }}?text=Halo%2C%20saya%20ingin%20bertanya.'">
-    <!-- WhatsApp Icon -->
-    <i>
-  <img 
-    alt="WhatsApp" 
-    width="32" height="32"
-    src="data:image/png;base64,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" 
-  />
-  </i>
+<!-- Tombol Floating WhatsApp -->
+<a href="https://wa.me/{{ $waNumber }}?text=Halo%2C%20saya%20ingin%20bertanya." 
+   target="_blank" 
+   rel="noopener noreferrer" 
+   class="wa-float" 
+   aria-label="Hubungi via WhatsApp" 
+   title="Hubungi via WhatsApp">
+    <span class="wa-status-dot"></span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" class="wa-icon">
+        <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.364 2.76 1.057 3.96L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+    </svg>
+    <span class="wa-label">Hubungi</span>
+</a>
 
-     <span class="wa-label">Hubungi</span>
-  </div>
+<style>
+.wa-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #25D366;
+    color: #ffffff !important;
+    border-radius: 9999px;
+    text-decoration: none !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4), 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.wa-float .wa-status-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background-color: #22c55e;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: waPulse 2s infinite;
+    pointer-events: none;
+}
+
+@keyframes waPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+.wa-float .wa-icon {
+    width: 22px;
+    height: 22px;
+    fill: #ffffff;
+    flex-shrink: 0;
+    display: block;
+    transition: transform 0.25s ease;
+}
+
+.wa-float .wa-label {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    color: #ffffff;
+    user-select: none;
+}
+
+.wa-float:hover {
+    background: #20ba5a;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(37, 211, 102, 0.5), 0 4px 10px rgba(0, 0, 0, 0.12);
+    color: #ffffff !important;
+}
+
+.wa-float:hover .wa-icon {
+    transform: scale(1.08);
+}
+
+.wa-float:active {
+    transform: translateY(-1px) scale(0.97);
+}
+</style>
 @endif
