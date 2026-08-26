@@ -274,6 +274,14 @@ class Post extends BaseModel
         return $this->media_description;
     }
 
+    public function getTtsButtonAttribute()
+    {
+        if (empty($this->content)) {
+            return null;
+        }
+        return new \Illuminate\Support\HtmlString(view('cms::layouts.detail_tts', ['post' => $this])->render());
+    }
+
     function count($type)
     {
         return $this->onType($type)->published()->count();

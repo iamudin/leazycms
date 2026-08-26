@@ -2747,6 +2747,15 @@ if (!function_exists('init_welcome_speech')) {
         return view()->make('cms::layouts.welcome_speech')->render();
     }
 }
+if (!function_exists('detail_tts_button')) {
+    function detail_tts_button($post = null)
+    {
+        if (!$post && isset($GLOBALS['detail'])) {
+            $post = $GLOBALS['detail'];
+        }
+        return $post?->tts_button ?? '';
+    }
+}
 if (!function_exists('init_brand_footer')) {
     function init_brand_footer()
     {
