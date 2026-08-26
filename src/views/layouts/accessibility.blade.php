@@ -1142,19 +1142,25 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
     });
 
     // ---------------------------------------------------------
-    // TEXT TO SPEECH (INDONESIAN TTS ENGINE)
+    // TEXT TO SPEECH (SMART INDONESIAN DUAL-ENGINE)
     // ---------------------------------------------------------
     let synth = window.speechSynthesis;
     let ttsQueue = [];
-    let currentUtterance = null;
     let isSpeaking = false;
     let isPaused = false;
     let currentHighlightEl = null;
+    let currentAudio = null;
+    let subSentenceQueue = [];
 
+    // Deteksi apakah browser memiliki voice pack asli Bahasa Indonesia
     function getIndonesianVoice() {
         if (!synth) return null;
-        const voices = synth.getVoices();
-        return voices.find(v => v.lang === 'id-ID' || v.lang.startsWith('id') || v.name.toLowerCase().includes('indonesia')) || null;
+        const voices = synth.getVoices() || [];
+        return voices.find(v => {
+            const lang = (v.lang || '').toLowerCase();
+            const name = (v.name || '').toLowerCase();
+            return (lang === 'id-id' || lang === 'id_id' || lang === 'id' || name.includes('indonesia') || name.includes('gadis') || name.includes('andika') || name.includes('ardhi'));
+        }) || null;
     }
 
     if (synth && synth.onvoiceschanged !== undefined) {
@@ -1170,9 +1176,14 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 
     function stopSpeech() {
         if (synth) {
-            synth.cancel();
+            try { synth.cancel(); } catch(e) {}
+        }
+        if (currentAudio) {
+            try { currentAudio.pause(); } catch(e) {}
+            currentAudio = null;
         }
         ttsQueue = [];
+        subSentenceQueue = [];
         isSpeaking = false;
         isPaused = false;
         removeHighlight();
@@ -1182,7 +1193,117 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         ttsStatus.style.display = 'none';
     }
 
-    function speakNextChunk() {
+    // Memecah teks panjang menjadi potongan kalimat (< 140 karakter)
+    function splitIntoSubSentences(text) {
+        const result = [];
+        const raw = text.split(/(?<=[.!?,;\n])\s+/);
+        raw.forEach(s => {
+            s = s.trim();
+            if (!s) return;
+            if (s.length <= 140) {
+                result.push(s);
+            } else {
+                const words = s.split(' ');
+                let buf = '';
+                words.forEach(w => {
+                    if ((buf + ' ' + w).length <= 140) {
+                        buf = buf ? buf + ' ' + w : w;
+                    } else {
+                        if (buf) result.push(buf);
+                        buf = w;
+                    }
+                });
+                if (buf) result.push(buf);
+            }
+        });
+        return result;
+    }
+
+    // Putar kalimat menggunakan Audio Google TTS Indonesia via local backend endpoint (Khusus Firefox / perangkat tanpa voice Indonesia)
+    function playAudioChunk(text, onDone) {
+        if (!isSpeaking || isPaused) return;
+        const clean = encodeURIComponent(text.trim());
+        const url = `{{ url('lz-tts') }}?text=${clean}`;
+        const audio = new Audio(url);
+        audio.playbackRate = state.ttsSpeed || 1.0;
+        currentAudio = audio;
+
+        audio.onended = () => {
+            currentAudio = null;
+            if (onDone) onDone();
+        };
+
+        audio.onerror = () => {
+            currentAudio = null;
+            // Fallback terakhir ke SpeechSynthesis jika audio network error
+            if (synth) {
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'id-ID';
+                u.rate = state.ttsSpeed || 1.0;
+                u.onend = onDone;
+                u.onerror = onDone;
+                synth.speak(u);
+            } else if (onDone) {
+                onDone();
+            }
+        };
+
+        audio.play().catch(() => {
+            // Jika autoplay audio diblokir peramban
+            if (synth) {
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'id-ID';
+                u.rate = state.ttsSpeed || 1.0;
+                u.onend = onDone;
+                u.onerror = onDone;
+                synth.speak(u);
+            } else if (onDone) {
+                onDone();
+            }
+        });
+    }
+
+    function processSubSentences(onParagraphFinished) {
+        if (!isSpeaking || isPaused) return;
+        if (subSentenceQueue.length === 0) {
+            if (onParagraphFinished) onParagraphFinished();
+            return;
+        }
+
+        const sentence = subSentenceQueue.shift();
+        const hasNativeVoice = !!getIndonesianVoice();
+
+        if (hasNativeVoice && synth) {
+            // Gunakan Web Speech API jika browser (Chrome/Edge) punya voice Indonesia asli
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.lang = 'id-ID';
+            utterance.rate = state.ttsSpeed || 1.0;
+            const voice = getIndonesianVoice();
+            if (voice) utterance.voice = voice;
+
+            utterance.onend = () => {
+                if (isSpeaking && !isPaused) {
+                    processSubSentences(onParagraphFinished);
+                }
+            };
+            utterance.onerror = () => {
+                if (isSpeaking && !isPaused) {
+                    processSubSentences(onParagraphFinished);
+                }
+            };
+            synth.speak(utterance);
+        } else {
+            // Gunakan Audio Stream Bahasa Indonesia (Natural) untuk Firefox / sistem tanpa voice pack ID
+            playAudioChunk(sentence, () => {
+                if (isSpeaking && !isPaused) {
+                    processSubSentences(onParagraphFinished);
+                }
+            });
+        }
+    }
+
+    function speakNextParagraph() {
+        if (!isSpeaking || isPaused) return;
         if (ttsQueue.length === 0) {
             stopSpeech();
             return;
@@ -1194,30 +1315,15 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         if (item.element) {
             currentHighlightEl = item.element;
             currentHighlightEl.classList.add('lz-a11y-tts-reading-highlight');
-            currentHighlightEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try {
+                currentHighlightEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch(e) {}
         }
 
-        const utterance = new SpeechSynthesisUtterance(item.text);
-        utterance.lang = 'id-ID';
-        utterance.rate = state.ttsSpeed || 1.0;
-        
-        const idVoice = getIndonesianVoice();
-        if (idVoice) utterance.voice = idVoice;
-
-        utterance.onend = () => {
-            if (isSpeaking && !isPaused) {
-                speakNextChunk();
-            }
-        };
-
-        utterance.onerror = () => {
-            if (isSpeaking && !isPaused) {
-                speakNextChunk();
-            }
-        };
-
-        currentUtterance = utterance;
-        synth.speak(utterance);
+        subSentenceQueue = splitIntoSubSentences(item.text);
+        processSubSentences(() => {
+            speakNextParagraph();
+        });
     }
 
     function extractArticleChunks() {
@@ -1238,8 +1344,8 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         // Ambil semua paragraf, heading H2-H3, list
         const textElements = articleContainer.querySelectorAll('p, h2, h3, h4, li');
         textElements.forEach(el => {
-            // Abaikan elemen dalam popup atau menu aksesibilitas
-            if (el.closest('#lzA11yApp, nav, footer, script, style')) return;
+            // Abaikan elemen dalam popup, footer, navbar, atau menu aksesibilitas
+            if (el.closest('#lzA11yApp, nav, footer, script, style, header')) return;
 
             const text = el.innerText.trim();
             if (text.length > 5) {
@@ -1254,11 +1360,6 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
     }
 
     function startFullPageSpeech() {
-        if (!synth) {
-            alert('Maaf, peramban (browser) Anda belum mendukung fitur Web Text to Speech.');
-            return;
-        }
-
         stopSpeech();
 
         // Cek apakah ada seleksi teks
@@ -1281,25 +1382,35 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
         ttsPauseBtn.style.display = 'inline-flex';
         ttsStopBtn.style.display = 'inline-flex';
         ttsStatus.style.display = 'flex';
-        ttsStatusText.textContent = 'Membaca (' + ttsQueue.length + ' bagian)...';
+        ttsStatusText.textContent = 'Membaca Bahasa Indonesia...';
 
-        speakNextChunk();
+        speakNextParagraph();
     }
 
     ttsPlayBtn.addEventListener('click', startFullPageSpeech);
 
     ttsPauseBtn.addEventListener('click', () => {
-        if (synth && isSpeaking) {
-            if (isPaused) {
+        if (!isSpeaking) return;
+        if (isPaused) {
+            isPaused = false;
+            ttsPauseBtn.querySelector('span').textContent = 'Jeda';
+            ttsStatusText.textContent = 'Membaca Bahasa Indonesia...';
+            if (currentAudio) {
+                currentAudio.play();
+            } else if (synth) {
                 synth.resume();
-                isPaused = false;
-                ttsPauseBtn.querySelector('span').textContent = 'Jeda';
-                ttsStatusText.textContent = 'Membaca...';
-            } else {
+            }
+            if (!currentAudio && (!synth || !synth.speaking)) {
+                processSubSentences(() => { speakNextParagraph(); });
+            }
+        } else {
+            isPaused = true;
+            ttsPauseBtn.querySelector('span').textContent = 'Lanjut';
+            ttsStatusText.textContent = 'Dijeda';
+            if (currentAudio) {
+                currentAudio.pause();
+            } else if (synth) {
                 synth.pause();
-                isPaused = true;
-                ttsPauseBtn.querySelector('span').textContent = 'Lanjut';
-                ttsStatusText.textContent = 'Dijeda';
             }
         }
     });
@@ -1310,14 +1421,13 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
     document.addEventListener('mouseup', () => {
         if (!state.readSelection || isSpeaking) return;
         const selected = window.getSelection().toString().trim();
-        if (selected.length > 3) {
-            if (synth) synth.cancel();
-            const u = new SpeechSynthesisUtterance(selected);
-            u.lang = 'id-ID';
-            u.rate = state.ttsSpeed || 1.0;
-            const idVoice = getIndonesianVoice();
-            if (idVoice) u.voice = idVoice;
-            synth.speak(u);
+        if (selected.length > 2) {
+            stopSpeech();
+            isSpeaking = true;
+            subSentenceQueue = splitIntoSubSentences(selected);
+            processSubSentences(() => {
+                isSpeaking = false;
+            });
         }
     });
 

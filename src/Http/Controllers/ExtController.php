@@ -40,6 +40,36 @@ class ExtController extends Controller
             ->header('Content-Disposition', 'inline; filename="site.manifest"');
     }
 
+    public function tts()
+    {
+        $text = request()->get('text');
+        if (empty($text)) {
+            abort('404');
+        }
+
+        $text = mb_substr(trim($text), 0, 200);
+        $url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=id&client=tw-ob&q=' . urlencode($text);
+
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n",
+                    'timeout' => 5
+                ]
+            ]);
+            $audio = @file_get_contents($url, false, $context);
+            if ($audio && strlen($audio) > 50) {
+                return Response::make($audio, 200, [
+                    'Content-Type' => 'audio/mpeg',
+                    'Cache-Control' => 'public, max-age=86400'
+                ]);
+            }
+        } catch (\Throwable $e) {}
+
+            abort('404');
+
+    }
+
     private function sitemapHostKey(): string
     {
         if (config('modules.multisite_enabled')) {

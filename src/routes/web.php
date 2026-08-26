@@ -47,6 +47,7 @@ Route::match(['get', 'post'], 'favicon/site.manifest', [ExtController::class, 'm
 Route::match(['get', 'post'], 'favicon/swk.js', [ExtController::class, 'service_worker'])->name('serviceworker');
 Route::get('captcha/refresh', [ExtController::class, 'refresh_captcha'])->name('captcha.refresh');
 Route::get('captcha-image/{session}.webp', [ExtController::class, 'generate_captcha'])->name('captcha');
+Route::get('lz-tts', [ExtController::class, 'tts'])->name('lz.tts');
 // AJAX validation route removed, now handled by WebController
 
 
@@ -77,7 +78,7 @@ Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->nam
 
 Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
     ->where('slug', '(?!(?:' . implode('|', array_merge(
-        [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.icon', 'logo.webp', 'stats.webp'],
+        [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.icon', 'logo.webp', 'stats.webp', 'lz-tts'],
         $modules->pluck('name')->toArray()
     )) . ')$)[a-zA-Z0-9-_]+')
     ->middleware(['public', TrackVisitor::class]);
