@@ -2554,6 +2554,12 @@ if (!function_exists('set_header_seo')) {
         $current_module = get_module($data->type);
         $desctitle = !Str::contains($current_module->title, Str::of($data->title)->explode(' ')[0]) ? $current_module->title . ' ' . $data->title : $data->title;
         return array(
+            'post' => (object)[
+                'user' => $data->user,
+                'created_at' => $data->created_at,
+                'updated_at' => $data->updated_at,
+                'type' => $data->type,
+            ],
             'description' => !empty($data->description) ? $data->description : (strlen($data->short_content) == 0 ? 'Lihat ' . $desctitle : $data->short_content),
             'keywords' => !empty($data->keyword) ? $data->keyword : $data->site_keyword,
             'title' => $data->title,

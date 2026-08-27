@@ -1,33 +1,50 @@
 <meta charset="utf-8">
-<meta name="author" content="Abu Umar's House">
-<meta name="copyright" content="© 2025 - Build by LeazyCMS's Plugins">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="{{ $description ?? 'LeazyCMS Plugins By Abu Umar'}}">
-<meta name="keywords" content="{{  $keywords ?? 'LeazyCMS Plugins By Abu Umar'}}">
-<title>{{$title}}</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+{{-- Resource Hints & DNS Prefetch --}}
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="//fonts.gstatic.com">
+<link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+@php
+  $siteTitle = get_option('site_title') ?: 'LeazyCMS';
+  $seoTitle = $title ?? $siteTitle;
+  $rawDescription = !empty($description) ? strip_tags($description) : 'LeazyCMS Plugins By Abu Umar';
+  $seoDescription = trim(preg_replace('/\s+/', ' ', $rawDescription));
+  $seoKeywords = !empty($keywords) ? strip_tags($keywords) : 'LeazyCMS Plugins By Abu Umar';
+  $seoThumbnail = !empty($thumbnail) ? $thumbnail : noimage();
+  $canonicalUrl = url()->current();
+@endphp
+
+<title>{{ $seoTitle }}</title>
+<meta name="title" content="{{ $seoTitle }}">
+<meta name="author" content="Abu Umar's House">
+<meta name="copyright" content="© {{ date('Y') }} - Build by LeazyCMS's Plugins">
+<meta name="description" content="{{ Str::limit($seoDescription, 160) }}">
+<meta name="keywords" content="{{ $seoKeywords }}">
+<link rel="canonical" href="{{ $canonicalUrl }}">
+
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 @if(config('modules.multisite_enabled') && function_exists('is_main_domain') && is_main_domain())
-<meta name="robots" content="noindex,nofollow">
+  <meta name="robots" content="noindex, nofollow">
 @else
-<meta name="robots" content="index,follow">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 @endif
-<meta name="distribution" content="global" >
+<meta name="distribution" content="global">
 <meta name="rating" content="general">
-<meta property="og:site_name" content="Aplikasi {{ get_option('site_title') }}">
-<meta property="og:type" content="website">
-<meta property="og:url"  content="{{url()->current()}}">
-<meta property="og:title" content="{{$title ?? ''}}">
-<meta property="og:description" content="{{ $description ?? ''}}">
-<meta property="og:image" content="{{$thumbnail ?? noimage()}}">
 
-<meta property="og:locale" content="id">
-<meta name="theme-color" content="{{ get_option('pwa_theme_color') ?? '#ffffff'}}">
-<link rel="canonical" href="{{url()->current()}}" >
-<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
-<meta name="apple-mobile-web-app-status-bar-style" content="{{ get_option('pwa_theme_color') ?? '#ffffff'}}">
-<meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
-<meta name="msapplication-TileColor" content="#0068df">
+<meta property="og:site_name" content="Aplikasi {{ $siteTitle }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ $canonicalUrl }}">
+<meta property="og:title" content="{{ $seoTitle }}">
+<meta property="og:description" content="{{ Str::limit($seoDescription, 200) }}">
+<meta property="og:image" content="{{ $seoThumbnail }}">
+<meta property="og:locale" content="id_ID">
 @php $ic180 = get_option('pwa_icon_180'); @endphp
 @if($ic180 && media_exists($ic180))
 <meta name="msapplication-TileImage" content="{{ url(get_option('pwa_icon_180'))  }}">

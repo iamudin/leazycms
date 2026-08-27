@@ -16,22 +16,34 @@
     <meta property="og:image" content="">
     <meta property="og:description" content="">
 @if(config('modules.multisite_enabled'))
-    @if(!get_option('favicon_for_all'))
-        @if(get_option('favicon') && media_exists(get_option('favicon')))
-            <link rel="icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
-            <link rel="shortcut icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
-        @endif
-    @else
+
+  @if(!get_option('favicon_for_all'))
+
+      @if(get_option('favicon') && media_exists(get_option('favicon')))
+      <link rel="icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
+      <link rel="shortcut icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
+      @else 
         @if(file_exists(public_path('favicon.ico')))
-            <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
-            <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+          <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+          <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+        @else 
+          <link rel="icon" href="{{ main_domain('favicon.icon') }}" type="image/x-icon">
+          <link rel="shortcut icon" href="{{ main_domain('favicon.icon') }}" type="image/x-icon">
         @endif
-    @endif
-@else
+      @endif
+  @else
+
     @if(file_exists(public_path('favicon.ico')))
-        <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
-        <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+      <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+      <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
     @endif
+  @endif
+
+@else
+  @if(file_exists(public_path('favicon.ico')))
+    <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+  @endif
 @endif
     <title>
         {{ isset($title) ? $title . ' › Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '') : ('Admin Panel ' . (get_option('site_title') ? ' › ' . get_option('site_title') : '')) }}

@@ -1,10 +1,33 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+{{-- Resource Hints & DNS Prefetch for High Performance --}}
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="//fonts.gstatic.com">
+<link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+@if(get_option('google_analytics_code'))
+<link rel="dns-prefetch" href="//www.googletagmanager.com">
+@endif
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+{{-- Favicons --}}
 @if(config('modules.multisite_enabled'))
   @if(!get_option('favicon_for_all'))
-    @if(get_option('favicon') && media_exists(get_option('favicon')))
+      @if(get_option('favicon') && media_exists(get_option('favicon')))
       <link rel="icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
       <link rel="shortcut icon" href="{{ url('favicon.icon') }}" type="image/x-icon">
-    @endif
+      @else 
+        @if(file_exists(public_path('favicon.ico')))
+          <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+          <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
+        @else 
+          <link rel="icon" href="{{ main_domain('favicon.icon') }}" type="image/x-icon">
+          <link rel="shortcut icon" href="{{ main_domain('favicon.icon') }}" type="image/x-icon">
+        @endif
+      @endif
   @else
     @if(file_exists(public_path('favicon.ico')))
       <link rel="icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
@@ -17,65 +40,101 @@
     <link rel="shortcut icon" href="{{ url('favicon.ico') }}" type="image/x-icon">
   @endif
 @endif
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
-<meta name="author" content="Abu Umar's House">
-<meta name="copyright" content="© 2025 - Build by LeazyCMS">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
-<meta name="keywords" content="{{  $keywords ?? 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS'}}">
-<title>{{$title}}
-  {{ get_option('site_title') && get_option('show_site_title_after_page_name') && !request()->is('/') ? ' - ' . get_option('site_title') : null }}
-</title>
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
+
+{{-- Meta Variables Normalization --}}
 @php
+  $siteTitle = get_option('site_title') ?: 'LeazyCMS';
+  $seoTitle = ($title ?? 'Home') . (get_option('site_title') && get_option('show_site_title_after_page_name') && !request()->is('/') ? ' - ' . get_option('site_title') : '');
+  $rawDescription = !empty($description) ? strip_tags($description) : (get_option('site_description') ? strip_tags(get_option('site_description')) : 'The Builded Website by LeazyCMS - Laravel');
+  $seoDescription = trim(preg_replace('/\s+/', ' ', $rawDescription));
+  $seoKeywords = !empty($keywords) ? strip_tags($keywords) : (get_option('site_keywords') ? strip_tags(get_option('site_keywords')) : 'LeazyCMS, Web Builder, Web Resmi, Easy Use CMS, Laravel CMS');
+  $seoAuthor = "Abu Umar's House";
+  $seoThumbnail = !empty($thumbnail) ? $thumbnail : noimage();
+  $canonicalUrl = url()->current();
+
   $ase = get_option('allow_search_engine');
-  $allowIndexing = empty($ase) || $ase && $ase == 'Y' ? 'Y' : 'N';
+  $allowIndexing = empty($ase) || ($ase && $ase == 'Y') ? 'Y' : 'N';
 @endphp
+
+{{-- Standard Primary Meta Tags --}}
+<title>{{ $seoTitle }}</title>
+<meta name="title" content="{{ $seoTitle }}">
+<meta name="description" content="{{ Str::limit($seoDescription, 160) }}">
+<meta name="keywords" content="{{ $seoKeywords }}">
+<meta name="author" content="{{ $seoAuthor }}">
+<meta name="copyright" content="© {{ date('Y') }} - {{ $siteTitle }}">
+<link rel="canonical" href="{{ $canonicalUrl }}">
+
+{{-- Search Engine Directives --}}
 @if($allowIndexing == 'Y')
-  <meta name="robots" content="index,follow">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 @else
-  <meta name="robots" content="noindex,nofollow">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="bingbot" content="noindex, nofollow">
 @endif
 <meta name="distribution" content="global">
 <meta name="rating" content="general">
-<meta property="og:site_name" content="{{ get_option('site_title') }}">
-<meta property="og:type" content="website">
-<meta property="og:url" content="{{url()->current()}}">
-<meta property="og:title" content="{{$title ?? 'The Builded Website by LeazyCMS - Laravel'}}">
-<meta property="og:description" content="{{ $description ?? 'The Website By Laravel'}}">
-<meta property="og:image" content="{{$thumbnail ?? noimage()}}">
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="{{url()->current()}}">
-<meta property="twitter:title" content="{{ $title ?? 'The Builded Website by LeazyCMS - Laravel'}}">
-<meta property="twitter:description" content="{{ $description ?? 'The Builded Website by LeazyCMS - Laravel'}}">
-<meta property="twitter:image" content="{{$thumbnail ?? noimage()}}">
-<meta property="og:locale" content="id">
-<meta name="theme-color" content="{{ get_option('pwa_theme_color') ?? '#ffffff'}}">
-<link rel="canonical" href="{{url()->current()}}">
-<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
-<meta name="apple-mobile-web-app-status-bar-style" content="{{ get_option('pwa_theme_color') ?? '#ffffff'}}">
-<meta name="application-name" content="{{ get_option('pwa_name') ?? get_option('site_title') }}">
-<meta name="msapplication-TileColor" content="#0068df">
+
+{{-- Open Graph / Facebook / WhatsApp --}}
+<meta property="og:site_name" content="{{ $siteTitle }}">
+<meta property="og:type" content="{{ isset($post) && isset($post->type) && in_array($post->type, ['berita', 'artikel', 'post', 'blog']) ? 'article' : 'website' }}">
+<meta property="og:url" content="{{ $canonicalUrl }}">
+<meta property="og:title" content="{{ $title ?? $siteTitle }}">
+<meta property="og:description" content="{{ Str::limit($seoDescription, 200) }}">
+<meta property="og:image" content="{{ $seoThumbnail }}">
+<meta property="og:image:alt" content="{{ $title ?? $siteTitle }}">
+<meta property="og:locale" content="id_ID">
+@if(isset($post) && isset($post->type))
+  @if(!empty($post->created_at))
+    <meta property="article:published_time" content="{{ is_string($post->created_at) ? date('c', strtotime($post->created_at)) : $post->created_at->toIso8601String() }}">
+  @endif
+  @if(!empty($post->updated_at))
+    <meta property="article:modified_time" content="{{ is_string($post->updated_at) ? date('c', strtotime($post->updated_at)) : $post->updated_at->toIso8601String() }}">
+  @endif
+  @if(!empty($post->user?->name))
+    <meta property="article:author" content="{{ $post->user->name }}">
+  @endif
+@endif
+
+{{-- Twitter Cards --}}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="{{ $canonicalUrl }}">
+<meta name="twitter:title" content="{{ $title ?? $siteTitle }}">
+<meta name="twitter:description" content="{{ Str::limit($seoDescription, 200) }}">
+<meta name="twitter:image" content="{{ $seoThumbnail }}">
+<meta name="twitter:image:alt" content="{{ $title ?? $siteTitle }}">
+
+{{-- PWA, Mobile & Application Styling --}}
+<meta name="theme-color" content="{{ get_option('pwa_theme_color') ?? '#ffffff' }}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="{{ get_option('pwa_theme_color') ?? '#ffffff' }}">
+<meta name="apple-mobile-web-app-title" content="{{ get_option('pwa_name') ?? $siteTitle }}">
+<meta name="application-name" content="{{ get_option('pwa_name') ?? $siteTitle }}">
+<meta name="msapplication-TileColor" content="{{ get_option('pwa_theme_color') ?? '#0068df' }}">
+
+{{-- PWA Icons & Manifest --}}
 @php $ic180 = get_option('pwa_icon_180'); @endphp
 @if($ic180 && media_exists($ic180))
-  <meta name="msapplication-TileImage" content="{{ url(get_option('pwa_icon_180'))  }}">
-  <link rel="apple-touch-icon" sizes="180x180" href="{{ url(get_option('pwa_icon_180'))}}">
+  <meta name="msapplication-TileImage" content="{{ url($ic180) }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url($ic180) }}">
 @endif
-@php $ic32 = get_option('pwa_icon_32');
-$ic16 = get_option('pwa_icon_16'); @endphp
+@php
+  $ic32 = get_option('pwa_icon_32');
+  $ic16 = get_option('pwa_icon_16');
+@endphp
 @if($ic32 && $ic16 && media_exists($ic32) && media_exists($ic16))
-  <link rel="icon" type="image/png" sizes="32x32" href="{{ url($ic32)}}">
-  <link rel="icon" type="image/png" sizes="16x16" href="{{ url($ic16)}}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url($ic32) }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url($ic16) }}">
 @endif
 @if(get_option('pwa_name') && get_option('pwa_short_name'))
-
-  <link rel="manifest" href="{{ urL('favicon/site.manifest') }}">
+  <link rel="manifest" href="{{ url('favicon/site.manifest') }}">
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register("{{ urL('favicon/swk.js')}}", {
+      navigator.serviceWorker.register("{{ url('favicon/swk.js') }}", {
         scope: '.'
       }).then(function (registration) {
       }, function (err) {
