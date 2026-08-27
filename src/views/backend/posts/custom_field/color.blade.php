@@ -25,3 +25,6 @@
         maxlength="7"
         oninput="if(this.value.length === 7 && this.value.startsWith('#')) { document.getElementById('picker_{{_us($r[0])}}').value = this.value; }">
 </div>
+@if(!empty($r[1]->helper))
+<small class="form-text text-muted">{{ $r[1]->helper }}</small>
+@endif

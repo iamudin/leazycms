@@ -14,3 +14,6 @@
        @endforeach
     </select>
 @endif
+@if(!empty($r[1]->helper))
+<small class="form-text text-muted">{{ $r[1]->helper }}</small>
+@endif

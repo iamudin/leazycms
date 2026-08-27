@@ -246,7 +246,8 @@
                 @endif
             </div>
             <div class="col-lg-3">
-                <!-- Desktop Status Toggle (Visible only on large screens) -->
+                <div class="sticky-sidebar-content" style="position: -webkit-sticky; position: sticky; top: 65px; z-index: 10; max-height: calc(100vh - 80px); overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;">
+                    <!-- Desktop Status Toggle (Visible only on large screens) -->
                 <div class="d-none d-lg-block">
                     <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
                         <label onclick="handleStatusSubmit(this)"
@@ -531,9 +532,25 @@
                             {!! help('Jika dicentang, maka postingan ini akan menjadi prioritas dihalaman jika dikondisikan pada template ') !!}
                         </small></label>
                 </div>
-
             </div>
     </form>
+    @push('styles')
+        <style>
+            .sticky-sidebar-content::-webkit-scrollbar {
+                width: 4px;
+            }
+            .sticky-sidebar-content::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .sticky-sidebar-content::-webkit-scrollbar-thumb {
+                background: rgba(0,0,0,0.15);
+                border-radius: 4px;
+            }
+            .sticky-sidebar-content::-webkit-scrollbar-thumb:hover {
+                background: rgba(0,0,0,0.3);
+            }
+        </style>
+    @endpush
     @if ($post->mime != 'html' && $post->type != 'docs' && $module->form->editor)
         @push('styles')
             <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">

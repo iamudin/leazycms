@@ -3007,7 +3007,7 @@ if (!function_exists('_loop')) {
 if (!function_exists('_us')) {
     function _us($val)
     {
-        return str_replace('-', '_', str($val)->slug());
+        return trim(preg_replace('/[^a-zA-Z0-9]+/', '_', strtolower((string) $val)), '_');
     }
 }
 if (!function_exists('time_to_path')) {

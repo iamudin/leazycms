@@ -50,6 +50,7 @@
 
             </div>
             <div class="col-lg-3">
+                <div class="sticky-sidebar-content" style="position: -webkit-sticky; position: sticky; top: 65px; z-index: 10; max-height: calc(100vh - 80px); overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;">
                 <!-- Desktop Status Toggle (Visible only on large screens) -->
                 <div class="d-none d-lg-block mb-3">
                     <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
@@ -111,11 +112,25 @@
                 
        
 
+                </div>
             </div>
         </div>
     </form>
     @push('styles')
         <style>
+            .sticky-sidebar-content::-webkit-scrollbar {
+                width: 4px;
+            }
+            .sticky-sidebar-content::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .sticky-sidebar-content::-webkit-scrollbar-thumb {
+                background: rgba(0,0,0,0.15);
+                border-radius: 4px;
+            }
+            .sticky-sidebar-content::-webkit-scrollbar-thumb:hover {
+                background: rgba(0,0,0,0.3);
+            }
             .autocomplete-box {
                 position: relative;
             }

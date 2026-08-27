@@ -1,5 +1,8 @@
 <small for="{{_us($r[0])}}">{{$r[0]}}</small>
 <textarea id="editor_{{_us($r[0])}}" data-no-media="true" class="form-control" name="{{_us($r[0])}}">{{ !empty(old(_us($r[0]))) ? old(_us($r[0])) :  (isset($field[_us($r[0])]) && !empty($field[_us($r[0])])  ? $field[_us($r[0])] : '')}}</textarea>
+@if(!empty($r[1]->helper))
+<small class="form-text text-muted">{{ $r[1]->helper }}</small>
+@endif
 
 @push('styles')
     @if(!defined('SUMMERNOTE_CSS_CUSTOM_FIELD'))

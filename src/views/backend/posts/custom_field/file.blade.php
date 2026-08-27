@@ -21,3 +21,6 @@
         class="compress-image form-control form-control-file" value="{{ $field[_us($r[0])] ?? null }}" name="{{_us($r[0])}}"
         placeholder="Entri {{$r[0]}}">
     </div>
+@if(!empty($r[1]->helper))
+<small class="form-text text-muted">{{ $r[1]->helper }}</small>
+@endif

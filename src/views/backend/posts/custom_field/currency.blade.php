@@ -17,3 +17,6 @@
         placeholder="0"
         oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.')">
 </div>
+@if(!empty($r[1]->helper))
+<small class="form-text text-muted">{{ $r[1]->helper }}</small>
+@endif
