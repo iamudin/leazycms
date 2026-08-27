@@ -420,12 +420,12 @@
 
             {{-- Main Editor Card --}}
             @if ($module->form->editor)
-                <div class="editor-card p-0">
                     @if (isset($module->form->ai_generator) && $module->form->ai_generator)
                         <button type="button" class="btn btn-sm btn-outline-primary mb-3" style="border-radius: 8px; font-weight: 600;" data-toggle="modal" data-target="#promptGeneratorModal" onclick="$('#prompt_topic').val($('[name=title]').val())">
                             <i class="fa fa-magic mr-1"></i> AI Prompt Generator
                         </button>
                     @endif
+                <div class="editor-card p-0">
 
                     @php
                         $isTenantOnMainDomain = config('modules.multisite_enabled') && !empty($post) && !empty($post->tenant_id) && is_main_domain() && $post->tenant;
@@ -1200,7 +1200,7 @@
                     <div class="form-group mb-0">
                         <label class="soft-label">Hasil Prompt (Salin teks ini ke ChatGPT / AI Anda)</label>
                         <textarea id="prompt_result" class="form-control soft-control" rows="8" style="background:#f8fafc;" readonly></textarea>
-                        <div class="mt-2.5">
+                        <div class="mt-3">
                             <button type="button" class="btn btn-success btn-sm" style="border-radius: 6px; font-weight: 600;" onclick="copyPrompt()">
                                 <i class="fa fa-copy mr-1"></i> Salin ke Clipboard
                             </button>
