@@ -12,7 +12,7 @@
                 <div class="badge badge-primary px-3 py-1 font-weight-bold text-uppercase" style="font-size: 11.5px; letter-spacing: 0.5px; border-radius: 6px; background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;">
                     <i class="fa fa-layer-group mr-1"></i> {{ $r[0] }}
                 </div>
-                <div class="flex-grow-1 ml-2" style="height: 1px; background: #e2e8f0;"></div>
+                <div class="flex-grow-1 ml-2" style="height: 1px; background: #bbbbbbff;"></div>
             </div>
             @if(!empty($r[1]->helper))
                 <small class="text-muted d-block mb-2 pl-1">{{ $r[1]->helper }}</small>

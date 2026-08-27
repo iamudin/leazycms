@@ -2,7 +2,7 @@
     <div class="badge badge-primary px-3 py-1.5 font-weight-bold text-uppercase" style="font-size: 11.5px; letter-spacing: 0.5px; border-radius: 6px; background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;">
         <i class="fa fa-list-ul mr-1.5"></i> Data {{ $module->form->looping_name }}
     </div>
-    <div class="flex-grow-1 ml-3" style="height: 1px; background: #e2e8f0;"></div>
+    <div class="flex-grow-1 ml-3" style="height: 1px; background: #bbbbbbff;"></div>
 </div>
 
 <div class="table-responsive looping-table-responsive" style="border: 1.5px solid #e2e8f0; border-radius: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; background: #ffffff;">

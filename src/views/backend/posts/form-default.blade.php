@@ -247,7 +247,7 @@
         padding: 2px 6px !important;
     }
     .app-content {
-        background-color: #f0f0f0ff !important;
+        background-color: #f8f8f8ff !important;
     }
 </style>
 
@@ -476,7 +476,6 @@
                     }
                 }
                 ?>
-                <div class="editor-card">
                     <label class="soft-label">{{ $pp[0] }}</label>
                     <select @if (isset($pp[3]) && $pp[3] == 'required') required @endif data-live-search="true"
                         class="selectpicker form-control soft-control" name="parent_id">
@@ -488,7 +487,6 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
                 @push('styles')
                     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
                 @endpush
@@ -500,16 +498,15 @@
 
             {{-- Custom Fields Container --}}
             @if ($module->form->custom_field)
-                <div id="custom-fields-container" class="editor-card p-3">
+                
                     @include('cms::backend.posts.custom_field.form')
-                </div>
             @endif
 
             {{-- Looping Data Container --}}
             @if ($module->form->looping_data)
-                <div id="looping-data-container" class="editor-card p-3">
+            <div class="mt-3 mb-3">
                     @include('cms::backend.posts.looping_data.form')
-                </div>
+                    </div>
             @endif
         </div>
 
