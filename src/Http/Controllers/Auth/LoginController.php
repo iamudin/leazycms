@@ -92,7 +92,7 @@ class LoginController extends Controller
     {
         // Jika multisite aktif dan request submit login ke tenant secara langsung (bukan main domain)
         if (config('modules.multisite_enabled') && !is_main_domain()) {
-            $redirectSetting = env('LOGIN_FORM_REDIRECT_TO', 'dashboard');
+            $redirectSetting = env('LOGIN_FORM_REDIRECT_TO');
             if ($redirectSetting !== false && $redirectSetting !== 'false' && $redirectSetting !== '0') {
                 $target = is_string($redirectSetting) ? trim($redirectSetting) : 'dashboard';
                 if (str_starts_with($target, 'http://') || str_starts_with($target, 'https://')) {
