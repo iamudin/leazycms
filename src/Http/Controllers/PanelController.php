@@ -649,20 +649,26 @@ class PanelController extends Controller implements HasMiddleware
         if ($request->isMethod('post')) {
             $option = new Option;
             foreach ($data as $field) {
-                if (isset($field[1]) && $field[1] === 'break') {
+                $fieldName = $field[0] ?? '';
+                $fieldMeta = $field[1] ?? 'text';
+                $fieldType = is_array($fieldMeta) ? ($fieldMeta['type'] ?? 'text') : (is_object($fieldMeta) ? ($fieldMeta->type ?? 'text') : $fieldMeta);
+
+                if ($fieldType === 'break') {
                     continue;
                 }
-                $key = _us($field[0]);
+                $key = _us($fieldName);
                 if (config('modules.multisite_enabled') && !is_main_domain() && function_exists('disallow_option_key') && disallow_option_key($key)) {
                     continue;
                 }
 
-                if ($field[1] == 'file') {
+                if ($fieldType == 'file' || $fieldType == 'image') {
+                    $mimeType = is_array($fieldMeta) ? ($fieldMeta['mime_type'] ?? null) : (is_object($fieldMeta) ? ($fieldMeta->mime_type ?? null) : ($field[2] ?? null));
                     if ($request->hasFile($key)) {
+                        $defaultMimes = $fieldType == 'image' ? ['image/gif', 'image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'] : explode(',', allow_mime());
                         $value = (new Flc)->addFile([
                             'file' => $request->file($key),
                             'purpose' => $key,
-                            'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
+                            'mime_type' => !empty($mimeType) ? (is_array($mimeType) ? $mimeType : explode(',', $mimeType)) : $defaultMimes,
                             'self_upload' => true,
                         ]);
                         $option->updateOrCreate(['name' => $key], ['value' => $value, 'autoload' => 1]);
@@ -672,7 +678,13 @@ class PanelController extends Controller implements HasMiddleware
                 } else {
                     if ($request->has($key)) {
                         $val = $request->input($key);
-                        $option->updateOrCreate(['name' => $key], ['value' => is_string($val) ? trim($val) : $val, 'autoload' => 1]);
+                        if ($fieldType === 'rich-text') {
+                            $allowedTags = '<p><br><b><strong><i><em><u><ul><ol><li><a><h1><h2><h3><h4><h5><h6><blockquote><hr><table><thead><tbody><tr><th><td><span><div>';
+                            $val = is_string($val) ? strip_tags($val, $allowedTags) : $val;
+                        } else {
+                            $val = is_string($val) ? trim($val) : $val;
+                        }
+                        $option->updateOrCreate(['name' => $key], ['value' => $val, 'autoload' => 1]);
                     }
                 }
             }

@@ -173,6 +173,8 @@ class DummyGenerator
                             $generatedFields[$fieldKey] = fake()->date();
                         } elseif ($fieldType == 'phone') {
                             $generatedFields[$fieldKey] = fake('id_ID')->phoneNumber();
+                        } elseif ($fieldType == 'url') {
+                            $generatedFields[$fieldKey] = fake()->url();
                         } elseif ($fieldType == 'textarea') {
                             $generatedFields[$fieldKey] = "Data dummy untuk " . $fieldLabel;
                         } elseif ($fieldType == 'image' || $fieldType == 'file') {
@@ -251,6 +253,8 @@ class DummyGenerator
                                 $generatedFields[$fieldKey] = fake()->date();
                             } elseif ($fieldType == 'phone') {
                                 $generatedFields[$fieldKey] = fake('id_ID')->phoneNumber();
+                            } elseif ($fieldType == 'url') {
+                                $generatedFields[$fieldKey] = fake()->url();
                             } elseif ($fieldType == 'textarea') {
                                 $generatedFields[$fieldKey] = fake()->randomElement($indoParagraphs);
                             } elseif ($fieldType == 'image' || $fieldType == 'file') {

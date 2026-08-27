@@ -270,7 +270,8 @@ if (!function_exists('add_option')) {
             if (is_array($array)) {
                 $array = array_values(array_filter($array, function ($field) {
                     if (is_array($field) && isset($field[0])) {
-                        if (isset($field[1]) && $field[1] === 'break') {
+                        $metaType = is_array($field[1] ?? null) ? ($field[1]['type'] ?? null) : ($field[1] ?? null);
+                        if ($metaType === 'break') {
                             return true;
                         }
                         $fieldKey = _us($field[0]);

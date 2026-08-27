@@ -50,7 +50,7 @@
 
             </div>
             <div class="col-lg-3">
-                <div class="sticky-sidebar-content" style="position: -webkit-sticky; position: sticky; top: 65px; z-index: 10; max-height: calc(100vh - 80px); overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;">
+                <div class="sticky-sidebar-content" style="position: -webkit-sticky; position: sticky; top: 65px; z-index: 10;">
                 <!-- Desktop Status Toggle (Visible only on large screens) -->
                 <div class="d-none d-lg-block mb-3">
                     <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
