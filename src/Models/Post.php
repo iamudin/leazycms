@@ -210,6 +210,108 @@ class Post extends BaseModel
         $this->attributes['content'] = $value;
     }
 
+    /**
+     * Accessor untuk $detail->content (Ultra-High Performance)
+     */
+    public function getContentAttribute($value)
+    {
+        if (empty($value)) {
+            return $value;
+        }
+
+        // 1. Lewatkan jika sedang di halaman Admin panel / CLI Console
+        if (request()->is(admin_path() . '*') || app()->runningInConsole()) {
+            return $value;
+        }
+
+        // 2. Abaikan iklan jika Singlesite (multisite tidak aktif)
+        if (!config('modules.multisite_enabled')) {
+            return $value;
+        }
+
+        // 3. Pengecualian jika Tenant Bebas Iklan
+        $isBebasIklan = in_array(get_option('bebas_iklan', '0'), ['1', 1, 'true', true, 'Y', 'y'], true);
+        if ($isBebasIklan) {
+            return $value;
+        }
+
+        // 4. Static Memory Cache: Supaya json_decode & filter hanya dieksekusi 1x per request lifecycle
+        static $cachedActiveAds = null;
+
+        if ($cachedActiveAds === null) {
+            $adsRaw = get_option('master_ads', '[]');
+            $adsList = is_array($adsRaw) ? $adsRaw : json_decode($adsRaw, true);
+
+            if (is_array($adsList) && !empty($adsList)) {
+                $cachedActiveAds = array_values(array_filter($adsList, function ($item) {
+                    $status = $item['status'] ?? 0;
+                    $isActive = in_array($status, [1, '1', true, 'true', 'active', 'on'], true);
+                    return $isActive && !empty($item['image']);
+                }));
+            } else {
+                $cachedActiveAds = [];
+            }
+        }
+
+        // Jika tidak ada iklan aktif, langsung kembalikan konten asli
+        if (empty($cachedActiveAds)) {
+            return $value;
+        }
+
+        // 4. Pilih 1 Iklan secara RANDOM
+        $selectedAd = $cachedActiveAds[array_rand($cachedActiveAds)];
+        $adTitle = htmlspecialchars($selectedAd['title'] ?? '');
+        $adLink  = !empty($selectedAd['link']) ? $selectedAd['link'] : '#';
+        $adImage = $selectedAd['image'];
+
+        // Jika URL image relatif (misal /media/...), sesuaikan dengan full URL
+        if (str_starts_with($adImage, '/media/')) {
+            $adImage = url($adImage);
+        }
+
+        // 5. Format HTML Banner Iklan dengan Optimasi Browser & Core Web Vitals (Lazy Load + Async Decode + Sponsored SEO)
+        $adHtml = '
+        <div class="tenant-global-inarticle-ad" style="margin: 24px auto; text-align: center; max-width: 100%; clear: both;">
+            ' . (!empty($adTitle) ? '<div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">' . $adTitle . '</div>' : '') . '
+            <a href="' . e($adLink) . '" target="_blank" rel="noopener noreferrer nofollow sponsored" style="display: inline-block; max-width: 100%;">
+                <img src="' . e($adImage) . '" alt="' . $adTitle . '" loading="lazy" decoding="async" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: block; margin: 0 auto;">
+            </a>
+        </div>';
+
+        // 6. Cek cepat sebelum regex (Short-circuit optimization: jika artikel tidak punya tag </p>)
+        if (stripos($value, '</p>') === false) {
+            return $value . $adHtml;
+        }
+
+        // 7. Ambil posisi target paragraf (default: 2)
+        $targetParagraph = (int) (get_option('master_ad_paragraph') ?? 2);
+
+        return $this->insertAdAfterParagraph($value, $adHtml, $targetParagraph);
+    }
+
+    /**
+     * Helper untuk menyisipkan HTML setelah tag </p> ke-N
+     */
+    protected function insertAdAfterParagraph(string $content, string $adHtml, int $paragraphNumber = 2): string
+    {
+        $count = 0;
+
+        $modified = preg_replace_callback('/(<\/p>)/i', function ($matches) use (&$count, $paragraphNumber, $adHtml) {
+            $count++;
+            if ($count === $paragraphNumber) {
+                return $matches[1] . $adHtml;
+            }
+            return $matches[1];
+        }, $content);
+
+        // Jika paragraf kurang dari target (misal artikel hanya 1 paragraf), sisipkan di akhir
+        if ($count < $paragraphNumber && $count > 0) {
+            $modified .= $adHtml;
+        }
+
+        return $modified;
+    }
+
     public function getThumbnailAttribute()
     {
         if ($this->media) {

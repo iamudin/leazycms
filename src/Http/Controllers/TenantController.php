@@ -693,4 +693,71 @@ class TenantController extends Controller implements HasMiddleware
             'message' => 'Konfigurasi Brand Master berhasil disimpan!',
         ]);
     }
+
+    public function adsConfigForm()
+    {
+        $adsJson = Option::withoutGlobalScope('tenant')
+            ->whereNull('tenant_id')
+            ->where('name', 'master_ads')
+            ->value('value');
+
+        $adsList = $adsJson ? json_decode($adsJson, true) : [];
+        if (!is_array($adsList)) {
+            $adsList = [];
+        }
+
+        $paragraphPos = (int) (Option::withoutGlobalScope('tenant')
+            ->whereNull('tenant_id')
+            ->where('name', 'master_ad_paragraph')
+            ->value('value') ?? 2);
+
+        return response()->json([
+            'status' => 'success',
+            'ads' => $adsList,
+            'paragraph' => $paragraphPos
+        ]);
+    }
+
+    public function adsConfigSave(Request $request)
+    {
+        $ads = $request->input('ads', []);
+        $cleanAds = [];
+
+        if (is_array($ads)) {
+            foreach ($ads as $ad) {
+                if (!empty($ad['image'])) {
+                    $cleanAds[] = [
+                        'title'  => strip_tags($ad['title'] ?? ''),
+                        'link'   => filter_var($ad['link'] ?? '', FILTER_SANITIZE_URL) ?: '#',
+                        'image'  => strip_tags($ad['image'] ?? ''),
+                        'status' => isset($ad['status']) && in_array($ad['status'], [1, '1', true, 'true', 'on', 'active'], true) ? 1 : 0,
+                    ];
+                }
+            }
+        }
+
+        // Simpan list iklan ke options induk (tenant_id = null)
+        Option::withoutGlobalScope('tenant')->updateOrInsert(
+            ['name' => 'master_ads', 'tenant_id' => null],
+            ['value' => json_encode($cleanAds), 'autoload' => 1]
+        );
+
+        // Simpan posisi target paragraf
+        $paragraphPos = (int) $request->input('paragraph', 2);
+        Option::withoutGlobalScope('tenant')->updateOrInsert(
+            ['name' => 'master_ad_paragraph', 'tenant_id' => null],
+            ['value' => $paragraphPos, 'autoload' => 1]
+        );
+
+        // Flush cache opsi
+        $mainHost = parse_url(config('app.url'), PHP_URL_HOST);
+        Cache::forget("tenant:master:{$mainHost}:options");
+        Cache::forget("tenant:master:options");
+        Cache::forget("default:options");
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Daftar Iklan Induk berhasil disimpan!'
+        ]);
+    }
 }

@@ -124,6 +124,10 @@ Route::controller(TenantController::class)->group(function () {
     // Brand Master Configuration
     Route::get('tenant/brand-config/form', 'brandConfigForm')->name('tenant.brand.form');
     Route::post('tenant/brand-config/save', 'brandConfigSave')->name('tenant.brand.save');
+
+    // Ads Master Configuration
+    Route::get('tenant/ads-config/form', 'adsConfigForm')->name('tenant.ads.form');
+    Route::post('tenant/ads-config/save', 'adsConfigSave')->name('tenant.ads.save');
 });
 }
 if (config('modules.app_master')) {

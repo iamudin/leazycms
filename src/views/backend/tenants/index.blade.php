@@ -4,6 +4,7 @@
         <div class="col-lg-12 mb-3">
             <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i> Tenant</h3>
             <div class="pull-right">
+                <button type="button" onclick="event.preventDefault(); openAdsModal();" class="btn btn-warning btn-sm text-dark font-weight-bold"> <i class="fa fa-bullhorn" aria-hidden="true"></i> Kelola Iklan</button>
                 <button type="button" onclick="event.preventDefault(); openBrandConfig();" class="btn btn-info btn-sm"> <i class="fa fa-tag" aria-hidden="true"></i> Brand Master</button>
                 <button type="button" onclick="event.preventDefault(); openCpanelConfig();" class="btn btn-dark btn-sm"> <i class="fa fa-cogs" aria-hidden="true"></i> API cPanel</button>
                 <a href="{{ route('tenant.create') }}" class="btn btn-primary btn-sm"> <i class="fa fa-plus" aria-hidden="true"></i> Tambah Tenant</a>
@@ -196,6 +197,59 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Ads Master Config -->
+    <div class="modal fade" id="adsModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title font-weight-bold"><i class="fa fa-bullhorn"></i> Pengaturan Iklan Induk (Global Ads)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row mb-3 align-items-center">
+                        <label class="col-sm-4 col-form-label font-weight-bold">Sisipkan Setelah Paragraf ke:</label>
+                        <div class="col-sm-3">
+                            <select id="ad_paragraph_select" class="form-control form-control-sm">
+                                <option value="1">Paragraf 1</option>
+                                <option value="2" selected>Paragraf 2</option>
+                                <option value="3">Paragraf 3</option>
+                                <option value="4">Paragraf 4</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-5 text-right">
+                            <button type="button" class="btn btn-success btn-sm" onclick="addNewAdRow()"><i class="fa fa-plus"></i> Tambah Iklan</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm" id="adsTable" style="font-size: 13px;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width="20%">Judul / Label</th>
+                                    <th width="32%">URL Gambar (Image Src)</th>
+                                    <th width="25%">Link Tujuan (URL)</th>
+                                    <th width="13%" class="text-center">Status</th>
+                                    <th width="10%" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-3"><i class="fa fa-spinner fa-spin"></i> Memuat data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveAds" onclick="saveAdsConfig()"><i class="fa fa-save"></i> Simpan Pengaturan Iklan</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @push('scripts')
     @include('cms::backend.layout.js')
     
@@ -344,6 +398,138 @@
             var table = $('.datatable').DataTable();
             $('.dataTables_filter input').val(category);
             table.search(category).draw();
+        }
+
+        // ==========================================
+        // ADS MASTER CONFIGURATION (JSON CRUD)
+        // ==========================================
+        let adsData = [];
+
+        function openAdsModal() {
+            $('#adsTableBody').html('<tr><td colspan="5" class="text-center py-3"><i class="fa fa-spinner fa-spin"></i> Memuat data iklan...</td></tr>');
+            $('#adsModal').modal('show');
+
+            $.ajax({
+                url: '{{ route('tenant.ads.form') }}',
+                type: 'GET',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        adsData = res.ads || [];
+                        $('#ad_paragraph_select').val(res.paragraph || 2);
+                        renderAdsTable();
+                    } else {
+                        $('#adsTableBody').html('<tr><td colspan="5" class="text-center text-danger py-3">Gagal memuat data iklan.</td></tr>');
+                    }
+                },
+                error: function() {
+                    $('#adsTableBody').html('<tr><td colspan="5" class="text-center text-danger py-3">Gagal menghubungi server.</td></tr>');
+                }
+            });
+        }
+
+        function renderAdsTable() {
+            let html = '';
+            if (adsData.length === 0) {
+                html = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada iklan. Klik tombol <strong>+ Tambah Iklan</strong> di atas.</td></tr>';
+            } else {
+                adsData.forEach((ad, index) => {
+                    let isChecked = (ad.status === 1 || ad.status === '1' || ad.status === true || ad.status === 'active' || ad.status === 'on') ? 'checked' : '';
+                    html += `
+                    <tr data-index="${index}">
+                        <td>
+                            <input type="text" class="form-control form-control-sm ad-title" value="${escapeHtml(ad.title || '')}" placeholder="Contoh: Sponsor Promo">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm ad-image" value="${escapeHtml(ad.image || '')}" placeholder="https://.../banner.jpg atau /media/...">
+                        </td>
+                        <td>
+                            <input type="url" class="form-control form-control-sm ad-link" value="${escapeHtml(ad.link || '')}" placeholder="https://domain.com/promo">
+                        </td>
+                        <td class="text-center align-middle">
+                            <label class="mb-0 font-weight-normal" style="cursor:pointer;">
+                                <input type="checkbox" class="ad-status" ${isChecked}> Aktif
+                            </label>
+                        </td>
+                        <td class="text-center align-middle">
+                            <button type="button" class="btn btn-danger btn-sm" title="Hapus Iklan" onclick="removeAdRow(${index})"><i class="fa fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            $('#adsTableBody').html(html);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function addNewAdRow() {
+            // Simpan perubahan form yang sedang diedit
+            syncCurrentAdsFromDOM();
+            adsData.push({ title: '', image: '', link: '', status: 1 });
+            renderAdsTable();
+        }
+
+        function removeAdRow(index) {
+            syncCurrentAdsFromDOM();
+            adsData.splice(index, 1);
+            renderAdsTable();
+        }
+
+        function syncCurrentAdsFromDOM() {
+            let currentList = [];
+            $('#adsTableBody tr').each(function() {
+                let row = $(this);
+                let titleInput = row.find('.ad-title');
+                if (titleInput.length) {
+                    let title = titleInput.val();
+                    let image = row.find('.ad-image').val();
+                    let link  = row.find('.ad-link').val();
+                    let status = row.find('.ad-status').is(':checked') ? 1 : 0;
+                    currentList.push({ title, image, link, status });
+                }
+            });
+            if (currentList.length > 0) {
+                adsData = currentList;
+            }
+        }
+
+        function saveAdsConfig() {
+            syncCurrentAdsFromDOM();
+
+            let btn = $('#btnSaveAds');
+            let originalText = btn.html();
+            btn.html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
+
+            let paragraph = $('#ad_paragraph_select').val();
+
+            $.ajax({
+                url: '{{ route('tenant.ads.save') }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    ads: adsData,
+                    paragraph: paragraph
+                },
+                success: function(res) {
+                    btn.html(originalText).prop('disabled', false);
+                    if (res.status === 'success') {
+                        $('#adsModal').modal('hide');
+                        swal('Berhasil!', res.message, 'success');
+                    } else {
+                        swal('Gagal!', res.message || 'Terjadi kesalahan.', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    btn.html(originalText).prop('disabled', false);
+                    var msg = 'Terjadi kesalahan sistem.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    swal('Error!', msg, 'error');
+                }
+            });
         }
     </script>
     @endpush

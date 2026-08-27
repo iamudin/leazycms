@@ -195,6 +195,13 @@
                             </div>
 
                             <div class="form-group mt-2 mb-2">
+                                <label class="mb-0 font-weight-bold">Bebas Iklan (Ad-Free) ?</label><br>
+                                <input type="hidden" name="options[bebas_iklan]" value="0">
+                                <input name="options[bebas_iklan]" id="bebas-iklan-check" type="checkbox" value="1" {{ (old('options.bebas_iklan', $options['bebas_iklan'] ?? '0') == '1') ? 'checked' : '' }}>
+                                <small class="text-muted">Ceklis jika tenant ini berlangganan paket Bebas Iklan (iklan dari induk tidak akan tampil pada website tenant ini).</small>
+                            </div>
+
+                            <div class="form-group mt-2 mb-2">
                                 <label class="mb-0">Dapat Edit Template ?</label><br>
                                 <input name="options[can_edit_template]" type="radio" value="Y" {{ (old('options.can_edit_template', $options['can_edit_template'] ?? 'N') == 'Y') ? 'checked' : '' }}> Iya &nbsp; &nbsp;
                                 <input name="options[can_edit_template]" type="radio" value="N" {{ (old('options.can_edit_template', $options['can_edit_template'] ?? 'N') == 'N') ? 'checked' : '' }}> Tidak
