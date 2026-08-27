@@ -498,15 +498,16 @@
 
             {{-- Custom Fields Container --}}
             @if ($module->form->custom_field)
-                
+                <div id="custom-fields-container">
                     @include('cms::backend.posts.custom_field.form')
+                </div>
             @endif
 
             {{-- Looping Data Container --}}
             @if ($module->form->looping_data)
-            <div class="mt-3 mb-3">
+                <div class="mt-3 mb-3" id="looping-data-container">
                     @include('cms::backend.posts.looping_data.form')
-                    </div>
+                </div>
             @endif
         </div>
 
@@ -994,16 +995,22 @@
                         let newCustomFields = newDoc.getElementById('custom-fields-container');
                         if (newCustomFields && document.getElementById('custom-fields-container')) {
                             $('#custom-fields-container').html(newCustomFields.innerHTML);
+                            if (typeof window.initGlobalFilePickers === 'function') {
+                                window.initGlobalFilePickers();
+                            }
                         }
 
                         // Update Looping Data Container
                         let newLoopingData = newDoc.getElementById('looping-data-container');
                         if (newLoopingData && document.getElementById('looping-data-container')) {
                             $('#looping-data-container').html(newLoopingData.innerHTML);
+                            if (typeof window.initGlobalFilePickers === 'function') {
+                                window.initGlobalFilePickers();
+                            }
+                            if (typeof window.initLoopingDataSortable === 'function') {
+                                window.initLoopingDataSortable();
+                            }
                         }
-
-                        // Clear any lingering Gmedia preview wrappers
-                        $('.btn-clear-gmedia').click();
 
                         // Update URL bar dynamically
                         let newUrlBar = newDoc.getElementById('post-url-bar');

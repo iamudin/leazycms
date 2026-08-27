@@ -341,6 +341,18 @@
 
                         clearBtn.show();
                         wrapper.siblings('input[type="hidden"].gmedia-hidden').remove();
+                        let wrapperContainer = wrapper.closest('.media-input-wrapper');
+                        if (wrapperContainer.length) {
+                            wrapperContainer.find('input[type="hidden"]').not('.gmedia-hidden').attr('disabled', 'disabled');
+                        } else {
+                            wrapper.siblings('input[type="hidden"]').not('.gmedia-hidden').attr('disabled', 'disabled');
+                        }
+                        let cellContainer = wrapper.closest('td, .form-group, .media-container, .col-12, .col-md-6');
+                        if (cellContainer.length) {
+                            let prevWrap = cellContainer.find('.media-preview-wrapper');
+                            prevWrap.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
+                            prevWrap.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
+                        }
                         $fileInput.removeAttr('disabled');
                     }
                 });
@@ -394,6 +406,12 @@
                     $fileInput.val('');
                     previewArea.empty().hide();
                     wrapper.siblings('input[type="hidden"].gmedia-hidden').remove();
+                    let wrapperContainer = wrapper.closest('.media-input-wrapper');
+                    if (wrapperContainer.length) {
+                        wrapperContainer.find('input[type="hidden"]').removeAttr('disabled');
+                    } else {
+                        wrapper.siblings('input[type="hidden"]').removeAttr('disabled');
+                    }
                     $fileInput.removeAttr('disabled');
                     $(this).hide();
                 });
@@ -953,6 +971,26 @@
                 /* Instead of modifying the original file input, we disable it and create hidden inputs */
                 currentFileInput.attr('disabled', 'disabled');
 
+                /* Disable existing hidden input (e.g. oldfile) in the wrapper container so it doesn't create duplicate array entries */
+                let wrapperContainer = currentFileWrapper.closest('.media-input-wrapper');
+                if (wrapperContainer.length) {
+                    wrapperContainer.find('input[type="hidden"]').not('.gmedia-hidden').attr('disabled', 'disabled');
+                } else {
+                    currentFileWrapper.siblings('input[type="hidden"]').not('.gmedia-hidden').attr('disabled', 'disabled');
+                }
+
+                /* Also hide and disable any existing media-preview-wrapper on the same cell/field */
+                let cellContainer = currentFileWrapper.closest('td, .form-group, .media-container, .col-12, .col-md-6');
+                if (cellContainer.length) {
+                    let prevWrap = cellContainer.find('.media-preview-wrapper');
+                    prevWrap.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
+                    prevWrap.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
+                } else {
+                    let prevWrap = currentFileWrapper.siblings('.media-preview-wrapper').add(currentFileWrapper.closest('.media-input-wrapper').siblings('.media-preview-wrapper'));
+                    prevWrap.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
+                    prevWrap.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
+                }
+
                 /* Remove existing hidden input if any */
                 currentFileWrapper.siblings('input[type="hidden"].gmedia-hidden').remove();
 
@@ -1047,17 +1085,55 @@
 
         $(document).on('click', '.btn-remove-media', function (e) {
             e.preventDefault();
-            if (confirm('Hapus gambar dari form ini?')) {
-                let field = $(this).data('field');
-                let wrapper = $(this).closest('.media-preview-wrapper');
-                wrapper.hide();
-                let inputWrapper = wrapper.nextAll('.media-input-wrapper').first();
-                inputWrapper.show();
-                /* Add hidden input to clear the field in database when saved */
-                /* We use prepend so it's first in the DOM, allowing any newly selected media hidden input to override it. */
-                let existingHidden = inputWrapper.find('input.removed-media-hidden[name="' + field + '"]');
-                if (existingHidden.length === 0) {
-                    inputWrapper.prepend('<input type="hidden" class="removed-media-hidden" name="' + field + '" value="">');
+            if (confirm('Hapus berkas ini?')) {
+                let btn = $(this);
+                let field = btn.data('field');
+                let wrapper = btn.closest('.media-preview-wrapper');
+                
+                // Disable and clear any hidden inputs inside the preview wrapper so old file paths are not submitted
+                wrapper.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
+                wrapper.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
+
+                // Find the corresponding media-input-wrapper (could be next sibling, previous sibling, or general sibling)
+                let inputWrapper = wrapper.siblings('.media-input-wrapper').first();
+                if (!inputWrapper.length) {
+                    inputWrapper = wrapper.nextAll('.media-input-wrapper').first();
+                }
+                if (!inputWrapper.length) {
+                    inputWrapper = wrapper.prevAll('.media-input-wrapper').first();
+                }
+
+                if (inputWrapper.length) {
+                    inputWrapper.attr('style', '').show();
+                    // Re-enable file input
+                    inputWrapper.find('input[type="file"]').removeAttr('disabled').val('');
+                    // Remove any temporary gmedia-hidden inputs
+                    inputWrapper.find('input[type="hidden"].gmedia-hidden').remove();
+                    inputWrapper.find('.media-preview-area').empty().hide();
+                    inputWrapper.find('.btn-clear-gmedia').hide();
+
+                    // Check if this is an array field (e.g. looping data field[] or name ends with [])
+                    let isArray = (field && typeof field === 'string' && field.endsWith('[]'));
+                    if (!isArray) {
+                        let fileInput = inputWrapper.find('input[type="file"]');
+                        if (fileInput.length && fileInput.attr('name') && fileInput.attr('name').endsWith('[]')) {
+                            isArray = true;
+                        }
+                    }
+
+                    if (isArray) {
+                        // For array inputs (looping data), the hidden input should be enabled with value 'nofile'
+                        inputWrapper.find('input[type="hidden"]').removeAttr('disabled').val('nofile');
+                    } else {
+                        // For single custom fields / options, set hidden input to empty or add removed-media-hidden
+                        inputWrapper.find('input[type="hidden"]').removeAttr('disabled').val('');
+                        if (field) {
+                            let existingHidden = inputWrapper.find('input.removed-media-hidden[name="' + field + '"]');
+                            if (existingHidden.length === 0) {
+                                inputWrapper.prepend('<input type="hidden" class="removed-media-hidden" name="' + field + '" value="">');
+                            }
+                        }
+                    }
                 }
             }
         });

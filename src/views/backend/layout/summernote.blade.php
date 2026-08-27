@@ -64,12 +64,12 @@
                 <div class="form-group">
                     <label for="embed-width">Width</label>
                     <input type="text" class="form-control" id="embed-width"
-                        placeholder="Sample : 100%, 100px or other">
+                        placeholder="Sample : 100%, 100px or other" value="100%">
                 </div>
                 <div class="form-group">
                     <label for="embed-height">Height</label>
                     <input type="text" class="form-control" id="embed-height"
-                        placeholder="Sample : 100%, 100px or other">
+                        placeholder="Sample : 500px, 100% or other" value="500px">
                 </div>
                 <div class="form-group">
                     <label for="embed-style-attr">Style Attribute</label>
@@ -215,6 +215,121 @@
     <script src="https://js.puter.com/v2/"></script>
 @endpush
 <script type="text/javascript">
+    function sanitizeVideoIframe($node) {
+        if (!$node) return $node;
+        var $iframe = $node.is('iframe') ? $node : $node.find('iframe');
+        if ($iframe.length) {
+            $iframe.each(function() {
+                var $this = $(this);
+                $this.removeAttr('width')
+                     .removeAttr('height')
+                     .attr('style', 'width:100%;height:500px;')
+                     .attr('allowfullscreen', 'true')
+                     .attr('frameborder', '0');
+            });
+        }
+        return $node;
+    }
+
+    function createCustomVideoNode(url) {
+        if (!url) return null;
+        url = url.trim();
+
+        // 1. YouTube (watch, embed, youtu.be, shorts, v)
+        var ytRegExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})(?:\S+)?$/;
+        var ytMatch = url.match(ytRegExp);
+        if (ytMatch && ytMatch[1].length === 11) {
+            var youtubeId = ytMatch[1];
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//www.youtube.com/embed/' + youtubeId)
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 2. Instagram
+        var igRegExp = /(?:instagram\.com|instagr\.am)\/p\/([\w-]+)\/?/i;
+        var igMatch = url.match(igRegExp);
+        if (igMatch && igMatch[0].length) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('scrolling', 'no')
+                .attr('allowtransparency', 'true')
+                .attr('src', 'https://instagram.com/p/' + igMatch[1] + '/embed/')
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 3. Vimeo
+        var vimeoRegExp = /(?:https?:)?\/\/(?:www\.)?(?:player\.)?vimeo.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
+        var vimeoMatch = url.match(vimeoRegExp);
+        if (vimeoMatch && vimeoMatch[3].length) {
+            return $('<iframe webkitallowfullscreen mozallowfullscreen allowfullscreen>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//player.vimeo.com/video/' + vimeoMatch[3])
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 4. Dailymotion
+        var dmRegExp = /^(?:https?:\/\/)?(?:www\.)?(?:dailymotion\.com\/(?:embed\/video\/|video\/)|dai\.ly\/)([\w-]+)/;
+        var dmMatch = url.match(dmRegExp);
+        if (dmMatch && dmMatch[1].length) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//www.dailymotion.com/embed/video/' + dmMatch[1])
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 5. Youku
+        var youkuRegExp = /^(?:https?:\/\/)?(?:v\.youku\.com\/v_show\/id_|embed\.youku\.com\/embed\/)([\w==]+)/;
+        var youkuMatch = url.match(youkuRegExp);
+        if (youkuMatch && youkuMatch[1].length) {
+            return $('<iframe webkitallowfullscreen mozallowfullscreen allowfullscreen>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//player.youku.com/embed/' + youkuMatch[1])
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 6. QQ
+        var qqRegExp = /^(?:https?:\/\/)?(?:v\.qq\.com\/x\/cover\/|v\.qq\.com\/x\/page\/|v\.qq\.com\/play\/)([\w==]+)/;
+        var qqMatch = url.match(qqRegExp);
+        if (qqMatch && qqMatch[1].length) {
+            return $('<iframe webkitallowfullscreen mozallowfullscreen allowfullscreen>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//v.qq.com/iframe/player.html?vid=' + qqMatch[1] + '&tiny=0&auto=0')
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 7. Vine
+        var vineRegExp = /\/\/vine\.co\/v\/([a-zA-Z0-9]+)/;
+        var vineMatch = url.match(vineRegExp);
+        if (vineMatch && vineMatch[0].length) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', vineMatch[0] + '/embed/simple')
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        // 8. Raw <iframe> pasted into dialog or arbitrary URL
+        if (url.indexOf('<iframe') !== -1) {
+            var $parsed = $(url);
+            return sanitizeVideoIframe($parsed);
+        } else if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', url)
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        return null;
+    }
+
     function dataURLtoFile(dataurl, filename) {
         var arr = dataurl.split(','),
             mimeMatch = arr[0].match(/:(.*?);/),
@@ -304,6 +419,10 @@
                         if (attrName !== 'src' && attrName !== 'id' && attrName !== 'data-uploading' && attrName !== 'alt' && attrName !== 'title') {
                             node.removeAttribute(attrs[i].name);
                         }
+                    } else if (tagName === 'iframe') {
+                        if (attrName !== 'src' && attrName !== 'frameborder' && attrName !== 'allowfullscreen' && attrName !== 'allow' && attrName !== 'style' && attrName !== 'scrolling' && attrName !== 'allowtransparency') {
+                            node.removeAttribute(attrs[i].name);
+                        }
                     } else if (tagName === 'a') {
                         if (attrName !== 'href' && attrName !== 'target') {
                             node.removeAttribute(attrs[i].name);
@@ -311,6 +430,12 @@
                     } else {
                         node.removeAttribute(attrs[i].name);
                     }
+                }
+
+                if (tagName === 'iframe') {
+                    node.removeAttribute('width');
+                    node.removeAttribute('height');
+                    node.setAttribute('style', 'width:100%;height:500px;');
                 }
 
                 if (tagName === 'div') {
@@ -430,11 +555,37 @@
         $('form').on('submit', function () {
             if ($('#editor').length) {
                 var code = $('#editor').summernote('code');
-                if (code && code.includes('data:image/')) {
-                    var cleanCode = code
-                        .replace(/<img[^>]*src=["']data:image\/svg\+xml[^"']*["'][^>]*\/?>/gi, '')
-                        .replace(/<img[^>]*src=["']data:image\/[^"']+["'][^>]*\/?>/gi, '');
-                    $('#editor').summernote('code', cleanCode);
+                if (code) {
+                    var needsUpdate = false;
+                    var cleanCode = code;
+                    if (cleanCode.includes('data:image/')) {
+                        cleanCode = cleanCode
+                            .replace(/<img[^>]*src=["']data:image\/svg\+xml[^"']*["'][^>]*\/?>/gi, '')
+                            .replace(/<img[^>]*src=["']data:image\/[^"']+["'][^>]*\/?>/gi, '');
+                        needsUpdate = true;
+                    }
+                    if (cleanCode.includes('<iframe')) {
+                        var tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = cleanCode;
+                        var iframes = tempDiv.querySelectorAll('iframe');
+                        if (iframes.length) {
+                            iframes.forEach(function(ifr) {
+                                ifr.removeAttribute('width');
+                                ifr.removeAttribute('height');
+                                if (!ifr.getAttribute('style')) {
+                                    ifr.setAttribute('style', 'width:100%;height:500px;');
+                                } else {
+                                    ifr.style.width = '100%';
+                                    ifr.style.height = '500px';
+                                }
+                            });
+                            cleanCode = tempDiv.innerHTML;
+                            needsUpdate = true;
+                        }
+                    }
+                    if (needsUpdate) {
+                        $('#editor').summernote('code', cleanCode);
+                    }
                 }
             }
         });
@@ -571,7 +722,26 @@
             codeviewIframeFilter: false,
             disableDragAndDrop: true,
             callbacks: {
-                onInit: function () {
+                onInit: function (context) {
+                    var ctx = context || (window.currentSummernoteObj && window.currentSummernoteObj.context ? window.currentSummernoteObj.context.data('summernote') : $('#editor').data('summernote'));
+                    if (ctx && ctx.modules && ctx.modules.video) {
+                        var videoModule = ctx.modules.video;
+                        videoModule.createVideoNode = function (url) {
+                            return createCustomVideoNode(url);
+                        };
+                        videoModule.insertVideo = function (url) {
+                            var $node = this.createVideoNode(url);
+                            if ($node) {
+                                sanitizeVideoIframe($node);
+                                ctx.invoke('editor.insertNode', $node[0]);
+
+                                var pNode = document.createElement('p');
+                                pNode.innerHTML = '<br>';
+                                ctx.invoke('editor.insertNode', pNode);
+                            }
+                        };
+                    }
+
                     var $editor = $('#editor');
                     var $noteEditor = $editor.next('.note-editor');
                     if ($noteEditor.length && !$noteEditor.find('.note-counter-bar').length) {
@@ -594,6 +764,27 @@
                             $noteEditor.append(counterHtml);
                         }
                     }
+
+                    // MutationObserver for iframes to enforce style="width:100%;height:500px;" and no width/height attributes
+                    var $editable = $noteEditor.find('.note-editable');
+                    if ($editable.length && window.MutationObserver) {
+                        var iframeObserver = new MutationObserver(function (mutations) {
+                            mutations.forEach(function (mutation) {
+                                if (mutation.addedNodes) {
+                                    mutation.addedNodes.forEach(function (node) {
+                                        if (node.nodeType === 1) {
+                                            var $iframes = $(node).is('iframe') ? $(node) : $(node).find('iframe');
+                                            $iframes.each(function () {
+                                                sanitizeVideoIframe($(this));
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                        iframeObserver.observe($editable[0], { childList: true, subtree: true });
+                    }
+
                     updateSummernoteCounter();
                 },
                 onKeyup: function () {
@@ -602,6 +793,13 @@
                 onChange: function (contents, $editable) {
                     updateSummernoteCounter();
                     if ($editable && $editable.length) {
+                        $editable.find('iframe').each(function() {
+                            var $ifr = $(this);
+                            if ($ifr.is('[width]') || $ifr.is('[height]')) {
+                                sanitizeVideoIframe($ifr);
+                            }
+                        });
+
                         $editable.find('img[src^="data:image/"], img[src^="file://"]').each(function() {
                             var $img = $(this);
                             var src = $img.attr('src');
@@ -1242,7 +1440,7 @@
     $('#embedModalSave').click(function () {
         var url = $('#embed-url').val();
         var width = $('#embed-width').val() || '100%';
-        var height = $('#embed-height').val() || '400px';
+        var height = $('#embed-height').val() || '500px';
         var styleAttr = $('#embed-style-attr').val() || '';
 
         if (url) {
@@ -1250,6 +1448,7 @@
                 // Updating existing iframe
                 var $iframe = window.activeSummernoteIframe;
                 $iframe.attr('src', url);
+                $iframe.removeAttr('width').removeAttr('height');
 
                 // Reset style and apply new styles
                 $iframe.attr('style', '');
@@ -1295,8 +1494,8 @@
 
             $('#embedModal').modal('hide');
             $('#embed-url').val('');
-            $('#embed-width').val('');
-            $('#embed-height').val('');
+            $('#embed-width').val('100%');
+            $('#embed-height').val('500px');
             $('#embed-style-attr').val('');
         } else {
             alert("Please enter a URL.");

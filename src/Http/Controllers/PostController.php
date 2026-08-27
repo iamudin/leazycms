@@ -441,31 +441,63 @@ class PostController extends Controller implements HasMiddleware
             $datanya = [];
             $jmlh = 0;
             foreach ($looping_data as $y) {
-                if ($y[1] != 'file') {
-                    $r = _us($y[0]);
-                    $jmlh = ($request->$r) ? count($request->$r) : 0;
+                $r = _us($y[0]);
+                $colCount = 0;
+                if ($request->has($r)) {
+                    $colCount = is_array($request->$r) ? count($request->$r) : 1;
+                } elseif ($request->hasFile($r)) {
+                    $colCount = is_array($request->file($r)) ? count($request->file($r)) : 1;
+                }
+                if ($colCount > $jmlh) {
+                    $jmlh = $colCount;
                 }
             }
 
             if ($jmlh > 0) {
                 for ($i = 0; $i < $jmlh; $i++) {
-
+                    $h = [];
                     foreach ($looping_data as $y) {
                         $r = _us($y[0]);
                         $as = $request->$r;
-                        if (isset($as[$i])) {
-
-                            $h[$r] = ($y[1] == 'file') ? (is_file($as[$i]) ? $post->addFile(['file' => $as[$i], 'purpose' => $r, 'child_id' => $i, 'mime_type' => explode(',', allow_mime())]) : $as[$i]) : strip_tags($as[$i]);
+                        if ($y[1] == 'file') {
+                            $files = $request->file($r);
+                            if (isset($files[$i]) && $files[$i] instanceof \Illuminate\Http\UploadedFile) {
+                                $h[$r] = $post->addFile([
+                                    'file' => $files[$i],
+                                    'purpose' => $r,
+                                    'child_id' => $i,
+                                    'mime_type' => explode(',', allow_mime())
+                                ]);
+                            } elseif (isset($as[$i])) {
+                                $val = $as[$i];
+                                if ($val === 'nofile' || $val === '' || $val === null) {
+                                    $h[$r] = null;
+                                } else {
+                                    $h[$r] = strip_tags($val);
+                                }
+                            } else {
+                                $h[$r] = null;
+                            }
                         } else {
-                            $h[$r] = null;
+                            $h[$r] = isset($as[$i]) ? strip_tags($as[$i]) : null;
                         }
                     }
-                    array_push($datanya, $h);
+
+                    // Check if this row has any non-empty data
+                    $hasData = false;
+                    foreach ($h as $kVal => $vVal) {
+                        if (!empty($vVal) && $vVal !== 'nofile') {
+                            $hasData = true;
+                            break;
+                        }
+                    }
+                    if ($hasData) {
+                        array_push($datanya, $h);
+                    }
                 }
             }
             $data['data_loop'] = $datanya;
             if (get_post_type() == 'menu') {
-
                 $fixd = json_decode($request->menu_json, true);
                 $mnews = [];
                 processMenu($fixd, $datanya, $mnews);

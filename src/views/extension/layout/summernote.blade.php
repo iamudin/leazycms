@@ -4,11 +4,115 @@
 <script type="text/javascript">
 $(document).ready(function() {
 
+    function sanitizeVideoIframe($node) {
+        if (!$node) return $node;
+        var $iframe = $node.is('iframe') ? $node : $node.find('iframe');
+        if ($iframe.length) {
+            $iframe.each(function() {
+                var $this = $(this);
+                $this.removeAttr('width')
+                     .removeAttr('height')
+                     .attr('style', 'width:100%;height:500px;')
+                     .attr('allowfullscreen', 'true')
+                     .attr('frameborder', '0');
+            });
+        }
+        return $node;
+    }
+
+    function createCustomVideoNode(url) {
+        if (!url) return null;
+        url = url.trim();
+
+        var ytRegExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})(?:\S+)?$/;
+        var ytMatch = url.match(ytRegExp);
+        if (ytMatch && ytMatch[1].length === 11) {
+            var youtubeId = ytMatch[1];
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//www.youtube.com/embed/' + youtubeId)
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        var igRegExp = /(?:instagram\.com|instagr\.am)\/p\/([\w-]+)\/?/i;
+        var igMatch = url.match(igRegExp);
+        if (igMatch && igMatch[0].length) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('scrolling', 'no')
+                .attr('allowtransparency', 'true')
+                .attr('src', 'https://instagram.com/p/' + igMatch[1] + '/embed/')
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        var vimeoRegExp = /(?:https?:)?\/\/(?:www\.)?(?:player\.)?vimeo.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
+        var vimeoMatch = url.match(vimeoRegExp);
+        if (vimeoMatch && vimeoMatch[3].length) {
+            return $('<iframe webkitallowfullscreen mozallowfullscreen allowfullscreen>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//player.vimeo.com/video/' + vimeoMatch[3])
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        var dmRegExp = /^(?:https?:\/\/)?(?:www\.)?(?:dailymotion\.com\/(?:embed\/video\/|video\/)|dai\.ly\/)([\w-]+)/;
+        var dmMatch = url.match(dmRegExp);
+        if (dmMatch && dmMatch[1].length) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', '//www.dailymotion.com/embed/video/' + dmMatch[1])
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        if (url.indexOf('<iframe') !== -1) {
+            var $parsed = $(url);
+            return sanitizeVideoIframe($parsed);
+        } else if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+            return $('<iframe>')
+                .attr('frameborder', 0)
+                .attr('allowfullscreen', 'true')
+                .attr('src', url)
+                .attr('style', 'width:100%;height:500px;');
+        }
+
+        return null;
+    }
+
     $("#editor").summernote({
       placeholder: 'Tulis isi..',
             height: 600,
             callbacks: {
+                onInit: function (context) {
+                    var ctx = context || $('#editor').data('summernote');
+                    if (ctx && ctx.modules && ctx.modules.video) {
+                        var videoModule = ctx.modules.video;
+                        videoModule.createVideoNode = function (url) {
+                            return createCustomVideoNode(url);
+                        };
+                        videoModule.insertVideo = function (url) {
+                            var $node = this.createVideoNode(url);
+                            if ($node) {
+                                sanitizeVideoIframe($node);
+                                ctx.invoke('editor.insertNode', $node[0]);
+                                var pNode = document.createElement('p');
+                                pNode.innerHTML = '<br>';
+                                ctx.invoke('editor.insertNode', pNode);
+                            }
+                        };
+                    }
+                },
                 onChange: function (contents, $editable) {
+                    if ($editable && $editable.length) {
+                        $editable.find('iframe').each(function() {
+                            var $ifr = $(this);
+                            if ($ifr.is('[width]') || $ifr.is('[height]')) {
+                                sanitizeVideoIframe($ifr);
+                            }
+                        });
+                    }
                     let sanitized = contents
                         .replace(/<script[^>]*>.*?<\/script>/gi, '')
                         .replace(/<style[^>]*>.*?<\/style>/gi, '')

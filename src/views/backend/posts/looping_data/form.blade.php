@@ -87,7 +87,7 @@
 @if(!Route::is($post->type.'.show'))
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-    (function() {
+    window.initLoopingDataSortable = function() {
         var tbody = document.querySelector('.coldata');
         if (tbody && typeof Sortable !== 'undefined') {
             new Sortable(tbody, {
@@ -96,6 +96,7 @@
                 ghostClass: 'bg-light'
             });
         }
-    })();
+    };
+    window.initLoopingDataSortable();
 </script>
 @endif
