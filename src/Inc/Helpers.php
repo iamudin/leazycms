@@ -4090,7 +4090,7 @@ if (!function_exists('render_master_ad')) {
     function render_master_ad($category = 'in_article', $extraClass = '')
     {
         $ad = get_master_ad($category);
-        if (!$ad) {
+        if (!$ad || is_main_domain()) {
             return '';
         }
 
