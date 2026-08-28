@@ -4103,7 +4103,6 @@ if (!function_exists('render_master_ad')) {
             'in_feed'         => 'margin: 0px auto; text-align: center; max-width: 100%; clear: both; width: 100%;',
             default           => 'margin: 12px auto; text-align: center; max-width: 100%; clear: both;',
         };
-
         return '
         <div class="tenant-global-ad-slot tenant-ad-' . e($category) . ' ' . e($extraClass) . '" style="' . $wrapperStyle . '">
             ' . (!empty($adTitle) ? '<div style="font-size: 9.5px; color: var(--cal-text-muted, #888); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">' . $adTitle . '</div>' : '') . '
