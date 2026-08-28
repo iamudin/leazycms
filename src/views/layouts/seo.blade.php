@@ -80,7 +80,7 @@
 
 {{-- Open Graph / Facebook / WhatsApp --}}
 <meta property="og:site_name" content="{{ $siteTitle }}">
-<meta property="og:type" content="{{ isset($post) && isset($post->type) && in_array($post->type, ['berita', 'artikel', 'post', 'blog']) ? 'article' : 'website' }}">
+<meta property="og:type" content="{{ isset($post) && isset($post->type) ? 'article' : 'website' }}">
 <meta property="og:url" content="{{ $canonicalUrl }}">
 <meta property="og:title" content="{{ $title ?? $siteTitle }}">
 <meta property="og:description" content="{{ Str::limit($seoDescription, 200) }}">
