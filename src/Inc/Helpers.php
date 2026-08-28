@@ -4095,6 +4095,7 @@ if (!function_exists('render_master_ad')) {
         }
 
         $adTitle = htmlspecialchars($ad['title'] ?? '');
+        $badgeText = !empty($adTitle) ? $adTitle : 'Iklan';
         $adLink  = !empty($ad['link']) ? $ad['link'] : '#';
         $adImage = $ad['image'];
 
@@ -4105,10 +4106,12 @@ if (!function_exists('render_master_ad')) {
         };
         return '
         <div class="tenant-global-ad-slot tenant-ad-' . e($category) . ' ' . e($extraClass) . '" style="' . $wrapperStyle . '">
-            ' . (!empty($adTitle) ? '<div style="font-size: 9.5px; color: var(--cal-text-muted, #888); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">' . $adTitle . '</div>' : '') . '
-            <a href="' . e($adLink) . '" target="_blank" rel="noopener noreferrer nofollow sponsored" style="display: block; max-width: 100%; text-decoration: none;">
-                <img src="' . e($adImage) . '" alt="' . $adTitle . '" loading="lazy" decoding="async" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: block; margin: 0 auto;">
-            </a>
+            <div style="position: relative; display: inline-block; max-width: 100%; vertical-align: middle;">
+                <a href="' . e($adLink) . '" target="_blank" rel="noopener noreferrer nofollow sponsored" style="display: block; max-width: 100%; text-decoration: none; position: relative;">
+                    <img src="' . e($adImage) . '" alt="' . e($badgeText) . '" loading="lazy" decoding="async" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: block; margin: 0 auto;">
+                    <span style="position: absolute; top: 6px; right: 6px; background: rgba(0, 0, 0, 0.65); color: #ffffff; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-size: 9px; font-weight: 700; line-height: 1.2; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; pointer-events: none; border: 1px solid rgba(255, 255, 255, 0.25); font-family: system-ui, -apple-system, sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' . e($badgeText) . '</span>
+                </a>
+            </div>
         </div>';
     }
 }
