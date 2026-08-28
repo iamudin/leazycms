@@ -493,6 +493,10 @@
                         {{ $tree[$defaultYear]['count'] ?? 0 }} post
                     </span>
                 </div>
+
+                @if(function_exists('render_master_ad'))
+                    {!! render_master_ad('widget_calendar') !!}
+                @endif
             </div>
 
         </div>

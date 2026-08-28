@@ -4016,4 +4016,131 @@ if (!function_exists('mask_email')) {
     }
 }
 
+if (!function_exists('get_master_ad')) {
+    /**
+     * Ambil 1 data banner iklan master acak berdasarkan kategori (Ultra-High Performance)
+     *
+     * @param string $category 'in_article', 'widget_calendar', atau 'all'
+     * @return array|null
+     */
+    function get_master_ad($category = 'all')
+    {
+        if (!config('modules.multisite_enabled')) {
+            return null;
+        }
+
+        $isBebasIklan = in_array(get_option('bebas_iklan', '0'), ['1', 1, 'true', true, 'Y', 'y'], true);
+        if ($isBebasIklan) {
+            return null;
+        }
+
+        // Abaikan iklan in_feed jika sedang berada di halaman Beranda (/)
+        if ($category === 'in_feed' && (request()->is('/') || empty(trim(request()->path(), '/')))) {
+            return null;
+        }
+
+        static $cachedAds = null;
+        if ($cachedAds === null) {
+            $adsRaw = get_option('master_ads', '[]');
+            $adsList = is_array($adsRaw) ? $adsRaw : json_decode($adsRaw, true);
+            if (is_array($adsList) && !empty($adsList)) {
+                $cachedAds = array_values(array_filter($adsList, function ($item) {
+                    $status = $item['status'] ?? 0;
+                    $isActive = in_array($status, [1, '1', true, 'true', 'active', 'on'], true);
+                    return $isActive && !empty($item['image']);
+                }));
+            } else {
+                $cachedAds = [];
+            }
+        }
+
+        if (empty($cachedAds)) {
+            return null;
+        }
+
+        $filtered = array_values(array_filter($cachedAds, function ($item) use ($category) {
+            $cat = $item['category'] ?? 'in_article';
+            if ($category === 'all' || $cat === 'all') {
+                return true;
+            }
+            return $cat === $category;
+        }));
+
+        if (empty($filtered)) {
+            return null;
+        }
+
+        $selected = $filtered[array_rand($filtered)];
+        if (!empty($selected['image']) && str_starts_with($selected['image'], '/media/')) {
+            $selected['image'] = url($selected['image']);
+        }
+
+        return $selected;
+    }
+}
+
+if (!function_exists('render_master_ad')) {
+    /**
+     * Render HTML banner iklan master acak berdasarkan kategori
+     *
+     * @param string $category 'in_article', 'in_feed', 'widget_calendar', atau 'all'
+     * @param string $extraClass Class CSS tambahan
+     * @return string
+     */
+    function render_master_ad($category = 'in_article', $extraClass = '')
+    {
+        $ad = get_master_ad($category);
+        if (!$ad) {
+            return '';
+        }
+
+        $adTitle = htmlspecialchars($ad['title'] ?? '');
+        $adLink  = !empty($ad['link']) ? $ad['link'] : '#';
+        $adImage = $ad['image'];
+
+        $wrapperStyle = match($category) {
+            'widget_calendar' => 'margin: 12px 0 0 0; padding-top: 10px; border-top: 1px solid var(--cal-border, #e2e8f0); text-align: center; max-width: 100%; clear: both;',
+            'in_feed'         => 'margin: 0px auto; text-align: center; max-width: 100%; clear: both; width: 100%;',
+            default           => 'margin: 12px auto; text-align: center; max-width: 100%; clear: both;',
+        };
+
+        return '
+        <div class="tenant-global-ad-slot tenant-ad-' . e($category) . ' ' . e($extraClass) . '" style="' . $wrapperStyle . '">
+            ' . (!empty($adTitle) ? '<div style="font-size: 9.5px; color: var(--cal-text-muted, #888); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">' . $adTitle . '</div>' : '') . '
+            <a href="' . e($adLink) . '" target="_blank" rel="noopener noreferrer nofollow sponsored" style="display: block; max-width: 100%; text-decoration: none;">
+                <img src="' . e($adImage) . '" alt="' . $adTitle . '" loading="lazy" decoding="async" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: block; margin: 0 auto;">
+            </a>
+        </div>';
+    }
+}
+
+if (!function_exists('render_feed_ad')) {
+    /**
+     * Render banner iklan master full-width setelah urutan item tertentu (default: setelah item ke-3)
+     *
+     * @param mixed $loop Objek $loop dari Blade @foreach
+     * @param int $afterIndex Urutan item ke berapa (default: 3)
+     * @param string $wrapperClass Class CSS pembungkus full-width
+     * @return string
+     */
+    function render_feed_ad($loop, $afterIndex = 3, $wrapperClass = 'col-span-full sm:col-span-2 md:col-span-3 lg:col-span-4 col-12 w-full my-4')
+    {
+        if (!is_object($loop) || !isset($loop->iteration)) {
+            return '';
+        }
+
+        // Tampilkan hanya setelah index/urutan ke-N yang ditentukan (default: ke-3)
+        if ($loop->iteration === (int) $afterIndex) {
+            $adHtml = render_master_ad('in_feed');
+            if (!empty($adHtml)) {
+                return '<div class="' . e($wrapperClass) . '" style="grid-column: 1 / -1; width: 100%;">' . $adHtml . '</div>';
+            }
+        }
+
+        return '';
+    }
+}
+
+
+
 

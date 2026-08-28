@@ -224,24 +224,23 @@
                         </div>
                     </div>
 
-                    <div class="table-responsive">
                         <table class="table table-bordered table-sm" id="adsTable" style="font-size: 13px;">
                             <thead class="thead-light">
                                 <tr>
-                                    <th width="20%">Judul / Label</th>
-                                    <th width="32%">URL Gambar (Image Src)</th>
-                                    <th width="25%">Link Tujuan (URL)</th>
-                                    <th width="13%" class="text-center">Status</th>
-                                    <th width="10%" class="text-center">Aksi</th>
+                                    <th width="18%">Judul / Label</th>
+                                    <th width="20%">Kategori / Posisi</th>
+                                    <th width="28%">URL Gambar (Image Src)</th>
+                                    <th width="20%">Link Tujuan (URL)</th>
+                                    <th width="8%" class="text-center">Status</th>
+                                    <th width="6%" class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="adsTableBody">
                                 <tr>
-                                    <td colspan="5" class="text-center py-3"><i class="fa fa-spinner fa-spin"></i> Memuat data...</td>
+                                    <td colspan="6" class="text-center py-3"><i class="fa fa-spinner fa-spin"></i> Memuat data...</td>
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
@@ -430,14 +429,23 @@
         function renderAdsTable() {
             let html = '';
             if (adsData.length === 0) {
-                html = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada iklan. Klik tombol <strong>+ Tambah Iklan</strong> di atas.</td></tr>';
+                html = '<tr><td colspan="6" class="text-center text-muted py-3">Belum ada iklan. Klik tombol <strong>+ Tambah Iklan</strong> di atas.</td></tr>';
             } else {
                 adsData.forEach((ad, index) => {
                     let isChecked = (ad.status === 1 || ad.status === '1' || ad.status === true || ad.status === 'active' || ad.status === 'on') ? 'checked' : '';
+                    let cat = ad.category || 'in_article';
                     html += `
                     <tr data-index="${index}">
                         <td>
                             <input type="text" class="form-control form-control-sm ad-title" value="${escapeHtml(ad.title || '')}" placeholder="Contoh: Sponsor Promo">
+                        </td>
+                        <td>
+                            <select class="form-control form-control-sm ad-category">
+                                <option value="in_article" ${cat === 'in_article' ? 'selected' : ''}>Artikel Konten</option>
+                                <option value="in_feed" ${cat === 'in_feed' ? 'selected' : ''}>Di Antara List / Index</option>
+                                <option value="widget_calendar" ${cat === 'widget_calendar' ? 'selected' : ''}>Footer Widget Kalender Arsip</option>
+                                <option value="all" ${cat === 'all' ? 'selected' : ''}>Semua Posisi</option>
+                            </select>
                         </td>
                         <td>
                             <input type="text" class="form-control form-control-sm ad-image" value="${escapeHtml(ad.image || '')}" placeholder="https://.../banner.jpg atau /media/...">
@@ -447,7 +455,7 @@
                         </td>
                         <td class="text-center align-middle">
                             <label class="mb-0 font-weight-normal" style="cursor:pointer;">
-                                <input type="checkbox" class="ad-status" ${isChecked}> Aktif
+                                <input type="checkbox" class="ad-status" ${isChecked}>
                             </label>
                         </td>
                         <td class="text-center align-middle">
@@ -467,7 +475,7 @@
         function addNewAdRow() {
             // Simpan perubahan form yang sedang diedit
             syncCurrentAdsFromDOM();
-            adsData.push({ title: '', image: '', link: '', status: 1 });
+            adsData.push({ title: '', category: 'in_article', image: '', link: '', status: 1 });
             renderAdsTable();
         }
 
@@ -484,10 +492,11 @@
                 let titleInput = row.find('.ad-title');
                 if (titleInput.length) {
                     let title = titleInput.val();
+                    let category = row.find('.ad-category').val() || 'in_article';
                     let image = row.find('.ad-image').val();
                     let link  = row.find('.ad-link').val();
                     let status = row.find('.ad-status').is(':checked') ? 1 : 0;
-                    currentList.push({ title, image, link, status });
+                    currentList.push({ title, category, image, link, status });
                 }
             });
             if (currentList.length > 0) {

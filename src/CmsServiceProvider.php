@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Leazycms\Web\Models\Post;
 use Leazycms\Web\Commands\AssetLink;
 use Leazycms\Web\Commands\InstallCommand;
 use Leazycms\Web\Commands\ResetPassword;
@@ -308,9 +310,8 @@ class CmsServiceProvider extends ServiceProvider
         $this->log_viewer();
         $this->handle500();
         $this->handle403();
-
-
     }
+
     protected function render403($request, Throwable $e)
     {
         $requestId = (string) Str::uuid();

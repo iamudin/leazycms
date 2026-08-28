@@ -727,10 +727,11 @@ class TenantController extends Controller implements HasMiddleware
             foreach ($ads as $ad) {
                 if (!empty($ad['image'])) {
                     $cleanAds[] = [
-                        'title'  => strip_tags($ad['title'] ?? ''),
-                        'link'   => filter_var($ad['link'] ?? '', FILTER_SANITIZE_URL) ?: '#',
-                        'image'  => strip_tags($ad['image'] ?? ''),
-                        'status' => isset($ad['status']) && in_array($ad['status'], [1, '1', true, 'true', 'on', 'active'], true) ? 1 : 0,
+                        'title'    => strip_tags($ad['title'] ?? ''),
+                        'link'     => filter_var($ad['link'] ?? '', FILTER_SANITIZE_URL) ?: '#',
+                        'image'    => strip_tags($ad['image'] ?? ''),
+                        'category' => in_array($ad['category'] ?? '', ['in_article', 'in_feed', 'widget_calendar', 'all']) ? $ad['category'] : 'in_article',
+                        'status'   => isset($ad['status']) && in_array($ad['status'], [1, '1', true, 'true', 'on', 'active'], true) ? 1 : 0,
                     ];
                 }
             }

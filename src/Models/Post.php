@@ -235,55 +235,18 @@ class Post extends BaseModel
             return $value;
         }
 
-        // 4. Static Memory Cache: Supaya json_decode & filter hanya dieksekusi 1x per request lifecycle
-        static $cachedActiveAds = null;
-
-        if ($cachedActiveAds === null) {
-            $adsRaw = get_option('master_ads', '[]');
-            $adsList = is_array($adsRaw) ? $adsRaw : json_decode($adsRaw, true);
-
-            if (is_array($adsList) && !empty($adsList)) {
-                $cachedActiveAds = array_values(array_filter($adsList, function ($item) {
-                    $status = $item['status'] ?? 0;
-                    $isActive = in_array($status, [1, '1', true, 'true', 'active', 'on'], true);
-                    return $isActive && !empty($item['image']);
-                }));
-            } else {
-                $cachedActiveAds = [];
-            }
-        }
-
-        // Jika tidak ada iklan aktif, langsung kembalikan konten asli
-        if (empty($cachedActiveAds)) {
+        // 4. Render banner iklan khusus untuk kategori 'in_article'
+        $adHtml = function_exists('render_master_ad') ? render_master_ad('in_article') : '';
+        if (empty($adHtml)) {
             return $value;
         }
 
-        // 4. Pilih 1 Iklan secara RANDOM
-        $selectedAd = $cachedActiveAds[array_rand($cachedActiveAds)];
-        $adTitle = htmlspecialchars($selectedAd['title'] ?? '');
-        $adLink  = !empty($selectedAd['link']) ? $selectedAd['link'] : '#';
-        $adImage = $selectedAd['image'];
-
-        // Jika URL image relatif (misal /media/...), sesuaikan dengan full URL
-        if (str_starts_with($adImage, '/media/')) {
-            $adImage = url($adImage);
-        }
-
-        // 5. Format HTML Banner Iklan dengan Optimasi Browser & Core Web Vitals (Lazy Load + Async Decode + Sponsored SEO)
-        $adHtml = '
-        <div class="tenant-global-inarticle-ad" style="margin: 24px auto; text-align: center; max-width: 100%; clear: both;">
-            ' . (!empty($adTitle) ? '<div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">' . $adTitle . '</div>' : '') . '
-            <a href="' . e($adLink) . '" target="_blank" rel="noopener noreferrer nofollow sponsored" style="display: inline-block; max-width: 100%;">
-                <img src="' . e($adImage) . '" alt="' . $adTitle . '" loading="lazy" decoding="async" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: block; margin: 0 auto;">
-            </a>
-        </div>';
-
-        // 6. Cek cepat sebelum regex (Short-circuit optimization: jika artikel tidak punya tag </p>)
+        // 5. Cek cepat sebelum regex (Short-circuit optimization: jika artikel tidak punya tag </p>)
         if (stripos($value, '</p>') === false) {
             return $value . $adHtml;
         }
 
-        // 7. Ambil posisi target paragraf (default: 2)
+        // 6. Ambil posisi target paragraf (default: 2)
         $targetParagraph = (int) (get_option('master_ad_paragraph') ?? 2);
 
         return $this->insertAdAfterParagraph($value, $adHtml, $targetParagraph);
