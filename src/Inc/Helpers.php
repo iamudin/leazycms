@@ -4143,6 +4143,101 @@ if (!function_exists('render_feed_ad')) {
     }
 }
 
+if (!function_exists('timeiso')) {
+    /**
+     * Mengubah tanggal/waktu ke format ISO-8601 string (W3C Datetime untuk Sitemap / Schema)
+     *
+     * @param mixed $date
+     * @return string
+     */
+    function timeiso($date = null)
+    {
+        if (empty($date)) {
+            return now()->toIso8601String();
+        }
 
+        if ($date instanceof \DateTimeInterface) {
+            return \Illuminate\Support\Carbon::instance($date)->toIso8601String();
+        }
 
+        try {
+            return \Illuminate\Support\Carbon::parse($date)->toIso8601String();
+        } catch (\Throwable $e) {
+            return now()->toIso8601String();
+        }
+    }
+}
 
+if (!function_exists('add_to_sitemap')) {
+    /**
+     * Menambahkan URL kustom ke sitemap generator (misal dipanggil di modules.blade.php template)
+     *
+     * Contoh penggunaan di modules.blade.php:
+     * add_to_sitemap([
+     *     'loc'      => 'https://domain.com/halaman-khusus', // atau cukup '/halaman-khusus'
+     *     'priority' => '0.80',                         // opsional (default: 0.80)
+     *     'lastmod'  => '2026-08-20 20:12:00',           // opsional (tanggal string/Carbon/now(), otomatis dikonversi ke ISO oleh sitemap generator)
+     * ]);
+     *
+     * @param array $data Array asosiatif single item atau list of array items
+     * @return array
+     */
+    function add_to_sitemap($data)
+    {
+        if (empty($data) || !is_array($data)) {
+            return config('modules.custom_sitemaps', []);
+        }
+
+        $isList = array_is_list($data);
+        $items = $isList ? $data : [$data];
+
+        $currentSitemaps = config('modules.custom_sitemaps', []);
+
+        foreach ($items as $item) {
+            if (!is_array($item) || empty($item['loc'])) {
+                continue;
+            }
+
+            $loc = trim($item['loc']);
+            $priority = isset($item['priority']) ? (string) $item['priority'] : '0.80';
+            $lastmod = $item['lastmod'] ?? null;
+
+            // Cek duplikasi berdasarkan loc
+            $exists = false;
+            foreach ($currentSitemaps as $key => $existing) {
+                if ($existing['loc'] === $loc) {
+                    $currentSitemaps[$key] = [
+                        'loc' => $loc,
+                        'priority' => $priority,
+                        'lastmod' => $lastmod,
+                    ];
+                    $exists = true;
+                    break;
+                }
+            }
+
+            if (!$exists) {
+                $currentSitemaps[] = [
+                    'loc' => $loc,
+                    'priority' => $priority,
+                    'lastmod' => $lastmod,
+                ];
+            }
+        }
+
+        config(['modules.custom_sitemaps' => $currentSitemaps]);
+        return $currentSitemaps;
+    }
+}
+
+if (!function_exists('get_custom_sitemaps')) {
+    /**
+     * Mengambil daftar URL kustom sitemap yang telah didaftarkan
+     *
+     * @return array
+     */
+    function get_custom_sitemaps()
+    {
+        return config('modules.custom_sitemaps', []);
+    }
+}

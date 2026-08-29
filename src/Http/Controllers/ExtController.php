@@ -105,6 +105,23 @@ class ExtController extends Controller
         }
     }
 
+    private function formatSitemapDate(mixed $date = null): string
+    {
+        if (empty($date)) {
+            return now()->toIso8601String();
+        }
+
+        if ($date instanceof \DateTimeInterface) {
+            return \Illuminate\Support\Carbon::instance($date)->toIso8601String();
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse($date)->toIso8601String();
+        } catch (\Throwable $e) {
+            return now()->toIso8601String();
+        }
+    }
+
     private function generateSitemaps(): void
     {
         $baseUrl = $this->sitemapBaseUrl();
@@ -138,7 +155,7 @@ class ExtController extends Controller
             $post = $post->get();
 
         $lastmod = $post->max('updated_at');
-        $lastmodIso = $lastmod ? $lastmod->toIso8601String() : now()->toIso8601String();
+        $lastmodIso = $lastmod ? $this->formatSitemapDate($lastmod) : $this->formatSitemapDate(now());
 
         $type_index = [
             [
@@ -154,7 +171,7 @@ class ExtController extends Controller
                 $type_index[] = [
                     'loc' => $baseUrl . '/' . ltrim((string) $row->name, '/'),
                     'priority' => '0.80',
-                    'lastmod' => $lst?->updated_at?->toIso8601String() ?: $lastmodIso,
+                    'lastmod' => $lst?->updated_at ? $this->formatSitemapDate($lst->updated_at) : $lastmodIso,
                 ];
             }
         }
@@ -163,12 +180,31 @@ class ExtController extends Controller
         foreach ($post as $row) {
             $post_index[] = [
                 'loc' => $baseUrl . '/' . ltrim((string) $row->url, '/'),
-                'priority' => $row->type == 'halaman' ? '0.64' : '0.80',
-                'lastmod' => $row->updated_at->toIso8601String(),
+                'priority' => $row->type == 'page' ? '0.64' : '0.80',
+                'lastmod' => $this->formatSitemapDate($row->updated_at),
             ];
         }
 
-        $urls = array_merge($type_index, $post_index);
+        // Custom sitemaps dari add_to_sitemap(...) yang didaftarkan di modules.blade.php
+        $custom_sitemaps = function_exists('get_custom_sitemaps') ? get_custom_sitemaps() : config('modules.custom_sitemaps', []);
+        $custom_index = [];
+        if (is_array($custom_sitemaps)) {
+            foreach ($custom_sitemaps as $cItem) {
+                if (!empty($cItem['loc'])) {
+                    $loc = trim($cItem['loc']);
+                    if (!preg_match('/^https?:\/\//i', $loc)) {
+                        $loc = $baseUrl . '/' . ltrim($loc, '/');
+                    }
+                    $custom_index[] = [
+                        'loc' => $loc,
+                        'priority' => isset($cItem['priority']) ? (string) $cItem['priority'] : '0.80',
+                        'lastmod' => !empty($cItem['lastmod']) ? $this->formatSitemapDate($cItem['lastmod']) : $lastmodIso,
+                    ];
+                }
+            }
+        }
+
+        $urls = array_merge($type_index, $post_index, $custom_index);
         $chunkedUrls = array_chunk($urls, 50000);
         $sitemaps = [];
 
