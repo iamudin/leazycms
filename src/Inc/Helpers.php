@@ -269,12 +269,13 @@ if (!function_exists('add_option')) {
 
             if (is_array($array)) {
                 $array = array_values(array_filter($array, function ($field) {
-                    if (is_array($field) && isset($field[0])) {
+                    if (is_array($field)) {
+                        $fieldName = isset($field[0]) ? $field[0] : array_key_first($field);
                         $metaType = is_array($field[1] ?? null) ? ($field[1]['type'] ?? null) : ($field[1] ?? null);
                         if ($metaType === 'break') {
                             return true;
                         }
-                        $fieldKey = _us($field[0]);
+                        $fieldKey = _us($fieldName);
                         return !disallow_option_key($fieldKey);
                     }
                     return true;
@@ -290,16 +291,12 @@ if (!function_exists('add_option')) {
 
         // cek apakah sudah ada key tersebut
         if (array_key_exists($key, $options)) {
-            // jika sudah ada, pastikan nilai yang ada adalah array sebelum merge
-            if (is_array($options[$key])) {
-                // merge dengan array baru (recursive untuk nested structure)
-                $options[$key] = array_merge_recursive($options[$key], $array);
+            if (is_array($options[$key]) && is_array($array)) {
+                $options[$key] = array_merge($options[$key], $array);
             } else {
-                // jika bukan array, ganti dengan array baru
                 $options[$key] = $array;
             }
         } else {
-            // jika belum ada, tambahkan
             $options[$key] = $array;
         }
 
@@ -4042,12 +4039,13 @@ if (!function_exists('get_master_ad')) {
         static $cachedAds = null;
         if ($cachedAds === null) {
             $adsRaw = get_option('master_ads', '[]');
-            $adsList = is_array($adsRaw) ? $adsRaw : json_decode($adsRaw, true);
+            $adsList = is_array($adsRaw) ? $adsRaw : (is_object($adsRaw) ? (array)$adsRaw : json_decode($adsRaw, true));
             if (is_array($adsList) && !empty($adsList)) {
                 $cachedAds = array_values(array_filter($adsList, function ($item) {
-                    $status = $item['status'] ?? 0;
+                    $itemArr = is_object($item) ? (array)$item : (is_array($item) ? $item : []);
+                    $status = $itemArr['status'] ?? 0;
                     $isActive = in_array($status, [1, '1', true, 'true', 'active', 'on'], true);
-                    return $isActive && !empty($item['image']);
+                    return $isActive && !empty($itemArr['image']);
                 }));
             } else {
                 $cachedAds = [];
@@ -4059,7 +4057,8 @@ if (!function_exists('get_master_ad')) {
         }
 
         $filtered = array_values(array_filter($cachedAds, function ($item) use ($category) {
-            $cat = $item['category'] ?? 'in_article';
+            $itemArr = is_object($item) ? (array)$item : (is_array($item) ? $item : []);
+            $cat = $itemArr['category'] ?? 'in_article';
             if ($category === 'all' || $cat === 'all') {
                 return true;
             }
@@ -4070,7 +4069,8 @@ if (!function_exists('get_master_ad')) {
             return null;
         }
 
-        $selected = $filtered[array_rand($filtered)];
+        $rawSelected = $filtered[array_rand($filtered)];
+        $selected = is_object($rawSelected) ? (array)$rawSelected : (is_array($rawSelected) ? $rawSelected : []);
         if (!empty($selected['image']) && str_starts_with($selected['image'], '/media/')) {
             $selected['image'] = url($selected['image']);
         }
@@ -4094,10 +4094,11 @@ if (!function_exists('render_master_ad')) {
             return '';
         }
 
-        $adTitle = htmlspecialchars($ad['title'] ?? '');
+        $adArr = is_object($ad) ? (array)$ad : (is_array($ad) ? $ad : []);
+        $adTitle = htmlspecialchars($adArr['title'] ?? '');
         $badgeText = !empty($adTitle) ? $adTitle : 'Iklan';
-        $adLink  = !empty($ad['link']) ? $ad['link'] : '#';
-        $adImage = $ad['image'];
+        $adLink  = !empty($adArr['link']) ? $adArr['link'] : '#';
+        $adImage = $adArr['image'] ?? '';
 
         $wrapperStyle = match($category) {
             'widget_calendar' => 'margin: 12px 0 0 0; padding-top: 10px; border-top: 1px solid var(--cal-border, #e2e8f0); text-align: center; max-width: 100%; clear: both;',

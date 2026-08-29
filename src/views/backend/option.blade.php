@@ -190,28 +190,58 @@
         <div class="row">
             @foreach ($data as $field)
                 @php
-                    $fieldName = $field[0] ?? '';
-                    $fieldMeta = $field[1] ?? 'text';
-                    
-                    // Normalisasi field format
-                    if (is_array($fieldMeta) && isset($fieldMeta['type'])) {
-                        $fieldType = $fieldMeta['type'];
-                        $fieldDefault = $fieldMeta['default'] ?? null;
-                        $fieldHelper = $fieldMeta['helper'] ?? null;
-                        $fieldRequired = $fieldMeta['required'] ?? false;
-                        $fieldMime = $fieldMeta['mime_type'] ?? null;
-                    } elseif (is_object($fieldMeta) && isset($fieldMeta->type)) {
-                        $fieldType = $fieldMeta->type;
-                        $fieldDefault = $fieldMeta->default ?? null;
-                        $fieldHelper = $fieldMeta->helper ?? null;
-                        $fieldRequired = $fieldMeta->required ?? false;
-                        $fieldMime = $fieldMeta->mime_type ?? null;
-                    } else {
-                        $fieldType = $fieldMeta;
-                        $fieldDefault = (isset($field[2]) && is_string($field[2]) && $fieldType !== 'file' && $fieldType !== 'break') ? $field[2] : null;
+                    $isArrayTable = false;
+                    $rawCols = [];
+
+                    if (is_array($field) && !isset($field[0])) {
+                        // Syntax: ['Jam Kerja' => [['Hari', 'Jam']]]
+                        $fieldName = array_key_first($field);
+                        $rawCols = $field[$fieldName];
+                        $isArrayTable = true;
+                        $fieldType = 'array';
                         $fieldHelper = null;
-                        $fieldRequired = isset($field[3]);
-                        $fieldMime = ($fieldType === 'file' && isset($field[2])) ? $field[2] : null;
+                        $fieldRequired = false;
+                        $fieldDefault = null;
+                    } elseif (isset($field[0]) && (isset($field[1]) && ($field[1] === 'array' || $field[1] === 'table' || (is_array($field[1]) && !isset($field[1]['type']) && !is_string($field[1][0] ?? null))))) {
+                        $fieldName = $field[0];
+                        $rawCols = $field[1] === 'array' ? ($field[2] ?? []) : $field[1];
+                        $isArrayTable = true;
+                        $fieldType = 'array';
+                        $fieldHelper = null;
+                        $fieldRequired = false;
+                        $fieldDefault = null;
+                    } elseif (isset($field[0]) && is_array($field[1] ?? null) && ($field[1]['type'] ?? '') === 'array') {
+                        $fieldName = $field[0];
+                        $rawCols = $field[1]['columns'] ?? $field[1]['data'] ?? [];
+                        $isArrayTable = true;
+                        $fieldType = 'array';
+                        $fieldHelper = $field[1]['helper'] ?? null;
+                        $fieldRequired = $field[1]['required'] ?? false;
+                        $fieldDefault = $field[1]['default'] ?? null;
+                    } else {
+                        $fieldName = $field[0] ?? '';
+                        $fieldMeta = $field[1] ?? 'text';
+                        
+                        // Normalisasi field format
+                        if (is_array($fieldMeta) && isset($fieldMeta['type'])) {
+                            $fieldType = $fieldMeta['type'];
+                            $fieldDefault = $fieldMeta['default'] ?? null;
+                            $fieldHelper = $fieldMeta['helper'] ?? null;
+                            $fieldRequired = $fieldMeta['required'] ?? false;
+                            $fieldMime = $fieldMeta['mime_type'] ?? null;
+                        } elseif (is_object($fieldMeta) && isset($fieldMeta->type)) {
+                            $fieldType = $fieldMeta->type;
+                            $fieldDefault = $fieldMeta->default ?? null;
+                            $fieldHelper = $fieldMeta->helper ?? null;
+                            $fieldRequired = $fieldMeta->required ?? false;
+                            $fieldMime = $fieldMeta->mime_type ?? null;
+                        } else {
+                            $fieldType = $fieldMeta;
+                            $fieldDefault = (isset($field[2]) && is_string($field[2]) && $fieldType !== 'file' && $fieldType !== 'break' && !is_array($fieldType)) ? $field[2] : null;
+                            $fieldHelper = null;
+                            $fieldRequired = isset($field[3]);
+                            $fieldMime = ($fieldType === 'file' && isset($field[2])) ? $field[2] : null;
+                        }
                     }
 
                     $fieldSlug = _us($fieldName);
@@ -219,7 +249,7 @@
                     $displayVal = ($savedVal !== null && $savedVal !== '') ? $savedVal : ($fieldDefault ?? '');
 
                     // Cek layout col: full-width atau 2-kolom
-                    $isFullWidth = in_array($fieldType, ['break', 'textarea', 'rich-text']) || str_contains($fieldSlug, 'embed') || str_contains($fieldSlug, 'alamat') || str_contains($fieldSlug, 'visi') || str_contains($fieldSlug, 'misi');
+                    $isFullWidth = in_array($fieldType, ['break', 'textarea', 'rich-text', 'array']) || str_contains($fieldSlug, 'embed') || str_contains($fieldSlug, 'alamat') || str_contains($fieldSlug, 'visi') || str_contains($fieldSlug, 'misi');
                     $colClass = $isFullWidth ? 'col-12' : 'col-md-6';
                 @endphp
 
@@ -234,6 +264,136 @@
                         @if(!empty($fieldHelper))
                             <small class="text-muted d-block mt-n2 mb-3 pl-1">{{ $fieldHelper }}</small>
                         @endif
+                    </div>
+
+                @elseif($isArrayTable || $fieldType === 'array')
+                    @php
+                        $colsList = [];
+                        if (is_array($rawCols)) {
+                            if (isset($rawCols[0]) && is_array($rawCols[0])) {
+                                $colsList = $rawCols[0];
+                            } else {
+                                $colsList = $rawCols;
+                            }
+                        }
+                        
+                        $normalizedCols = [];
+                        foreach ($colsList as $c) {
+                            if (is_array($c)) {
+                                $colLabel = $c[0] ?? 'Kolom';
+                                $colType = $c[1] ?? 'text';
+                            } else {
+                                $colLabel = (string)$c;
+                                $colType = 'text';
+                            }
+                            $normalizedCols[] = [
+                                'label' => $colLabel,
+                                'slug' => _us($colLabel),
+                                'type' => $colType
+                            ];
+                        }
+
+                        if (is_string($savedVal)) {
+                            $tableRows = json_decode($savedVal, true) ?? [];
+                        } elseif (is_array($savedVal)) {
+                            $tableRows = $savedVal;
+                        } elseif (is_object($savedVal)) {
+                            $tableRows = (array)$savedVal;
+                        } else {
+                            $tableRows = [];
+                        }
+                    @endphp
+
+                    <div class="col-12 mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="option-label m-0">
+                                <span class="font-weight-bold" style="font-size: 13.5px;"><i class="fa fa-list-ol text-primary mr-1"></i> {{ str($fieldName)->headline() }}</span>
+                            </label>
+                            <button type="button" class="btn btn-xs btn-outline-primary btn-add-row" data-target="#table_{{ $fieldSlug }}" style="border-radius: 6px; padding: 4px 12px; font-weight: 600;">
+                                <i class="fa fa-plus mr-1"></i> Tambah Baris
+                            </button>
+                        </div>
+                        
+                        @if(!empty($fieldHelper))
+                            <div class="option-helper mb-2"><i class="fa fa-info-circle text-primary"></i> {{ $fieldHelper }}</div>
+                        @endif
+
+                        <div class="table-responsive" style="border: 1.5px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff;">
+                            <table class="table table-sm table-bordered m-0 dynamic-option-table" id="table_{{ $fieldSlug }}" data-slug="{{ $fieldSlug }}">
+                                <thead class="bg-light text-dark">
+                                    <tr>
+                                        <th style="width: 45px;" class="text-center">#</th>
+                                        @foreach($normalizedCols as $col)
+                                            <th>{{ $col['label'] }}</th>
+                                        @endforeach
+                                        <th style="width: 50px;" class="text-center"><i class="fa fa-cog text-muted"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody_{{ $fieldSlug }}">
+                                    @forelse($tableRows as $rowIndex => $rowItem)
+                                        @php $rowArr = is_object($rowItem) ? (array)$rowItem : (is_array($rowItem) ? $rowItem : []); @endphp
+                                        <tr class="option-row">
+                                            <td class="text-center align-middle text-muted row-num font-weight-bold" style="font-size: 11px;">
+                                                {{ $loop->iteration }}
+                                            </td>
+                                            @foreach($normalizedCols as $col)
+                                                @php
+                                                    $valCol = $rowArr[$col['slug']] ?? $rowArr[$col['label']] ?? ($rowArr[array_search($col, $normalizedCols)] ?? '');
+                                                @endphp
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm option-control" 
+                                                        name="{{ $fieldSlug }}[{{ $rowIndex }}][{{ $col['slug'] }}]" 
+                                                        value="{{ $valCol }}" 
+                                                        placeholder="Entri {{ $col['label'] }}">
+                                                </td>
+                                            @endforeach
+                                            <td class="text-center align-middle">
+                                                <button type="button" class="btn btn-xs btn-outline-danger btn-remove-row" title="Hapus Baris" style="border-radius: 6px; padding: 3px 7px;">
+                                                    <i class="fa fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr class="option-row">
+                                            <td class="text-center align-middle text-muted row-num font-weight-bold" style="font-size: 11px;">1</td>
+                                            @foreach($normalizedCols as $col)
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm option-control" 
+                                                        name="{{ $fieldSlug }}[0][{{ $col['slug'] }}]" 
+                                                        value="" 
+                                                        placeholder="Entri {{ $col['label'] }}">
+                                                </td>
+                                            @endforeach
+                                            <td class="text-center align-middle">
+                                                <button type="button" class="btn btn-xs btn-outline-danger btn-remove-row" title="Hapus Baris" style="border-radius: 6px; padding: 3px 7px;">
+                                                    <i class="fa fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Template for JS Dynamic Appending --}}
+                        <template id="tmpl_{{ $fieldSlug }}">
+                            <tr class="option-row">
+                                <td class="text-center align-middle text-muted row-num font-weight-bold" style="font-size: 11px;">__NUM__</td>
+                                @foreach($normalizedCols as $col)
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm option-control" 
+                                            name="{{ $fieldSlug }}[__INDEX__][{{ $col['slug'] }}]" 
+                                            value="" 
+                                            placeholder="Entri {{ $col['label'] }}">
+                                    </td>
+                                @endforeach
+                                <td class="text-center align-middle">
+                                    <button type="button" class="btn btn-xs btn-outline-danger btn-remove-row" title="Hapus Baris" style="border-radius: 6px; padding: 3px 7px;">
+                                        <i class="fa fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
                     </div>
 
                 @elseif(is_array($fieldType))
@@ -486,6 +646,44 @@
                     ]
                 });
             }
+
+            // Handler Tambah Baris Dynamic Table
+            $(document).on('click', '.btn-add-row', function(e) {
+                e.preventDefault();
+                var targetSelector = $(this).data('target');
+                var $table = $(targetSelector);
+                var slug = $table.data('slug');
+                var $tbody = $('#tbody_' + slug);
+                var currentCount = $tbody.find('tr.option-row').length;
+                var tmplHtml = $('#tmpl_' + slug).html();
+                
+                if (tmplHtml) {
+                    var nextIndex = new Date().getTime();
+                    var newRowHtml = tmplHtml
+                        .replace(/__INDEX__/g, nextIndex)
+                        .replace(/__NUM__/g, currentCount + 1);
+                    $tbody.append(newRowHtml);
+                }
+            });
+
+            // Handler Hapus Baris Dynamic Table
+            $(document).on('click', '.btn-remove-row', function(e) {
+                e.preventDefault();
+                var $row = $(this).closest('tr.option-row');
+                var $tbody = $row.closest('tbody');
+                
+                if ($tbody.find('tr.option-row').length > 1) {
+                    $row.remove();
+                } else {
+                    // Jika tinggal 1 baris, kosongkan isinya
+                    $row.find('input').val('');
+                }
+
+                // Re-number index urutan baris
+                $tbody.find('tr.option-row').each(function(idx) {
+                    $(this).find('.row-num').text(idx + 1);
+                });
+            });
         });
     </script>
 @endpush

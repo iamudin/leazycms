@@ -649,9 +649,27 @@ class PanelController extends Controller implements HasMiddleware
         if ($request->isMethod('post')) {
             $option = new Option;
             foreach ($data as $field) {
-                $fieldName = $field[0] ?? '';
-                $fieldMeta = $field[1] ?? 'text';
-                $fieldType = is_array($fieldMeta) ? ($fieldMeta['type'] ?? 'text') : (is_object($fieldMeta) ? ($fieldMeta->type ?? 'text') : $fieldMeta);
+                $isArrayTable = false;
+                if (is_array($field) && !isset($field[0])) {
+                    $fieldName = array_key_first($field);
+                    $fieldMeta = $field[$fieldName];
+                    $isArrayTable = true;
+                    $fieldType = 'array';
+                } elseif (isset($field[0]) && (isset($field[1]) && ($field[1] === 'array' || $field[1] === 'table' || (is_array($field[1]) && !isset($field[1]['type']) && !is_string($field[1][0] ?? null))))) {
+                    $fieldName = $field[0];
+                    $fieldMeta = $field[1];
+                    $isArrayTable = true;
+                    $fieldType = 'array';
+                } elseif (isset($field[0]) && is_array($field[1] ?? null) && ($field[1]['type'] ?? '') === 'array') {
+                    $fieldName = $field[0];
+                    $fieldMeta = $field[1];
+                    $isArrayTable = true;
+                    $fieldType = 'array';
+                } else {
+                    $fieldName = $field[0] ?? '';
+                    $fieldMeta = $field[1] ?? 'text';
+                    $fieldType = is_array($fieldMeta) ? ($fieldMeta['type'] ?? 'text') : (is_object($fieldMeta) ? ($fieldMeta->type ?? 'text') : $fieldMeta);
+                }
 
                 if ($fieldType === 'break') {
                     continue;
@@ -661,7 +679,30 @@ class PanelController extends Controller implements HasMiddleware
                     continue;
                 }
 
-                if ($fieldType == 'file' || $fieldType == 'image') {
+                if ($isArrayTable || $fieldType === 'array') {
+                    $rawRows = $request->input($key);
+                    $cleanRows = [];
+                    if (is_array($rawRows)) {
+                        foreach ($rawRows as $rItem) {
+                            if (is_array($rItem)) {
+                                $hasContent = false;
+                                $cleanItem = [];
+                                foreach ($rItem as $subK => $subV) {
+                                    $valStr = is_string($subV) ? trim(strip_tags($subV)) : $subV;
+                                    $cleanItem[$subK] = $valStr;
+                                    if ($valStr !== null && $valStr !== '') {
+                                        $hasContent = true;
+                                    }
+                                }
+                                if ($hasContent) {
+                                    $cleanRows[] = $cleanItem;
+                                }
+                            }
+                        }
+                    }
+                    $val = !empty($cleanRows) ? json_encode(array_values($cleanRows), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
+                    $option->updateOrCreate(['name' => $key], ['value' => $val, 'autoload' => 1]);
+                } elseif ($fieldType == 'file' || $fieldType == 'image') {
                     $mimeType = is_array($fieldMeta) ? ($fieldMeta['mime_type'] ?? null) : (is_object($fieldMeta) ? ($fieldMeta->mime_type ?? null) : ($field[2] ?? null));
                     if ($request->hasFile($key)) {
                         $defaultMimes = $fieldType == 'image' ? ['image/gif', 'image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'] : explode(',', allow_mime());

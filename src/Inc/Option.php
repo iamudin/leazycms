@@ -20,6 +20,12 @@ if (!function_exists('get_option')) {
         if (!config('modules.multisite_enabled')) {
             $val = config('modules.option.' . $key);
             if ($val !== null && $val !== '') {
+                if (is_string($val) && (str_starts_with(trim($val), '[') || str_starts_with(trim($val), '{'))) {
+                    $decoded = json_decode($val, true);
+                    if (json_last_error() === JSON_ERROR_NONE && (is_array($decoded) || is_object($decoded))) {
+                        return $decoded;
+                    }
+                }
                 return $val;
             }
         } else {
@@ -27,7 +33,14 @@ if (!function_exists('get_option')) {
                 $options = array_merge(app('default.options'), app('tenant.options'));
             }
             if ($options !== null && isset($options[$key]) && $options[$key] !== '') {
-                return $options[$key];
+                $val = $options[$key];
+                if (is_string($val) && (str_starts_with(trim($val), '[') || str_starts_with(trim($val), '{'))) {
+                    $decoded = json_decode($val, true);
+                    if (json_last_error() === JSON_ERROR_NONE && (is_array($decoded) || is_object($decoded))) {
+                        return $decoded;
+                    }
+                }
+                return $val;
             }
         }
 
@@ -41,15 +54,18 @@ if (!function_exists('get_option')) {
         foreach ($allGroups as $group) {
             if (is_array($group)) {
                 foreach ($group as $item) {
-                    if (is_array($item) && isset($item[0])) {
-                        $itemSlug = function_exists('_us') ? _us($item[0]) : strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $item[0]), '_'));
-                        if ($itemSlug === $targetSlug && isset($item[1])) {
-                            if (is_array($item[1]) && array_key_exists('default', $item[1])) {
-                                return $item[1]['default'];
-                            } elseif (is_object($item[1]) && isset($item[1]->default)) {
-                                return $item[1]->default;
-                            } elseif (isset($item[2]) && is_string($item[2])) {
-                                return $item[2];
+                    if (is_array($item)) {
+                        $itemLabel = isset($item[0]) ? $item[0] : array_key_first($item);
+                        $itemSlug = function_exists('_us') ? _us($itemLabel) : strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $itemLabel), '_'));
+                        if ($itemSlug === $targetSlug) {
+                            if (isset($item[1])) {
+                                if (is_array($item[1]) && array_key_exists('default', $item[1])) {
+                                    return $item[1]['default'];
+                                } elseif (is_object($item[1]) && isset($item[1]->default)) {
+                                    return $item[1]->default;
+                                } elseif (isset($item[2]) && is_string($item[2])) {
+                                    return $item[2];
+                                }
                             }
                         }
                     }
