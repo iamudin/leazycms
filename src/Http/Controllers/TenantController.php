@@ -637,8 +637,8 @@ class TenantController extends Controller implements HasMiddleware
             <div class="form-group mb-2">
                 <label class="font-weight-bold mb-1">Brand Logo / Icon Master</label>
                 ' . $logoPreviewHtml . '
-                <input type="file" name="brand_logo" id="brandLogoFileInput" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/x-icon" class="form-control-file form-control-sm">
-                <small class="text-muted">Format didukung: PNG, JPG, WEBP, SVG, ICO (Rasio 1:1 atau proporsional logo).</small>
+                <input type="text" name="brand_logo" id="brandLogoFileInput" class="form-control-file form-control-sm" placeholder="URL atau path gambar..." onchange="let v=this.value.trim(); if(v && !v.match(/\.(webp|ico|gif|png)$/i)){ alert(\'Format didukung hanya .webp, .ico, .gif, atau .png!\'); this.value=\'\'; }">
+                <small class="text-muted">Format didukung: PNG, GIF, WEBP, ICO (Rasio 1:1 atau proporsional logo).</small>
             </div>
         </form>
         ';

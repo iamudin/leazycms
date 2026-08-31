@@ -339,58 +339,51 @@ function error500Msg($requestId)
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Server Error</title>
+    <title>500 Server Error</title>
     <style>
         body {
-            margin:0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:100vh;
-            text-align:center;
+            margin: 0;
+            padding: 20px;
+            font-family: arial, sans-serif;
+            background-color: #fff;
+            color: #202124;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
-        .card {
-            padding:40px;
-            max-width:500px;
-            width:90%;
+        .container {
+            max-width: 600px;
+            padding: 20px;
         }
-        h1 {
-            margin:0 0 10px;
-            font-size:28px;
+        .logo {
+            margin-bottom: 20px;
+        }
+        .error-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ea4335;
+            margin-right: 8px;
+        }
+        .error-desc {
+            font-size: 20px;
+            color: #5f6368;
         }
         p {
-            opacity:0.8;
-            margin-bottom:20px;
-        }
-        .request-id {
-            background:#0f172a;
-            padding:10px 15px;
-            border-radius:8px;
-            font-family: monospace;
-            font-size:14px;
-            color:#38bdf8;
-            word-break: break-all;
-        }
-        .footer {
-            margin-top:25px;
-            font-size:12px;
-            opacity:0.6;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class='card'>
-        <h1>⚠ Server Error</h1>
-        <p>Something went wrong on our side.</p>
-        <div class='request-id'>
-            Request ID: {$requestId}
+    <div class='container'>
+        <div class='logo'>
+            <span class='error-code'>500.</span>
+            <span class='error-desc'>That's an error.</span>
         </div>
-        <div class='footer'>
-            Please contact administrator and provide this ID.
-        </div>
+        <p>There was an error. Please try again later.<br>That's all we know.</p>
+        <p style='color:#777; font-size:12px; margin-top:20px;'>Request ID: {$requestId}</p>
     </div>
 </body>
 </html>";
@@ -398,7 +391,7 @@ function error500Msg($requestId)
 function error404Msg($requestId = null)
 {
     $requestBlock = $requestId
-        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        ? "<p style='color:#777; font-size:12px; margin-top:20px;'>Request ID: {$requestId}</p>"
         : "";
 
     return "<!DOCTYPE html>
@@ -406,69 +399,51 @@ function error404Msg($requestId = null)
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>404 - Page Not Found</title>
+    <title>404 Not Found</title>
     <style>
         body {
-            margin:0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:100vh;
-            text-align:center;
+            margin: 0;
+            padding: 20px;
+            font-family: arial, sans-serif;
+            background-color: #fff;
+            color: #202124;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
-        .card {
-            padding:40px;
-            max-width:500px;
-            width:90%;
+        .container {
+            max-width: 600px;
+            padding: 20px;
         }
-        h1 {
-            margin:0 0 10px;
-            font-size:28px;
-            color:#f87171;
+        .logo {
+            margin-bottom: 20px;
+        }
+        .error-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ea4335;
+            margin-right: 8px;
+        }
+        .error-desc {
+            font-size: 20px;
+            color: #5f6368;
         }
         p {
-            opacity:0.8;
-            margin-bottom:20px;
-        }
-        .request-id {
-            background:#0f172a;
-            padding:10px 15px;
-            border-radius:8px;
-            font-family: monospace;
-            font-size:14px;
-            color:#facc15;
-            word-break: break-all;
-            margin-bottom:20px;
-        }
-        .btn {
-            display:inline-block;
-            padding:10px 18px;
-            background:#38bdf8;
-            color:#0f172a;
-            text-decoration:none;
-            border-radius:8px;
-            font-weight:600;
-        }
-        .btn:hover { opacity:0.9; }
-        .footer {
-            margin-top:25px;
-            font-size:12px;
-            opacity:0.6;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class='card'>
-        <h1>404 - Page Not Found</h1>
-        <p>The page you are looking for does not exist or has been moved.</p>
-        {$requestBlock}
-        <a href='/' class='btn'>Back to Homepage</a>
-        <div class='footer'>
-            Please verify the URL or return to the homepage.
+    <div class='container'>
+        <div class='logo'>
+            <span class='error-code'>404.</span>
+            <span class='error-desc'>That's an error.</span>
         </div>
+        <p>The requested URL was not found on this server.<br>That's all we know.</p>
+        {$requestBlock}
     </div>
 </body>
 </html>";
@@ -476,7 +451,7 @@ function error404Msg($requestId = null)
 function tooManyRequestsMsg($requestId = null)
 {
     $requestBlock = $requestId
-        ? "<div class='request-id'>Request ID: {$requestId}</div>"
+        ? "<p style='color:#777; font-size:12px; margin-top:20px;'>Request ID: {$requestId}</p>"
         : "";
 
     return "<!DOCTYPE html>
@@ -484,92 +459,62 @@ function tooManyRequestsMsg($requestId = null)
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>429 - Too Many Requests</title>
+    <title>429 Too Many Requests</title>
     <style>
         body {
-            margin:0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:100vh;
-            text-align:center;
+            margin: 0;
+            padding: 20px;
+            font-family: arial, sans-serif;
+            background-color: #fff;
+            color: #202124;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
-
-        .card {
-            background:#1e293b;
-            padding:40px;
-            border-radius:16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-            max-width:500px;
-            width:90%;
+        .container {
+            max-width: 600px;
+            padding: 20px;
         }
-
-        h1 {
-            margin:0 0 10px;
-            font-size:28px;
-            color:#facc15;
+        .logo {
+            margin-bottom: 20px;
         }
-
+        .error-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ea4335;
+            margin-right: 8px;
+        }
+        .error-desc {
+            font-size: 20px;
+            color: #5f6368;
+        }
         p {
-            opacity:0.85;
-            margin-bottom:20px;
-            line-height:1.6;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
         }
-
-        .request-id {
-            background:#0f172a;
-            padding:10px 15px;
-            border-radius:8px;
-            font-family: monospace;
-            font-size:14px;
-            color:#38bdf8;
-            word-break: break-all;
-            margin-bottom:20px;
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 14px;
         }
-
-        .btn {
-            display:inline-block;
-            padding:10px 18px;
-            background:#38bdf8;
-            color:#0f172a;
-            text-decoration:none;
-            border-radius:8px;
-            font-weight:600;
-            transition:0.2s;
-        }
-
-        .btn:hover {
-            opacity:0.9;
-        }
-
-        .footer {
-            margin-top:25px;
-            font-size:12px;
-            opacity:0.6;
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class='card'>
-        <h1>429 - Too Many Requests</h1>
-
-        <p>
-            You have sent too many requests in a short period of time.
-            Please wait a moment before trying again.
-        </p>
-
-        {$requestBlock}
-
-        <a href='javascript:location.reload()' class='btn'>
-            Try Again
-        </a>
-
-        <div class='footer'>
-            Rate limit protection is enabled to maintain server stability and security.
+    <div class='container'>
+        <div class='logo'>
+            <span class='error-code'>429.</span>
+            <span class='error-desc'>That's an error.</span>
         </div>
+        <p>You have sent too many requests in a short period of time.<br>Please wait a moment before trying again.</p>
+        <p style='color: #5f6368;'>That's all we know.</p>
+        <br>
+        <a href='javascript:location.reload()'>Try Again</a>
+        {$requestBlock}
     </div>
 </body>
 </html>";

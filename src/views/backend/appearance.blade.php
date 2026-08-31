@@ -21,7 +21,7 @@
 
 
 
-    <div class="col-lg-2" style="max-height: 85vh;overflow:auto">
+    <div class="col-lg-3" style="max-height: 85vh;overflow:auto">
         <h6>Modul</h6>
         <div class="accordion mb-3" id="accordionExample" >
           @php 
@@ -114,11 +114,25 @@
                     @if(is_array($fieldType))
                       <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
                       <select name="{{ $fieldSlug }}" class="form-control form-control-sm"  @if (isset($fieldExtra)) required @endif >
-                          <option value="">-- Pilih --</option>
+                          <option value="">Tanpa Preload</option>
                           @foreach($fieldType as $row)
                           <option value="{{ $row }}" {{ $displayVal == $row ? 'selected' : '' }}>{{ $row }}</option>
                           @endforeach
                       </select>
+                      @if($fieldSlug === 'preload_effect')
+                        <button type="button" class="btn btn-sm btn-info mt-2 mb-2" onclick="previewPreload()"><i class="fa fa-play"></i> Preview Preload</button>
+                        <script>
+                            function previewPreload() {
+                                var effect = document.querySelector('select[name="preload_effect"]').value;
+                                var color = document.querySelector('input[name="preload_color"]') ? document.querySelector('input[name="preload_color"]').value : '#2563eb';
+                                var iframe = document.querySelector('.preview');
+                                if (iframe) {
+                                    var baseUrl = iframe.src.split('?')[0];
+                                    iframe.src = baseUrl + '?preview_preload=' + encodeURIComponent(effect) + '&preview_color=' + encodeURIComponent(color);
+                                }
+                            }
+                        </script>
+                      @endif
                     @elseif ($fieldType === 'file')
                           <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
                               @if (media_exists($savedVal))
@@ -224,7 +238,7 @@
     </a>
     </div>
 
-    <div class="col-lg-10">
+    <div class="col-lg-9">
 
     <iframe  src="{{ url('/') }}?reload={{ time() }}" frameborder="0" class="w-100 preview" style="height: 85vh;border-radius:5px;border:4px solid rgb(48, 48, 48)"></iframe>
 

@@ -1591,7 +1591,10 @@ return [
             'template' => [
                 ['Logo Title', 'text'],
                 ['Logo Description', 'text'],
-                ['Logo Image', 'file', 'image/png,image/jpeg,image/gif,image/webp']
+                ['Logo Image', 'file', 'image/png,image/jpeg,image/gif,image/webp'],
+                ['Pengaturan Preloader', 'break'],
+                ['Preload Effect', ['circular', 'pulse_logo', 'top_bar', 'dual_ring', 'dots_wave', 'cube_morph', 'line_shimmer', 'glass_card', 'minimal_spinner']],
+                ['Preload Color', 'color']
             ]
         ),
         'template' => array(),
