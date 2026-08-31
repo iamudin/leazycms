@@ -334,8 +334,8 @@ if (!function_exists('add_view_stats')) {
 }
 function error500Msg($requestId)
 {
-    //okeoke
-    return "<!DOCTYPE html>
+ 
+return "<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
