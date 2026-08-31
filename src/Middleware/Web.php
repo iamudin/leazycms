@@ -153,7 +153,7 @@ class Web
 
                 // Cache jika class mengandung lz-thumbnail
 
-                return '<img ' . $attributes . ' src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">';
+                return '<img ' . $attributes . ' src="/noimage.webp">';
             }, $content);
             if (!is_custom_web_route_matched()) {
                 $footer = '';
@@ -221,6 +221,7 @@ document.addEventListener("lazybeforeunveil", function(e){
 
             if (
                 strpos($content, '<body') !== false &&
+                strpos($content, 'page-preloader') === false &&
                 strpos($content, 'circular-spinner') === false
             ) {
                 $content = preg_replace(

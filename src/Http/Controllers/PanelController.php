@@ -48,8 +48,9 @@ class PanelController extends Controller implements HasMiddleware
                     return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
                         ->where('tenant_id', $tenant->id)
                         ->where('name', 'parked_domain')
-                        ->value('value');
+                        ->value('value') ?: '';
                 });
+                if ($parkedDomain === '') $parkedDomain = null;
                 $allowedHosts = array_values(array_filter([
                     $tenant->domain,
                     $parkedDomain,
@@ -65,7 +66,24 @@ class PanelController extends Controller implements HasMiddleware
                 $q->where('host', $request->getHost())->orWhereNull('host');
             });
         }
-        return $query->latest()->paginate(40);
+
+        if ($request->filled('search')) {
+            $query->where('file_name', 'like', '%' . $request->search . '%');
+        }
+
+        $paginator = $query->latest()->paginate(40);
+
+        if ($request->filled('search')) {
+            $extensions = $query->pluck('file_name')->map(function ($name) {
+                return strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            })->unique()->filter()->values()->all();
+
+            $data = $paginator->toArray();
+            $data['search_extensions'] = $extensions;
+            return response()->json($data);
+        }
+
+        return $paginator;
     }
 
     function blockedIps(Request $request, BlockedIp $blockedIp = null)

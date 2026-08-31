@@ -108,7 +108,7 @@ class IdentifyTenant
                         return Option::withoutGlobalScope('tenant')
                             ->where('tenant_id', $tenant->id)
                             ->where('name', 'parked_domain')
-                            ->value('value');
+                            ->value('value') ?: '';
                     }
                 );
 
@@ -135,319 +135,117 @@ class IdentifyTenant
                 return $next($request);
             }
 
-            $portal = config('app.url');
+            $mainHost = parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHttpHost();
+            $masterOptions = \Illuminate\Support\Facades\Cache::rememberForever(
+                "tenant:master:{$mainHost}:options",
+                function () {
+                    if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                        return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->pluck('value', 'name')->toArray();
+                    }
+                    return [];
+                }
+            );
+
+            $brandName = !empty($masterOptions['brand_name']) ? $masterOptions['brand_name'] : (!empty($masterOptions['site_title']) ? $masterOptions['site_title'] : config('app.name', 'LeazyCMS'));
+            $brandUrl = !empty($masterOptions['brand_url']) ? $masterOptions['brand_url'] : (config('app.url') ?: ('https://' . $mainHost));
+            $brandLogo = !empty($masterOptions['brand_logo']) ? $masterOptions['brand_logo'] : (!empty($masterOptions['favicon']) ? $masterOptions['favicon'] : null);
+
+            $safeBrandName = htmlspecialchars($brandName, ENT_QUOTES, 'UTF-8');
+            $safeBrandUrl = htmlspecialchars($brandUrl, ENT_QUOTES, 'UTF-8');
+            $safeHost = htmlspecialchars($host, ENT_QUOTES, 'UTF-8');
+
+            if ($brandLogo) {
+                $logoSrc = (filter_var($brandLogo, FILTER_VALIDATE_URL) || str_starts_with($brandLogo, '//'))
+                    ? $brandLogo
+                    : (rtrim(config('app.url'), '/') . '/' . ltrim('media/' . $brandLogo, '/'));
+                $safeLogoSrc = htmlspecialchars($logoSrc, ENT_QUOTES, 'UTF-8');
+                $brandLogoHtml = '<img src="' . $safeLogoSrc . '" alt="' . $safeBrandName . '" class="brand-logo-img" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><div class="brand-logo-fallback" style="display:none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>';
+            } else {
+                $brandLogoHtml = '<div class="brand-logo-fallback"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>';
+            }
+
             $html = <<<HTML
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Website Tidak Ditemukan</title>
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, minimum-scale=1, width=device-width">
+    <title>Error 404 (Not Found)!! - {$safeBrandName}</title>
     <style>
-
-        :root{
-            --bg:#f8fafc;
-            --card:#ffffff;
-            --text:#0f172a;
-            --muted:#64748b;
-            --primary:#0f766e;
-            --border:#e2e8f0;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, code { font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 15px; line-height: 1.6; }
+        html { background: #ffffff; color: #202124; min-height: 100%; }
+        body { margin: 6% auto 0; max-width: 760px; padding: 30px 24px; position: relative; }
+        .error-container { display: flex; align-items: flex-start; justify-content: space-between; gap: 40px; }
+        .error-content { flex: 1; min-width: 0; }
+        .brand-header { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #202124; margin-bottom: 28px; }
+        .brand-logo-img { width: 34px; height: 34px; object-fit: contain; border-radius: 6px; }
+        .brand-logo-fallback { width: 34px; height: 34px; border-radius: 6px; background: #1a73e8; color: #ffffff; display: flex; align-items: center; justify-content: center; }
+        .brand-title { font-size: 20px; font-weight: 700; color: #202124; letter-spacing: -0.3px; }
+        h1 { font-size: 20px; font-weight: 700; color: #202124; margin-bottom: 14px; }
+        h1 span { font-weight: 400; color: #5f6368; }
+        p { margin: 12px 0 16px; color: #3c4043; font-size: 14px; line-height: 1.6; }
+        p ins { color: #5f6368; text-decoration: none; }
+        code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; color: #202124; font-size: 13.5px; font-family: monospace; }
+        .brand-action-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; color: #1a73e8; font-weight: 500; font-size: 14px; text-decoration: none; }
+        .brand-action-link:hover { text-decoration: underline; }
+        .robot-art { flex-shrink: 0; width: 180px; }
+        @media screen and (max-width: 680px) {
+            body { margin-top: 20px; padding: 20px; }
+            .error-container { flex-direction: column-reverse; align-items: flex-start; gap: 24px; }
+            .robot-art { width: 130px; }
         }
-
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
-
-        body{
-            min-height:100vh;
-
-            display:flex;
-            align-items:center;
-            justify-content:center;
-
-            padding:20px;
-
-            background:
-                radial-gradient(circle at top left,#dbeafe 0%,transparent 30%),
-                radial-gradient(circle at bottom right,#ccfbf1 0%,transparent 30%),
-                var(--bg);
-
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                sans-serif;
-
-            color:var(--text);
-        }
-
-        .wrapper{
-            width:100%;
-            max-width:540px;
-        }
-
-        .card{
-
-            position:relative;
-
-            background:rgba(255,255,255,0.92);
-
-            backdrop-filter:blur(12px);
-
-            border:1px solid rgba(255,255,255,0.6);
-
-            border-radius:28px;
-
-            padding:50px 40px;
-
-            box-shadow:
-                0 20px 60px rgba(15,23,42,0.08),
-                0 8px 20px rgba(15,23,42,0.04);
-
-            overflow:hidden;
-
-            animation:fadeIn .4s ease;
-        }
-
-        .card::before{
-
-            content:"";
-
-            position:absolute;
-
-            top:-120px;
-            right:-120px;
-
-            width:240px;
-            height:240px;
-
-            background:linear-gradient(
-                135deg,
-                rgba(13,148,136,.18),
-                rgba(59,130,246,.10)
-            );
-
-            border-radius:50%;
-        }
-
-        .icon{
-
-            width:82px;
-            height:82px;
-
-            margin:0 auto 25px;
-
-            display:flex;
-            align-items:center;
-            justify-content:center;
-
-            border-radius:24px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #0f766e,
-                    #14b8a6
-                );
-
-            box-shadow:
-                0 10px 30px rgba(15,118,110,.25);
-
-            font-size:36px;
-
-            color:white;
-
-            position:relative;
-            z-index:2;
-        }
-
-        h1{
-
-            font-size:30px;
-            font-weight:800;
-
-            text-align:center;
-
-            margin-bottom:14px;
-
-            letter-spacing:-0.5px;
-
-            position:relative;
-            z-index:2;
-        }
-
-        .desc{
-
-            text-align:center;
-
-            font-size:15px;
-            line-height:1.8;
-
-            color:var(--muted);
-
-            position:relative;
-            z-index:2;
-        }
-
-        .domain-box{
-
-            margin-top:30px;
-
-            background:#f8fafc;
-
-            border:1px solid var(--border);
-
-            border-radius:18px;
-
-            padding:18px 20px;
-
-            text-align:center;
-
-            position:relative;
-            z-index:2;
-        }
-
-        .domain-label{
-
-            font-size:12px;
-
-            color:#94a3b8;
-
-            margin-bottom:8px;
-
-            text-transform:uppercase;
-
-            letter-spacing:1px;
-        }
-
-        .domain{
-
-            font-size:18px;
-            font-weight:700;
-
-            color:var(--text);
-
-            word-break:break-word;
-        }
-
-        .note{
-
-            margin-top:24px;
-
-            text-align:center;
-
-            font-size:13px;
-
-            color:#94a3b8;
-
-            line-height:1.7;
-
-            position:relative;
-            z-index:2;
-        }
-
-        .footer{
-
-            margin-top:35px;
-
-            text-align:center;
-
-            font-size:12px;
-
-            color:#cbd5e1;
-
-            position:relative;
-            z-index:2;
-        }
-
-        @keyframes fadeIn{
-
-            from{
-                opacity:0;
-                transform:translateY(15px);
-            }
-
-            to{
-                opacity:1;
-                transform:translateY(0);
-            }
-
-        }
-
-        @media(max-width:640px){
-
-            .card{
-                padding:40px 25px;
-                border-radius:24px;
-            }
-
-            h1{
-                font-size:24px;
-            }
-
-            .domain{
-                font-size:16px;
-            }
-
-        }
-
     </style>
 </head>
-
 <body>
+    <div class="error-container">
+        <div class="error-content">
+            <a href="{$safeBrandUrl}" class="brand-header" title="{$safeBrandName}">
+                {$brandLogoHtml}
+                <span class="brand-title">{$safeBrandName}</span>
+            </a>
 
-    <div class="wrapper">
+            <h1><b>404.</b> <span>That’s an error.</span></h1>
 
-        <div class="card">
+            <p>Domain <code>{$safeHost}</code> tidak ditemukan atau belum terdaftar pada server ini. <ins>That’s all we know.</ins></p>
 
-            <div class="icon">
-                🌐
-            </div>
-
-            <h1>
-                Website Tidak Ditemukan
-            </h1>
-
-            <div class="desc">
-
-                Domain yang Anda akses saat ini belum terdaftar,
-                dinonaktifkan, atau belum diarahkan ke sistem.
-
-            </div>
-
-            <div class="domain-box">
-
-                <div class="domain-label">
-                    DOMAIN
-                </div>
-
-                <div class="domain">
-                    {$host}
-                </div>
-
-            </div>
-
-            <div class="note">
-
-                Pastikan penulisan domain sudah benar
-                atau hubungi administrator website terkait
-                untuk informasi lebih lanjut.
-
-            </div>
-
-            <div class="footer">
-                Terima Kasih Telah Menggunakan Layanan Kami
-            </div>
-
+       
         </div>
 
+        <div class="robot-art">
+            <svg width="100%" viewBox="0 0 160 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Antenna -->
+                <circle cx="80" cy="20" r="5" fill="#ea4335"/>
+                <line x1="80" y1="25" x2="80" y2="40" stroke="#70757a" stroke-width="3"/>
+                <!-- Head -->
+                <rect x="42" y="40" width="76" height="50" rx="8" fill="#dadce0" stroke="#70757a" stroke-width="3"/>
+                <!-- Eyes -->
+                <circle cx="62" cy="62" r="7" fill="#4285f4"/>
+                <circle cx="64" cy="60" r="2.5" fill="#ffffff"/>
+                <line x1="92" y1="56" x2="102" y2="66" stroke="#ea4335" stroke-width="3" stroke-linecap="round"/>
+                <line x1="102" y1="56" x2="92" y2="66" stroke="#ea4335" stroke-width="3" stroke-linecap="round"/>
+                <!-- Mouth -->
+                <path d="M66 78 Q80 86 94 78" stroke="#70757a" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <!-- Neck -->
+                <rect x="74" y="90" width="12" height="8" fill="#9aa0a6"/>
+                <!-- Body -->
+                <rect x="36" y="98" width="88" height="60" rx="10" fill="#dadce0" stroke="#70757a" stroke-width="3"/>
+                <!-- Chest Screen/Gears -->
+                <rect x="48" y="108" width="40" height="26" rx="4" fill="#ffffff" stroke="#9aa0a6" stroke-width="2"/>
+                <line x1="53" y1="117" x2="83" y2="117" stroke="#34a853" stroke-width="2" stroke-linecap="round"/>
+                <line x1="53" y1="124" x2="73" y2="124" stroke="#fbbc05" stroke-width="2" stroke-linecap="round"/>
+                <!-- Buttons -->
+                <circle cx="104" cy="114" r="4" fill="#ea4335"/>
+                <circle cx="104" cy="126" r="4" fill="#4285f4"/>
+                <!-- Arms -->
+                <path d="M36 112 Q20 120 28 138" stroke="#70757a" stroke-width="4" stroke-linecap="round" fill="none"/>
+                <path d="M124 112 Q140 120 132 138" stroke="#70757a" stroke-width="4" stroke-linecap="round" fill="none"/>
+                <!-- Legs/Wheels -->
+                <rect x="52" y="158" width="14" height="14" rx="3" fill="#70757a"/>
+                <rect x="94" y="158" width="14" height="14" rx="3" fill="#70757a"/>
+            </svg>
+        </div>
     </div>
-
 </body>
 </html>
 HTML;

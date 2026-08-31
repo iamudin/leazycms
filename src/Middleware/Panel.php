@@ -163,7 +163,7 @@ class Panel
                 $content = minify_all_one_line($content);
             }
             $isCmsLayout = strpos($content, '/backend/css/main.css') !== false;
-            if ($isCmsLayout && (preg_match('/<input\b[^>]*type\s*=\s*(["\'])file\1/i', $content) || strpos($content, 'btn-text-gmedia') !== false)) {
+            if ($isCmsLayout && strpos($content, 'globalMediaModal') === false && (preg_match('/<input\b[^>]*type\s*=\s*(["\'])file\1/i', $content) || strpos($content, 'btn-text-gmedia') !== false)) {
                 try {
                     $jsSnippet = minify_all_one_line(init_modal_upload());
                     if (stripos($content, '</body>') !== false) {

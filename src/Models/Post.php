@@ -149,6 +149,34 @@ class Post extends BaseModel
         });
     }
 
+    public function getTenantDomainAttribute()
+    {
+        if (!config('modules.multisite_enabled') || empty($this->tenant_id)) {
+            return null;
+        }
+
+        static $tenantDomains = [];
+        if (array_key_exists($this->tenant_id, $tenantDomains)) {
+            return $tenantDomains[$this->tenant_id];
+        }
+
+        if (app()->has('tenant') && function_exists('tenant')) {
+            $currentTenant = tenant();
+            if ($currentTenant && $currentTenant->id == $this->tenant_id) {
+                $tenantDomains[$this->tenant_id] = $currentTenant->domain;
+                return $currentTenant->domain;
+            }
+        }
+
+        $domain = \Illuminate\Support\Facades\Cache::rememberForever("tenant_domain_{$this->tenant_id}", function () {
+            return \Leazycms\Web\Models\Tenant::find($this->tenant_id)?->domain ?: '';
+        });
+
+        $domain = $domain === '' ? null : $domain;
+        $tenantDomains[$this->tenant_id] = $domain;
+        return $domain;
+    }
+
     private static function getCurrentHost(): string
     {
         if (app()->runningInConsole()) {
@@ -159,8 +187,8 @@ class Post extends BaseModel
 
     public function getCacheHost(): string
     {
-        if (config('modules.multisite_enabled') && !empty($this->tenant_id) && $this->tenant) {
-            return $this->tenant->domain;
+        if (config('modules.multisite_enabled') && $this->tenant_domain) {
+            return $this->tenant_domain;
         }
         return self::getCurrentHost();
     }
@@ -202,8 +230,8 @@ class Post extends BaseModel
     public function setContentAttribute($value)
     {
         if (config('modules.multisite_enabled') && !empty($this->tenant_id) && is_main_domain()) {
-            if ($this->tenant && $this->tenant->domain) {
-                $domain = $this->tenant->domain;
+            if ($this->tenant_domain) {
+                $domain = $this->tenant_domain;
                 $value = preg_replace('/src="https?:\/\/' . preg_quote($domain, '/') . '\/media\//i', 'src="/media/', (string) $value);
             }
         }
@@ -282,7 +310,7 @@ class Post extends BaseModel
                 return $this->media;
             }
             if (config('modules.multisite_enabled') && app()->has('tenant')) {
-                return media($this->media, $this->tenant?->domain ?? null)->url();
+               return media($this->media, $this->tenant_domain)->url();
             }
             return media($this->media)->url();
         }
@@ -292,7 +320,7 @@ class Post extends BaseModel
         $cacheKey = $this->getCacheHost() . ':thumbnail:' . $this->id;
         $media = Cache::get($cacheKey, noimage());
         if (str_starts_with($media, '/media')) {
-            return media($media, $this->tenant?->domain ?? null)->url();
+            return media($media, $this->tenant_domain)->url();
         }
         return $media;
     }

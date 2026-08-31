@@ -378,12 +378,13 @@ class WebController extends Controller
 
         if ($year && !$month && !$date) {
             $periode = $year;
-            $data = $post->onType($type)->published()->whereYear('created_at', $year)->paginate($perPage);
+            $data = $post->onType($type)->published()->with(['user', 'category'])->whereYear('created_at', $year)->paginate($perPage);
         } elseif ($year && $month && !$date) {
 
             $periode = blnindo($month) . ' ' . $year;
             $data = $post->onType($type)
                 ->published()
+                ->with(['user', 'category'])
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->paginate($perPage);
@@ -394,6 +395,7 @@ class WebController extends Controller
             $periode = ((substr($date, 0, 1) == '0') ? substr($date, 1, 2) : $date) . ' ' . blnindo($month) . ' ' . $year;
             $data = $post->onType($type)
                 ->published()
+                ->with(['user', 'category'])
                 ->whereDate('created_at', $year . '-' . $month . '-' . $date)
                 ->paginate($perPage);
 

@@ -39,7 +39,16 @@
                     <div class="tab-pane fade show active" id="g-library" role="tabpanel"
                         aria-labelledby="g-library-tab">
                         <div class="form-group">
-                            <label>Pilih File yang Sudah Ada</label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="mb-0">Pilih File yang Sudah Ada</label>
+                                <div class="input-group input-group-sm" style="width: 250px;">
+                                    <input type="text" id="g-library-search" class="form-control" placeholder="Cari nama file...">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" id="g-library-search-btn"><i class="fa fa-search"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="g-library-search-info" class="text-right text-muted mt-1 mb-2" style="display:none; font-size: 12px;"></div>
                             <input type="hidden" id="global-library-select" value="">
                             <div id="global-media-grid" class="row mx-0"
                                 style="max-height: 400px; overflow-y: auto; overflow-x: hidden; border: 1px solid #eee; padding: 10px; background: #fafafa;">
@@ -117,8 +126,9 @@
                                 return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
                                     ->where('tenant_id', $tenantData->id)
                                     ->where('name', 'parked_domain')
-                                    ->value('value');
+                                    ->value('value') ?: '';
                             });
+                            if ($parkedDomain === '') $parkedDomain = null;
                             $allowedHosts = array_values(array_filter([
                                 $tenantData->domain,
                                 $parkedDomain,
@@ -340,6 +350,7 @@
                         previewArea.append('<div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + fileName + '">' + fileName + '</div>');
 
                         clearBtn.show();
+                        btn.hide();
                         wrapper.siblings('input[type="hidden"].gmedia-hidden').remove();
                         let wrapperContainer = wrapper.closest('.media-input-wrapper');
                         if (wrapperContainer.length) {
@@ -347,9 +358,20 @@
                         } else {
                             wrapper.siblings('input[type="hidden"]').not('.gmedia-hidden').attr('disabled', 'disabled');
                         }
-                        let cellContainer = wrapper.closest('td, .form-group, .media-container, .col-12, .col-md-6');
-                        if (cellContainer.length) {
-                            let prevWrap = cellContainer.find('.media-preview-wrapper');
+                        let fieldName = $fileInput.attr('name') || $fileInput.data('name');
+                        let prevWrap = $();
+                        let inputWrap = wrapper.closest('.media-input-wrapper');
+                        if (inputWrap.length) {
+                            prevWrap = inputWrap.prevAll('.media-preview-wrapper').first();
+                            if (!prevWrap.length) prevWrap = inputWrap.nextAll('.media-preview-wrapper').first();
+                        } else {
+                            prevWrap = wrapper.siblings('.media-preview-wrapper').first();
+                        }
+                        if (!prevWrap.length && fieldName) {
+                            prevWrap = wrapper.closest('form, body').find('.btn-remove-media[data-field="' + fieldName.replace('[]', '') + '"]').closest('.media-preview-wrapper');
+                        }
+                        
+                        if (prevWrap.length) {
                             prevWrap.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
                             prevWrap.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
                         }
@@ -414,6 +436,7 @@
                     }
                     $fileInput.removeAttr('disabled');
                     $(this).hide();
+                    btn.show();
                 });
             });
         }
@@ -484,6 +507,7 @@
         }
 
         function loadGlobalMedia(page) {
+            let search = $('#g-library-search').val() || '';
             if (page === 1) {
                 $('#global-media-grid').find('.media-grid-col').remove();
                 $('#global-media-loading').show();
@@ -493,8 +517,18 @@
                 $('#btn-load-more-media').prop('disabled', true).text('Memuat...');
             }
 
-            $.get('{{ route("global.media.list") }}?page=' + page, function (response) {
+            $.get('{{ route("global.media.list") }}?page=' + page + '&search=' + encodeURIComponent(search), function (response) {
                 $('#global-media-loading').hide();
+
+                if (search !== '') {
+                    let extText = '';
+                    if (response.search_extensions && response.search_extensions.length > 0) {
+                        extText = ', dengan ' + response.search_extensions.length + ' ekstensi (' + response.search_extensions.map(e => '.' + e).join(', ') + ')';
+                    }
+                    $('#g-library-search-info').html('Ditemukan <b>' + response.total + '</b> file' + extText).show();
+                } else {
+                    $('#g-library-search-info').hide();
+                }
 
                 if (response.data && response.data.length > 0) {
                     response.data.forEach(function (media) {
@@ -581,6 +615,17 @@
 
         $('#btn-load-more-media').on('click', function () {
             loadGlobalMedia(currentMediaPage);
+        });
+
+        $('#g-library-search').on('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadGlobalMedia(1);
+            }
+        });
+        
+        $('#g-library-search-btn').on('click', function () {
+            loadGlobalMedia(1);
         });
 
         function initSummernotePickers() {
@@ -980,13 +1025,19 @@
                 }
 
                 /* Also hide and disable any existing media-preview-wrapper on the same cell/field */
-                let cellContainer = currentFileWrapper.closest('td, .form-group, .media-container, .col-12, .col-md-6');
-                if (cellContainer.length) {
-                    let prevWrap = cellContainer.find('.media-preview-wrapper');
-                    prevWrap.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
-                    prevWrap.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
+                let prevWrap = $();
+                let inputWrap = currentFileWrapper.closest('.media-input-wrapper');
+                if (inputWrap.length) {
+                    prevWrap = inputWrap.prevAll('.media-preview-wrapper').first();
+                    if (!prevWrap.length) prevWrap = inputWrap.nextAll('.media-preview-wrapper').first();
                 } else {
-                    let prevWrap = currentFileWrapper.siblings('.media-preview-wrapper').add(currentFileWrapper.closest('.media-input-wrapper').siblings('.media-preview-wrapper'));
+                    prevWrap = currentFileWrapper.siblings('.media-preview-wrapper').first();
+                }
+                if (!prevWrap.length && fieldName) {
+                    prevWrap = currentFileWrapper.closest('form, body').find('.btn-remove-media[data-field="' + fieldName.replace('[]', '') + '"]').closest('.media-preview-wrapper');
+                }
+                
+                if (prevWrap.length) {
                     prevWrap.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
                     prevWrap.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
                 }
@@ -1049,6 +1100,7 @@
                 });
 
                 currentFileWrapper.find('.btn-clear-gmedia').show();
+                currentFileWrapper.find('.btn-open-gmedia').hide();
                 $('#globalMediaModal').modal('hide');
             } else if (currentTextInput) {
                 let fileUrl = '/media/' + selectedVal;
@@ -1094,13 +1146,16 @@
                 wrapper.find('input[type="hidden"]').attr('disabled', 'disabled').val('');
                 wrapper.attr('style', 'display: none !important;').removeClass('d-inline-flex d-flex').hide();
 
-                // Find the corresponding media-input-wrapper (could be next sibling, previous sibling, or general sibling)
-                let inputWrapper = wrapper.siblings('.media-input-wrapper').first();
-                if (!inputWrapper.length) {
-                    inputWrapper = wrapper.nextAll('.media-input-wrapper').first();
-                }
+                // Find the corresponding media-input-wrapper
+                let inputWrapper = wrapper.nextAll('.media-input-wrapper').first();
                 if (!inputWrapper.length) {
                     inputWrapper = wrapper.prevAll('.media-input-wrapper').first();
+                }
+                if (!inputWrapper.length && field) {
+                    let fieldInput = wrapper.parent().find('input[name="' + field + '"]');
+                    if (fieldInput.length) {
+                        inputWrapper = fieldInput.closest('.media-input-wrapper');
+                    }
                 }
 
                 if (inputWrapper.length) {
