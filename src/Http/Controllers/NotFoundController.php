@@ -55,8 +55,7 @@ class NotFoundController extends Controller
                 $showspin = false;
                 $content = error404Msg();
             }
-
-            if (strpos($content, '<head>') !== false) {
+            if (strpos($content, '<head>') !== false ) {
                 $content = str_replace(
                     '<head>',
                     '<head>' . init_meta_header(),
@@ -65,7 +64,7 @@ class NotFoundController extends Controller
             }
 
             if (
-                is_main_domain() && $showspin &&
+                $showspin &&
                 strpos($content, '<body') !== false &&
                 strpos($content, 'circular-spinner') === false
             ) {

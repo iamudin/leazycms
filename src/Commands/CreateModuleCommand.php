@@ -363,6 +363,7 @@ class CreateModuleCommand extends Command
         $fields = [];
         $fieldTypes = [
             'text' => 'Input Teks Pendek (String / Text)',
+            'rich-text' => 'Input Teks Panjang dengan Editor Paragraf, List, dan Font Style Sederahana',
             'textarea' => 'Input Teks Panjang (Textarea / Paragraf)',
             'number' => 'Angka / Nominal (Number)',
             'date' => 'Tanggal (Datepicker)',

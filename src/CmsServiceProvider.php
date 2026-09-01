@@ -304,8 +304,7 @@ class CmsServiceProvider extends ServiceProvider
             PluginUpdateCommand::class,
             AssetLink::class,
             \Leazycms\Web\Commands\TailwindCommand::class,
-            \Leazycms\Web\Commands\CreateTemplateCommand::class,
-            \Leazycms\Web\Commands\CreateModuleCommand::class,
+            \Leazycms\Web\Commands\CreateModuleCommand::class
         ]);
         $this->log_viewer();
         $this->handle500();

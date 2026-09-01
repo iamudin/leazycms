@@ -277,7 +277,7 @@
                                 </div>
                               @if($fieldName=='Logo')
                               <small>Preview</small>
-                              <img src="{{ url('logo.webp') }}?time={{ time() }}" alt="Logo Preview" style="height: 50px;display: flex;margin: auto;">
+                              <img src="{{ url('logo.webp') }}?time={{ time() }}" alt="Logo Preview" style="height: auto;display: flex;margin: auto;width:100%">
                               @endif
                             @elseif($fieldType === 'color')
                                 @php

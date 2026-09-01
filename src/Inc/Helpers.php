@@ -342,20 +342,24 @@ return "<!DOCTYPE html>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>500 Server Error</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+        }
+        body {
             font-family: arial, sans-serif;
             background-color: #fff;
             color: #202124;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
         }
         .container {
             max-width: 600px;
-            padding: 20px;
+            width: 100%;
         }
         .logo {
             margin-bottom: 20px;
@@ -402,20 +406,24 @@ function error404Msg($requestId = null)
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>404 Not Found</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+        }
+        body {
             font-family: arial, sans-serif;
             background-color: #fff;
             color: #202124;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
         }
         .container {
             max-width: 600px;
-            padding: 20px;
+            width: 100%;
         }
         .logo {
             margin-bottom: 20px;
@@ -462,20 +470,24 @@ function tooManyRequestsMsg($requestId = null)
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>429 Too Many Requests</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+        }
+        body {
             font-family: arial, sans-serif;
             background-color: #fff;
             color: #202124;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
         }
         .container {
             max-width: 600px;
-            padding: 20px;
+            width: 100%;
         }
         .logo {
             margin-bottom: 20px;
@@ -2141,85 +2153,55 @@ function error503Msg($requestId = null)
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>503 - Service Unavailable</title>
+    <title>Error 503 (Service Unavailable)!!1</title>
     <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            margin:0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            height:100vh;
-            text-align:center;
+            font-family: Roboto, Arial, sans-serif;
+            background: #fff;
+            color: #222;
+            padding: 30px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
         }
-        .card {
-            background:#1e293b;
-            padding:40px;
-            border-radius:16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-            max-width:500px;
-            width:90%;
+        .container {
+            max-width: 500px;
+            width: 100%;
         }
-        h1 {
-            margin:0 0 10px;
-            font-size:28px;
-            color:#facc15;
+        .header {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .header b {
+            font-weight: 700;
+        }
+        .header ins, p ins {
+            color: #777;
+            text-decoration: none;
         }
         p {
-            opacity:0.8;
-            margin-bottom:20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 12px;
         }
         .request-id {
-            background:#0f172a;
-            padding:10px 15px;
-            border-radius:8px;
             font-family: monospace;
-            font-size:14px;
-            color:#38bdf8;
-            word-break: break-all;
-            margin-bottom:20px;
-        }
-        .btn {
-            display:inline-block;
-            padding:10px 18px;
-            background:#38bdf8;
-            color:#0f172a;
-            text-decoration:none;
-            border-radius:8px;
-            font-weight:600;
-        }
-        .btn:hover { opacity:0.9; }
-        .footer {
-            margin-top:25px;
-            font-size:12px;
-            opacity:0.6;
-        }
-        .spinner {
-            margin:20px auto;
-            width:40px;
-            height:40px;
-            border:4px solid rgba(255,255,255,0.2);
-            border-top:4px solid #facc15;
-            border-radius:50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            font-size: 12px;
+            color: #888;
+            margin-top: 14px;
         }
     </style>
 </head>
 <body>
-    <div class='card'>
-        <h1>🛠 Under Maintenance</h1>
-        <p>This page is currently being improved. Please check back later.</p>
-        {$requestBlock}
-        <a href='/' class='btn'>Back to Homepage</a>
-        <div class='footer'>
-            We apologize for the inconvenience.
+    <div class='container'>
+        <div class='header'>
+            <b>503.</b> <ins>That’s an error.</ins>
         </div>
+        <p>The requested service is temporarily unavailable. <ins>That’s all we know.</ins></p>
+        {$requestBlock}
     </div>
 </body>
 </html>"));

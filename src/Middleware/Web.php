@@ -194,12 +194,13 @@ document.addEventListener("lazybeforeunveil", function(e){
                         $footer = $brandFooterHtml . $footer;
                     }
                 }
-
-                $content = preg_replace(
-                    '/<\/body>/i',
-                    $footer . '</body>',
-                    $content
-                );
+                if (strpos($content, 'error-code') === false) {
+                    $content = preg_replace(
+                        '/<\/body>/i',
+                        $footer . '</body>',
+                        $content
+                    );
+                }
 
             } else {
                 $footer = '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
@@ -220,9 +221,11 @@ document.addEventListener("lazybeforeunveil", function(e){
             }
 
             if (
+                
                 strpos($content, '<body') !== false &&
                 strpos($content, 'page-preloader') === false &&
-                strpos($content, 'circular-spinner') === false
+                strpos($content, 'circular-spinner') === false && 
+                strpos($content, 'error-code') === false
             ) {
                 $content = preg_replace(
                     '/<body\b[^>]*>/i',
