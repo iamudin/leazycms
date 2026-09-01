@@ -3,7 +3,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 {{-- Resource Hints & DNS Prefetch for High Performance --}}
-<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="https://fonts.googleapis.com">
 <link rel="dns-prefetch" href="//fonts.gstatic.com">
 <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
 @if(get_option('google_analytics_code'))

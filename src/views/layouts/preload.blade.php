@@ -1,11 +1,10 @@
 @php
-  $preload_opt = request()->has('preview_preload') ? 'Y' : get_option('preload', 'N');
   $preload_effect = request()->has('preview_preload') ? request()->query('preview_preload') : get_option('preload_effect', 'none');
   $preload_color = request()->has('preview_color') ? request()->query('preview_color') : get_option('preload_color', '#2563eb');
   if (empty($preload_color)) {
       $preload_color = '#2563eb';
   }
-  $favicon = file_exists(public_path('favicon.ico')) ? url('favicon.ico') :  (get_option('favicon') && media(get_option('favicon'))->isExists()  ? url(get_option('favicon')) : noimage());
+  $favicon = file_exists(public_path('favicon.ico')) ? url('favicon.ico') :  (get_option('favicon') && media(get_option('favicon'))->isExists()  ? url('favicon.icon') : main_domain('favicon.icon'));
   $cleanHex = ltrim($preload_color, '#');
   if (strlen($cleanHex) == 3) {
       $cleanHex = $cleanHex[0].$cleanHex[0].$cleanHex[1].$cleanHex[1].$cleanHex[2].$cleanHex[2];
@@ -15,7 +14,7 @@
   $b = hexdec(substr($cleanHex, 4, 2));
 @endphp
 
-@if($preload_opt === 'Y' && $preload_effect !== 'none')
+@if($preload_effect !== 'none')
   <style>
     :root {
       --preload-color: {{ $preload_color }};

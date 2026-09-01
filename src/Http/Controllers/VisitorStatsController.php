@@ -23,8 +23,12 @@ class VisitorStatsController extends Controller
             get_option('logo_title') ?? 'JUDULWEB'
         );
 
+        $titleColor = get_option('logo_title_color') ?? '#00843D';
+
         $slogan = get_option('logo_description')
             ?? 'DESKRIPSIWEB';
+
+        $sloganColor = get_option('logo_description_color') ?? '#B8860B';
 
         $logoPath = get_option('logo_image') && media_exists(get_option('logo_image'))
             ? media(get_option('logo_image'))->path()
@@ -40,6 +44,8 @@ class VisitorStatsController extends Controller
         $cacheKey = md5(
             $title .
             $slogan .
+            $titleColor .
+            $sloganColor .
             $logoPath .
             (app()->has('tenant') ? tenant()->id : '')
         );
@@ -124,12 +130,12 @@ class VisitorStatsController extends Controller
         */
 
         $fontBold = public_path('fonts/Poppins-Bold.ttf');
-        $img->text($title, 108, 60, function ($font) use ($fontBold) {
+        $img->text($title, 108, 60, function ($font) use ($fontBold, $titleColor) {
             if (File::exists($fontBold)) {
                 $font->filename($fontBold);
             }
             $font->size(55);
-            $font->color('#00843D');
+            $font->color($titleColor);
         });
 
         /*
@@ -139,12 +145,12 @@ class VisitorStatsController extends Controller
         */
 
         $fontRegular = public_path('fonts/Poppins-Regular.ttf');
-        $img->text($slogan, 110, 91, function ($font) use ($fontRegular) {
+        $img->text($slogan, 110, 91, function ($font) use ($fontRegular, $sloganColor) {
             if (File::exists($fontRegular)) {
                 $font->filename($fontRegular);
             }
             $font->size(30);
-            $font->color('#B8860B');
+            $font->color($sloganColor);
         });
 
         /*

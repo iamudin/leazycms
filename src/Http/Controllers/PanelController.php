@@ -867,7 +867,6 @@ class PanelController extends Controller implements HasMiddleware
         ) : [];
 
         $data['shortcut'] = array_merge($data['shortcut'], array(
-            ['Preloader Effect', 'preload'],
             ['Cache Web Pages', 'cache_web'],
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],

@@ -1589,9 +1589,12 @@ return [
         'web_type' => null,
         'option' => array(
             'template' => [
-                ['Logo Title', 'text'],
-                ['Logo Description', 'text'],
+                ['Logo', 'break'],
                 ['Logo Image', 'file', 'image/png,image/jpeg,image/gif,image/webp'],
+                ['Logo Title', 'text'],
+                ['Logo Title Color', 'color', '#000000'],
+                ['Logo Description', 'text'],
+                ['Logo Description Color', 'color', '#6c757d'],
                 ['Pengaturan Preloader', 'break'],
                 ['Preload Effect', ['circular', 'pulse_logo', 'top_bar', 'dual_ring', 'dots_wave', 'cube_morph', 'line_shimmer', 'glass_card', 'minimal_spinner']],
                 ['Preload Color', 'color']
