@@ -419,7 +419,7 @@
             </div>
 
             {{-- Main Editor Card --}}
-            @if (isset($module->form?->editor))
+            @if (isset($module->form->editor) && $module->form->editor)
                     @if (isset($module->form->ai_generator) && $module->form->ai_generator)
                         <button type="button" class="btn btn-sm btn-outline-primary mb-3" style="border-radius: 8px; font-weight: 600;" data-toggle="modal" data-target="#promptGeneratorModal" onclick="$('#prompt_topic').val($('[name=title]').val())">
                             <i class="fa fa-magic mr-1"></i> AI Prompt Generator
@@ -453,7 +453,7 @@
             @endif
 
             {{-- Post Parent Card --}}
-            @if (isset($module->form?->post_parent))
+            @if (isset($module->form->post_parent) && $module->form->post_parent)
                 <?php
                 $pp = $module->form->post_parent;
                 if (isset($pp[1])) {
@@ -498,14 +498,14 @@
             @endif
 
             {{-- Custom Fields Container --}}
-            @if (isset($module->form?->custom_field))
+            @if (isset($module->form?->custom_field) && $module->form->custom_field)
                 <div id="custom-fields-container">
                     @include('cms::backend.posts.custom_field.form')
                 </div>
             @endif
 
             {{-- Looping Data Container --}}
-            @if (isset($module->form?->looping_data))
+            @if (isset($module->form->looping_data) && $module->form->looping_data)
                 <div class="mt-3 mb-3" id="looping-data-container">
                     @include('cms::backend.posts.looping_data.form')
                 </div>
@@ -833,7 +833,7 @@
     </div>
 </form>
 
-@if ($post->mime != 'html' && $post->type != 'docs' && $module->form->editor)
+@if ($post->mime != 'html' && $post->type != 'docs' && isset($module->form->editor) && $module->form->editor)
     @push('styles')
         <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
     @endpush
@@ -1150,7 +1150,7 @@
     </script>
 @endpush
 
-@if ($module->form->editor && isset($module->form->ai_generator) && $module->form->ai_generator)
+@if (isset($module->form->editor) && $module->form->editor && isset($module->form->ai_generator) && $module->form->ai_generator)
     <!-- AI Prompt Generator Modal -->
     <div class="modal fade" id="promptGeneratorModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">

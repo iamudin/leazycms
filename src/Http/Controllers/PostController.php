@@ -436,8 +436,8 @@ class PostController extends Controller implements HasMiddleware
         }
         $data['url'] = $post->type != 'page' ? $post->type . '/' . $data['slug'] : $data['slug'];
 
-        if ($looping_data = $module->form->looping_data) {
-
+        if (isset($module->form->looping_data) && $module->form->looping_data) {
+            $looping_data = $module->form->looping_data;
             $datanya = [];
             $jmlh = 0;
             foreach ($looping_data as $y) {
