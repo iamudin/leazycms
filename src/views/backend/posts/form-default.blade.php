@@ -283,7 +283,7 @@
 
             @php
                 $showUrl = !empty($post && $module->web->detail && $post->title && $post->status == 'publish') && $module->public;
-                $postUrl = config('modules.multisite_enabled') && $post->tenant ? 'https://' . $post->tenant->domain . '/' . $post->url : url($post->url);
+                $postUrl = config('modules.multisite_enabled') && $post->tenant ? 'https://' . $post->tenant->domain . '/' . $post->url : url($post->url ??'/');
             @endphp
 
             @if($module->web->detail && $module->public)
