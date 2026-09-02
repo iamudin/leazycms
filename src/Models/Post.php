@@ -347,7 +347,7 @@ class Post extends BaseModel
     }
     public function getLinkAttribute()
     {
-        return !config('modules.multisite_enabled') ? url($this->url) : ($this->tenant ? (request()->secure() ? 'https://' : 'http://') . $this->tenant->domain . '/' . $this->url : url($this->url));
+        return !config('modules.multisite_enabled') ? url($this->url ?? '/') : ($this->tenant ? (request()->secure() ? 'https://' : 'http://') . $this->tenant->domain . '/' . $this->url : url($this->url ?? '/'));
     }
     public function getMonthAttribute()
     {
