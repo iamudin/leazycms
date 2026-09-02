@@ -2153,7 +2153,7 @@ function error503Msg($requestId = null)
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Error 503 (Service Unavailable)!!1</title>
+    <title>Error 503 (Service Unavailable)</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {

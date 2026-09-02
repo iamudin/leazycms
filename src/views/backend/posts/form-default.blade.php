@@ -419,7 +419,7 @@
             </div>
 
             {{-- Main Editor Card --}}
-            @if ($module->form->editor)
+            @if (isset($module->form?->editor))
                     @if (isset($module->form->ai_generator) && $module->form->ai_generator)
                         <button type="button" class="btn btn-sm btn-outline-primary mb-3" style="border-radius: 8px; font-weight: 600;" data-toggle="modal" data-target="#promptGeneratorModal" onclick="$('#prompt_topic').val($('[name=title]').val())">
                             <i class="fa fa-magic mr-1"></i> AI Prompt Generator
@@ -453,8 +453,9 @@
             @endif
 
             {{-- Post Parent Card --}}
-            @if ($pp = $module->form->post_parent)
+            @if (isset($module->form?->post_parent))
                 <?php
+                $pp = $module->form->post_parent;
                 if (isset($pp[1])) {
                     if (isset($pp[2]) && $pp[2] != 'all') {
                         $par = query()->withwherehas('category', function ($q) use ($pp) {
@@ -497,14 +498,14 @@
             @endif
 
             {{-- Custom Fields Container --}}
-            @if ($module->form->custom_field)
+            @if (isset($module->form?->custom_field))
                 <div id="custom-fields-container">
                     @include('cms::backend.posts.custom_field.form')
                 </div>
             @endif
 
             {{-- Looping Data Container --}}
-            @if ($module->form->looping_data)
+            @if (isset($module->form?->looping_data))
                 <div class="mt-3 mb-3" id="looping-data-container">
                     @include('cms::backend.posts.looping_data.form')
                 </div>
