@@ -2596,6 +2596,11 @@ class PanelController extends Controller implements HasMiddleware
     public function pluginStore(Request $request)
     {
         admin_only();
+        
+       if (!File::isDirectory(resource_path('plugins'))) {
+                File::makeDirectory(resource_path('plugins'), 0755, true);
+           }
+
         $cloudKey = $this->getOrRegisterCloudKey();
         if (!$cloudKey) {
             return back()->with('danger', 'API Key Cloud Template belum dikonfigurasi. Silakan jalankan php artisan cms:register-cloud');
