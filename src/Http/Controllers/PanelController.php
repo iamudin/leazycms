@@ -777,7 +777,7 @@ class PanelController extends Controller implements HasMiddleware
             'instagram',
             'twitter',
             'whatsapp',
-            'jam_kerja',
+            'jam_kerja_organisasi',
             'visi',
             'misi',
             'welcome_speech',
@@ -2596,7 +2596,7 @@ class PanelController extends Controller implements HasMiddleware
     public function pluginStore(Request $request)
     {
         admin_only();
-        
+
        if (!File::isDirectory(resource_path('plugins'))) {
                 File::makeDirectory(resource_path('plugins'), 0755, true);
            }
