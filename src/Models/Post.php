@@ -309,20 +309,28 @@ class Post extends BaseModel
             if (str_starts_with($this->media, 'http')) {
                 return $this->media;
             }
-            if (config('modules.multisite_enabled') && app()->has('tenant')) {
-               return media($this->media, $this->tenant_domain)->url();
-            }
-            return media($this->media)->url();
+
+            // url() sudah otomatis mengecek isExists() via cache MediaHandler
+            $tenantDomain = (config('modules.multisite_enabled') && app()->has('tenant')) ? $this->tenant_domain : null;
+            $url = media($this->media, $tenantDomain)->url();
+
+            return $url ?: noimage();
         }
 
-
-        // Cek cache
+        // Cek cache fallback dari first-image content
         $cacheKey = $this->getCacheHost() . ':thumbnail:' . $this->id;
-        $media = Cache::get($cacheKey, noimage());
-        if (str_starts_with($media, '/media')) {
-            return media($media, $this->tenant_domain)->url();
+        $media = Cache::get($cacheKey);
+
+        if ($media) {
+            if (str_starts_with($media, 'http')) {
+                return $media;
+            }
+            $tenantDomain = (config('modules.multisite_enabled') && app()->has('tenant')) ? $this->tenant_domain : null;
+            $url = media($media, $tenantDomain)->url();
+            return $url ?: noimage();
         }
-        return $media;
+
+        return noimage();
     }
     public function getThumbnailTextAttribute()
     {

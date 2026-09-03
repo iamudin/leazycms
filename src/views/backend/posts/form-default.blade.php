@@ -540,7 +540,7 @@
                         </div>
                         
                         <div class="thumbnail-box">
-                            <img class="img-responsive w-100" style="width: 100%; height: auto; display: block; margin: 0; padding: 0;" id="thumb" src="{{ $post->media && media($post->media)->isExists() ? $post->thumbnail : noimage() }}" />
+                            <img class="img-responsive w-100" style="width: 100%; height: auto; display: block; margin: 0; padding: 0;" id="thumb" src="{{$post->thumbnail ?? noimage() }}" />
                             <div class="upload-overlay">
                                 <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
                                     class="compress-image form-control-file form-control-sm" name="media" value="" style="display: none;">
