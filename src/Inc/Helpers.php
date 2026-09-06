@@ -2508,6 +2508,10 @@ if (!function_exists('set_header_seo')) {
                 $hasThumbnailField = $current_module->form->thumbnail;
 
                 if ($hasThumbnailField) {
+                    if ($data->media && str_starts_with(trim($data->media), 'http')) {
+                        return trim($data->media);
+                    }
+
                     if ($data->media && media_exists($data->media)) {
                         return url($data->thumbnail);
                     }
