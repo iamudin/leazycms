@@ -1,9 +1,9 @@
 @if(get_option('accessibility_widget') && get_option('accessibility_widget') == 'Y')
 <!-- Widget Aksesibilitas Ramah Disabilitas & Pembaca Layar Bahasa Indonesia -->
 <div id="lzA11yApp">
-    <!-- Floating Trigger Button (Kiri Bawah) -->
+    <!-- Floating Trigger Button (Center Left) -->
     <button id="lzA11yTrigger" class="lz-a11y-trigger" aria-label="Buka Menu Aksesibilitas" title="Menu Aksesibilitas & Pembaca Suara">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <circle cx="12" cy="4" r="2"/>
             <path d="M19 13v-2c-1.54.02-3.09-.75-4.07-1.83l-1.29-1.43c-.17-.19-.38-.34-.61-.45-.49-.23-1.07-.2-1.54.09l-3.95 2.45c-.48.3-.77.82-.77 1.39v4.78c0 .55.45 1 1 1s1-.45 1-1v-4.09l2.23-1.38v8.69c0 .55.45 1 1 1s1-.45 1-1v-5.2l1.62-1.01c.78.89 1.93 1.51 3.38 1.58v2.01c0 .55.45 1 1 1s1-.45 1-1z"/>
         </svg>
@@ -249,48 +249,50 @@
     z-index: 99999;
 }
 
-/* Floating Button (Kiri Bawah) */
+/* Floating Button (Center Left - Tab Merapat di Tepi Kiri) */
 .lz-a11y-trigger {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 99999;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 99997;
+    width: 36px;
+    height: 44px;
+    border-radius: 0 10px 10px 0;
     background: #1d4ed8;
     color: #ffffff;
-    border: 2px solid #ffffff;
-    box-shadow: 0 4px 16px rgba(29, 78, 216, 0.4), 0 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-left: none;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.12), 2px 0 12px rgba(29, 78, 216, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
-    padding: 0;
+    padding: 0 2px 0 0;
 }
 
 .lz-a11y-trigger:hover {
     background: #1e40af;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 24px rgba(29, 78, 216, 0.5);
+    transform: translateY(-50%) translateX(3px);
+    box-shadow: 3px 4px 14px rgba(29, 78, 216, 0.4);
 }
 
 .lz-a11y-trigger:active {
-    transform: translateY(-1px) scale(0.96);
+    transform: translateY(-50%) translateX(1px) scale(0.97);
 }
 
 .lz-a11y-badge {
     position: absolute;
-    top: -3px;
-    right: -3px;
+    top: -4px;
+    right: -4px;
     background: #ef4444;
     color: #ffffff;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: bold;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -318,31 +320,33 @@
     visibility: visible;
 }
 
-/* Panel Modal */
+/* Panel Drawer (Muncul dari Kiri Layar) */
 .lz-a11y-panel {
     position: fixed;
-    bottom: 80px;
-    left: 20px;
-    width: 380px;
-    max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 110px);
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    height: 100vh;
+    height: 100dvh;
     background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    border-radius: 0 20px 20px 0;
+    box-shadow: 10px 0 35px -5px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
     z-index: 99999;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px) scale(0.95);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(-100%);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.32s ease;
 }
 
 .lz-a11y-panel.active {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0) scale(1);
+    transform: translateX(0);
 }
 
 /* Header */
@@ -436,9 +440,23 @@
 
 /* Body */
 .lz-a11y-body {
-    padding: 16px 20px;
+    padding: 16px 20px 24px;
     overflow-y: auto;
-    max-height: calc(100vh - 200px);
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+}
+.lz-a11y-body::-webkit-scrollbar {
+    width: 6px;
+}
+.lz-a11y-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+.lz-a11y-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+.lz-a11y-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .lz-a11y-section {
@@ -869,15 +887,16 @@ html.lz-a11y-hide-images svg:not(#lzA11yApp svg) {
 /* Responsive */
 @media (max-width: 480px) {
     .lz-a11y-trigger {
-        bottom: 15px;
-        left: 15px;
-        width: 42px;
-        height: 42px;
+        width: 32px;
+        height: 40px;
     }
     .lz-a11y-panel {
-        left: 10px;
-        bottom: 65px;
-        max-width: calc(100vw - 20px);
+        width: 320px;
+        max-width: calc(100vw - 24px);
+        border-radius: 0 16px 16px 0;
+    }
+    .lz-a11y-body {
+        padding: 14px 16px 20px;
     }
 }
 </style>
