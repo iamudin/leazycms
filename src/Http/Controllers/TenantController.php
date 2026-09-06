@@ -90,7 +90,14 @@ class TenantController extends Controller implements HasMiddleware
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('theme', function ($row) {
-                return $row->custom_theme ? '<span class="text-primary">' . (Str::upper(str_replace('-' . $row->id, '', $row->theme)) ?? '-') . ' (Custom)</span>' : (str($row->themeSelected?->path)->upper() ?? '-');
+                if ($row->custom_theme) {
+                    $customName = Str::upper(str_replace('-' . $row->id, '', $row->theme ?: ($row->options->where('name', 'template')->first()?->value ?? '')));
+                    return '<span class="text-primary">' . ($customName ?: '-') . ' (Custom)</span>';
+                }
+
+                $theme = $row->themeSelected?->path ?: ($row->options->where('name', 'template')->first()?->value ?: $row->theme);
+
+                return !empty($theme) ? Str::upper($theme) : '-';
             })
             ->addColumn('admin', function ($row) {
                 return $row->admin?->name ?? '-';
@@ -102,6 +109,14 @@ class TenantController extends Controller implements HasMiddleware
             ->filterColumn('category', function ($query, $keyword) {
                 $query->whereHas('options', function ($q) use ($keyword) {
                     $q->where('name', 'category')->where('value', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('theme', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('theme', 'like', "%{$keyword}%")
+                        ->orWhereHas('options', function ($opt) use ($keyword) {
+                            $opt->where('name', 'template')->where('value', 'like', "%{$keyword}%");
+                        });
                 });
             })
             ->addColumn('action', function ($row) {
@@ -211,11 +226,23 @@ class TenantController extends Controller implements HasMiddleware
         $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
         if ($cpanelApi->isActive()) {
             if ($cpanelApi->checkDomainExists($domain)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'Domain sudah digunakan di server cPanel.',
+                        'errors' => ['domain' => ['Domain sudah digunakan di server cPanel.']]
+                    ], 422);
+                }
                 return back()->withInput()->withErrors(['domain' => 'Domain sudah digunakan di server cPanel.']);
             }
 
             $createDomain = $cpanelApi->createAliasDomain($domain);
             if (isset($createDomain['error'])) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'Gagal membuat domain di cPanel: ' . $createDomain['error'],
+                        'errors' => ['domain' => ['Gagal membuat domain di cPanel: ' . $createDomain['error']]]
+                    ], 422);
+                }
                 return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain di cPanel: ' . $createDomain['error']]);
             }
         }
@@ -277,6 +304,16 @@ class TenantController extends Controller implements HasMiddleware
 
         Cache::forget("tenant:{$domain}:options");
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Tenant dan akun admin berhasil ditambah',
+                'edit_url' => route('tenant.edit', $tenant->id),
+                'action_url' => route('tenant.update', $tenant->id),
+                'tenant_id' => $tenant->id,
+            ]);
+        }
+
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil ditambah');
     }
 
@@ -326,18 +363,36 @@ class TenantController extends Controller implements HasMiddleware
             $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
             if ($cpanelApi->isActive()) {
                 if ($cpanelApi->checkDomainExists($domain)) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'message' => 'Domain baru sudah digunakan di server cPanel.',
+                            'errors' => ['domain' => ['Domain baru sudah digunakan di server cPanel.']]
+                        ], 422);
+                    }
                     return back()->withInput()->withErrors(['domain' => 'Domain baru sudah digunakan di server cPanel.']);
                 }
 
                 // Delete old domain
                 $deleteOld = $cpanelApi->deleteAliasDomain($oldDomain);
                 if (isset($deleteOld['error'])) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'message' => 'Gagal menghapus domain lama di cPanel: ' . $deleteOld['error'],
+                            'errors' => ['domain' => ['Gagal menghapus domain lama di cPanel: ' . $deleteOld['error']]]
+                        ], 422);
+                    }
                     return back()->withInput()->withErrors(['domain' => 'Gagal menghapus domain lama di cPanel: ' . $deleteOld['error']]);
                 }
 
                 // Create new domain
                 $createDomain = $cpanelApi->createAliasDomain($domain);
                 if (isset($createDomain['error'])) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'message' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error'],
+                            'errors' => ['domain' => ['Gagal membuat domain baru di cPanel: ' . $createDomain['error']]]
+                        ], 422);
+                    }
                     return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error']]);
                 }
             }
@@ -417,6 +472,13 @@ class TenantController extends Controller implements HasMiddleware
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
         Cache::forget("tenant:{$tenant->domain}:options");
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Tenant dan akun admin berhasil diupdate',
+            ]);
+        }
 
         return to_route('tenant.index')->with('success', 'Tenant dan akun admin berhasil diupdate');
     }
