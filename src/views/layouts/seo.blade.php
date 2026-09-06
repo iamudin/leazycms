@@ -208,4 +208,313 @@
   img.share-button:hover {
     cursor: pointer;
   }
+
+  /* ==========================================================================
+     LeazyCMS Built-in Summernote Content Typography Styles
+     ========================================================================== */
+  .summernote-content {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: inherit;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .summernote-content p {
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    line-height: 1.8;
+  }
+  .summernote-content > :first-child {
+    margin-top: 0 !important;
+  }
+  .summernote-content > :last-child {
+    margin-bottom: 0 !important;
+  }
+  .summernote-content p:empty,
+  .summernote-content p:has(> br:only-child) {
+    margin-bottom: 0.5rem;
+    min-height: 0.5rem;
+  }
+  .summernote-content h1,
+  .summernote-content h2,
+  .summernote-content h3,
+  .summernote-content h4,
+  .summernote-content h5,
+  .summernote-content h6 {
+    font-weight: 700;
+    line-height: 1.35;
+    margin-top: 2rem;
+    margin-bottom: 0.875rem;
+    color: inherit;
+  }
+  .summernote-content h1 { font-size: 1.875rem; font-weight: 800; }
+  .summernote-content h2 { font-size: 1.5rem; font-weight: 800; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(125, 125, 125, 0.2); }
+  .summernote-content h3 { font-size: 1.25rem; font-weight: 700; }
+  .summernote-content h4 { font-size: 1.125rem; font-weight: 600; }
+  .summernote-content h5 { font-size: 1rem; font-weight: 600; }
+  .summernote-content h6 { font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+  .summernote-content ul {
+    list-style-type: disc !important;
+    padding-left: 1.75rem !important;
+    margin-top: 0.75rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+  .summernote-content ol {
+    list-style-type: decimal !important;
+    padding-left: 1.75rem !important;
+    margin-top: 0.75rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+  .summernote-content ul ul {
+    list-style-type: circle !important;
+    margin-top: 0.35rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+  .summernote-content ul ul ul {
+    list-style-type: square !important;
+  }
+  .summernote-content ol ol {
+    list-style-type: lower-alpha !important;
+    margin-top: 0.35rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+  .summernote-content ol ol ol {
+    list-style-type: lower-roman !important;
+  }
+  .summernote-content li {
+    margin-top: 0.35rem !important;
+    margin-bottom: 0.35rem !important;
+    line-height: 1.75 !important;
+    padding-left: 0.25rem;
+  }
+  .summernote-content li > p {
+    margin-top: 0 !important;
+    margin-bottom: 0.35rem !important;
+    display: inline;
+  }
+  .summernote-content blockquote {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: 0.875rem 1.25rem;
+    border-left: 4px solid #10b981;
+    background-color: rgba(125, 125, 125, 0.06);
+    border-radius: 0 0.75rem 0.75rem 0;
+    font-style: italic;
+    color: inherit;
+  }
+  .summernote-content blockquote p {
+    margin-bottom: 0.5rem !important;
+  }
+  .summernote-content blockquote p:last-child {
+    margin-bottom: 0 !important;
+  }
+  .summernote-content a {
+    color: #059669;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 600;
+    transition: color 0.15s ease;
+  }
+  .summernote-content a:hover {
+    color: #047857;
+  }
+  .summernote-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 0.75rem;
+    margin: 1.25rem auto;
+    display: block;
+  }
+  .summernote-content img[style*="float: left"],
+  .summernote-content img[style*="float:left"] {
+    float: left !important;
+    margin-right: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    margin-top: 0.5rem !important;
+    display: inline-block !important;
+  }
+  .summernote-content img[style*="float: right"],
+  .summernote-content img[style*="float:right"] {
+    float: right !important;
+    margin-left: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    margin-top: 0.5rem !important;
+    display: inline-block !important;
+  }
+  .summernote-content::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  .summernote-content table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin: 1.5rem 0 !important;
+    border: 1px solid rgba(125, 125, 125, 0.2);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    font-size: 0.875rem;
+  }
+  .summernote-content th {
+    background-color: rgba(125, 125, 125, 0.08);
+    font-weight: 700;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(125, 125, 125, 0.2);
+    border-right: 1px solid rgba(125, 125, 125, 0.1);
+  }
+  .summernote-content td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(125, 125, 125, 0.1);
+    border-right: 1px solid rgba(125, 125, 125, 0.1);
+    vertical-align: top;
+  }
+  .summernote-content tr:nth-child(even) td {
+    background-color: rgba(125, 125, 125, 0.03);
+  }
+  .summernote-content tr:last-child td {
+    border-bottom: none !important;
+  }
+  .summernote-content th:last-child,
+  .summernote-content td:last-child {
+    border-right: none !important;
+  }
+  .summernote-content code:not(pre code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background-color: rgba(125, 125, 125, 0.1);
+    color: #e11d48;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.35rem;
+    font-size: 0.875em;
+  }
+  .summernote-content pre {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 1.5rem 0;
+  }
+  .summernote-content pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  .summernote-content hr {
+    border: 0;
+    border-top: 1px solid rgba(125, 125, 125, 0.2);
+    margin: 2rem 0;
+  }
+  .summernote-content iframe,
+  .summernote-content video {
+    max-width: 100%;
+    border-radius: 0.75rem;
+    margin: 1.5rem auto;
+    display: block;
+  }
+  /* Dark mode overrides (Tailwind .dark, Bootstrap data-bs-theme="dark") */
+  .dark .summernote-content,
+  [data-bs-theme="dark"] .summernote-content {
+    color: #cbd5e1;
+  }
+  .dark .summernote-content h1,
+  .dark .summernote-content h2,
+  .dark .summernote-content h3,
+  .dark .summernote-content h4,
+  .dark .summernote-content h5,
+  .dark .summernote-content h6,
+  [data-bs-theme="dark"] .summernote-content h1,
+  [data-bs-theme="dark"] .summernote-content h2,
+  [data-bs-theme="dark"] .summernote-content h3,
+  [data-bs-theme="dark"] .summernote-content h4,
+  [data-bs-theme="dark"] .summernote-content h5,
+  [data-bs-theme="dark"] .summernote-content h6 {
+    color: #f8fafc;
+  }
+  .dark .summernote-content h2,
+  [data-bs-theme="dark"] .summernote-content h2 {
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+  }
+  .dark .summernote-content a,
+  [data-bs-theme="dark"] .summernote-content a {
+    color: #34d399;
+  }
+  .dark .summernote-content a:hover,
+  [data-bs-theme="dark"] .summernote-content a:hover {
+    color: #6ee7b7;
+  }
+  .dark .summernote-content blockquote,
+  [data-bs-theme="dark"] .summernote-content blockquote {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-left-color: #34d399;
+    color: #94a3b8;
+  }
+  .dark .summernote-content table,
+  [data-bs-theme="dark"] .summernote-content table {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .dark .summernote-content th,
+  [data-bs-theme="dark"] .summernote-content th {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #f8fafc;
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+    border-right-color: rgba(255, 255, 255, 0.1);
+  }
+  .dark .summernote-content td,
+  [data-bs-theme="dark"] .summernote-content td {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    border-right-color: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+  }
+  .dark .summernote-content tr:nth-child(even) td,
+  [data-bs-theme="dark"] .summernote-content tr:nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+  .dark .summernote-content code:not(pre code),
+  [data-bs-theme="dark"] .summernote-content code:not(pre code) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fb7185;
+  }
+  .dark .summernote-content hr,
+  [data-bs-theme="dark"] .summernote-content hr {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* Dark mode overrides for hardcoded inline colors pasted from Word/external HTML */
+  .dark .summernote-content [style*="color: #000"],
+  .dark .summernote-content [style*="color:#000"],
+  .dark .summernote-content [style*="color: black"],
+  .dark .summernote-content [style*="color:black"],
+  .dark .summernote-content [style*="color: rgb(0, 0, 0)"],
+  .dark .summernote-content [style*="color: rgb(34, 34, 34)"],
+  .dark .summernote-content [style*="color: rgb(51, 51, 51)"],
+  .dark .summernote-content [style*="color: #111"],
+  .dark .summernote-content [style*="color: #222"],
+  .dark .summernote-content [style*="color: #333"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: #000"],
+  [data-bs-theme="dark"] .summernote-content [style*="color:#000"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: black"],
+  [data-bs-theme="dark"] .summernote-content [style*="color:black"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: rgb(0, 0, 0)"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: rgb(34, 34, 34)"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: rgb(51, 51, 51)"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: #111"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: #222"],
+  [data-bs-theme="dark"] .summernote-content [style*="color: #333"] {
+    color: #cbd5e1 !important;
+  }
+
+  .dark .summernote-content [style*="background-color: #fff"],
+  .dark .summernote-content [style*="background-color:#fff"],
+  .dark .summernote-content [style*="background-color: white"],
+  .dark .summernote-content [style*="background-color: rgb(255, 255, 255)"],
+  [data-bs-theme="dark"] .summernote-content [style*="background-color: #fff"],
+  [data-bs-theme="dark"] .summernote-content [style*="background-color:#fff"],
+  [data-bs-theme="dark"] .summernote-content [style*="background-color: white"],
+  [data-bs-theme="dark"] .summernote-content [style*="background-color: rgb(255, 255, 255)"] {
+    background-color: transparent !important;
+  }
 </style>

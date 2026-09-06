@@ -364,6 +364,9 @@ class PostController extends Controller implements HasMiddleware
         }
         $allowed_tags = '<div><sub><sup><small><h1><h2><h3><h4><h5><h6><p><s><strike><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
         $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content']) : null;
+        if ($post->type != 'docs' && !empty($data['content'])) {
+            $data['content'] = wrap_summernote_content($data['content']);
+        }
 
         if (!config('modules.multisite_enabled') ? Post::onType($post->type)->whereNotIn('id', [$post->id])->whereSlug($slug)->count() > 0 : Post::onType($post->type)->whereNotIn('id', [$post->id])->whereTenantId($post->tenant_id)->whereSlug($slug)->count() > 0) {
             $data['slug'] = $post->slug ?? str($request->title . ' ' . Str::random(4))->slug();
@@ -410,7 +413,8 @@ class PostController extends Controller implements HasMiddleware
                             ]) : strip_tags($request->$fieldname);
                         break;
                     case 'rich-text':
-                        $custom_field[$fieldname] = isset($request->$fieldname) ? strip_tags($request->$fieldname, $allowed_tags) : null;
+                        $cleanRich = isset($request->$fieldname) ? strip_tags($request->$fieldname, $allowed_tags) : null;
+                        $custom_field[$fieldname] = !empty($cleanRich) ? wrap_summernote_content($cleanRich) : $cleanRich;
                         break;
                     default:
                         $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;

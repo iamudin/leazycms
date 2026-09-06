@@ -2661,6 +2661,41 @@ if (!function_exists('short_content')) {
         return implode(' ', $words);
     }
 }
+if (!function_exists('wrap_summernote_content')) {
+    function wrap_summernote_content($content)
+    {
+        if (empty($content) || !is_string($content)) {
+            return $content;
+        }
+
+        $trimmed = trim($content);
+        if ($trimmed === '' || $trimmed === '<p><br></p>' || $trimmed === '<p></p>') {
+            return $trimmed;
+        }
+
+        // Unwrap existing outer <div class="summernote-content">...</div> to avoid duplicate nesting
+        while (preg_match('/^<div\s+class=["\'](?:[^"\']*\s+)?summernote-content(?:\s+[^"\']*)?["\']\s*>(.*)<\/div>$/si', $trimmed, $matches)) {
+            $trimmed = trim($matches[1]);
+        }
+
+        return '<div class="summernote-content">' . $trimmed . '</div>';
+    }
+}
+if (!function_exists('strip_summernote_wrap')) {
+    function strip_summernote_wrap($content)
+    {
+        if (empty($content) || !is_string($content)) {
+            return $content;
+        }
+
+        $trimmed = trim($content);
+        while (preg_match('/^<div\s+class=["\'](?:[^"\']*\s+)?summernote-content(?:\s+[^"\']*)?["\']\s*>(.*)<\/div>$/si', $trimmed, $matches)) {
+            $trimmed = trim($matches[1]);
+        }
+
+        return $trimmed;
+    }
+}
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
     {

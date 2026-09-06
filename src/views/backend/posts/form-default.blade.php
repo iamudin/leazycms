@@ -446,6 +446,7 @@
                             if ($isTenantOnMainDomain) {
                                 $content = preg_replace('/src="\/media\//i', 'src="https://' . $post->tenant->domain . '/media/', $content);
                             }
+                            $content = function_exists('strip_summernote_wrap') ? strip_summernote_wrap($content) : $content;
                         @endphp
                         <textarea name="content" placeholder="Keterangan lengkap..." id="editor">{{ $content }}</textarea>
                     @endif
