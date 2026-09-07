@@ -364,6 +364,9 @@ class PostController extends Controller implements HasMiddleware
         }
         $allowed_tags = '<div><sub><sup><small><h1><h2><h3><h4><h5><h6><p><s><strike><b><i><u><strong><em><ul><ol><li><br><hr><img><a><iframe><figcaption><figure><blockquote><quote><table><tr><td><span>';
         $data['content'] = isset($data['content']) ? ($post->type != 'docs' ? strip_tags($data['content'], $allowed_tags) : $data['content']) : null;
+        if ($post->type != 'docs' && !empty($data['content'])) {
+            $data['content'] = wrap_summernote_content($data['content']);
+        }
 
         if (!config('modules.multisite_enabled') ? Post::onType($post->type)->whereNotIn('id', [$post->id])->whereSlug($slug)->count() > 0 : Post::onType($post->type)->whereNotIn('id', [$post->id])->whereTenantId($post->tenant_id)->whereSlug($slug)->count() > 0) {
             $data['slug'] = $post->slug ?? str($request->title . ' ' . Str::random(4))->slug();
@@ -410,7 +413,8 @@ class PostController extends Controller implements HasMiddleware
                             ]) : strip_tags($request->$fieldname);
                         break;
                     case 'rich-text':
-                        $custom_field[$fieldname] = isset($request->$fieldname) ? strip_tags($request->$fieldname, $allowed_tags) : null;
+                        $cleanRich = isset($request->$fieldname) ? strip_tags($request->$fieldname, $allowed_tags) : null;
+                        $custom_field[$fieldname] = !empty($cleanRich) ? wrap_summernote_content($cleanRich) : $cleanRich;
                         break;
                     default:
                         $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;
@@ -727,22 +731,22 @@ class PostController extends Controller implements HasMiddleware
 
         $dt->addColumn('title', function ($row) use ($current_module, $maindomain) {
 
-            $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . $row->category?->name : "") : '';
+            $category = $current_module->form->category ? (!empty($row->category) ? "<i class='fa fa-tag'></i> " . utf8_clean($row->category?->name) : "") : '';
             $tags = '';
             foreach ($row->tags ? $row->tags->pluck('name') : [] as $item) {
-                $tags .= ' <b>#' . $item . '</b>';
+                $tags .= ' <b>#' . utf8_clean($item) . '</b>';
             }
 
             $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
-            $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . $row->redirect_to . '</small>' : null;
-            $tit = !empty($row->title) ? $row->title : '<i class="text-muted">__Tidak ada data__</i>';
+            $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . utf8_clean($row->redirect_to) . '</small>' : null;
+            $tit = !empty($row->title) ? utf8_clean($row->title) : '<i class="text-muted">__Tidak ada data__</i>';
 
 
             $pin = $row->pinned == 'Y' ? '<span class="badge badge-danger"> <i class="fa fa-star"></i> Disematkan</span>&nbsp;' : '';
             $locked = (!empty($row->password) ? '<i class="fa fa-lock pointer text-danger" onclick="copy(\'' . dec64($row->password) . '\')" title="Akses ' . $current_module->title . ' ini  dibatasi. Klik untuk menyalin kode akses"></i>' : '');
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
-            $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . $row->tenant?->domain : null;
+            $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . utf8_clean($row->tenant?->domain) : null;
             $b = '<b class="text-primary">' . $tit . '</b><br>';
             $b .= '<small class="text-muted">' . $locked . ' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
             return $b;
@@ -750,13 +754,13 @@ class PostController extends Controller implements HasMiddleware
 
 
         $dt->addColumn('created_at', function ($row) {
-            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->created_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . $row->user?->name . '</small>';
+            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->created_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . utf8_clean($row->user?->name) . '</small>';
         });
         $dt->addColumn('visited', function ($row) {
             return '<center><small class="badge badge-pill badge-dark py-1" style="border:1px solid lime;"> <i class="fa fa-line-chart"></i> <b>' . $row->visited . '</b></small></center>';
         });
         $dt->addColumn('updated_at', function ($row) {
-            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->updated_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . ($row->field?->last_editor ?? '-') . '</small>';
+            return '<small class="text-muted badge text-left"> <i class="fa fa-clock"></i> ' . date('d M Y H:i', strtotime($row->updated_at)) . '<br><br> <i class="fa fa-user-o"></i> ' . utf8_clean($row->field?->last_editor ?? '-') . '</small>';
         });
         $dt->addColumn('thumbnail', function ($row) {
             return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
@@ -771,6 +775,7 @@ class PostController extends Controller implements HasMiddleware
                 $value = $row->data_field[$field];
 
                 if (is_string($value)) {
+                    $value = utf8_clean($value);
 
                     // 🔗 0️⃣ Jika /media/ + ada nama file & ekstensi
                     if (str_starts_with($value, '/media/')) {
@@ -899,6 +904,7 @@ class PostController extends Controller implements HasMiddleware
 
             $titles = collect($parents)
                 ->pluck('title')
+                ->map(fn($t) => utf8_clean($t))
                 ->implode(' - ');
 
             return '<a href="' . admin_url($lastParent->type . '/' . $lastParent->id . '/edit') . '">'
@@ -1018,7 +1024,7 @@ class PostController extends Controller implements HasMiddleware
             'category' => $categoryCount
         ]);
 
-        return $dt->toJson();
+        return $dt->toJson(JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
     }
 
     public function updateStatus(Request $request)

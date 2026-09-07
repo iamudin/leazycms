@@ -2,7 +2,7 @@
 @section('content')
     <div class="row">
         <div class="col-lg-12 mb-3">
-            <h3 style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i>
+            <h3 id="page-title-text" style="font-weight:normal;float:left"><i class="fa fa-globe" aria-hidden="true"></i>
                 {{ $tenant ? 'Edit Tenant' : 'Tambah Tenant' }}</h3>
             <div class="pull-right">
                 <a href="{{ route('tenant.index') }}" class="btn btn-danger btn-sm"> <i class="fa fa-undo" aria-hidden></i>
@@ -10,8 +10,9 @@
             </div>
         </div>
         <div class="col-lg-12">
+            <div id="ajax-alert-container"></div>
             @include('cms::backend.layout.error')
-            <form autocomplete="off" action="{{ $tenant ? route('tenant.update', $tenant->id) : route('tenant.store') }}"
+            <form id="form-tenant" autocomplete="off" action="{{ $tenant ? route('tenant.update', $tenant->id) : route('tenant.store') }}"
                 method="post">
                 @csrf
                 @if($tenant)
@@ -70,25 +71,48 @@
                         @endif
 
                         <div class="form-group mt-2 mb-2">
-                            <label class="mb-0">Pilih Tema</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="mb-0">Pilih Tema</label>
+                                <a href="javascript:void(0)" id="toggle-theme-input" class="text-primary font-weight-bold" style="font-size: 11px; text-decoration: none;">
+                                    <i class="fa fa-pencil" id="toggle-theme-icon"></i> <span id="toggle-theme-text">Input Manual</span>
+                                </a>
+                            </div>
                             @php
                                 $activeTheme = old('theme', $tenant ? ($options['template'] ?? $tenant->theme) : null);
                             @endphp
-                            <select class="form-control form-control-sm" name="theme" id="theme-select" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? '' : 'required' }}>
-                                <option value="">-- Pilih Tema --</option>
-                                <option value="default" {{ $activeTheme == 'default' ? 'selected' : '' }}>Default</option>
 
-                                @if($activeTheme && $activeTheme != 'default' && !$themes->contains('path', $activeTheme))
-                                    <option value="{{ $activeTheme }}" selected>
-                                        {{ Str::title(str_replace('-', ' ', $activeTheme)) }} (Cloud / Custom Aktif)
-                                    </option>
-                                @endif
+                            {{-- Mode Dropdown Select --}}
+                            <div id="theme-select-wrapper">
+                                <select class="form-control form-control-sm" name="theme" id="theme-select" {{ (old('custom_theme') == '1' || ($tenant && $tenant->custom_theme)) ? '' : 'required' }}>
+                                    <option value="">-- Pilih Tema --</option>
+                                    <option value="default" {{ $activeTheme == 'default' ? 'selected' : '' }}>Default</option>
 
-                                @foreach($themes as $row)
-                                    <option value="{{ $row->path }}" {{ $activeTheme == $row->path ? 'selected' : '' }}>{{ $row->name }} ({{ $row->path }})
-                                    </option>
-                                @endforeach
-                            </select>
+                                    @if($activeTheme && $activeTheme != 'default' && !$themes->contains('path', $activeTheme))
+                                        <option value="{{ $activeTheme }}" selected>
+                                            {{ Str::title(str_replace('-', ' ', $activeTheme)) }} (Cloud / Custom Aktif)
+                                        </option>
+                                    @endif
+
+                                    @foreach($themes as $row)
+                                        <option value="{{ $row->path }}" {{ $activeTheme == $row->path ? 'selected' : '' }}>{{ $row->name }} ({{ $row->path }})
+                                        </option>
+                                    @endforeach
+                                    <option value="__manual__">+ Input Manual / Kustom...</option>
+                                </select>
+                            </div>
+
+                            {{-- Mode Input Text Manual --}}
+                            <div id="theme-manual-wrapper" style="display: none;">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control form-control-sm" id="theme-manual-input" placeholder="Masukkan nama/path tema (misal: desa, websekolah)" value="{{ $activeTheme }}" disabled>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-switch-theme-select" title="Kembali ke pilihan dropdown">
+                                            <i class="fa fa-list"></i> Pilih dari Daftar
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Masukkan nama folder tema yang ada di <code>resources/views/template/</code>.</small>
+                            </div>
                         </div>
                         <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Custom Theme ?</label><br>
@@ -114,18 +138,108 @@
                         <script>
                             document.addEventListener('DOMContentLoaded', function () {
                                 const themeSelect = document.getElementById('theme-select');
+                                const themeSelectWrapper = document.getElementById('theme-select-wrapper');
+                                const themeManualInput = document.getElementById('theme-manual-input');
+                                const themeManualWrapper = document.getElementById('theme-manual-wrapper');
+                                const toggleThemeBtn = document.getElementById('toggle-theme-input');
+                                const toggleThemeText = document.getElementById('toggle-theme-text');
+                                const toggleThemeIcon = document.getElementById('toggle-theme-icon');
+                                const btnSwitchSelect = document.getElementById('btn-switch-theme-select');
                                 const customThemeCheck = document.getElementById('custom-theme-check');
 
-                                function toggleThemeRequired() {
-                                    if (customThemeCheck.checked) {
+                                let isManualMode = false;
+
+                                function updateThemeRequired() {
+                                    const isCustomTheme = customThemeCheck && customThemeCheck.checked;
+                                    if (isManualMode) {
                                         themeSelect.removeAttribute('required');
+                                        if (isCustomTheme) {
+                                            themeManualInput.removeAttribute('required');
+                                        } else {
+                                            themeManualInput.setAttribute('required', 'required');
+                                        }
                                     } else {
-                                        themeSelect.setAttribute('required', 'required');
+                                        themeManualInput.removeAttribute('required');
+                                        if (isCustomTheme) {
+                                            themeSelect.removeAttribute('required');
+                                        } else {
+                                            themeSelect.setAttribute('required', 'required');
+                                        }
                                     }
                                 }
 
-                                customThemeCheck.addEventListener('change', toggleThemeRequired);
-                                toggleThemeRequired();
+                                function setMode(manual) {
+                                    isManualMode = manual;
+                                    if (isManualMode) {
+                                        themeSelectWrapper.style.display = 'none';
+                                        themeManualWrapper.style.display = 'block';
+
+                                        themeSelect.disabled = true;
+                                        themeSelect.removeAttribute('name');
+
+                                        themeManualInput.disabled = false;
+                                        themeManualInput.setAttribute('name', 'theme');
+
+                                        if (!themeManualInput.value && themeSelect.value && themeSelect.value !== '__manual__') {
+                                            themeManualInput.value = themeSelect.value;
+                                        }
+
+                                        if (toggleThemeText) toggleThemeText.textContent = 'Pilih dari Daftar';
+                                        if (toggleThemeIcon) toggleThemeIcon.className = 'fa fa-list';
+                                        themeManualInput.focus();
+                                    } else {
+                                        themeManualWrapper.style.display = 'none';
+                                        themeSelectWrapper.style.display = 'block';
+
+                                        themeManualInput.disabled = true;
+                                        themeManualInput.removeAttribute('name');
+
+                                        themeSelect.disabled = false;
+                                        themeSelect.setAttribute('name', 'theme');
+
+                                        if (themeSelect.value === '__manual__') {
+                                            themeSelect.value = '';
+                                        }
+
+                                        if (themeManualInput.value) {
+                                            const matchedOption = Array.from(themeSelect.options).find(opt => opt.value === themeManualInput.value);
+                                            if (matchedOption) {
+                                                themeSelect.value = themeManualInput.value;
+                                            }
+                                        }
+
+                                        if (toggleThemeText) toggleThemeText.textContent = 'Input Manual';
+                                        if (toggleThemeIcon) toggleThemeIcon.className = 'fa fa-pencil';
+                                    }
+                                    updateThemeRequired();
+                                }
+
+                                if (toggleThemeBtn) {
+                                    toggleThemeBtn.addEventListener('click', function (e) {
+                                        e.preventDefault();
+                                        setMode(!isManualMode);
+                                    });
+                                }
+
+                                if (btnSwitchSelect) {
+                                    btnSwitchSelect.addEventListener('click', function () {
+                                        setMode(false);
+                                    });
+                                }
+
+                                if (themeSelect) {
+                                    themeSelect.addEventListener('change', function () {
+                                        if (this.value === '__manual__') {
+                                            setMode(true);
+                                        }
+                                    });
+                                }
+
+                                if (customThemeCheck) {
+                                    customThemeCheck.addEventListener('change', updateThemeRequired);
+                                }
+
+                                updateThemeRequired();
                             });
                         </script>
                         @if($tenant && parse_url(config('app.url'), PHP_URL_HOST) != $tenant->domain || !$tenant)
@@ -168,7 +282,7 @@
                                 </div>
                             </div>
                             <div class="form-group mt-2 mb-2">
-                                <label class="mb-0">Password Admin {{ $admin ? '(Kosongkan jika tidak ganti)' : '' }}</label>
+                                <label class="mb-0" id="label-admin-password">Password Admin {{ $admin ? '(Kosongkan jika tidak ganti)' : '' }}</label>
                                 <div class="input-group">
                                     <input type="password" id="admin_password" name="admin_password"
                                         class="form-control form-control-sm" placeholder="Masukkan Password Admin" {{ $admin ? '' : 'required' }}>
@@ -279,7 +393,9 @@
                 @endif
 
                 <div class="form-group mt-2 mb-2 text-right">
-                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Simpan Tenant & Admin</button>
+                    <button type="submit" id="btn-save-tenant" class="btn btn-primary">
+                        <i class="fa fa-save"></i> <span class="text-save">Simpan Tenant & Admin</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -333,6 +449,140 @@
                 $('#select2').select2({
                     tags: true,
                     placeholder: 'Pilih Modul'
+                });
+
+                // AJAX Save Tenant Form
+                $('#form-tenant').on('submit', function (e) {
+                    e.preventDefault();
+
+                    let form = this;
+                    let actionUrl = $(form).attr('action');
+                    let formData = new FormData(form);
+                    let btnSave = $('#btn-save-tenant');
+                    let textSave = btnSave.find('.text-save');
+                    let iconSave = btnSave.find('i');
+                    let originalText = textSave.text() || 'Simpan Tenant & Admin';
+
+                    // Reset alert dan validasi
+                    $('#ajax-alert-container').empty();
+                    $('.is-invalid').removeClass('is-invalid');
+                    $('.invalid-feedback-ajax').remove();
+
+                    // Loading state
+                    btnSave.prop('disabled', true);
+                    iconSave.attr('class', 'fa fa-spinner fa-spin');
+                    textSave.text('Menyimpan...');
+
+                    $.ajaxSetup({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    $.ajax({
+                        url: actionUrl,
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            btnSave.prop('disabled', false);
+                            iconSave.attr('class', 'fa fa-save');
+                            textSave.text(originalText);
+
+                            let msg = response.message || 'Tenant dan akun admin berhasil disimpan!';
+                            if (typeof notif === 'function') {
+                                notif(msg, 'success');
+                            }
+
+                            // Jika baru saja menambah tenant baru (Create mode)
+                            if (response.edit_url) {
+                                // Update URL di address bar browser tanpa reload
+                                window.history.replaceState(null, '', response.edit_url);
+
+                                // Update action form ke route update
+                                if (response.action_url) {
+                                    $(form).attr('action', response.action_url);
+                                }
+
+                                // Tambahkan method spoofing PUT untuk update berikutnya
+                                if ($(form).find('input[name="_method"]').length === 0) {
+                                    $(form).prepend('<input type="hidden" name="_method" value="PUT">');
+                                }
+
+                                // Update judul halaman
+                                $('#page-title-text').html('<i class="fa fa-globe" aria-hidden="true"></i> Edit Tenant');
+                                document.title = 'Edit Tenant › Admin Panel';
+
+                                // Password admin menjadi opsional untuk update selanjutnya
+                                $('#admin_password').removeAttr('required');
+                                let passLabel = $('#label-admin-password');
+                                if (passLabel.length) {
+                                    passLabel.text('Password Admin (Kosongkan jika tidak ganti)');
+                                }
+                            }
+
+                            // Kosongkan kolom input password setelah berhasil disimpan demi keamanan
+                            $('#admin_password').val('');
+                        },
+                        error: function (xhr) {
+                            btnSave.prop('disabled', false);
+                            iconSave.attr('class', 'fa fa-save');
+                            textSave.text(originalText);
+
+                            if (xhr.status === 422) {
+                                let res = xhr.responseJSON;
+                                let errors = res && res.errors ? res.errors : {};
+                                let errorListHtml = '<ul class="p-0 m-0 pl-2">';
+                                let firstErrorMsg = res.message || 'Harap periksa kembali input formulir.';
+
+                                $.each(errors, function (field, messages) {
+                                    let cleanField = field.replace(/\./g, '\\.');
+                                    let inputEl = $('[name="' + field + '"], [name="' + cleanField + '"]');
+
+                                    if (inputEl.length) {
+                                        inputEl.addClass('is-invalid');
+                                        inputEl.first().after('<div class="invalid-feedback invalid-feedback-ajax d-block">' + messages[0] + '</div>');
+                                    }
+
+                                    $.each(messages, function (idx, err) {
+                                        errorListHtml += '<li>' + err + '</li>';
+                                        if (idx === 0 && firstErrorMsg === res.message) {
+                                            firstErrorMsg = err;
+                                        }
+                                    });
+                                });
+                                errorListHtml += '</ul>';
+
+                                $('#ajax-alert-container').html(
+                                    '<div class="alert alert-dismissible alert-danger mb-3">' +
+                                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                                    errorListHtml +
+                                    '</div>'
+                                );
+
+                                $('html, body').animate({
+                                    scrollTop: $('#ajax-alert-container').offset().top - 70
+                                }, 300);
+
+                                if (typeof notif === 'function') {
+                                    notif(firstErrorMsg, 'danger');
+                                }
+                            } else {
+                                let errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Terjadi kesalahan sistem (' + xhr.status + ')';
+                                $('#ajax-alert-container').html(
+                                    '<div class="alert alert-dismissible alert-danger mb-3">' +
+                                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                                    '<strong>Error:</strong> ' + errMsg +
+                                    '</div>'
+                                );
+                                if (typeof notif === 'function') {
+                                    notif(errMsg, 'danger');
+                                }
+                            }
+                        }
+                    });
                 });
             });
         </script>

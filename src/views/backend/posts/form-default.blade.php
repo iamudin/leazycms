@@ -380,12 +380,12 @@
             <div class="d-block d-lg-none mb-3">
                 <div class="status-toggle-card">
                     <div class="status-toggle-group" data-toggle="buttons">
-                        <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-publish {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
-                            <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required style="display:none;">
+                        <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-publish {{ (!$post || $post->status == 'publish') ? 'active' : '' }}" data-toggle="tooltip" title="Publikasikan perubahan (Ctrl+S / ⌘S)">
+                            <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} style="display:none;">
                             <i class="fa fa-globe"></i> Publikasikan
                         </label>
-                        <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-draft {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
-                            <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required style="display:none;">
+                        <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-draft {{ ($post && $post->status == 'draft') ? 'active' : '' }}" data-toggle="tooltip" title="Simpan sebagai Draft (Ctrl+S / ⌘S)">
+                            <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} style="display:none;">
                             <i class="fa fa-archive"></i> Draft
                         </label>
                     </div>
@@ -446,6 +446,7 @@
                             if ($isTenantOnMainDomain) {
                                 $content = preg_replace('/src="\/media\//i', 'src="https://' . $post->tenant->domain . '/media/', $content);
                             }
+                            $content = function_exists('strip_summernote_wrap') ? strip_summernote_wrap($content) : $content;
                         @endphp
                         <textarea name="content" placeholder="Keterangan lengkap..." id="editor">{{ $content }}</textarea>
                     @endif
@@ -520,14 +521,19 @@
                 <div class="d-none d-lg-block mb-3">
                     <div class="status-toggle-card">
                         <div class="status-toggle-group" data-toggle="buttons">
-                            <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-publish {{ (!$post || $post->status == 'publish') ? 'active' : '' }}">
-                                <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} required style="display:none;">
+                            <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-publish {{ (!$post || $post->status == 'publish') ? 'active' : '' }}" data-toggle="tooltip" title="Publikasikan perubahan (Ctrl + S / ⌘S)">
+                                <input type="radio" name="status" value="publish" {{ (!$post || $post->status == 'publish') ? 'checked' : '' }} style="display:none;">
                                 <i class="fa fa-globe"></i> Publikasikan
                             </label>
-                            <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-draft {{ ($post && $post->status == 'draft') ? 'active' : '' }}">
-                                <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} required style="display:none;">
+                            <label onclick="handleStatusSubmit(this)" class="status-toggle-btn btn-draft {{ ($post && $post->status == 'draft') ? 'active' : '' }}" data-toggle="tooltip" title="Simpan sebagai Draft (Ctrl + S / ⌘S)">
+                                <input type="radio" name="status" value="draft" {{ ($post && $post->status == 'draft') ? 'checked' : '' }} style="display:none;">
                                 <i class="fa fa-archive"></i> Draft
                             </label>
+                        </div>
+                        <div class="text-center mt-1.5 pt-1" style="border-top: 1px dashed #e2e8f0;">
+                            <small class="text-muted" style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa fa-keyboard-o text-secondary"></i> Simpan cepat: <kbd style="padding: 1px 5px; font-size: 10px; border-radius: 4px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-family: inherit;">Ctrl+S</kbd> / <kbd style="padding: 1px 5px; font-size: 10px; border-radius: 4px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-family: inherit;">⌘S</kbd>
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -540,7 +546,7 @@
                         </div>
                         
                         <div class="thumbnail-box">
-                            <img class="img-responsive w-100" style="width: 100%; height: auto; display: block; margin: 0; padding: 0;" id="thumb" src="{{ $post->media && media($post->media)->isExists() ? $post->thumbnail : noimage() }}" />
+                            <img class="img-responsive w-100" style="width: 100%; height: auto; display: block; margin: 0; padding: 0;" id="thumb" src="{{$post->thumbnail ?? noimage() }}" />
                             <div class="upload-overlay">
                                 <input accept="image/png,image/jpeg,image/webp,image/gif" type="file"
                                     class="compress-image form-control-file form-control-sm" name="media" value="" style="display: none;">
@@ -919,6 +925,46 @@
 
         $('.editorForm').on('submit', function (e) {
             e.preventDefault();
+            submitEditorForm();
+        });
+    </script>
+    @include('cms::backend.layout.js')
+    <script>
+        var isEditorSaving = false;
+
+        function resetStatusButtons() {
+            $('.status-toggle-btn').each(function () {
+                let $label = $(this);
+                let $input = $label.find('input');
+                let val = $input.val() || ($label.hasClass('btn-draft') ? 'draft' : 'publish');
+                $label.css('pointer-events', 'auto').fadeTo(200, 1);
+                let $icon = $label.find('i');
+                $icon.removeClass('fa-spinner fa-spin');
+                if (val === 'publish') {
+                    $icon.addClass('fa-globe');
+                    $label.contents().filter(function () {
+                        return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                    }).each(function () {
+                        this.nodeValue = ' Publikasikan';
+                    });
+                } else if (val === 'draft') {
+                    $icon.addClass('fa-archive');
+                    $label.contents().filter(function () {
+                        return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                    }).each(function () {
+                        this.nodeValue = ' Draft';
+                    });
+                }
+            });
+        }
+
+        function submitEditorForm(statusOverride) {
+            if (isEditorSaving) {
+                return false;
+            }
+
+            let form = document.querySelector('.editorForm');
+            if (!form) return false;
 
             let $titleInput = $('[name="title"]');
             if ($titleInput.length && $titleInput.attr('type') !== 'hidden') {
@@ -927,42 +973,77 @@
                 if (nonSpaceLen < 5) {
                     notif('{{ $module->datatable->data_title }} minimal 5 karakter di luar spasi!', 'danger');
                     $titleInput.focus();
-                    $('.status-toggle-btn').each(function () {
-                        let $label = $(this);
-                        let $input = $label.find('input');
-                        let val = $input.val();
-                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
-                        let $icon = $label.find('i');
-                        $icon.removeClass('fa-spinner fa-spin');
-                        if (val === 'publish') {
-                            $icon.addClass('fa-globe');
-                            $label.contents().filter(function () {
-                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                            }).each(function () {
-                                this.nodeValue = ' Publikasikan';
-                            });
-                        } else if (val === 'draft') {
-                            $icon.addClass('fa-archive');
-                            $label.contents().filter(function () {
-                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                            }).each(function () {
-                                this.nodeValue = ' Draft';
-                            });
-                        }
-                    });
                     return false;
                 }
             }
 
-            if (typeof window.editor !== 'undefined' && window.editor.save) {
-                window.editor.save();
+            // Determine active status
+            let currentStatus = statusOverride;
+            if (!currentStatus) {
+                let $checked = $('input[name="status"]:checked');
+                if ($checked.length) {
+                    currentStatus = $checked.val();
+                } else {
+                    let $activeBtn = $('.status-toggle-btn.active');
+                    if ($activeBtn.length) {
+                        currentStatus = $activeBtn.find('input').val() || ($activeBtn.hasClass('btn-draft') ? 'draft' : 'publish');
+                    } else {
+                        currentStatus = 'publish';
+                    }
+                }
             }
+
+            // Sync status radio inputs and active button classes
+            $('input[name="status"]').each(function () {
+                if ($(this).val() === currentStatus) {
+                    $(this).prop('checked', true);
+                    $(this).closest('.status-toggle-btn').addClass('active');
+                } else {
+                    $(this).prop('checked', false);
+                    $(this).closest('.status-toggle-btn').removeClass('active');
+                }
+            });
+
+            // Update button visual state to spinner
+            $('.status-toggle-btn').each(function () {
+                let $label = $(this);
+                let val = $label.find('input').val() || ($label.hasClass('btn-draft') ? 'draft' : 'publish');
+                if (val === currentStatus) {
+                    let $icon = $label.find('i');
+                    $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
+                    $label.contents().filter(function () {
+                        return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
+                    }).each(function () {
+                        this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
+                    });
+                } else {
+                    $label.css('pointer-events', 'none').fadeTo(200, 0.5);
+                }
+            });
+
+            // Sync Summernote & CodeMirror editors
+            if (typeof window.editor !== 'undefined' && window.editor && window.editor.save) {
+                try { window.editor.save(); } catch (err) {}
+            }
+            if (window.jQuery && typeof $.fn.summernote !== 'undefined') {
+                $('textarea').each(function () {
+                    if ($(this).data('summernote')) {
+                        try {
+                            $(this).val($(this).summernote('code'));
+                        } catch (err) {}
+                    }
+                });
+            }
+
+            isEditorSaving = true;
             $('.text-save').html('Menyimpan...');
             $('.btn-primary').attr('disabled', 'disabled');
-            let form = this;
+
             let actionUrl = $(form).attr('action');
             let formData = new FormData(form);
+            formData.set('status', currentStatus);
             formData.append('_method', 'PUT');
+
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -1018,7 +1099,7 @@
                         let currentUrlBar = document.getElementById('post-url-bar');
                         if (currentUrlBar && newUrlBar) {
                             if (newUrlBar.style.display === 'none' && currentUrlBar.style.display !== 'none') {
-                                $(currentUrlBar).slideUp('fast', function() {
+                                $(currentUrlBar).slideUp('fast', function () {
                                     currentUrlBar.innerHTML = newUrlBar.innerHTML;
                                 });
                             } else if (newUrlBar.style.display !== 'none' && currentUrlBar.style.display === 'none') {
@@ -1050,30 +1131,7 @@
                         }
                     }
 
-                    // Reset status buttons state
-                    $('.status-toggle-btn').each(function () {
-                        let $label = $(this);
-                        let $input = $label.find('input');
-                        let val = $input.val();
-                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
-                        let $icon = $label.find('i');
-                        $icon.removeClass('fa-spinner fa-spin');
-                        if (val === 'publish') {
-                            $icon.addClass('fa-globe');
-                            $label.contents().filter(function () {
-                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                            }).each(function () {
-                                this.nodeValue = ' Publikasikan';
-                            });
-                        } else if (val === 'draft') {
-                            $icon.addClass('fa-archive');
-                            $label.contents().filter(function () {
-                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                            }).each(function () {
-                                this.nodeValue = ' Draft';
-                            });
-                        }
-                    });
+                    resetStatusButtons();
                 },
                 error: function (xhr) {
                     try {
@@ -1096,57 +1154,55 @@
 
                     $('.text-save').html('Simpan');
                     $('.btn-primary').removeAttr('disabled');
-
-                    $('.status-toggle-btn').each(function () {
-                        let $label = $(this);
-                        let $input = $label.find('input');
-                        let val = $input.val();
-                        $label.css('pointer-events', 'auto').fadeTo(200, 1);
-                        let $icon = $label.find('i');
-                        $icon.removeClass('fa-spinner fa-spin');
-                        if (val === 'publish') {
-                            $icon.addClass('fa-globe');
-                            $label.contents().filter(function () {
-                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                            }).each(function () {
-                                this.nodeValue = ' Publikasikan';
-                            });
-                        } else if (val === 'draft') {
-                            $icon.addClass('fa-archive');
-                            $label.contents().filter(function () {
-                                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-                            }).each(function () {
-                                this.nodeValue = ' Draft';
-                            });
-                        }
-                    });
+                    resetStatusButtons();
+                },
+                complete: function () {
+                    isEditorSaving = false;
                 }
             });
-        });
-    </script>
-    @include('cms::backend.layout.js')
-    <script>
+        }
+
         function handleStatusSubmit(btn) {
             let $btn = $(btn);
-            $btn.find('input').prop('checked', true);
-            let val = $btn.find('input').val();
-
-            // Toggle active visual class on buttons
-            $btn.siblings('.status-toggle-btn').removeClass('active');
-            $btn.addClass('active');
-
-            let $icon = $btn.find('i');
-            $icon.removeClass('fa-globe fa-archive').addClass('fa-spinner fa-spin');
-
-            $btn.contents().filter(function () {
-                return this.nodeType === 3 && $.trim(this.nodeValue) !== '';
-            }).each(function () {
-                this.nodeValue = val === 'publish' ? ' Diproses...' : ' Menyimpan...';
-            });
-
-            $btn.siblings('label').css('pointer-events', 'none').fadeTo(200, 0.5);
-            $('.editorForm').submit();
+            let val = $btn.find('input').val() || ($btn.hasClass('btn-draft') ? 'draft' : 'publish');
+            submitEditorForm(val);
         }
+
+        function saveViaShortcut() {
+            submitEditorForm();
+        }
+
+        function onEditorShortcutSave(e) {
+            var isS = (e.key && (e.key === 's' || e.key === 'S')) || e.code === 'KeyS' || e.keyCode === 83 || e.which === 83;
+            var isModifier = e.ctrlKey || e.metaKey;
+
+            if (isModifier && isS && !e.altKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                submitEditorForm();
+                return false;
+            }
+        }
+
+        // Multi-level listeners ensuring shortcut works across any element/focus
+        window.addEventListener('keydown', onEditorShortcutSave, true);
+        document.addEventListener('keydown', onEditorShortcutSave, true);
+        $(document).on('keydown', onEditorShortcutSave);
+        $(window).on('keydown', onEditorShortcutSave);
+        $(document).on('keydown', '.note-editable, input, textarea', onEditorShortcutSave);
+
+        // CodeMirror editor support
+        $(document).ready(function () {
+            if (typeof window.editor !== 'undefined' && window.editor && typeof window.editor.setOption === 'function') {
+                window.editor.setOption("extraKeys", {
+                    "Ctrl-S": function (cm) { submitEditorForm(); },
+                    "Cmd-S": function (cm) { submitEditorForm(); }
+                });
+            }
+        });
     </script>
 @endpush
 

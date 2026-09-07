@@ -153,7 +153,7 @@ class Web
 
                 // Cache jika class mengandung lz-thumbnail
 
-                return '<img ' . $attributes . ' src="/noimage.webp">';
+                return '<img ' . $attributes . ' src="/shimmer.gif">';
             }, $content);
             if (!is_custom_web_route_matched()) {
                 $footer = '';

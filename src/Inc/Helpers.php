@@ -2508,6 +2508,10 @@ if (!function_exists('set_header_seo')) {
                 $hasThumbnailField = $current_module->form->thumbnail;
 
                 if ($hasThumbnailField) {
+                    if ($data->media && str_starts_with(trim($data->media), 'http')) {
+                        return trim($data->media);
+                    }
+
                     if ($data->media && media_exists($data->media)) {
                         return url($data->thumbnail);
                     }
@@ -2659,6 +2663,60 @@ if (!function_exists('short_content')) {
         }
 
         return implode(' ', $words);
+    }
+}
+if (!function_exists('wrap_summernote_content')) {
+    function wrap_summernote_content($content)
+    {
+        if (empty($content) || !is_string($content)) {
+            return $content;
+        }
+
+        $trimmed = trim($content);
+        if ($trimmed === '' || $trimmed === '<p><br></p>' || $trimmed === '<p></p>') {
+            return $trimmed;
+        }
+
+        // Unwrap existing outer <div class="summernote-content">...</div> to avoid duplicate nesting
+        while (preg_match('/^<div\s+class=["\'](?:[^"\']*\s+)?summernote-content(?:\s+[^"\']*)?["\']\s*>(.*)<\/div>$/si', $trimmed, $matches)) {
+            $trimmed = trim($matches[1]);
+        }
+
+        return '<div class="summernote-content">' . $trimmed . '</div>';
+    }
+}
+if (!function_exists('strip_summernote_wrap')) {
+    function strip_summernote_wrap($content)
+    {
+        if (empty($content) || !is_string($content)) {
+            return $content;
+        }
+
+        $trimmed = trim($content);
+        while (preg_match('/^<div\s+class=["\'](?:[^"\']*\s+)?summernote-content(?:\s+[^"\']*)?["\']\s*>(.*)<\/div>$/si', $trimmed, $matches)) {
+            $trimmed = trim($matches[1]);
+        }
+
+        return $trimmed;
+    }
+}
+if (!function_exists('utf8_clean')) {
+    function utf8_clean($data)
+    {
+        if (is_array($data)) {
+            return array_map('utf8_clean', $data);
+        }
+        if (!is_string($data) || empty($data)) {
+            return $data;
+        }
+        if (mb_check_encoding($data, 'UTF-8')) {
+            return $data;
+        }
+        $converted = mb_convert_encoding($data, 'UTF-8', 'Windows-1252, ISO-8859-1, UTF-8');
+        if (!mb_check_encoding($converted, 'UTF-8')) {
+            $converted = mb_convert_encoding($converted, 'UTF-8', 'UTF-8');
+        }
+        return $converted;
     }
 }
 if (!function_exists('init_wabutton')) {
