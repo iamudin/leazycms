@@ -84,6 +84,28 @@
                 @if(is_main_domain() || get_option('can_upload_template', 'N') === 'Y')
                 <form action="{{ URL::full() }}" method="post" enctype="multipart/form-data" id="formUploadTemplate" class="mb-2">
                     @csrf
+                    @if(is_main_domain())
+                    <div class="form-group mb-2">
+                        <label class="small font-weight-bold text-dark mb-1">Pilih Folder Template:</label>
+                        <select name="slug" id="selectTemplateManual" class="form-control form-control-sm">
+                            <option value="">-- Pilih Folder Template --</option>
+                            @php
+                                $templatePath = resource_path('views/template');
+                                $templateList = $templateFolders ?? (\Illuminate\Support\Facades\File::isDirectory($templatePath)
+                                    ? array_map('basename', \Illuminate\Support\Facades\File::directories($templatePath))
+                                    : []);
+                                sort($templateList);
+                                $activeTemplate = template();
+                            @endphp
+                            @foreach($templateList as $folder)
+                                <option value="{{ $folder }}" {{ $activeTemplate === $folder ? 'selected' : '' }}>
+                                    {{ $folder }} {{ $activeTemplate === $folder ? '(Aktif)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div style="text-align:center;font-weight:bold;font-size:11px;padding:0.25rem 0;" class="text-muted">Atau Upload ZIP</div>
+                    @endif
                     <input type="file" accept="application/zip,x-zip-compressed,.zip" class="template mb-2" name="template" id="inputTemplateFile">
                     <button type="submit" id="btnUploadTemplate" class="btn btn-sm btn-danger w-100 mt-2" style="display: none;">
                     <i class="fa fa-exclamation-triangle"></i> Ganti Sekarang !
@@ -97,22 +119,66 @@
                     const form = document.getElementById('formUploadTemplate');
                     const fileInput = document.getElementById('inputTemplateFile');
                     const btnSubmit = document.getElementById('btnUploadTemplate');
+                    const selectTemplate = document.getElementById('selectTemplateManual');
+                    const activeTemplate = @json(template());
                     
                     if (!form || !btnSubmit) return;
 
                     function checkTemplateSelected() {
                         const hasHiddenInput = form.querySelector('input.gmedia-hidden[value]') !== null;
                         const hasFileSelected = fileInput && fileInput.files && fileInput.files.length > 0;
+                        const hasSelectVal = selectTemplate && selectTemplate.value && selectTemplate.value !== activeTemplate;
 
-                        if (hasHiddenInput || hasFileSelected) {
-                        btnSubmit.style.display = 'block';
+                        if (hasHiddenInput || hasFileSelected || hasSelectVal) {
+                            btnSubmit.style.display = 'block';
                         } else {
-                        btnSubmit.style.display = 'none';
+                            btnSubmit.style.display = 'none';
                         }
                     }
 
                     if (fileInput) {
-                        fileInput.addEventListener('change', checkTemplateSelected);
+                        fileInput.addEventListener('change', function () {
+                            if (selectTemplate) {
+                                selectTemplate.value = activeTemplate;
+                                if (window.jQuery && $(selectTemplate).data('select2')) {
+                                    $(selectTemplate).trigger('change.select2');
+                                }
+                            }
+                            checkTemplateSelected();
+                        });
+                    }
+
+                    if (selectTemplate) {
+                        selectTemplate.addEventListener('change', function () {
+                            if (this.value && this.value !== activeTemplate) {
+                                if (fileInput) {
+                                    fileInput.value = '';
+                                }
+                                const gmediaHidden = form.querySelector('input.gmedia-hidden');
+                                if (gmediaHidden) {
+                                    gmediaHidden.remove();
+                                }
+                            }
+                            checkTemplateSelected();
+                        });
+
+                        if (window.jQuery && $.fn.select2) {
+                            $(selectTemplate).select2({
+                                placeholder: '-- Pilih Folder Template --',
+                                width: '100%'
+                            }).on('change', function () {
+                                if (this.value && this.value !== activeTemplate) {
+                                    if (fileInput) {
+                                        fileInput.value = '';
+                                    }
+                                    const gmediaHidden = form.querySelector('input.gmedia-hidden');
+                                    if (gmediaHidden) {
+                                        gmediaHidden.remove();
+                                    }
+                                }
+                                checkTemplateSelected();
+                            });
+                        }
                     }
 
                     const observer = new MutationObserver(function () {

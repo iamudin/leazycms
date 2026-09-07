@@ -1502,6 +1502,12 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Template Berhasil diupdate' : 'Gagal update template'));
         }
         if ($request->isMethod('post')) {
+            if ($request->filled('slug') && is_main_domain() && !$request->hasFile('template')) {
+                return $this->activateTemplate($request);
+            }
+            if ($request->filled('template_folder') && is_main_domain() && !$request->hasFile('template')) {
+                return $this->activateTemplate($request->merge(['slug' => $request->input('template_folder')]));
+            }
             if ($request->hasFile('template') || $request->filled('template')) {
                 if (!is_main_domain() && get_option('can_upload_template', 'N') !== 'Y') {
                     return back()->with('danger', 'Anda tidak memiliki akses untuk upload template.');
@@ -1515,6 +1521,9 @@ class PanelController extends Controller implements HasMiddleware
                     return $this->template_uploader($file);
                 } elseif ($request->filled('template')) {
                     $templatePath = $request->input('template');
+                    if (is_main_domain() && File::isDirectory(resource_path('views/template/' . $templatePath))) {
+                        return $this->activateTemplate($request->merge(['slug' => $templatePath]));
+                    }
                     return $this->template_uploader($templatePath);
                 }
             }
@@ -1580,6 +1589,12 @@ class PanelController extends Controller implements HasMiddleware
                 return back()->with('success', 'Berhasil diupdate');
             }
         }
+        $templatePath = resource_path('views/template');
+        $templateFolders = File::isDirectory($templatePath)
+            ? array_map([File::class, 'basename'], File::directories($templatePath))
+            : [];
+        sort($templateFolders);
+        view()->share('templateFolders', $templateFolders);
         view()->share('home', array_map([File::class, 'basename'], File::glob(resource_path('views/template/' . template() . '/home-*.blade.php'))));
         return view('cms::backend.appearance');
     }
@@ -2005,6 +2020,12 @@ class PanelController extends Controller implements HasMiddleware
         \Leazycms\Web\Models\Option::updateOrCreate(['name' => 'template'], [
             'value' => $slug
         ]);
+        if (\Illuminate\Support\Facades\File::isDirectory($templatePath . '/assets')) {
+            \Illuminate\Support\Facades\Artisan::call('cms:link-asset', [
+                'slug' => $slug,
+                '--force' => true,
+            ]);
+        }
         if (config('modules.multisite_enabled')) {
             if (!is_main_domain()) {
                 cache()->forget('tenant:' . tenant()->domain . ':options');
