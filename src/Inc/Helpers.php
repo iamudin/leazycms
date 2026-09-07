@@ -2700,6 +2700,25 @@ if (!function_exists('strip_summernote_wrap')) {
         return $trimmed;
     }
 }
+if (!function_exists('utf8_clean')) {
+    function utf8_clean($data)
+    {
+        if (is_array($data)) {
+            return array_map('utf8_clean', $data);
+        }
+        if (!is_string($data) || empty($data)) {
+            return $data;
+        }
+        if (mb_check_encoding($data, 'UTF-8')) {
+            return $data;
+        }
+        $converted = mb_convert_encoding($data, 'UTF-8', 'Windows-1252, ISO-8859-1, UTF-8');
+        if (!mb_check_encoding($converted, 'UTF-8')) {
+            $converted = mb_convert_encoding($converted, 'UTF-8', 'UTF-8');
+        }
+        return $converted;
+    }
+}
 if (!function_exists('init_wabutton')) {
     function init_wabutton()
     {

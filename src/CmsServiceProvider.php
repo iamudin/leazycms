@@ -197,6 +197,7 @@ class CmsServiceProvider extends ServiceProvider
     protected function configure()
     {
         $this->mergeConfigFrom(__DIR__ . "/config/modules.php", "modules");
+        config()->set('datatables.json.options', JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
     }
     protected function registerMigrations()
     {
