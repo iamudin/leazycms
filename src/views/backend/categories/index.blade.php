@@ -304,7 +304,7 @@
 
     function openEditModal(id, name, description, sort, status, iconUrl, tenantDomain) {
         let titleHtml = '<i class="fa fa-edit text-warning"></i> Edit Kategori';
-        @if(is_main_domain())
+        @if(is_main_domain()  && config('modules.multisite_enabled'))
         if (tenantDomain) {
             titleHtml += ' <span class="badge badge-light border text-dark ml-2" style="font-size: 0.75rem; font-weight: normal;"><i class="fa fa-globe text-primary"></i> ' + tenantDomain + '</span>';
         }
