@@ -104,11 +104,7 @@
     <div class="row" id="sortable-category-list">
         @php
             $gradients = [
-                'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-                'background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%)',
-                'background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)',
-                'background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)',
+
                 'background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)'
             ];
         @endphp
@@ -143,11 +139,18 @@
                         </div>
 
                         <!-- Judul dan Info Kategori -->
-                        <div class="flex-grow-1">
+                        <div class="flex-grow-1 mr-2">
                             <h5 class="mb-0 font-weight-bold" style="letter-spacing: 0.5px;">{{ $cat->name }}</h5>
-                            <small style="opacity: 0.9; font-size: 0.85rem;">
-                                <i class="fa fa-file-text-o mr-1"></i> {{ $cat->posts_count }} Data Terkait
-                            </small>
+                            <div class="d-flex align-items-center flex-wrap mt-1" style="gap: 6px;">
+                                <small style="opacity: 0.9; font-size: 0.85rem;">
+                                    <i class="fa fa-file-text-o mr-1"></i> {{ $cat->posts_count }} Data Terkait
+                                </small>
+                                @if(is_main_domain() && config('modules.multisite_enabled'))
+                                    <span class="badge bg-white text-dark px-2 py-1 shadow-sm" style="border-radius: 12px; font-size: 0.75rem; font-weight: 600;" title="Domain Tenant Pemilik">
+                                        <i class="fa fa-globe text-primary mr-1"></i> {{ $cat->tenant ? $cat->tenant->domain : 'Main Domain' }}
+                                    </span>
+                                @endif
+                            </div>
                         </div>
 
                         <!-- Badge Sort Order & Status -->
@@ -162,9 +165,14 @@
                             
                             <div class="btn-group shadow-sm" style="border-radius: 6px; overflow: hidden;">
                                 @if($cat->status == 'publish' && $cat->posts_count > 0)
-                                    <a target="_blank" href="{{ url($cat->url) }}" class="btn btn-light btn-sm" title="Preview"><i class="fa fa-globe text-info"></i></a>
+                                    @php
+                                        $catUrl = (config('modules.multisite_enabled') && is_main_domain() && $cat->tenant)
+                                            ? 'https://' . $cat->tenant->domain . '/' . $cat->url
+                                            : url($cat->url);
+                                    @endphp
+                                    <a target="_blank" href="{{ $catUrl }}" class="btn btn-light btn-sm" title="Preview"><i class="fa fa-globe text-info"></i></a>
                                 @endif
-                                <button type="button" onclick="openEditModal({{ $cat->id }}, '{{ addslashes($cat->name) }}', '{{ addslashes($cat->description) }}', {{ $cat->sort }}, '{{ $cat->status }}', '{{ $cat->icon && media_exists($cat->icon) ? url($cat->icon) : '' }}')" class="btn btn-light btn-sm" title="Edit"><i class="fa fa-edit text-warning"></i></button>
+                                <button type="button" onclick="openEditModal({{ $cat->id }}, '{{ addslashes($cat->name) }}', '{{ addslashes($cat->description) }}', {{ $cat->sort }}, '{{ $cat->status }}', '{{ $cat->icon && media_exists($cat->icon) ? url($cat->icon) : '' }}', '{{ addslashes($cat->tenant ? $cat->tenant->domain : 'Main Domain') }}')" class="btn btn-light btn-sm" title="Edit"><i class="fa fa-edit text-warning"></i></button>
                                 @if(!$cat->posts()->exists())
                                     <button onclick="deleteAlert('{{ route(get_post_type() . '.category.destroy', $cat->id) }}')" class="btn btn-light btn-sm" title="Hapus"><i class="fa fa-trash text-danger"></i></button>
                                 @endif
@@ -294,8 +302,14 @@
         $('#categoryModal').modal('show');
     }
 
-    function openEditModal(id, name, description, sort, status, iconUrl) {
-        $('#categoryModalTitle').html('<i class="fa fa-edit text-warning"></i> Edit Kategori');
+    function openEditModal(id, name, description, sort, status, iconUrl, tenantDomain) {
+        let titleHtml = '<i class="fa fa-edit text-warning"></i> Edit Kategori';
+        @if(is_main_domain())
+        if (tenantDomain) {
+            titleHtml += ' <span class="badge badge-light border text-dark ml-2" style="font-size: 0.75rem; font-weight: normal;"><i class="fa fa-globe text-primary"></i> ' + tenantDomain + '</span>';
+        }
+        @endif
+        $('#categoryModalTitle').html(titleHtml);
         $('#categoryForm').attr('action', updateRouteTemplate.replace(':id', id));
         $('#categoryMethod').val('PUT');
         

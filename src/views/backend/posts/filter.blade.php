@@ -10,7 +10,7 @@
         <div class="modal-body">
 
     @php 
-    $multisiteEnabled = config('modules.multisite_enabled'); 
+    $multisiteEnabled = config('modules.multisite_enabled') && is_main_domain(); 
     @endphp
 
     <form class="row mb-3" action="{{ route('print.posts') }}" method="post">
@@ -161,7 +161,7 @@
 @push('scripts')
 <script>
 function submitPrintFilter() {
-    @if(config('modules.multisite_enabled'))
+    @if($multisiteEnabled)
     if ($('#tenant_id').length && !$('#tenant_id').val()) {
         if (typeof swal === 'function') {
             swal("Perhatian", "Silakan pilih domain tenant terlebih dahulu sebelum mencetak data!", "warning");
@@ -174,7 +174,7 @@ function submitPrintFilter() {
     $('.submit-filter').click();
 }
 
-@if(config('modules.multisite_enabled'))
+@if($multisiteEnabled)
 function onTenantFilterChange(tenantId) {
     if (!tenantId) {
         $('.tenant-dependent-filter').val('').prop('disabled', true);

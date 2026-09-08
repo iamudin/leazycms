@@ -43,7 +43,7 @@ window.addEventListener('DOMContentLoaded', function () {
                 d.tag_id = $("#tag_id").val();
                 @endif
 
-                @if(config('modules.multisite_enabled'))
+                @if(config('modules.multisite_enabled') && is_main_domain())
                 d.tenant_id = $("#tenant_id").val();
                 @endif
 

@@ -550,7 +550,7 @@
 
 
       window.filterStatusCard = function(status) {
-        @if(config('modules.multisite_enabled'))
+        @if(config('modules.multisite_enabled') && is_main_domain())
         if ($('#tenant_id').length && !$('#tenant_id').val()) {
           $('#filter-modal').modal('show');
           if (typeof swal === 'function') {
