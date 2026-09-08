@@ -4,6 +4,10 @@
   .dd-placeholder {
     margin: 6px 0 !important;
   }
+  .dd-item:hover,
+  .dd-list li:hover {
+    background: transparent !important;
+  }
   .dd3-item > .dd-handle,
   .dd3-handle {
     position: absolute !important;
@@ -14,12 +18,15 @@
     width: 36px !important;
     height: 40px !important;
     box-sizing: border-box !important;
-    border: 1px solid #aaa !important;
-    border-top-left-radius: 3px !important;
-    border-bottom-left-radius: 3px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #e2e8f0 !important;
+    background: linear-gradient(to bottom, #f1f5f9 0%, #cbd5e1 100%) !important;
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
     z-index: 3 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   .dd3-handle:before {
     content: '≡' !important;
@@ -32,9 +39,10 @@
     line-height: 36px !important;
     text-align: center !important;
     text-indent: 0 !important;
-    color: #fff !important;
+    color: #64748b !important;
     font-size: 20px !important;
     font-weight: normal !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   .dd3-content {
     display: block !important;
@@ -43,36 +51,121 @@
     margin: 0 !important;
     padding: 5px 115px 5px 46px !important;
     box-sizing: border-box !important;
-    border: 1px solid #ccc !important;
-    border-radius: 3px !important;
-    background: #fafafa !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     position: relative !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
+
+  /* ===================================================
+     Hover Effects pada List Menu
+     =================================================== */
+  .dd3-item:hover > .dd3-content {
+    background: #f0f7ff !important;
+    border-color: #70a1ff !important;
+    box-shadow: 0 4px 14px rgba(0, 123, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  }
+  .dd3-item:hover > .dd3-handle {
+    border-color: #3b82f6 !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25) !important;
+  }
+  .dd3-item:hover > .dd3-handle:before {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  }
+  .dd3-item:hover > .dd3-content .menu-label-title {
+    color: #1d4ed8 !important;
+  }
+  .dd3-item:hover > .dd3-content .menu-sep-icon {
+    color: #3b82f6 !important;
+  }
+  .dd3-item:hover > .dd3-content .menu-link-url a {
+    color: #0284c7 !important;
+  }
+  .dd3-handle:hover {
+    filter: brightness(1.08) !important;
+  }
+
+  /* Menu Item Icon (Font Awesome / Image) */
+  .menu-item-icon {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin-right: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  i.menu-item-icon {
+    font-size: 14px !important;
+    width: 16px !important;
+    text-align: center !important;
+    color: #3b82f6 !important;
+    transition: transform 0.2s ease, color 0.2s ease !important;
+  }
+  img.menu-item-icon {
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain !important;
+    border-radius: 3px !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.2s ease !important;
+  }
+  .dd3-item:hover > .dd3-content i.menu-item-icon {
+    color: #1d4ed8 !important;
+    transform: scale(1.12) !important;
+  }
+  .dd3-item:hover > .dd3-content img.menu-item-icon {
+    transform: scale(1.12) !important;
+  }
+
   .menu-label-title {
     font-weight: 600;
     color: #333;
     display: inline-block;
-    max-width: 50%;
+    max-width: 40%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+    transition: color 0.2s ease !important;
+  }
+  .menu-label-desc {
+    display: inline-block;
+    max-width: 25%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    font-size: 11.5px !important;
+    color: #64748b !important;
+    margin-left: 4px;
+    font-style: italic;
+    transition: color 0.2s ease !important;
+  }
+  .dd3-item:hover > .dd3-content .menu-label-desc {
+    color: #475569 !important;
   }
   .menu-sep-icon {
     margin: 0 4px;
     color: #888;
     vertical-align: middle;
+    transition: color 0.2s ease !important;
   }
   .menu-link-url {
     display: inline-block;
-    max-width: 45%;
+    max-width: 35%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+  }
+  .menu-link-url a {
+    transition: color 0.2s ease !important;
   }
   .dd-item > button {
     display: block;
@@ -98,6 +191,7 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
     float: none !important;
     box-sizing: border-box !important;
+    transition: all 0.15s ease !important;
   }
   .dd-item > button[style*="display: none"],
   .dd-item > button[style*="display:none"] {
@@ -107,6 +201,7 @@
     background: #e2e8f0 !important;
     color: #0f172a !important;
     border-color: #94a3b8 !important;
+    transform: scale(1.08) !important;
   }
   .dd-item > button:before {
     content: '+' !important;
@@ -141,17 +236,38 @@
     gap: 6px !important;
     height: 28px !important;
     line-height: 28px !important;
-    z-index: 5 !important;
+    z-index: 10 !important;
+    pointer-events: auto !important;
   }
   .menu-action-buttons a {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 22px !important;
-    height: 22px !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 4px !important;
     text-decoration: none !important;
     font-size: 14px !important;
     line-height: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+  }
+  .menu-action-buttons a:hover {
+    transform: scale(1.22) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  }
+  .menu-action-buttons a.btn-add-sub:hover {
+    background-color: rgba(40, 167, 69, 0.12) !important;
+  }
+  .menu-action-buttons a.btn-edit-menu:hover {
+    background-color: rgba(255, 193, 7, 0.18) !important;
+  }
+  .menu-action-buttons a.btn-delete-menu:hover {
+    background-color: rgba(220, 53, 69, 0.12) !important;
+  }
+  .menu-action-buttons a.btn-edit-post:hover {
+    background-color: rgba(0, 123, 255, 0.12) !important;
   }
   #nestable3 {
     max-height: 74vh;
@@ -220,7 +336,8 @@
       max-width: 90% !important;
     }
     .menu-sep-icon,
-    .menu-link-url {
+    .menu-link-url,
+    .menu-label-desc {
       display: none !important;
     }
   }
@@ -272,7 +389,7 @@
             <input type="hidden" class="link-{{$l->menu_id}}" name="menu_link[]" value="{{$l->menu_link ?? null}}">
             <input type="hidden" class="icon-{{$l->menu_id}}" name="menu_icon[]" value="{{$l->menu_icon ?? null}}">
             <div style="cursor:move" class="dd-handle dd3-handle"></div>
-            <div class="dd3-content"><span class="menu-label-title">{{$l->menu_name}}</span> <i class="fa fa-angle-right menu-sep-icon" aria-hidden></i>
+            <div class="dd3-content">{!! render_menu_icon($l->menu_icon ?? null) !!}<span class="menu-label-title">{{$l->menu_name}}</span>{!! render_menu_description($l->menu_description ?? null) !!} <i class="fa fa-angle-right menu-sep-icon" aria-hidden></i>
               <code class="menu-link-url"><a href="{{link_menu($l->menu_link)}}" title="Klik untuk mengunjungi"><i>{{Str::limit(link_menu($l->menu_link), '60', '...')}}</i></a></code>
               @php
                 $edit_post_btn = '';
@@ -551,6 +668,50 @@
     }, 600);
   });
 
+  function getMenuIconHtml(icon) {
+    if (!icon || icon === '-') return '';
+    icon = icon.trim();
+    if (icon.indexOf('/media') !== -1 || icon.indexOf('media/') === 0) {
+      var imgUrl = icon.charAt(0) === '/' ? '{{ url('') }}' + icon : '{{ url('') }}/' + icon;
+      return '<img src="' + imgUrl + '" class="menu-item-icon mr-1" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle; border-radius: 2px;" alt="icon"> ';
+    }
+    if (icon.indexOf('fa ') === 0 || icon.indexOf('fas ') === 0 || icon.indexOf('fab ') === 0 || icon.indexOf('far ') === 0 || icon.indexOf('fa-') === 0 || icon.indexOf('fa-') !== -1) {
+      return '<i class="' + icon + ' menu-item-icon mr-1 text-primary" style="font-size: 14px; width: 18px; text-align: center; vertical-align: middle;"></i> ';
+    }
+    return '';
+  }
+
+  function getMenuDescHtml(desc) {
+    if (!desc || !desc.trim()) return '';
+    desc = desc.trim();
+    var displayDesc = desc.length > 35 ? desc.substring(0, 35) + '...' : desc;
+    var escapedDesc = $('<div/>').text(desc).html();
+    var escapedDisplay = $('<div/>').text(displayDesc).html();
+    return ' <small class="menu-label-desc text-muted font-italic" title="Keterangan: ' + escapedDesc + '">(' + escapedDisplay + ')</small>';
+  }
+
+  function updateMenuIconPreview(icon) {
+    if (icon && icon !== '-' && (icon.indexOf('/media') !== -1 || icon.indexOf('media/') === 0)) {
+      var imgUrl = icon.charAt(0) === '/' ? '{{ url('') }}' + icon : '{{ url('') }}/' + icon;
+      if ($('#menu-icon-preview').is('img')) {
+        $('#menu-icon-preview').attr('src', imgUrl);
+      } else {
+        $('#menu-icon-preview').replaceWith('<img id="menu-icon-preview" src="' + imgUrl + '" style="width: 16px; height: 16px; object-fit: contain; vertical-align: middle;">');
+      }
+    } else {
+      var previewClass = (icon && icon !== '-') ? icon : 'fa fa-flag';
+      if ($('#menu-icon-preview').is('img')) {
+        $('#menu-icon-preview').replaceWith('<i class="' + previewClass + '" id="menu-icon-preview"></i>');
+      } else {
+        $('#menu-icon-preview').attr('class', previewClass);
+      }
+    }
+  }
+
+  $(document).on('input change', '#menu-icon-input', function () {
+    updateMenuIconPreview($(this).val());
+  });
+
   function open_add_menu(parentId, parentName) {
     if (parentId) {
       var $parentLi = $('.menu-id-' + parentId);
@@ -568,7 +729,7 @@
     $('.description').val('');
     $('.link').val('');
     $('.iconx').val('-');
-    $('#menu-icon-preview').attr('class', 'fa fa-flag');
+    updateMenuIconPreview('-');
     
     if (parentId) {
       $('.modtitle').text('Tambah Sub ');
@@ -598,8 +759,7 @@
     $('.link').val(link);
     $('.iconx').val(icon);
     
-    var previewClass = (icon && icon !== '-') ? icon : 'fa fa-flag';
-    $('#menu-icon-preview').attr('class', previewClass);
+    updateMenuIconPreview(icon);
     
     $('#menuFormModal').modal('show');
   }
@@ -656,11 +816,36 @@
       var $item = $('.menu-id-' + type);
       var $content = $item.children('.dd3-content');
       if ($content.length) {
+        $content.find('.menu-item-icon').remove();
+        var iconHtml = getMenuIconHtml(icon);
         var $title = $content.find('.menu-label-title');
+        if (iconHtml) {
+          if ($title.length) {
+            $title.before(iconHtml);
+          } else {
+            $content.prepend(iconHtml);
+          }
+        }
+
         if ($title.length) {
           $title.text(name);
         } else if ($content[0].childNodes[0].nodeType === 3) {
           $content[0].childNodes[0].nodeValue = name + " ";
+        }
+
+        $content.find('.menu-label-desc').remove();
+        var descHtml = getMenuDescHtml(desc);
+        if (descHtml) {
+          if ($title.length) {
+            $title.after(descHtml);
+          } else {
+            var $icon = $content.find('.menu-item-icon');
+            if ($icon.length) {
+              $icon.after(descHtml);
+            } else {
+              $content.prepend(descHtml);
+            }
+          }
         }
 
         var $linkCode = $content.find('code a');
@@ -679,7 +864,9 @@
         '<a href="javascript:void(0)" onclick="del_menu(\'' + newId + '\')" class="text-danger btn-delete-menu" title="Hapus Menu"> <i class="fa fa-trash-alt" aria-hidden="true"></i> </a>' +
         '</span>';
 
-      var contentHtml = '<span class="menu-label-title">' + name + '</span> <i class="fa fa-angle-right menu-sep-icon" aria-hidden="true"></i> <code class="menu-link-url"><a href="' + formattedLink + '" title="Klik untuk mengunjungi"><i>' + displayLink + '</i></a></code>' + buttonsHtml;
+      var iconHtml = getMenuIconHtml(icon);
+      var descHtml = getMenuDescHtml(desc);
+      var contentHtml = iconHtml + '<span class="menu-label-title">' + name + '</span>' + descHtml + ' <i class="fa fa-angle-right menu-sep-icon" aria-hidden="true"></i> <code class="menu-link-url"><a href="' + formattedLink + '" title="Klik untuk mengunjungi"><i>' + displayLink + '</i></a></code>' + buttonsHtml;
 
       var newItemHtml = '<li class="dd-item dd3-item menu-id-' + newId + '" data-id="' + newId + '">' +
         '<input type="hidden" name="menu_id[]" value="' + newId + '">' +

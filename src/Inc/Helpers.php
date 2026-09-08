@@ -1668,6 +1668,40 @@ if (!function_exists('_field')) {
     }
 }
 
+if (!function_exists('render_menu_icon')) {
+    function render_menu_icon($icon = null)
+    {
+        if (empty($icon) || $icon === '-') {
+            return '';
+        }
+        $icon = trim($icon);
+
+        // Cek jika icon image (/media atau media/)
+        if (str_starts_with($icon, '/media') || str_starts_with($icon, 'media/') || str_contains($icon, '/media/')) {
+            $imgUrl = url($icon);
+            return '<img src="' . $imgUrl . '" class="menu-item-icon mr-1" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle; border-radius: 2px;" alt="icon"> ';
+        }
+
+        // Cek jika Font Awesome (diawali fa fa-, fas fa-, fab fa-, far fa-, fa-)
+        if (str_starts_with($icon, 'fa ') || str_starts_with($icon, 'fas ') || str_starts_with($icon, 'fab ') || str_starts_with($icon, 'far ') || str_starts_with($icon, 'fa-') || str_contains($icon, 'fa-')) {
+            return '<i class="' . e($icon) . ' menu-item-icon mr-1 text-primary" style="font-size: 14px; width: 18px; text-align: center; vertical-align: middle;"></i> ';
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('render_menu_description')) {
+    function render_menu_description($desc = null)
+    {
+        if (empty($desc) || trim($desc) === '') {
+            return '';
+        }
+        $desc = trim($desc);
+        return ' <small class="menu-label-desc text-muted font-italic" title="Keterangan: ' . htmlspecialchars($desc, ENT_QUOTES) . '">(' . htmlspecialchars(Str::limit($desc, 35, '...'), ENT_QUOTES) . ')</small>';
+    }
+}
+
 if (!function_exists('getlistmenu')) {
     function getlistmenu($menu, $menulist, $level = 2)
     {
@@ -1682,7 +1716,7 @@ if (!function_exists('getlistmenu')) {
     <input type="hidden" class="desc-' . $value->menu_id . '" name="menu_description[]" value="' . htmlspecialchars($value->menu_description ?? '', ENT_QUOTES) . '">
     <input type="hidden" class="link-' . $value->menu_id . '" name="menu_link[]" value="' . htmlspecialchars($value->menu_link ?? '', ENT_QUOTES) . '">
     <input type="hidden" class="icon-' . $value->menu_id . '" name="menu_icon[]" value="' . htmlspecialchars($value->menu_icon ?? '', ENT_QUOTES) . '">
-      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content"><span class="menu-label-title">' . $value->menu_name . '</span> <i class="fa fa-angle-right menu-sep-icon" aria-hidden="true"></i> <code class="menu-link-url"><a href="' . link_menu($value->menu_link) . '" title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span class="menu-action-buttons">';
+      <div style="cursor:move" class="dd-handle dd3-handle"></div><div class="dd3-content">' . render_menu_icon($value->menu_icon ?? null) . '<span class="menu-label-title">' . $value->menu_name . '</span>' . render_menu_description($value->menu_description ?? null) . ' <i class="fa fa-angle-right menu-sep-icon" aria-hidden="true"></i> <code class="menu-link-url"><a href="' . link_menu($value->menu_link) . '" title="Klik untuk mengunjungi"><i>' . Str::limit(link_menu($value->menu_link), 60, '...') . '</i></a></code><span class="menu-action-buttons">';
 
             $edit_post_btn = '';
             $raw_link = $value->menu_link ?? '';
