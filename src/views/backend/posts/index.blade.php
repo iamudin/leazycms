@@ -48,7 +48,7 @@
           $draft = $counts->draft ?? 0;
           $trash = $counts->trash ?? 0;
         @endphp
-        <div onclick="$('#status').val('publish').trigger('change');" title="Klik untuk selengkapnya"
+        <div onclick="filterStatusCard('publish');" title="Klik untuk selengkapnya"
           class="pointer col-6 col-md-4 col-lg-3 mb-3">
           <div
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
@@ -63,7 +63,7 @@
           </div>
         </div>
 
-        <div onclick="$('#status').val('draft').trigger('change');" title="Klik untuk selengkapnya"
+        <div onclick="filterStatusCard('draft');" title="Klik untuk selengkapnya"
           class="pointer col-6 col-md-4 col-lg-3 mb-3">
           <div
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #fd7e14 0%, #e85d04 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
@@ -95,7 +95,7 @@
             </a>
           @endif
         @endif
-        <div onclick="$('#status').val('sampah').trigger('change');" title="Klik untuk selengkapnya"
+        <div onclick="filterStatusCard('sampah');" title="Klik untuk selengkapnya"
           class="pointer col-6 col-md-4 col-lg-3 mb-3">
           <div
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
@@ -548,6 +548,19 @@
         });
       });
 
+
+      window.filterStatusCard = function(status) {
+        @if(config('modules.multisite_enabled'))
+        if ($('#tenant_id').length && !$('#tenant_id').val()) {
+          $('#filter-modal').modal('show');
+          if (typeof swal === 'function') {
+            swal("Perhatian", "Silakan pilih domain tenant terlebih dahulu pada filter!", "info");
+          }
+          return;
+        }
+        @endif
+        $('#status').val(status).trigger('change');
+      };
 
       $(document).ready(function () {
         $('.datatable').on('xhr.dt', function (e, settings, json, xhr) {

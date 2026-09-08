@@ -22,4 +22,8 @@ class Tenant extends Model
     {
         return $this->hasMany(Option::class, 'tenant_id')->withoutGlobalScope('tenant');
     }
+    public function posts()
+    {
+        return $this->hasMany(Post::class, 'tenant_id');
+    }
 }

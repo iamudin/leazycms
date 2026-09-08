@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Leazycms\Web\Models\Category;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Tag;
+use Leazycms\Web\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Leazycms\Web\Services\DummyGenerator;
 
@@ -44,6 +45,17 @@ class PostController extends Controller implements HasMiddleware
         if ($request->category_id) {
             $query->where('category_id', $request->category_id);
         }
+        if ($tenant = $request->tenant_id ?? $request->tenant) {
+            if ($tenant === 'main') {
+                $query->whereNull('tenant_id');
+            } elseif (is_numeric($tenant)) {
+                $query->where('tenant_id', $tenant);
+            } else {
+                $query->whereHas('tenant', function ($q) use ($tenant) {
+                    $q->where('domain', $tenant);
+                });
+            }
+        }
         if ($request->from_date && $request->to_date) {
             $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
         }
@@ -64,6 +76,135 @@ class PostController extends Controller implements HasMiddleware
         $pdf = PDF::loadHTML($html)->setOption('page-width', '330')->setPaper('a4', 'landscape');
         return $pdf->stream('laporan-posts-' . date('Y-m-d-His') . '.pdf');
     }
+
+    public function filterOptions(Request $request)
+    {
+        $type = $request->type ?: get_post_type();
+        $tenantId = $request->tenant_id;
+
+        if (!$tenantId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Tenant ID required'
+            ], 400);
+        }
+
+        // 1. Status Counts
+        $statusQuery = Post::whereType($type);
+        if ($tenantId === 'main') {
+            $statusQuery->whereNull('tenant_id');
+        } elseif (is_numeric($tenantId)) {
+            $statusQuery->where('tenant_id', $tenantId);
+        } else {
+            $statusQuery->whereHas('tenant', fn($q) => $q->where('domain', $tenantId));
+        }
+
+        $counts = (clone $statusQuery)->withTrashed()
+            ->selectRaw("
+                SUM(deleted_at IS NULL AND status = 'publish') as publish,
+                SUM(deleted_at IS NULL AND status = 'draft') as draft,
+                SUM(deleted_at IS NOT NULL) as trash,
+                SUM(deleted_at IS NULL AND (pinned = 'Y' OR pinned = '1')) as disematkan
+            ")->first();
+
+        $statuses = [
+            'publish' => (int) ($counts->publish ?? 0),
+            'disematkan' => (int) ($counts->disematkan ?? 0),
+            'draft' => (int) ($counts->draft ?? 0),
+            'sampah' => (int) ($counts->trash ?? 0),
+        ];
+
+        // Filter closure for related models
+        $tenantFilter = function ($q) use ($tenantId, $type) {
+            $q->onType($type);
+            if ($tenantId === 'main') {
+                $q->whereNull('tenant_id');
+            } elseif (is_numeric($tenantId)) {
+                $q->where('tenant_id', $tenantId);
+            } else {
+                $q->whereHas('tenant', fn($t) => $t->where('domain', $tenantId));
+            }
+        };
+
+        // 2. Categories
+        $categories = Category::onType($type)
+            ->where(function ($q) use ($tenantId, $tenantFilter) {
+                if ($tenantId === 'main') {
+                    $q->whereNull('tenant_id')->orWhereHas('posts', $tenantFilter);
+                } elseif (is_numeric($tenantId)) {
+                    $q->where('tenant_id', $tenantId)->orWhereHas('posts', $tenantFilter);
+                } else {
+                    $q->whereHas('tenant', fn($t) => $t->where('domain', $tenantId))->orWhereHas('posts', $tenantFilter);
+                }
+            })
+            ->withCount(['posts' => $tenantFilter])
+            ->orderBy('sort', 'ASC')
+            ->orderBy('name', 'ASC')
+            ->get(['id', 'name'])
+            ->toArray();
+
+        // 3. Tags
+        $tags = Tag::whereHas('posts', $tenantFilter)
+            ->withCount(['posts' => $tenantFilter])
+            ->orderBy('name', 'ASC')
+            ->get(['id', 'name'])
+            ->toArray();
+
+        // 4. Parents
+        $parents = [];
+        $module = get_module($type);
+        if ($parentConfig = $module?->form?->post_parent ?? null) {
+            $parentType = $parentConfig[1] ?? null;
+            if ($parentType) {
+                $parentQuery = Post::with('parent.parent.parent')
+                    ->onType($parentType)
+                    ->published()
+                    ->select('title', 'id', 'parent_id', 'category_id');
+
+                if ($tenantId === 'main') {
+                    $parentQuery->whereNull('tenant_id');
+                } elseif (is_numeric($tenantId)) {
+                    $parentQuery->where('tenant_id', $tenantId);
+                } else {
+                    $parentQuery->whereHas('tenant', fn($t) => $t->where('domain', $tenantId));
+                }
+
+                if (isset($parentConfig[2])) {
+                    $parentQuery->whereHas('category', function ($q) use ($parentConfig) {
+                        $q->whereSlug($parentConfig[2]);
+                    });
+                }
+
+                $parents = $parentQuery->get()->map(function ($row) {
+                    $title = $row->title;
+                    if ($row->parent) {
+                        $title .= ' - ' . $row->parent->title . ($row->parent->parent ? ' - ' . $row->parent->parent->title : '');
+                    }
+                    return [
+                        'id' => $row->id,
+                        'title' => $title
+                    ];
+                })->toArray();
+            }
+        }
+
+        // 5. Authors / Users
+        $authors = User::whereHas('posts', $tenantFilter)
+            ->withCount(['posts' => $tenantFilter])
+            ->orderBy('name', 'ASC')
+            ->get(['id', 'name'])
+            ->toArray();
+
+        return response()->json([
+            'status' => true,
+            'statuses' => $statuses,
+            'categories' => $categories,
+            'tags' => $tags,
+            'parents' => $parents,
+            'authors' => $authors
+        ]);
+    }
+
     public function uploadFileSummernote(Request $request)
     {
         $post = Post::findOrFail($request->post);
@@ -635,6 +776,17 @@ class PostController extends Controller implements HasMiddleware
                         $query->where('tags.id', $tag_id); // Pastikan untuk menggunakan nama tabel yang benar
                     });
                 }
+                if ($tenant = $req->tenant_id ?? $req->tenant) {
+                    if ($tenant === 'main') {
+                        $instance->whereNull('tenant_id');
+                    } elseif (is_numeric($tenant)) {
+                        $instance->where('tenant_id', $tenant);
+                    } else {
+                        $instance->whereHas('tenant', function ($q) use ($tenant) {
+                            $q->where('domain', $tenant);
+                        });
+                    }
+                }
                 if ($search = $req->search) {
                     $instance->where('type', get_post_type()) // Batasi hanya pada type 'berita'
                         ->where(function ($query) use ($search) {
@@ -1006,16 +1158,37 @@ class PostController extends Controller implements HasMiddleware
         $user = $req->user();
         $postType = get_post_type();
         $canSeeAll = $user->isAdmin() || !$user->hasRole($postType, 'admin', true);
-        $counts = \Leazycms\Web\Models\Post::whereType($postType)->withTenant()
+        $countsQuery = \Leazycms\Web\Models\Post::whereType($postType)->withTenant()
             ->when(!$canSeeAll, fn($q) => $q->whereBelongsTo($user))
-            ->withTrashed()
-            ->selectRaw("
+            ->withTrashed();
+
+        if ($tenant = $req->tenant_id ?? $req->tenant) {
+            if ($tenant === 'main') {
+                $countsQuery->whereNull('tenant_id');
+            } elseif (is_numeric($tenant)) {
+                $countsQuery->where('tenant_id', $tenant);
+            } else {
+                $countsQuery->whereHas('tenant', fn($q) => $q->where('domain', $tenant));
+            }
+        }
+
+        $counts = $countsQuery->selectRaw("
                 SUM(deleted_at IS NULL AND status = 'publish') as publish,
                 SUM(deleted_at IS NULL AND status = 'draft') as draft,
                 SUM(deleted_at IS NOT NULL) as trash
             ")->first();
 
-        $categoryCount = \Leazycms\Web\Models\Category::onType($postType)->count();
+        $categoryCountQuery = \Leazycms\Web\Models\Category::onType($postType);
+        if ($tenant) {
+            if ($tenant === 'main') {
+                $categoryCountQuery->where(fn($q) => $q->whereNull('tenant_id')->orWhereHas('posts', fn($p) => $p->onType($postType)->whereNull('tenant_id')));
+            } elseif (is_numeric($tenant)) {
+                $categoryCountQuery->where(fn($q) => $q->where('tenant_id', $tenant)->orWhereHas('posts', fn($p) => $p->onType($postType)->where('tenant_id', $tenant)));
+            } else {
+                $categoryCountQuery->where(fn($q) => $q->whereHas('tenant', fn($t) => $t->where('domain', $tenant))->orWhereHas('posts', fn($p) => $p->onType($postType)->whereHas('tenant', fn($t) => $t->where('domain', $tenant))));
+            }
+        }
+        $categoryCount = $categoryCountQuery->count();
 
         $dt->with('counts', [
             'publish' => $counts->publish ?? 0,

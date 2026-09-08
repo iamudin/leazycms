@@ -43,6 +43,10 @@ window.addEventListener('DOMContentLoaded', function () {
                 d.tag_id = $("#tag_id").val();
                 @endif
 
+                @if(config('modules.multisite_enabled'))
+                d.tenant_id = $("#tenant_id").val();
+                @endif
+
                 d.status = $("#status").val();
                 d.user_id = $("#user_id").val();
                 d.from_date = $("#from_date").val();
