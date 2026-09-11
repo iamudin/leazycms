@@ -252,29 +252,40 @@ class Post extends BaseModel
             return $value;
         }
 
-        // 2. Abaikan iklan jika Singlesite (multisite tidak aktif)
+        // 2. Bungkus dengan summernote-content jika belum dibungkus
+        if ($this->type != 'docs' && function_exists('wrap_summernote_content')) {
+            $trimmed = trim($value);
+            $isWrapped = (str_starts_with($trimmed, '<div class="summernote-content">') && str_ends_with($trimmed, '</div>'))
+                || (bool) preg_match('/^<div\s+class=["\'](?:[^"\']*\s+)?summernote-content(?:\s+[^"\']*)?["\']\s*>(.*)<\/div>$/si', $trimmed);
+
+            if (!$isWrapped) {
+                $value = wrap_summernote_content($value);
+            }
+        }
+
+        // 3. Abaikan iklan jika Singlesite (multisite tidak aktif)
         if (!config('modules.multisite_enabled')) {
             return $value;
         }
 
-        // 3. Pengecualian jika Tenant Bebas Iklan
+        // 4. Pengecualian jika Tenant Bebas Iklan
         $isBebasIklan = in_array(get_option('bebas_iklan', '0'), ['1', 1, 'true', true, 'Y', 'y'], true);
         if ($isBebasIklan) {
             return $value;
         }
 
-        // 4. Render banner iklan khusus untuk kategori 'in_article'
+        // 5. Render banner iklan khusus untuk kategori 'in_article'
         $adHtml = function_exists('render_master_ad') ? render_master_ad('in_article') : '';
         if (empty($adHtml)) {
             return $value;
         }
 
-        // 5. Cek cepat sebelum regex (Short-circuit optimization: jika artikel tidak punya tag </p>)
+        // 6. Cek cepat sebelum regex (Short-circuit optimization: jika artikel tidak punya tag </p>)
         if (stripos($value, '</p>') === false) {
             return $value . $adHtml;
         }
 
-        // 6. Ambil posisi target paragraf (default: 2)
+        // 7. Ambil posisi target paragraf (default: 2)
         $targetParagraph = (int) (get_option('master_ad_paragraph') ?? 2);
 
         return $this->insertAdAfterParagraph($value, $adHtml, $targetParagraph);
