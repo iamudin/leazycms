@@ -1502,30 +1502,27 @@ class PanelController extends Controller implements HasMiddleware
             return back()->with($exit === 0 ? 'success' : 'danger', $out ?: ($exit === 0 ? 'Template Berhasil diupdate' : 'Gagal update template'));
         }
         if ($request->isMethod('post')) {
-            if ($request->filled('slug') && is_main_domain() && !$request->hasFile('template')) {
-                return $this->activateTemplate($request);
-            }
-            if ($request->filled('template_folder') && is_main_domain() && !$request->hasFile('template')) {
-                return $this->activateTemplate($request->merge(['slug' => $request->input('template_folder')]));
-            }
-            if ($request->hasFile('template') || $request->filled('template')) {
+            // 1. Jika ada template dari upload_modal (string) atau file
+            if ($request->filled('template') || $request->hasFile('template')) {
                 if (!is_main_domain() && get_option('can_upload_template', 'N') !== 'Y') {
                     return back()->with('danger', 'Anda tidak memiliki akses untuk upload template.');
                 }
 
-                if ($request->hasFile('template')) {
-                    $file = $request->file('template');
-                    $request->validate([
-                        'template' => 'required|file|mimes:zip',
-                    ]);
-                    return $this->template_uploader($file);
-                } elseif ($request->filled('template')) {
-                    $templatePath = $request->input('template');
-                    if (is_main_domain() && File::isDirectory(resource_path('views/template/' . $templatePath))) {
-                        return $this->activateTemplate($request->merge(['slug' => $templatePath]));
-                    }
-                    return $this->template_uploader($templatePath);
+                $template = $request->hasFile('template') ? $request->file('template') : $request->input('template');
+
+                if (is_string($template) && is_main_domain() && File::isDirectory(resource_path('views/template/' . $template))) {
+                    return $this->activateTemplate($request->merge(['slug' => $template]));
                 }
+
+                return $this->template_uploader($template);
+            }
+
+            // 2. Jika memilih ganti folder template manual
+            if ($request->filled('slug') && is_main_domain()) {
+                return $this->activateTemplate($request);
+            }
+            if ($request->filled('template_folder') && is_main_domain()) {
+                return $this->activateTemplate($request->merge(['slug' => $request->input('template_folder')]));
             }
             if ($request->template_setting) {
                 $ar_ta = config('modules.config.option.template') ?? [];
