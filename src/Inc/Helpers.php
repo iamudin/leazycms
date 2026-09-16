@@ -2969,6 +2969,7 @@ if (!function_exists('get_menu')) {
                 'name' => $item['menu_name'],
                 'icon' => $item['menu_icon'],
                 'url' => link_menu($item['menu_link']),
+                'link' => link_menu($item['menu_link']),
                 'parent' => $item['menu_parent'],
                 'description' => $item['menu_description'],
                 'sub' => [],

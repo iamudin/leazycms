@@ -1219,7 +1219,7 @@ class PostController extends Controller implements HasMiddleware
                 case 'delete':
                     $posts = query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->get();
                     foreach ($posts as $post) {
-                        if (empty($post->title) && $post->status == 'draft') {
+                        if ($post->trashed() || (empty($post->title) && $post->status == 'draft')) {
                             $post->forceDelete();
                         } else {
                             $post->delete();
