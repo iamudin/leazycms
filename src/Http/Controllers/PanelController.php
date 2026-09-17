@@ -1754,6 +1754,8 @@ class PanelController extends Controller implements HasMiddleware
     }
     public function template_uploader($file)
     {
+        $tempDownloadedFile = null;
+
         if ($file instanceof \Illuminate\Http\UploadedFile) {
             $zipFilePath = $file->getRealPath();
         } elseif ($file instanceof \Illuminate\Http\File) {
@@ -1774,9 +1776,51 @@ class PanelController extends Controller implements HasMiddleware
                 ->first();
 
             if ($mediaFile) {
-                $disk = $mediaFile->disk ?? 'public';
-                if (\Illuminate\Support\Facades\Storage::disk($disk)->exists($mediaFile->file_path)) {
-                    $zipFilePath = \Illuminate\Support\Facades\Storage::disk($disk)->path($mediaFile->file_path);
+                $candidateDisks = array_unique(array_filter([
+                    $mediaFile->disk,
+                    config('filesystems.default'),
+                    'public',
+                    'local',
+                    's3'
+                ]));
+
+                $foundDisk = null;
+                foreach ($candidateDisks as $d) {
+                    if (config("filesystems.disks.{$d}") && \Illuminate\Support\Facades\Storage::disk($d)->exists($mediaFile->file_path)) {
+                        $foundDisk = $d;
+                        break;
+                    }
+                }
+
+                if ($foundDisk) {
+                    try {
+                        $candidatePath = \Illuminate\Support\Facades\Storage::disk($foundDisk)->path($mediaFile->file_path);
+                        if (is_string($candidatePath) && file_exists($candidatePath) && is_file($candidatePath)) {
+                            $zipFilePath = $candidatePath;
+                        }
+                    } catch (\Throwable $e) {
+                    }
+
+                    // Jika file ada di S3 / remote storage dan belum tersedia di server lokal
+                    if (empty($zipFilePath)) {
+                        $tempDownloadedFile = storage_path('app/temp-template-' . uniqid() . '.zip');
+                        $stream = \Illuminate\Support\Facades\Storage::disk($foundDisk)->readStream($mediaFile->file_path);
+                        if ($stream) {
+                            $targetFile = fopen($tempDownloadedFile, 'wb');
+                            stream_copy_to_stream($stream, $targetFile);
+                            fclose($targetFile);
+                            if (is_resource($stream)) {
+                                fclose($stream);
+                            }
+                        } else {
+                            $content = \Illuminate\Support\Facades\Storage::disk($foundDisk)->get($mediaFile->file_path);
+                            file_put_contents($tempDownloadedFile, $content);
+                        }
+
+                        if (file_exists($tempDownloadedFile) && filesize($tempDownloadedFile) > 0) {
+                            $zipFilePath = $tempDownloadedFile;
+                        }
+                    }
                 } elseif (file_exists(public_path($mediaFile->file_path))) {
                     $zipFilePath = public_path($mediaFile->file_path);
                 } elseif (file_exists(storage_path('app/' . ltrim($mediaFile->file_path, '/')))) {
@@ -1786,7 +1830,52 @@ class PanelController extends Controller implements HasMiddleware
                 }
             }
 
-            // 2. Jika tidak ditemukan di database files, cek lokasi fisik publik & storage
+            // 2. Jika tidak ditemukan di database files, cek storage disk langsung atau lokasi fisik
+            if (empty($zipFilePath)) {
+                $checkDisks = array_unique(array_filter([
+                    config('filesystems.default'),
+                    'public',
+                    'local',
+                    's3'
+                ]));
+                foreach ($checkDisks as $d) {
+                    if (!config("filesystems.disks.{$d}")) {
+                        continue;
+                    }
+                    $testPaths = array_unique(array_filter([$cleanRelative, $fileName]));
+                    foreach ($testPaths as $tp) {
+                        try {
+                            if (\Illuminate\Support\Facades\Storage::disk($d)->exists($tp)) {
+                                try {
+                                    $candidate = \Illuminate\Support\Facades\Storage::disk($d)->path($tp);
+                                    if (is_string($candidate) && file_exists($candidate) && is_file($candidate)) {
+                                        $zipFilePath = $candidate;
+                                        break 2;
+                                    }
+                                } catch (\Throwable $e) {}
+
+                                $tempDownloadedFile = storage_path('app/temp-template-' . uniqid() . '.zip');
+                                $stream = \Illuminate\Support\Facades\Storage::disk($d)->readStream($tp);
+                                if ($stream) {
+                                    $targetFile = fopen($tempDownloadedFile, 'wb');
+                                    stream_copy_to_stream($stream, $targetFile);
+                                    fclose($targetFile);
+                                    if (is_resource($stream)) {
+                                        fclose($stream);
+                                    }
+                                } else {
+                                    file_put_contents($tempDownloadedFile, \Illuminate\Support\Facades\Storage::disk($d)->get($tp));
+                                }
+                                if (file_exists($tempDownloadedFile) && filesize($tempDownloadedFile) > 0) {
+                                    $zipFilePath = $tempDownloadedFile;
+                                    break 2;
+                                }
+                            }
+                        } catch (\Throwable $e) {}
+                    }
+                }
+            }
+
             if (empty($zipFilePath)) {
                 if (!empty($cleanRelative) && file_exists(public_path($cleanRelative))) {
                     $zipFilePath = public_path($cleanRelative);
@@ -1804,164 +1893,173 @@ class PanelController extends Controller implements HasMiddleware
             }
 
             if (empty($zipFilePath) || !file_exists($zipFilePath)) {
+                if ($tempDownloadedFile && file_exists($tempDownloadedFile)) {
+                    @unlink($tempDownloadedFile);
+                }
                 return back()->with('danger', 'File template tidak ditemukan.');
             }
         } else {
             return back()->with('danger', 'File template tidak valid.');
         }
 
-        $zip = new ZipArchive;
-        if ($zip->open($zipFilePath) === TRUE) {
-            // Ekstrak file ZIP ke direktori sementara
-            $extractPath = storage_path('app/temp');
-            if (File::exists($extractPath)) {
-                File::deleteDirectory($extractPath);
-            }
-            File::ensureDirectoryExists($extractPath);
-            $zip->extractTo($extractPath);
-            $zip->close();
-
-            // Dapatkan nama folder utama di dalam ZIP (temaku)
-            $mainFolderName = '';
-            $extractedFolder = scandir($extractPath);
-            foreach ($extractedFolder as $folder) {
-                if ($folder !== '.' && $folder !== '..') {
-                    $mainFolderName = $folder;
-                    break;
+        try {
+            $zip = new ZipArchive;
+            if ($zip->open($zipFilePath) === TRUE) {
+                // Ekstrak file ZIP ke direktori sementara
+                $extractPath = storage_path('app/temp');
+                if (File::exists($extractPath)) {
+                    File::deleteDirectory($extractPath);
                 }
-            }
+                File::ensureDirectoryExists($extractPath);
+                $zip->extractTo($extractPath);
+                $zip->close();
 
-            if (empty($mainFolderName) || !File::isDirectory($extractPath . '/' . $mainFolderName)) {
-                // Hapus folder sementara
-                File::deleteDirectory($extractPath);
-
-                // Batalkan upload dan kembalikan respon error
-                return back()->with('danger', 'File Template Tidak Valid');
-            }
-
-            // Path sumber dari folder temaku
-            $sourcePath = $extractPath . '/' . $mainFolderName;
-            $assetsSourcePath = $sourcePath . '/assets';
-            $hasAssets = File::isDirectory($assetsSourcePath);
-
-            $danger = [
-                'hex2bin(',
-                'exit(',
-                'eval(',
-                'phpinfo(',
-                'exec(',
-                'system(',
-                'passthru(',
-                'shell_exec(',
-                'proc_open(',
-                'popen(',
-                'assert(',
-                'base64_decode(',
-                'file_put_contents(',
-                'fopen(',
-                'unlink(',
-                'mkdir(',
-                'curl_exec(',
-                'create_function(',
-                'file_get_contents(',
-                'delete('
-            ];
-
-            $scanExt = [
-                'php',
-                'blade.php',
-                'js',
-                'css',
-                'json',
-                'html',
-                'htm',
-                'xml',
-                'txt',
-                'md',
-                'yml',
-                'yaml',
-                'env',
-            ];
-
-            $baseLen = strlen($sourcePath) + 1;
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($sourcePath, \FilesystemIterator::SKIP_DOTS)
-            );
-            foreach ($iterator as $item) {
-                if (!$item->isFile()) {
-                    continue;
-                }
-                $filePath = $item->getPathname();
-                $relative = str_replace('\\', '/', substr($filePath, $baseLen));
-                if ($relative === 'assets' || str_starts_with($relative, 'assets/')) {
-                    continue;
-                }
-                if ($item->getSize() > 5 * 1024 * 1024) {
-                    continue;
-                }
-                $nameLower = strtolower($item->getFilename());
-                $ext = strtolower(pathinfo($nameLower, PATHINFO_EXTENSION));
-                if (str_ends_with($nameLower, '.blade.php')) {
-                    $ext = 'blade.php';
-                }
-                if (!in_array($ext, $scanExt, true)) {
-                    continue;
-                }
-                $content = @file_get_contents($filePath);
-                if (!is_string($content)) {
-                    continue;
-                }
-                foreach ($danger as $func) {
-                    if (stripos($content, $func) !== false) {
-                        File::deleteDirectory($extractPath);
-                        return back()->with('danger', 'File Template Tidak Valid. Terdeteksi keyword berbahaya "' . $func . '" pada file: ' . $relative);
+                // Dapatkan nama folder utama di dalam ZIP (temaku)
+                $mainFolderName = '';
+                $extractedFolder = scandir($extractPath);
+                foreach ($extractedFolder as $folder) {
+                    if ($folder !== '.' && $folder !== '..') {
+                        $mainFolderName = $folder;
+                        break;
                     }
                 }
-            }
 
-            if (config('modules.multisite_enabled') && !is_main_domain()) {
-                $mainFolderName = str_replace('.', '-', request()->getHost()) . '-' . $mainFolderName;
-            }
+                if (empty($mainFolderName) || !File::isDirectory($extractPath . '/' . $mainFolderName)) {
+                    // Hapus folder sementara
+                    File::deleteDirectory($extractPath);
 
-            // Path tujuan untuk resource_path
-            $templatePath = resource_path('views/template/' . $mainFolderName);
+                    // Batalkan upload dan kembalikan respon error
+                    return back()->with('danger', 'File Template Tidak Valid');
+                }
 
-            // Pastikan direktori target ada
-            if (File::exists($templatePath)) {
-                File::deleteDirectory($templatePath);
-            }
-            File::ensureDirectoryExists($templatePath);
-            File::copyDirectory($sourcePath, $templatePath);
+                // Path sumber dari folder temaku
+                $sourcePath = $extractPath . '/' . $mainFolderName;
+                $assetsSourcePath = $sourcePath . '/assets';
+                $hasAssets = File::isDirectory($assetsSourcePath);
 
-            // Hapus file sementara dan folder setelah pemindahan
-            File::deleteDirectory($extractPath);
-            Option::updateOrCreate(['name' => 'template'], [
-                'value' => $mainFolderName
-            ]);
-            if ($hasAssets) {
-                $exit = Artisan::call('cms:link-asset', [
-                    'slug' => $mainFolderName,
-                    '--force' => true,
+                $danger = [
+                    'hex2bin(',
+                    'exit(',
+                    'eval(',
+                    'phpinfo(',
+                    'exec(',
+                    'system(',
+                    'passthru(',
+                    'shell_exec(',
+                    'proc_open(',
+                    'popen(',
+                    'assert(',
+                    'base64_decode(',
+                    'file_put_contents(',
+                    'fopen(',
+                    'unlink(',
+                    'mkdir(',
+                    'curl_exec(',
+                    'create_function(',
+                    'file_get_contents(',
+                    'delete('
+                ];
+
+                $scanExt = [
+                    'php',
+                    'blade.php',
+                    'js',
+                    'css',
+                    'json',
+                    'html',
+                    'htm',
+                    'xml',
+                    'txt',
+                    'md',
+                    'yml',
+                    'yaml',
+                    'env',
+                ];
+
+                $baseLen = strlen($sourcePath) + 1;
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($sourcePath, \FilesystemIterator::SKIP_DOTS)
+                );
+                foreach ($iterator as $item) {
+                    if (!$item->isFile()) {
+                        continue;
+                    }
+                    $filePath = $item->getPathname();
+                    $relative = str_replace('\\', '/', substr($filePath, $baseLen));
+                    if ($relative === 'assets' || str_starts_with($relative, 'assets/')) {
+                        continue;
+                    }
+                    if ($item->getSize() > 5 * 1024 * 1024) {
+                        continue;
+                    }
+                    $nameLower = strtolower($item->getFilename());
+                    $ext = strtolower(pathinfo($nameLower, PATHINFO_EXTENSION));
+                    if (str_ends_with($nameLower, '.blade.php')) {
+                        $ext = 'blade.php';
+                    }
+                    if (!in_array($ext, $scanExt, true)) {
+                        continue;
+                    }
+                    $content = @file_get_contents($filePath);
+                    if (!is_string($content)) {
+                        continue;
+                    }
+                    foreach ($danger as $func) {
+                        if (stripos($content, $func) !== false) {
+                            File::deleteDirectory($extractPath);
+                            return back()->with('danger', 'File Template Tidak Valid. Terdeteksi keyword berbahaya "' . $func . '" pada file: ' . $relative);
+                        }
+                    }
+                }
+
+                if (config('modules.multisite_enabled') && !is_main_domain()) {
+                    $mainFolderName = str_replace('.', '-', request()->getHost()) . '-' . $mainFolderName;
+                }
+
+                // Path tujuan untuk resource_path
+                $templatePath = resource_path('views/template/' . $mainFolderName);
+
+                // Pastikan direktori target ada
+                if (File::exists($templatePath)) {
+                    File::deleteDirectory($templatePath);
+                }
+                File::ensureDirectoryExists($templatePath);
+                File::copyDirectory($sourcePath, $templatePath);
+
+                // Hapus file sementara dan folder setelah pemindahan
+                File::deleteDirectory($extractPath);
+                Option::updateOrCreate(['name' => 'template'], [
+                    'value' => $mainFolderName
                 ]);
-                if ($exit !== 0) {
-                    return to_route('appearance')->with('danger', trim((string) Artisan::output()) ?: 'Template berhasil diupload, tapi gagal link asset.');
+                if ($hasAssets) {
+                    $exit = Artisan::call('cms:link-asset', [
+                        'slug' => $mainFolderName,
+                        '--force' => true,
+                    ]);
+                    if ($exit !== 0) {
+                        return to_route('appearance')->with('danger', trim((string) Artisan::output()) ?: 'Template berhasil diupload, tapi gagal link asset.');
+                    }
                 }
-            }
-            if (config('modules.multisite_enabled')) {
-                if (!is_main_domain()) {
-                    cache()->forget('tenant:' . tenant()->domain . ':options');
+                if (config('modules.multisite_enabled')) {
+                    if (!is_main_domain()) {
+                        cache()->forget('tenant:' . tenant()->domain . ':options');
+                    } else {
+                        cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+                    }
                 } else {
-                    cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+                    if (app()->configurationIsCached()) {
+                        \Illuminate\Support\Facades\Artisan::call('config:cache');
+                    }
                 }
-            } else {
-                if (app()->configurationIsCached()) {
-                    \Illuminate\Support\Facades\Artisan::call('config:cache');
-                }
-            }
 
-            return to_route('appearance');
-        } else {
-            return back()->with('danger', 'Template Gagal Diupload');
+                return to_route('appearance');
+            } else {
+                return back()->with('danger', 'Template Gagal Diupload');
+            }
+        } finally {
+            if ($tempDownloadedFile && file_exists($tempDownloadedFile)) {
+                @unlink($tempDownloadedFile);
+            }
         }
     }
 
@@ -2300,9 +2398,54 @@ class PanelController extends Controller implements HasMiddleware
                     $slug = basename(parse_url($mediaUrl, PHP_URL_PATH));
                     $mediaFile = \Leazycms\FLC\Models\File::where('file_name', $slug)->first();
 
-                    if ($mediaFile && \Illuminate\Support\Facades\Storage::disk($mediaFile->disk)->exists($mediaFile->file_path)) {
-                        $zipPath = \Illuminate\Support\Facades\Storage::disk($mediaFile->disk)->path($mediaFile->file_path);
-                    } else {
+                    if ($mediaFile) {
+                        $candidateDisks = array_unique(array_filter([
+                            $mediaFile->disk,
+                            config('filesystems.default'),
+                            'public',
+                            'local',
+                            's3'
+                        ]));
+
+                        $foundDisk = null;
+                        foreach ($candidateDisks as $d) {
+                            if (config("filesystems.disks.{$d}") && \Illuminate\Support\Facades\Storage::disk($d)->exists($mediaFile->file_path)) {
+                                $foundDisk = $d;
+                                break;
+                            }
+                        }
+
+                        if ($foundDisk) {
+                            try {
+                                $candidate = \Illuminate\Support\Facades\Storage::disk($foundDisk)->path($mediaFile->file_path);
+                                if (is_string($candidate) && file_exists($candidate)) {
+                                    $zipPath = $candidate;
+                                }
+                            } catch (\Throwable $e) {}
+
+                            if (empty($zipPath)) {
+                                $tempBackupFile = storage_path('app/leazycms-transfer/imports/temp-backup-' . uniqid() . '.zip');
+                                if (!is_dir(dirname($tempBackupFile))) {
+                                    mkdir(dirname($tempBackupFile), 0755, true);
+                                }
+                                $stream = \Illuminate\Support\Facades\Storage::disk($foundDisk)->readStream($mediaFile->file_path);
+                                if ($stream) {
+                                    $targetFile = fopen($tempBackupFile, 'wb');
+                                    stream_copy_to_stream($stream, $targetFile);
+                                    fclose($targetFile);
+                                    if (is_resource($stream)) {
+                                        fclose($stream);
+                                    }
+                                } else {
+                                    file_put_contents($tempBackupFile, \Illuminate\Support\Facades\Storage::disk($foundDisk)->get($mediaFile->file_path));
+                                }
+                                if (file_exists($tempBackupFile) && filesize($tempBackupFile) > 0) {
+                                    $zipPath = $tempBackupFile;
+                                }
+                            }
+                        }
+                    }
+                    if (empty($zipPath)) {
                         $zipPath = storage_path('app/public/' . $slug);
                     }
                 } else {
@@ -2310,25 +2453,34 @@ class PanelController extends Controller implements HasMiddleware
                 }
 
                 if (!file_exists($zipPath)) {
+                    if (isset($tempBackupFile) && file_exists($tempBackupFile)) {
+                        @unlink($tempBackupFile);
+                    }
                     return back()->with('danger', 'File backup tidak ditemukan di server.');
                 }
 
                 $zip = new \ZipArchive();
                 $sqlPath = '';
-                if ($zip->open($zipPath) === TRUE) {
-                    for ($i = 0; $i < $zip->numFiles; $i++) {
-                        $filename = $zip->getNameIndex($i);
-                        if (str_ends_with($filename, '.sql')) {
-                            $extractDir = storage_path('app/leazycms-transfer/imports');
-                            if (!is_dir($extractDir)) {
-                                mkdir($extractDir, 0755, true);
+                try {
+                    if ($zip->open($zipPath) === TRUE) {
+                        for ($i = 0; $i < $zip->numFiles; $i++) {
+                            $filename = $zip->getNameIndex($i);
+                            if (str_ends_with($filename, '.sql')) {
+                                $extractDir = storage_path('app/leazycms-transfer/imports');
+                                if (!is_dir($extractDir)) {
+                                    mkdir($extractDir, 0755, true);
+                                }
+                                $sqlPath = $extractDir . '/import-' . \Illuminate\Support\Str::uuid()->toString() . '.sql';
+                                file_put_contents($sqlPath, $zip->getFromIndex($i));
+                                break;
                             }
-                            $sqlPath = $extractDir . '/import-' . \Illuminate\Support\Str::uuid()->toString() . '.sql';
-                            file_put_contents($sqlPath, $zip->getFromIndex($i));
-                            break;
                         }
+                        $zip->close();
                     }
-                    $zip->close();
+                } finally {
+                    if (isset($tempBackupFile) && file_exists($tempBackupFile)) {
+                        @unlink($tempBackupFile);
+                    }
                 }
 
                 if (empty($sqlPath) || !file_exists($sqlPath)) {
@@ -2578,10 +2730,69 @@ class PanelController extends Controller implements HasMiddleware
             'plugin_file' => 'required|string',
         ]);
 
+        $tempPluginFile = null;
         try {
-            $path = media($request->plugin_file)->path();
+            $pluginFile = $request->plugin_file;
+            $fileName = basename(parse_url($pluginFile, PHP_URL_PATH));
+            $mediaFile = \Leazycms\FLC\Models\File::where('file_name', $fileName)->first();
+            $path = null;
 
-            if (!File::exists($path) || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'zip') {
+            if ($mediaFile) {
+                $candidateDisks = array_unique(array_filter([
+                    $mediaFile->disk,
+                    config('filesystems.default'),
+                    'public',
+                    'local',
+                    's3'
+                ]));
+
+                $foundDisk = null;
+                foreach ($candidateDisks as $d) {
+                    if (config("filesystems.disks.{$d}") && \Illuminate\Support\Facades\Storage::disk($d)->exists($mediaFile->file_path)) {
+                        $foundDisk = $d;
+                        break;
+                    }
+                }
+
+                if ($foundDisk) {
+                    try {
+                        $candidate = \Illuminate\Support\Facades\Storage::disk($foundDisk)->path($mediaFile->file_path);
+                        if (is_string($candidate) && file_exists($candidate)) {
+                            $path = $candidate;
+                        }
+                    } catch (\Throwable $e) {}
+
+                    if (empty($path)) {
+                        $tempPluginFile = storage_path('app/temp_plugins/temp-install-' . uniqid() . '.zip');
+                        if (!is_dir(dirname($tempPluginFile))) {
+                            mkdir(dirname($tempPluginFile), 0755, true);
+                        }
+                        $stream = \Illuminate\Support\Facades\Storage::disk($foundDisk)->readStream($mediaFile->file_path);
+                        if ($stream) {
+                            $targetFile = fopen($tempPluginFile, 'wb');
+                            stream_copy_to_stream($stream, $targetFile);
+                            fclose($targetFile);
+                            if (is_resource($stream)) {
+                                fclose($stream);
+                            }
+                        } else {
+                            file_put_contents($tempPluginFile, \Illuminate\Support\Facades\Storage::disk($foundDisk)->get($mediaFile->file_path));
+                        }
+                        if (file_exists($tempPluginFile) && filesize($tempPluginFile) > 0) {
+                            $path = $tempPluginFile;
+                        }
+                    }
+                }
+            }
+
+            if (empty($path)) {
+                $candidate = media($pluginFile)->path();
+                if ($candidate && file_exists($candidate)) {
+                    $path = $candidate;
+                }
+            }
+
+            if (!$path || !File::exists($path) || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'zip') {
                 return back()->with('danger', 'File tidak ditemukan atau bukan file ZIP yang valid.');
             }
 
@@ -2589,6 +2800,10 @@ class PanelController extends Controller implements HasMiddleware
             return $this->plugin_uploader($file);
         } catch (\Exception $e) {
             return back()->with('danger', 'Gagal install plugin: ' . $e->getMessage());
+        } finally {
+            if ($tempPluginFile && file_exists($tempPluginFile)) {
+                @unlink($tempPluginFile);
+            }
         }
     }
 
