@@ -2964,14 +2964,14 @@ if (!function_exists('get_menu')) {
         $menu = $menus[$cacheKey][$name] ?? [];
         $menuIndex = [];
         foreach ($menu as $item) {
-            $menuIndex[$item['menu_id']] = [
-                'id' => (int) $item['menu_id'],
-                'name' => $item['menu_name'],
-                'icon' => $item['menu_icon'],
-                'url' => link_menu($item['menu_link']),
-                'link' => link_menu($item['menu_link']),
-                'parent' => $item['menu_parent'],
-                'description' => $item['menu_description'],
+            $menuIndex[$item['menu_id'] ?? 0] = [
+                'id' => (int) $item['menu_id'] ?? 0,
+                'name' => $item['menu_name'] ?? '',
+                'icon' => $item['menu_icon'] ?? '',
+                'url' => link_menu($item['menu_link'] ?? '/'),
+                'link' => link_menu($item['menu_link'] ?? '/'),
+                'parent' => $item['menu_parent'] ?? 0,
+                'description' => $item['menu_description'] ?? '',
                 'sub' => [],
             ];
         }
