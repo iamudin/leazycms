@@ -77,6 +77,12 @@ class Web
                                 }
                             }
                         }
+                        if (config('modules.data')) {
+                            $footerProgress = init_reading_progress();
+                            if (!empty($footerProgress)) {
+                                $content = preg_replace('/<\/body>/i', $footerProgress . '</body>', $content, 1);
+                            }
+                        }
                         $response->setContent(minify_all_one_line($content));
                     }
                     return $response;
@@ -163,6 +169,7 @@ class Web
                 $footer .= get_option('float_btn_whatsapp') ? init_wabutton() : null;
                 $footer .= get_option('top_button') && get_option('top_button') == 'Y' ? init_goup() : null;
                 $footer .= get_option('accessibility_widget') && get_option('accessibility_widget') == 'Y' ? init_accessibility() : null;
+                $footer .= config('modules.data') ? init_reading_progress() : null;
                 $footer .= '<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js"></script>';
                 if (file_exists(public_path('template/' . template() . '/scripts.js'))) {
                     $footer .= '<script src="' . url('template/' . template() . '/scripts.js') . '"></script>';
@@ -212,6 +219,7 @@ document.addEventListener("lazybeforeunveil", function(e){
                         $footer = $brandFooterHtml . $footer;
                     }
                 }
+                $footer .= config('modules.data') ? init_reading_progress() : null;
 
                 $content = preg_replace(
                     '/<\/body>/i',

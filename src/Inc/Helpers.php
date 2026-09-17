@@ -2771,6 +2771,20 @@ if (!function_exists('init_welcome_speech')) {
         return view()->make('cms::layouts.welcome_speech')->render();
     }
 }
+if (!function_exists('init_reading_progress')) {
+    function init_reading_progress($force = false)
+    {
+        if (!config('modules.data') && !$force) {
+            return '';
+        }
+        static $rendered = false;
+        if ($rendered) {
+            return '';
+        }
+        $rendered = true;
+        return view()->make('cms::layouts.reading_progress')->render();
+    }
+}
 if (!function_exists('detail_tts_button')) {
     function detail_tts_button($post = null)
     {
