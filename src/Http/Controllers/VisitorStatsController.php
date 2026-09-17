@@ -19,9 +19,9 @@ class VisitorStatsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $title = strtoupper(
-            get_option('logo_title') ?? 'JUDULWEB'
-        );
+        $title = 
+            get_option('logo_title') ?? 'JUDULWEB';
+       
 
         $titleColor = get_option('logo_title_color') ?? '#00843D';
 

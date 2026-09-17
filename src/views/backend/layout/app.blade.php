@@ -413,7 +413,7 @@
         }
 
         body {
-            font-family: sans-serif;
+            font-family: 'Outfit', sans-serif !important;
             background-color: var(--body-bg);
         }
 

@@ -1136,7 +1136,7 @@ class PostController extends Controller implements HasMiddleware
 
         if ($current_module->web->sortable ?? false) {
             $dt->addColumn('drag_handle', function ($row) {
-                return '<span class="drag-handle text-secondary" style="cursor:move;" title="Tarik &amp; Lepas untuk mengubah urutan"><i class="fa fa-bars fa-lg"></i></span>';
+                return '<span class="drag-handle text-secondary" style="cursor:move;" title="Tarik &amp; Lepas untuk mengubah urutan"><i class="fa fa-sort"></i></span>';
             });
             $rawColumns[] = 'drag_handle';
             $dt->setRowAttr([

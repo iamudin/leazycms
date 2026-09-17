@@ -41,7 +41,7 @@
                         <div class="form-group">
                             <div class="d-flex justify-content-between align-items-center">
                                 <label class="mb-0">Pilih File yang Sudah Ada</label>
-                                <div class="input-group input-group-sm" style="width: 250px;">
+                                <div class="input-group input-group-sm" style="width: 250px;margin-bottom:5px">
                                     <input type="text" id="g-library-search" class="form-control" placeholder="Cari nama file...">
                                     <div class="input-group-append">
                                         <button class="btn btn-outline-secondary" type="button" id="g-library-search-btn"><i class="fa fa-search"></i></button>

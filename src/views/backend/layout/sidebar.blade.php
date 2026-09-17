@@ -299,23 +299,23 @@
                 <li class="treeview {{ active_item($row->name) ? 'is-expanded' : '' }}">
                     <a title="{{ $row->description }}" class="app-menu__item" href="#" data-toggle="treeview"><i
                             class="app-menu__icon fa {{ $row->icon }}"></i><span
-                            class="app-menu__label">{{ $row->title }}</span><i
+                            class="app-menu__label">{{ str($row->title)->title()->limit(20) }}</span><i
                             class="treeview-indicator fa fa-chevron-right"></i></a>
                     <ul class="treeview-menu">
-                        <li class="treeview-header-title">{{ $row->title }}</li>
+                        <li class="treeview-header-title">{{ str($row->title)->title()->limit(20) }}</li>
                         @if (in_array('create', $row->route))
                             @if (auth()->user()->isAdmin() || !auth()->user()->hasRole($row->name, 'create', true))
                                 <li>
                                     <a class="treeview-item @if (request()->segment(4) == 'edit') active @endif"
                                         href="{{ Route::has($row->name . '.create') ? route($row->name . '.create') : '' }}"><i
-                                            class="icon fa fa-plus "></i> Tambah {{ $row->title }}</a>
+                                            class="icon fa fa-plus "></i> Tambah {{ str($row->title)->title()->limit(20) }}</a>
                                 </li>
                             @endif
                         @endif
                         <li>
                             <a class="treeview-item @if (active_item($row->name) && !request()->segment(3)) active @endif"
                                 href="{{ Route::has($row->name) ? route($row->name) : '' }}"><i
-                                    class="icon fa fa-table "></i> Daftar {{ $row->title }}</a>
+                                    class="icon fa fa-table "></i> Daftar {{ str($row->title)->title()->limit(20) }}</a>
                         </li>
                         @if ($row->form->category)
                             @if (auth()->user()->isAdmin() ||
@@ -360,7 +360,7 @@
                         <a class="app-menu__item {{ Request::is(admin_path() . '/option/' . str($k)->slug()) ? 'active' : '' }}"
                             href="{{ route('option', str($k)->slug()) }}"><i
                                 class="app-menu__icon fa fa-list-alt "></i>
-                            <span class="app-menu__label">{{ str($k)->headline() }}</span></a>
+                            <span class="app-menu__label">{{ str($k)->headline()->limit(25) }}</span></a>
                     </li>
                 @endforeach
             @if (Auth::user()->isAdmin())
@@ -408,7 +408,7 @@
                                 <a class="app-menu__item {{ active_item($cs['path']) }}"
                                     href="{{ admin_url($cs['path']) }}"><i
                                         class="app-menu__icon fa {{ $cs['icon'] }} "></i>
-                                    <span class="app-menu__label">{{ $cs['title'] }}</span></a>
+                                    <span class="app-menu__label">{{ str($cs['title'])->title()->limit(20) }}</span></a>
                             </li>
                         @endforeach
 
@@ -425,16 +425,16 @@
                             <li class="treeview {{ $isActive ? 'is-expanded' : '' }}">
                                 <a class="app-menu__item" href="#" data-toggle="treeview">
                                     <i class="app-menu__icon fa fa-plug "></i>
-                                    <span class="app-menu__label">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</span>
+                                    <span class="app-menu__label">{{ str(str_replace('-', ' ', $pluginName))->title()->limit(20) }}</span>
                                     <i class="treeview-indicator fa fa-angle-right"></i>
                                 </a>
                                 <ul class="treeview-menu">
-                                    <li class="treeview-header-title">{{ Str::title(str_replace('-', ' ', $pluginName)) }}</li>
+                                    <li class="treeview-header-title">{{ str(str_replace('-', ' ', $pluginName))->title()->limit(20) }}</li>
                                     @foreach ($menus as $cs)
                                         <li>
                                             <a class="treeview-item {{ active_item($cs['path']) }}"
                                                 href="{{ admin_url($cs['path']) }}"><i
-                                                class="icon fa {{ $cs['icon'] }}"></i> {{ $cs['title'] }}</a>
+                                                class="icon fa {{ $cs['icon'] }}"></i> {{ str($cs['title'])->limit(20) }}</a>
                                         </li>
                                     @endforeach
                                 </ul>
