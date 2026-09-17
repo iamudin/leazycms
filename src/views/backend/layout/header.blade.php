@@ -104,9 +104,9 @@
         style="color: var(--header-font, #fff) !important; background:transparent">
 
             @if(get_option('logo') && media(get_option('logo'))->isExists())
-            <img src="{{get_option('logo') }}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo"> 
+            <img src="{{get_option('logo').'?time='.time() }}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo"> 
              @elseif(get_option('logo_title') && get_option('logo_description') && get_option('logo_image')) 
-            <img src="{{ url('logo.webp')}}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo"> 
+            <img src="{{ url('logo.webp').'?time='.time()}}" style="max-width: 100%; height: auto; max-height: 45px; object-fit: contain;" alt="Logo"> 
             @else
              Admin<b>Panel</b>
             @endif
