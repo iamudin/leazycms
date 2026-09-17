@@ -9,7 +9,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 2.5px;
+    height: 1.5px;
     background: transparent;
     z-index: 99999999;
     pointer-events: none;
