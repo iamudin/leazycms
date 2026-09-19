@@ -1,6 +1,7 @@
 <?php
 namespace Leazycms\Web\Http\Controllers;
 use Leazycms\Web\Models\Post;
+use Leazycms\Web\Models\Tag;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
@@ -185,6 +186,31 @@ class ExtController extends Controller
             ];
         }
 
+        $tagQuery = Tag::whereStatus('publish')
+            ->whereHas('posts', function ($q) use ($typeNames) {
+                $q->published();
+                if (!empty($typeNames)) {
+                    $q->whereIn('type', $typeNames);
+                }
+                if (config('modules.multisite_enabled') && is_main_domain() && app()->bound('tenant') && app('tenant')) {
+                    $q->where('tenant_id', app('tenant')->id);
+                }
+            });
+        $tags = $tagQuery->select('id', 'name', 'slug', 'url', 'updated_at')->get();
+
+        $tag_index = [];
+        foreach ($tags as $tag) {
+            $tagPath = !empty($tag->url) ? (string) $tag->url : ('tags/' . ($tag->slug ?: $tag->name));
+            if (!str_starts_with(ltrim($tagPath, '/'), 'tags/')) {
+                $tagPath = 'tags/' . ltrim($tagPath, '/');
+            }
+            $tag_index[] = [
+                'loc' => $baseUrl . '/' . ltrim($tagPath, '/'),
+                'priority' => '0.64',
+                'lastmod' => $tag->updated_at ? $this->formatSitemapDate($tag->updated_at) : $lastmodIso,
+            ];
+        }
+
         // Custom sitemaps dari add_to_sitemap(...) yang didaftarkan di modules.blade.php
         $custom_sitemaps = function_exists('get_custom_sitemaps') ? get_custom_sitemaps() : config('modules.custom_sitemaps', []);
         $custom_index = [];
@@ -204,7 +230,7 @@ class ExtController extends Controller
             }
         }
 
-        $urls = array_merge($type_index, $post_index, $custom_index);
+        $urls = array_merge($type_index, $post_index, $tag_index, $custom_index);
         $chunkedUrls = array_chunk($urls, 50000);
         $sitemaps = [];
 
