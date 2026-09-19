@@ -10,6 +10,50 @@
     .note-editable img.selected-img {
         outline: 2px solid #007bff;
     }
+
+    .sn-image-preloader {
+        display: inline-block;
+        position: relative;
+        margin: 6px 4px;
+        vertical-align: middle;
+        max-width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: #f8f9fa;
+        user-select: none;
+    }
+    .sn-image-preloader img {
+        display: block;
+        max-width: 100%;
+        max-height: 280px;
+        object-fit: contain;
+        filter: brightness(0.85) blur(1px);
+        opacity: 0.85;
+        pointer-events: none;
+    }
+    .sn-image-preloader .sn-preloader-badge {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: #ffffff;
+        padding: 7px 16px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        pointer-events: none;
+    }
 </style>
 
 @if (function_exists('current_module') && isset(current_module()?->form?->editor_mode) && current_module()?->form?->editor_mode == 'simple')
@@ -475,6 +519,43 @@
         return container.innerHTML;
     }
 
+    function normalizeClipboardFile(file) {
+        if (!file) return file;
+        var name = file.name || '';
+        if (!name || name === 'blob' || /^image\.(png|jpe?g|webp|gif)$/i.test(name)) {
+            var ext = file.type ? (file.type.split('/')[1] || 'png') : 'png';
+            if (ext === 'jpeg') ext = 'jpg';
+            var rand = Math.random().toString(36).substring(2, 7);
+            var timestamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+            var newName = 'screenshot_' + timestamp + '_' + rand + '.' + ext;
+            try {
+                return new File([file], newName, { type: file.type, lastModified: Date.now() });
+            } catch(e) {
+                return file;
+            }
+        }
+        return file;
+    }
+
+    function createImagePreloaderNode(file, tempId) {
+        var previewUrl = '';
+        try {
+            previewUrl = URL.createObjectURL(file);
+        } catch(err) {
+            previewUrl = '';
+        }
+        var imgOrPlaceholder = previewUrl 
+            ? '<img src="' + previewUrl + '" alt="Mengunggah..." />' 
+            : '<div style="width: 180px; height: 100px; display: flex; align-items: center; justify-content: center; background: #e9ecef;"><i class="fa fa-picture-o fa-2x text-muted"></i></div>';
+
+        var preloaderHtml = '<span id="' + tempId + '" class="sn-image-preloader" contenteditable="false">' +
+            imgOrPlaceholder +
+            '<span class="sn-preloader-badge"><i class="fa fa-circle-o-notch fa-spin text-white"></i> <span>Mengunggah...</span></span>' +
+            '</span>';
+
+        return { $node: $(preloaderHtml), previewUrl: previewUrl };
+    }
+
     function getFileCacheKey(file, base64Src) {
         if (base64Src) {
             var len = base64Src.length;
@@ -552,12 +633,25 @@
             currentImage = $(this);
         });
 
-        $('form').on('submit', function () {
+        $('form').on('submit', function (e) {
             if ($('#editor').length) {
+                if ($('.sn-image-preloader').length) {
+                    e.preventDefault();
+                    if (typeof notif === 'function') {
+                        notif('Harap tunggu, gambar masih dalam proses upload!', 'warning');
+                    } else {
+                        alert('Harap tunggu, gambar masih dalam proses upload!');
+                    }
+                    return false;
+                }
                 var code = $('#editor').summernote('code');
                 if (code) {
                     var needsUpdate = false;
                     var cleanCode = code;
+                    if (cleanCode.includes('sn-image-preloader')) {
+                        cleanCode = cleanCode.replace(/<span[^>]*class=["'][^"']*sn-image-preloader[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '');
+                        needsUpdate = true;
+                    }
                     if (cleanCode.includes('data:image/')) {
                         cleanCode = cleanCode
                             .replace(/<img[^>]*src=["']data:image\/svg\+xml[^"']*["'][^>]*\/?>/gi, '')
@@ -785,6 +879,35 @@
                         iframeObserver.observe($editable[0], { childList: true, subtree: true });
                     }
 
+                    // Capture-phase paste listener on $editable to flag paste events before Summernote's internal modules run
+                    if ($editable.length) {
+                        $editable[0].addEventListener('paste', function (e) {
+                            var cd = e.clipboardData || window.clipboardData;
+                            if (!cd) return;
+                            var hasImg = false;
+                            if (cd.files && cd.files.length > 0) {
+                                for (var i = 0; i < cd.files.length; i++) {
+                                    if (cd.files[i].type && cd.files[i].type.startsWith('image/')) {
+                                        hasImg = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!hasImg && cd.items && cd.items.length > 0) {
+                                for (var j = 0; j < cd.items.length; j++) {
+                                    if (cd.items[j].type && cd.items[j].type.startsWith('image/')) {
+                                        hasImg = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (hasImg) {
+                                window.isSummernotePasting = true;
+                                window.lastSummernotePasteTime = Date.now();
+                            }
+                        }, true);
+                    }
+
                     updateSummernoteCounter();
                 },
                 onKeyup: function () {
@@ -847,42 +970,68 @@
                         var imageFiles = [];
                         if (files && files.length > 0) {
                             for (var f = 0; f < files.length; f++) {
-                                if (files[f].type && files[f].type.startsWith('image/')) imageFiles.push(files[f]);
+                                if (files[f].type && files[f].type.startsWith('image/')) {
+                                    imageFiles.push(normalizeClipboardFile(files[f]));
+                                }
                             }
                         } else if (items && items.length > 0) {
                             for (var it = 0; it < items.length; it++) {
                                 if (items[it].type && items[it].type.startsWith('image/')) {
                                     var blob = items[it].getAsFile();
-                                    if (blob) imageFiles.push(blob);
+                                    if (blob) imageFiles.push(normalizeClipboardFile(blob));
                                 }
                             }
                         }
 
                         if (imageFiles.length > 0) {
                             e.preventDefault();
-                            setSummernoteEditable(false);
-                            var pureUploadPromises = [];
-                            imageFiles.forEach(function(imgFile) {
-                                var p = new Promise(function(resolve) {
+                            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                            if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
+                            window.isSummernotePasting = true;
+                            window.lastSummernotePasteTime = Date.now();
+
+                            var $target = (window.currentSummernoteObj && window.currentSummernoteObj.context) ? window.currentSummernoteObj.context : ($(this).length ? $(this) : $('#editor'));
+
+                            var pureUploadPromises = imageFiles.map(function(imgFile) {
+                                var tempId = 'sn-img-preload-' + Math.random().toString(36).substring(2, 9);
+                                var preloaderObj = createImagePreloaderNode(imgFile, tempId);
+                                $target.summernote('insertNode', preloaderObj.$node[0]);
+
+                                return new Promise(function(resolve) {
                                     uploadSummernoteImage(imgFile, function(uploadedUrl) {
                                         var $newImg = $('<img>').attr('src', uploadedUrl);
-                                        setSummernoteEditable(true);
-                                        if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
-                                            window.currentSummernoteObj.context.summernote('insertNode', $newImg[0]);
+                                        var $ph = $('#' + tempId);
+                                        if ($ph.length) {
+                                            $ph.replaceWith($newImg);
                                         } else {
-                                            $('#editor').summernote('insertNode', $newImg[0]);
+                                            $target.summernote('insertNode', $newImg[0]);
                                         }
-                                        resolve();
+                                        if (preloaderObj.previewUrl) {
+                                            try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
+                                        }
+                                        resolve(uploadedUrl);
                                     }, function() {
-                                        resolve();
+                                        var $ph = $('#' + tempId);
+                                        if ($ph.length) {
+                                            $ph.remove();
+                                        }
+                                        if (preloaderObj.previewUrl) {
+                                            try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
+                                        }
+                                        if (typeof notif === 'function') {
+                                            notif('Gagal mengunggah gambar!', 'error');
+                                        }
+                                        resolve(null);
                                     });
                                 });
-                                pureUploadPromises.push(p);
                             });
+
                             Promise.all(pureUploadPromises).then(function() {
-                                setSummernoteEditable(true);
+                                updateSummernoteCounter();
+                                setTimeout(function() { window.isSummernotePasting = false; }, 300);
                             }).catch(function() {
-                                setSummernoteEditable(true);
+                                updateSummernoteCounter();
+                                setTimeout(function() { window.isSummernotePasting = false; }, 300);
                             });
                             return;
                         }
@@ -891,6 +1040,11 @@
                     // Case B: HTML Paste (Word Desktop, Word Online, Webpage, Editor)
                     if (html && html.trim().length > 0) {
                         e.preventDefault();
+                        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                        if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
+                        window.isSummernotePasting = true;
+                        window.isPastingHtml = true;
+                        window.lastSummernotePasteTime = Date.now();
 
                         var rtfImages = extractImagesFromRtf(rtf);
                         var itemBlobs = [];
@@ -922,6 +1076,10 @@
                             } else {
                                 $('#editor').summernote('pasteHTML', finalCleanHtml);
                             }
+                            setTimeout(function() {
+                                window.isSummernotePasting = false;
+                                window.isPastingHtml = false;
+                            }, 300);
                         }
 
                         var pendingUploads = [];
@@ -1023,23 +1181,37 @@
                 },
 
                 onImageUpload: function(files) {
-                    if (window.isPastingHtml) return;
+                    if (window.isSummernotePasting || window.isPastingHtml || (Date.now() - (window.lastSummernotePasteTime || 0) < 1500)) return;
                     if (files && files.length > 0) {
-                        setSummernoteEditable(false);
+                        var $target = (window.currentSummernoteObj && window.currentSummernoteObj.context) ? window.currentSummernoteObj.context : ($(this).length ? $(this) : $('#editor'));
                         var uploadPromises = [];
                         for (var i = 0; i < files.length; i++) {
                             (function(file) {
+                                var tempId = 'sn-img-preload-' + Math.random().toString(36).substring(2, 9);
+                                var preloaderObj = createImagePreloaderNode(file, tempId);
+                                $target.summernote('insertNode', preloaderObj.$node[0]);
+
                                 var p = new Promise(function(resolve) {
                                     uploadSummernoteImage(file, function(uploadedUrl) {
                                         var $newImg = $('<img>').attr('src', uploadedUrl);
-                                        setSummernoteEditable(true);
-                                        if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
-                                            window.currentSummernoteObj.context.summernote('insertNode', $newImg[0]);
+                                        var $ph = $('#' + tempId);
+                                        if ($ph.length) {
+                                            $ph.replaceWith($newImg);
                                         } else {
-                                            $('#editor').summernote('insertNode', $newImg[0]);
+                                            $target.summernote('insertNode', $newImg[0]);
+                                        }
+                                        if (preloaderObj.previewUrl) {
+                                            try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
                                         }
                                         resolve();
                                     }, function() {
+                                        var $ph = $('#' + tempId);
+                                        if ($ph.length) {
+                                            $ph.remove();
+                                        }
+                                        if (preloaderObj.previewUrl) {
+                                            try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
+                                        }
                                         resolve();
                                     });
                                 });
@@ -1047,9 +1219,9 @@
                             })(files[i]);
                         }
                         Promise.all(uploadPromises).then(function() {
-                            setSummernoteEditable(true);
+                            updateSummernoteCounter();
                         }).catch(function() {
-                            setSummernoteEditable(true);
+                            updateSummernoteCounter();
                         });
                     }
                 },
