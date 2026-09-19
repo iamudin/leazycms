@@ -103,7 +103,7 @@ class WebController extends Controller
 
         $post = Post::selectedColumn()->whereHas('tags', function ($query) use ($slug) {
             $query->where('slug', $slug)->whereStatus('publish');
-        })->whereStatus('publish')->paginate(get_option('post_perpage'));
+        })->published()->latest('created_at')->paginate(get_option('post_perpage'));
 
         $data = array(
             'index' => $post,
