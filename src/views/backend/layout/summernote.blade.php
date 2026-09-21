@@ -75,6 +75,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5>Edit Gambar</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body">
@@ -84,7 +87,7 @@
             </div>
 
             <div class="modal-footer">
-
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                 <button class="btn btn-primary" type="button" id="btnSaveImageEdit">Simpan</button>
             </div>
         </div>
@@ -1230,15 +1233,12 @@
                     var img = $(target).is('img') ? $(target) : $(target).find('img');
 
                     if (img.length > 0) {
-                        var src = img.attr('src');
-                        if (src.startsWith('https')) {
-                            return;
-                        } else {
+                        var src = img.attr('src') || '';
+                        if (!src.startsWith('http://') && !src.startsWith('https://')) {
                             deleteImage(src);
-
                         }
-                        removeFigure(target);
-                    } else { }
+                    }
+                    removeFigure(target);
                 },
 
 
@@ -1463,8 +1463,7 @@
                             $('#edit-image-alt').val(alt);
                             $('#edit-image-caption').val(caption);
 
-                            new bootstrap.Modal(document.getElementById(
-                                'editImageModal')).show();
+                            $('#editImageModal').modal('show');
                         }
                     }).render();
                 }
@@ -1494,8 +1493,6 @@
         });
 
         $('#btnSaveImageEdit').on('click', function () {
-
-
             if (!currentImage || !currentImage.length) return;
 
             let url = $('#edit-image-url').val().trim();
@@ -1508,20 +1505,65 @@
             let figure = currentImage.closest('figure');
 
             if (figure.length) {
-
                 let cap = figure.children('figcaption');
-
-                if (cap.length) {
-                    cap.html(`<small>${caption}</small>`);
+                if (caption) {
+                    if (cap.length) {
+                        cap.html(`<small>${caption}</small>`);
+                    } else {
+                        figure.append(`<figcaption style="font-style: italic; color: #666;"><small>${caption}</small></figcaption>`);
+                    }
                 } else {
-                    figure.append(`<figcaption><small>${caption}</small></figcaption>`);
+                    if (cap.length) {
+                        cap.remove();
+                    }
+                    if (currentImage.parent().is('figure')) {
+                        currentImage.unwrap();
+                    }
+                }
+            } else if (caption) {
+                let $fig = $('<figure style="text-align: center; margin: 10px 0;"></figure>');
+                let $cap = $(`<figcaption style="font-style: italic; color: #666;"><small>${caption}</small></figcaption>`);
+
+                currentImage.css({ 'max-width': '100%', 'height': 'auto' });
+
+                let $parentP = currentImage.parent('p');
+                if ($parentP.length && $parentP.text().trim() === '' && $parentP.children().length === 1) {
+                    $parentP.replaceWith($fig);
+                    $fig.append(currentImage);
+                    $fig.append($cap);
+                } else {
+                    currentImage.wrap($fig);
+                    currentImage.after($cap);
+                }
+
+                if (!$fig.next().length) {
+                    $fig.after('<p><br></p>');
                 }
             }
 
-            $('#editImageModal').hide();
+            updateSummernoteCounter();
 
-            $('body').removeClass('modal-open');
-            $('.modal-backdrop').remove();
+            $('#editImageModal').modal('hide');
+
+            try {
+                var modalEl = document.getElementById('editImageModal');
+                if (window.bootstrap && bootstrap.Modal && typeof bootstrap.Modal.getInstance === 'function') {
+                    var modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }
+            } catch(e) {}
+
+            setTimeout(function() {
+                if ($('#editImageModal').is(':visible')) {
+                    $('#editImageModal').removeClass('show').hide();
+                }
+                if (!$('.modal.show').length) {
+                    $('body').removeClass('modal-open').css({ 'overflow': '', 'padding-right': '' });
+                    $('.modal-backdrop').remove();
+                }
+            }, 200);
         });
 
         /* Save Table Style Modal */
@@ -1593,6 +1635,17 @@
         });
 
     });
+
+    function removeFigure(target) {
+        if (!target) return;
+        var $target = $(target);
+        var $fig = $target.closest('figure');
+        if ($fig.length) {
+            $fig.remove();
+        } else if ($target.is('figure')) {
+            $target.remove();
+        }
+    }
 
     function deleteImage(src) {
         var data = new FormData();
