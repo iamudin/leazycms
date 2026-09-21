@@ -322,9 +322,8 @@
     max-width: 100% !important;
     height: auto !important;
     border-radius: 0.75rem;
-    margin:0 auto;
-  
-    display: block;
+    margin:0 auto !important;
+      display: block;
   }
   .summernote-content img[style*="float: left"],
   .summernote-content img[style*="float:left"] {
