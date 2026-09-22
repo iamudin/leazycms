@@ -792,7 +792,6 @@ class PostController extends Controller implements HasMiddleware
                         ->where(function ($query) use ($search) {
                             $q = $query->orWhere('title', 'like', '%' . $search . '%')
                                 ->orWhere('data_field', 'like', '%' . $search . '%')
-                                ->orWhere('content', 'like', '%' . $search . '%')
                                 ->orWhere('description', 'like', '%' . $search . '%')
                                 ->orWhere('keyword', 'like', '%' . $search . '%')
                                 ->orWhere('media_description', 'like', '%' . $search . '%');
@@ -890,7 +889,7 @@ class PostController extends Controller implements HasMiddleware
             }
 
             $label = $row->allow_comment == 'Y' ? "<i title='Lihat Komentar' onclick=\"show_comment('" . $row->id . "')\" class='fa fa-comments-o pointer text-primary'></i> " . $row->comments_count : '';
-            $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: ' . utf8_clean($row->redirect_to) . '</small>' : null;
+            $redirect = $row->redirect_to ? '<br><small class="text-dark"><i class="fa fa-mail-forward"></i> Dialihkan ke: <a href="' . utf8_clean($row->redirect_to) . '" target="_blank">' . Str::limit(utf8_clean($row->redirect_to), 100) . '</a></small>' : null;
             $tit = !empty($row->title) ? utf8_clean($row->title) : '<i class="text-muted">__Tidak ada data__</i>';
 
 
@@ -899,7 +898,7 @@ class PostController extends Controller implements HasMiddleware
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
             $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . utf8_clean($row->tenant?->domain) : null;
-            $b = '<b class="text-primary">' . $tit . '</b><br>';
+            $b = '<b class="text-primary">' . $tit . '</b>'.$redirect.'<br>';
             $b .= '<small class="text-muted">' . $locked . ' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
             return $b;
         });
