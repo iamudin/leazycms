@@ -225,25 +225,30 @@ class TenantController extends Controller implements HasMiddleware
         // cPanel API Integration
         $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
         if ($cpanelApi->isActive()) {
-            if ($cpanelApi->checkDomainExists($domain)) {
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json([
-                        'message' => 'Domain sudah digunakan di server cPanel.',
-                        'errors' => ['domain' => ['Domain sudah digunakan di server cPanel.']]
-                    ], 422);
+            $domainExistsInCpanel = $cpanelApi->checkDomainExists($domain);
+            if ($domainExistsInCpanel) {
+                // Jika terdaftar pada tenants atau di custom domain plugin, maka tolak
+                if ($this->isDomainRegistered($domain)) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'message' => 'Domain sudah digunakan di server cPanel.',
+                            'errors' => ['domain' => ['Domain sudah digunakan di server cPanel.']]
+                        ], 422);
+                    }
+                    return back()->withInput()->withErrors(['domain' => 'Domain sudah digunakan di server cPanel.']);
                 }
-                return back()->withInput()->withErrors(['domain' => 'Domain sudah digunakan di server cPanel.']);
-            }
-
-            $createDomain = $cpanelApi->createAliasDomain($domain);
-            if (isset($createDomain['error'])) {
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json([
-                        'message' => 'Gagal membuat domain di cPanel: ' . $createDomain['error'],
-                        'errors' => ['domain' => ['Gagal membuat domain di cPanel: ' . $createDomain['error']]]
-                    ], 422);
+                // Jika tidak terdaftar pada tenants atau di custom domain plugin, maka abaikan
+            } else {
+                $createDomain = $cpanelApi->createAliasDomain($domain);
+                if (isset($createDomain['error'])) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'message' => 'Gagal membuat domain di cPanel: ' . $createDomain['error'],
+                            'errors' => ['domain' => ['Gagal membuat domain di cPanel: ' . $createDomain['error']]]
+                        ], 422);
+                    }
+                    return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain di cPanel: ' . $createDomain['error']]);
                 }
-                return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain di cPanel: ' . $createDomain['error']]);
             }
         }
 
@@ -362,14 +367,19 @@ class TenantController extends Controller implements HasMiddleware
         if ($oldDomain !== $domain) {
             $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
             if ($cpanelApi->isActive()) {
-                if ($cpanelApi->checkDomainExists($domain)) {
-                    if ($request->ajax() || $request->wantsJson()) {
-                        return response()->json([
-                            'message' => 'Domain baru sudah digunakan di server cPanel.',
-                            'errors' => ['domain' => ['Domain baru sudah digunakan di server cPanel.']]
-                        ], 422);
+                $domainExistsInCpanel = $cpanelApi->checkDomainExists($domain);
+                if ($domainExistsInCpanel) {
+                    // Jika terdaftar pada tenants atau di custom domain plugin, maka tolak
+                    if ($this->isDomainRegistered($domain, $tenant->id)) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'message' => 'Domain baru sudah digunakan di server cPanel.',
+                                'errors' => ['domain' => ['Domain baru sudah digunakan di server cPanel.']]
+                            ], 422);
+                        }
+                        return back()->withInput()->withErrors(['domain' => 'Domain baru sudah digunakan di server cPanel.']);
                     }
-                    return back()->withInput()->withErrors(['domain' => 'Domain baru sudah digunakan di server cPanel.']);
+                    // Jika tidak terdaftar pada tenants atau di custom domain plugin, maka abaikan
                 }
 
                 // Delete old domain
@@ -384,16 +394,18 @@ class TenantController extends Controller implements HasMiddleware
                     return back()->withInput()->withErrors(['domain' => 'Gagal menghapus domain lama di cPanel: ' . $deleteOld['error']]);
                 }
 
-                // Create new domain
-                $createDomain = $cpanelApi->createAliasDomain($domain);
-                if (isset($createDomain['error'])) {
-                    if ($request->ajax() || $request->wantsJson()) {
-                        return response()->json([
-                            'message' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error'],
-                            'errors' => ['domain' => ['Gagal membuat domain baru di cPanel: ' . $createDomain['error']]]
-                        ], 422);
+                // Create new domain (hanya jika belum ada di cPanel)
+                if (!$domainExistsInCpanel) {
+                    $createDomain = $cpanelApi->createAliasDomain($domain);
+                    if (isset($createDomain['error'])) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'message' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error'],
+                                'errors' => ['domain' => ['Gagal membuat domain baru di cPanel: ' . $createDomain['error']]]
+                            ], 422);
+                        }
+                        return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error']]);
                     }
-                    return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain baru di cPanel: ' . $createDomain['error']]);
                 }
             }
         }
@@ -577,6 +589,43 @@ class TenantController extends Controller implements HasMiddleware
         }
         $tenant->delete();
         return response()->json(['success' => 'Tenant berhasil dihapus']);
+    }
+
+    private function isDomainRegistered($domain, $excludeTenantId = null)
+    {
+        if (filter_var($domain, FILTER_VALIDATE_URL)) {
+            $domain = parse_url($domain, PHP_URL_HOST);
+        }
+        $domain = strtolower(trim($domain));
+
+        $tenantQuery = Tenant::where('domain', $domain);
+        if ($excludeTenantId) {
+            $tenantQuery->where('id', '!=', $excludeTenantId);
+        }
+        if ($tenantQuery->exists()) {
+            return true;
+        }
+
+        $optionQuery = DB::table('options')
+            ->where('value', $domain)
+            ->where(function ($q) {
+                $q->where('name', 'like', '%-domain')
+                  ->orWhere('name', 'like', '%custom_domain%')
+                  ->orWhere('name', 'parked_domain');
+            });
+
+        if ($excludeTenantId) {
+            $optionQuery->where(function ($q) use ($excludeTenantId) {
+                if ($excludeTenantId == 1) {
+                    $q->whereNotNull('tenant_id');
+                } else {
+                    $q->where('tenant_id', '!=', $excludeTenantId)
+                      ->orWhereNull('tenant_id');
+                }
+            });
+        }
+
+        return $optionQuery->exists();
     }
 
     private function getAvailablePlugins()
