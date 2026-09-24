@@ -187,7 +187,17 @@ class TenantController extends Controller implements HasMiddleware
 
                 return $html;
             })
-            ->rawColumns(['action', 'status', 'theme', 'resource', 'category'])
+            ->editColumn('domain', function ($row) {
+                $html = '<div><a href="http://' . $row->domain . '" target="_blank" class="font-weight-bold text-dark">' . $row->domain . '</a></div>';
+                $parked = $row->options->where('name', 'parked_domain')->first()?->value;
+                if ($parked) {
+                    $status = $row->options->where('name', 'parked_domain_status')->first()?->value ?? 'verified';
+                    $badgeClass = $status === 'verified' ? 'badge-success' : ($status === 'pending' ? 'badge-warning' : 'badge-secondary');
+                    $html .= '<div class="mt-1"><a href="http://' . $parked . '" target="_blank" class="text-primary small" style="text-decoration:none;"><i class="fa fa-globe"></i> ' . $parked . '</a> <span class="badge ' . $badgeClass . '" style="font-size:10px;">' . ucfirst($status) . '</span></div>';
+                }
+                return $html;
+            })
+            ->rawColumns(['action', 'status', 'theme', 'resource', 'category', 'domain'])
             ->toJson();
     }
 
@@ -204,6 +214,7 @@ class TenantController extends Controller implements HasMiddleware
         $request->validate([
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain',
+            'parked_domain' => 'nullable|string|max:100',
             'status' => 'required|in:active,inactive,suspended,maintenance',
             'theme' => 'required_unless:custom_theme,1',
             'admin_name' => 'required|string|max:100',
@@ -217,9 +228,46 @@ class TenantController extends Controller implements HasMiddleware
             'admin_password.regex' => 'Password admin harus minimal 8 karakter dan mengandung huruf besar, huruf kecil, angka, serta simbol.',
         ]);
 
-        $domain = $request->domain;
-        if (filter_var($domain, FILTER_VALIDATE_URL)) {
-            $domain = parse_url($domain, PHP_URL_HOST);
+        $domain = normalize_domain($request->domain);
+        $parkedDomain = normalize_domain($request->parked_domain);
+        if ($parkedDomain === $domain) {
+            $parkedDomain = '';
+        }
+
+        if (!empty($parkedDomain)) {
+            $mainHost = strtolower(parse_url(config('app.url'), PHP_URL_HOST) ?: '');
+            if (!empty($mainHost) && ($parkedDomain === $mainHost || str_ends_with($parkedDomain, '.' . $mainHost))) {
+                $msg = "Custom domain tidak boleh menggunakan domain utama atau subdomain dari {$mainHost}.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => $msg,
+                        'errors' => ['parked_domain' => [$msg]]
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['parked_domain' => $msg]);
+            }
+
+            if (!str_contains($parkedDomain, '.') || str_contains($parkedDomain, ' ') || str_contains($parkedDomain, '/')) {
+                $msg = "Format custom domain {$parkedDomain} tidak valid.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => $msg,
+                        'errors' => ['parked_domain' => [$msg]]
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['parked_domain' => $msg]);
+            }
+
+            if ($this->isDomainRegistered($parkedDomain)) {
+                $msg = "Custom domain {$parkedDomain} sudah digunakan oleh tenant lain.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => $msg,
+                        'errors' => ['parked_domain' => [$msg]]
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['parked_domain' => $msg]);
+            }
         }
 
         // cPanel API Integration
@@ -248,6 +296,27 @@ class TenantController extends Controller implements HasMiddleware
                         ], 422);
                     }
                     return back()->withInput()->withErrors(['domain' => 'Gagal membuat domain di cPanel: ' . $createDomain['error']]);
+                }
+            }
+
+            // Juga buat alias di cPanel untuk custom domain jika diisi
+            if (!empty($parkedDomain)) {
+                $parkedExistsInCpanel = $cpanelApi->checkDomainExists($parkedDomain);
+                if ($parkedExistsInCpanel) {
+                    if ($this->isDomainRegistered($parkedDomain)) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'message' => 'Custom domain sudah digunakan di server cPanel.',
+                                'errors' => ['parked_domain' => ['Custom domain sudah digunakan di server cPanel.']]
+                            ], 422);
+                        }
+                        return back()->withInput()->withErrors(['parked_domain' => 'Custom domain sudah digunakan di server cPanel.']);
+                    }
+                } else {
+                    $createParked = $cpanelApi->createAliasDomain($parkedDomain);
+                    if (isset($createParked['error'])) {
+                        \Illuminate\Support\Facades\Log::error("Gagal membuat alias cPanel untuk custom domain {$parkedDomain}: " . $createParked['error']);
+                    }
                 }
             }
         }
@@ -307,6 +376,29 @@ class TenantController extends Controller implements HasMiddleware
         // Save Options
         $this->saveTenantOptions($tenant, $request);
 
+        // Save Custom Domain / Parked Domain jika ada
+        if (!empty($parkedDomain)) {
+            DB::table('options')->updateOrInsert(
+                ['name' => 'parked_domain', 'tenant_id' => $tenant->id],
+                ['value' => $parkedDomain, 'autoload' => 1]
+            );
+            DB::table('options')->updateOrInsert(
+                ['name' => 'parked_domain_status', 'tenant_id' => $tenant->id],
+                ['value' => 'verified', 'autoload' => 1]
+            );
+            DB::table('options')->updateOrInsert(
+                ['name' => 'parked_domain_verified_at', 'tenant_id' => $tenant->id],
+                ['value' => now()->toDateTimeString(), 'autoload' => 1]
+            );
+            DB::table('options')->updateOrInsert(
+                ['name' => 'parked_domain_token', 'tenant_id' => $tenant->id],
+                ['value' => Str::random(64), 'autoload' => 0]
+            );
+            Cache::forget("tenant:{$tenant->id}:parked_domain");
+            Cache::forget("tenant:{$parkedDomain}");
+            Cache::forget("tenant:{$parkedDomain}:options");
+        }
+
         Cache::forget("tenant:{$domain}:options");
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -340,6 +432,7 @@ class TenantController extends Controller implements HasMiddleware
         $rules = [
             'name' => 'required|string|max:100',
             'domain' => 'required|string|max:100|unique:tenants,domain,' . $tenant->id,
+            'parked_domain' => 'nullable|string|max:100',
             'theme' => 'required_unless:custom_theme,1',
             'modules' => 'nullable|array',
             'plugins' => 'nullable|array',
@@ -359,9 +452,51 @@ class TenantController extends Controller implements HasMiddleware
         ]);
 
         $oldDomain = $tenant->domain;
-        $domain = $request->domain;
-        if (filter_var($domain, FILTER_VALIDATE_URL)) {
-            $domain = parse_url($domain, PHP_URL_HOST);
+        $domain = normalize_domain($request->domain);
+
+        $oldParkedDomain = DB::table('options')
+            ->where('tenant_id', $tenant->id)
+            ->where('name', 'parked_domain')
+            ->value('value');
+        $newParkedDomain = normalize_domain($request->input('parked_domain', ''));
+        if ($newParkedDomain === $domain) {
+            $newParkedDomain = '';
+        }
+
+        if (!empty($newParkedDomain)) {
+            $mainHost = strtolower(parse_url(config('app.url'), PHP_URL_HOST) ?: '');
+            if (!empty($mainHost) && ($newParkedDomain === $mainHost || str_ends_with($newParkedDomain, '.' . $mainHost))) {
+                $msg = "Custom domain tidak boleh menggunakan domain utama atau subdomain dari {$mainHost}.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => $msg,
+                        'errors' => ['parked_domain' => [$msg]]
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['parked_domain' => $msg]);
+            }
+
+            if (!str_contains($newParkedDomain, '.') || str_contains($newParkedDomain, ' ') || str_contains($newParkedDomain, '/')) {
+                $msg = "Format custom domain {$newParkedDomain} tidak valid.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => $msg,
+                        'errors' => ['parked_domain' => [$msg]]
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['parked_domain' => $msg]);
+            }
+
+            if ($this->isDomainRegistered($newParkedDomain, $tenant->id)) {
+                $msg = "Custom domain {$newParkedDomain} sudah digunakan oleh tenant lain.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'message' => $msg,
+                        'errors' => ['parked_domain' => [$msg]]
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['parked_domain' => $msg]);
+            }
         }
 
         if ($oldDomain !== $domain) {
@@ -481,6 +616,85 @@ class TenantController extends Controller implements HasMiddleware
         // Save Options
         $this->saveTenantOptions($tenant, $request);
 
+        // Handle Custom Domain / Parked Domain jika berubah
+        if ($oldParkedDomain !== $newParkedDomain) {
+            $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
+            if ($cpanelApi->isActive()) {
+                // Hapus alias lama jika ada
+                if (!empty($oldParkedDomain) && $oldParkedDomain !== $tenant->domain && $oldParkedDomain !== $domain) {
+                    try {
+                        $cpanelApi->deleteAliasDomain($oldParkedDomain);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Gagal hapus cPanel alias domain {$oldParkedDomain}: " . $e->getMessage());
+                    }
+                }
+
+                // Tambahkan alias baru ke cPanel
+                if (!empty($newParkedDomain)) {
+                    $domainExistsInCpanel = $cpanelApi->checkDomainExists($newParkedDomain);
+                    if ($domainExistsInCpanel) {
+                        if ($this->isDomainRegistered($newParkedDomain, $tenant->id)) {
+                            if ($request->ajax() || $request->wantsJson()) {
+                                return response()->json([
+                                    'message' => 'Custom domain sudah digunakan di server cPanel.',
+                                    'errors' => ['parked_domain' => ['Custom domain sudah digunakan di server cPanel.']]
+                                ], 422);
+                            }
+                            return back()->withInput()->withErrors(['parked_domain' => 'Custom domain sudah digunakan di server cPanel.']);
+                        }
+                    } else {
+                        $createParked = $cpanelApi->createAliasDomain($newParkedDomain);
+                        if (isset($createParked['error'])) {
+                            \Illuminate\Support\Facades\Log::error("Gagal membuat alias cPanel untuk custom domain {$newParkedDomain}: " . $createParked['error']);
+                        }
+                    }
+                }
+            }
+
+            if (!empty($newParkedDomain)) {
+                DB::table('options')->updateOrInsert(
+                    ['name' => 'parked_domain', 'tenant_id' => $tenant->id],
+                    ['value' => $newParkedDomain, 'autoload' => 1]
+                );
+                DB::table('options')->updateOrInsert(
+                    ['name' => 'parked_domain_status', 'tenant_id' => $tenant->id],
+                    ['value' => 'verified', 'autoload' => 1]
+                );
+                DB::table('options')->updateOrInsert(
+                    ['name' => 'parked_domain_verified_at', 'tenant_id' => $tenant->id],
+                    ['value' => now()->toDateTimeString(), 'autoload' => 1]
+                );
+                if (!DB::table('options')->where('tenant_id', $tenant->id)->where('name', 'parked_domain_token')->exists()) {
+                    DB::table('options')->insert([
+                        'name' => 'parked_domain_token',
+                        'tenant_id' => $tenant->id,
+                        'value' => Str::random(64),
+                        'autoload' => 0
+                    ]);
+                }
+            } else {
+                DB::table('options')->where('tenant_id', $tenant->id)->whereIn('name', [
+                    'parked_domain',
+                    'parked_domain_status',
+                    'parked_domain_verified_at'
+                ])->delete();
+            }
+
+            if (!empty($oldParkedDomain) && $oldParkedDomain !== $domain) {
+                \Leazycms\FLC\Models\File::where('host', $oldParkedDomain)->update(['host' => $domain]);
+            }
+
+            Cache::forget("tenant:{$tenant->id}:parked_domain");
+            if (!empty($oldParkedDomain)) {
+                Cache::forget("tenant:{$oldParkedDomain}");
+                Cache::forget("tenant:{$oldParkedDomain}:options");
+            }
+            if (!empty($newParkedDomain)) {
+                Cache::forget("tenant:{$newParkedDomain}");
+                Cache::forget("tenant:{$newParkedDomain}:options");
+            }
+        }
+
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
         Cache::forget("tenant:{$tenant->domain}:options");
@@ -593,10 +807,10 @@ class TenantController extends Controller implements HasMiddleware
 
     private function isDomainRegistered($domain, $excludeTenantId = null)
     {
-        if (filter_var($domain, FILTER_VALIDATE_URL)) {
-            $domain = parse_url($domain, PHP_URL_HOST);
+        $domain = normalize_domain($domain);
+        if (empty($domain)) {
+            return false;
         }
-        $domain = strtolower(trim($domain));
 
         $tenantQuery = Tenant::where('domain', $domain);
         if ($excludeTenantId) {
@@ -606,21 +820,30 @@ class TenantController extends Controller implements HasMiddleware
             return true;
         }
 
-        $optionQuery = DB::table('options')
-            ->where('value', $domain)
+        $optionQuery = DB::table('options as o')
+            ->where('o.value', $domain)
             ->where(function ($q) {
-                $q->where('name', 'like', '%-domain')
-                  ->orWhere('name', 'like', '%custom_domain%')
-                  ->orWhere('name', 'parked_domain');
+                $q->where('o.name', 'like', '%-domain')
+                  ->orWhere('o.name', 'like', '%custom_domain%')
+                  ->orWhere(function ($sub) {
+                      $sub->where('o.name', 'parked_domain')
+                          ->whereNotExists(function ($s) {
+                              $s->select(DB::raw(1))
+                                ->from('options as s_opt')
+                                ->whereColumn('s_opt.tenant_id', 'o.tenant_id')
+                                ->where('s_opt.name', 'parked_domain_status')
+                                ->where('s_opt.value', 'released');
+                          });
+                  });
             });
 
         if ($excludeTenantId) {
             $optionQuery->where(function ($q) use ($excludeTenantId) {
                 if ($excludeTenantId == 1) {
-                    $q->whereNotNull('tenant_id');
+                    $q->whereNotNull('o.tenant_id');
                 } else {
-                    $q->where('tenant_id', '!=', $excludeTenantId)
-                      ->orWhereNull('tenant_id');
+                    $q->where('o.tenant_id', '!=', $excludeTenantId)
+                      ->orWhereNull('o.tenant_id');
                 }
             });
         }

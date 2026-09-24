@@ -1160,8 +1160,7 @@ class PanelController extends Controller implements HasMiddleware
                     $tenant = tenant();
                     $oldParkedDomain = get_option('parked_domain');
                     $rawDomain = trim(strtolower($request->input('parked_domain', '')));
-                    $newParkedDomain = preg_replace('#^https?://#i', '', $rawDomain);
-                    $newParkedDomain = rtrim($newParkedDomain, '/');
+                    $newParkedDomain = normalize_domain($rawDomain);
 
                     if (!empty($newParkedDomain)) {
                         $mainHost = strtolower(parse_url(config('app.url'), PHP_URL_HOST) ?: '');
@@ -1196,14 +1195,7 @@ class PanelController extends Controller implements HasMiddleware
                                 return back()->with('danger', $msg);
                             }
 
-                            $existingTenant = \Leazycms\Web\Models\Tenant::where('domain', $newParkedDomain)->where('id', '<>', $tenant->id)->first();
-                            $existingOption = Option::withoutGlobalScope('tenant')
-                                ->where('name', 'parked_domain')
-                                ->where('value', $newParkedDomain)
-                                ->where('tenant_id', '<>', $tenant->id)
-                                ->first();
-
-                            if ($existingTenant || $existingOption) {
+                            if ($this->isCustomDomainTakenByOtherTenant($newParkedDomain, $tenant->id)) {
                                 if ($request->ajax() || $request->wantsJson()) {
                                     return response()->json([
                                         'status' => 'error',
@@ -1211,6 +1203,18 @@ class PanelController extends Controller implements HasMiddleware
                                     ], 422);
                                 }
                                 return back()->with('danger', "Domain {$newParkedDomain} sudah digunakan oleh website lain.");
+                            }
+
+                            // Pastikan domain sudah diverifikasi melalui DNS TXT sebelum menyimpan
+                            $verifiedDomain = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('name', 'parked_domain')->value('value');
+                            $verifiedStatus = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('name', 'parked_domain_status')->value('value');
+
+                            if ($newParkedDomain !== $verifiedDomain || $verifiedStatus !== 'verified') {
+                                $msg = "Domain '{$newParkedDomain}' belum diverifikasi melalui DNS TXT. Silakan klik tombol 'Cek & Verifikasi Domain' terlebih dahulu sebelum menyimpan.";
+                                if ($request->ajax() || $request->wantsJson()) {
+                                    return response()->json(['status' => 'error', 'message' => $msg], 422);
+                                }
+                                return back()->with('danger', $msg);
                             }
                         }
                     }
@@ -1245,8 +1249,11 @@ class PanelController extends Controller implements HasMiddleware
 
                         if (!empty($newParkedDomain)) {
                             $option->updateOrCreate(['name' => 'parked_domain'], ['value' => $newParkedDomain, 'autoload' => 1]);
+                            $option->updateOrCreate(['name' => 'parked_domain_status'], ['value' => 'verified', 'autoload' => 1]);
                         } else {
                             $option->where('name', 'parked_domain')->delete();
+                            $option->updateOrCreate(['name' => 'parked_domain_status'], ['value' => 'released', 'autoload' => 1]);
+                            $option->where('name', 'parked_domain_verified_at')->delete();
                         }
 
                         // Migrasikan file yang mungkin melekat di host parked domain lama ke domain utama tenant
@@ -1398,7 +1405,183 @@ class PanelController extends Controller implements HasMiddleware
 
             return to_route('setting')->with('success', 'Pengaturan berhasil diperbarui');
         }
+        if (config('modules.multisite_enabled') && !is_main_domain()) {
+            $token = get_option('parked_domain_token');
+            if (empty($token)) {
+                $token = Str::random(64);
+                $option->updateOrCreate(['name' => 'parked_domain_token'], ['value' => $token, 'autoload' => 0]);
+            }
+        }
         return view('cms::backend.setting', $data);
+    }
+
+    public function verifyDomain(Request $request)
+    {
+        $tenant = tenant();
+        if (!$tenant) {
+            return response()->json(['status' => 'error', 'message' => 'Tenant tidak ditemukan.'], 404);
+        }
+
+        $rawDomain = $request->input('domain', get_option('parked_domain'));
+        $domain = normalize_domain($rawDomain);
+
+        if (empty($domain)) {
+            return response()->json(['status' => 'error', 'message' => 'Silakan masukkan domain kustom terlebih dahulu.'], 422);
+        }
+
+        $mainHost = strtolower(parse_url(config('app.url'), PHP_URL_HOST) ?: '');
+        if (!empty($mainHost) && ($domain === $mainHost || str_ends_with($domain, '.' . $mainHost))) {
+            return response()->json(['status' => 'error', 'message' => "Domain kustom tidak boleh menggunakan domain utama atau subdomain dari {$mainHost}."], 422);
+        }
+
+        if ($domain === $tenant->domain) {
+            return response()->json(['status' => 'error', 'message' => 'Domain kustom tidak boleh sama dengan subdomain bawaan.'], 422);
+        }
+
+        if (!str_contains($domain, '.') || str_contains($domain, ' ') || str_contains($domain, '/')) {
+            return response()->json(['status' => 'error', 'message' => "Format domain {$domain} tidak valid."], 422);
+        }
+
+        // Cek apakah sudah digunakan tenant lain
+        $isTaken = $this->isCustomDomainTakenByOtherTenant($domain, $tenant->id);
+        if ($isTaken) {
+            return response()->json(['status' => 'error', 'message' => "Domain {$domain} sudah digunakan oleh website lain."], 422);
+        }
+
+        // Dapatkan token verifikasi untuk tenant ini
+        $token = get_option('parked_domain_token');
+        if (empty($token)) {
+            $token = Str::random(64);
+            $option = new Option();
+            $option->updateOrCreate(['name' => 'parked_domain_token'], ['value' => $token, 'autoload' => 0]);
+        }
+
+        $expectedRecord = 'wp-domain-verification=' . $token;
+        $targetHost = '_webprofile.' . $domain;
+
+        // Cek DNS TXT record pada _webprofile.{domain}
+        $txtRecords = @dns_get_record($targetHost, DNS_TXT);
+        $verified = false;
+
+        if (!empty($txtRecords) && is_array($txtRecords)) {
+            foreach ($txtRecords as $rec) {
+                if (isset($rec['txt']) && trim($rec['txt']) === $expectedRecord) {
+                    $verified = true;
+                    break;
+                }
+                if (isset($rec['entries']) && is_array($rec['entries'])) {
+                    foreach ($rec['entries'] as $entry) {
+                        if (trim($entry) === $expectedRecord) {
+                            $verified = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Juga cek apex jika user memasang di root
+        if (!$verified) {
+            $rootRecords = @dns_get_record($domain, DNS_TXT);
+            if (!empty($rootRecords) && is_array($rootRecords)) {
+                foreach ($rootRecords as $rec) {
+                    if (isset($rec['txt']) && trim($rec['txt']) === $expectedRecord) {
+                        $verified = true;
+                        break;
+                    }
+                    if (isset($rec['entries']) && is_array($rec['entries'])) {
+                        foreach ($rec['entries'] as $entry) {
+                            if (trim($entry) === $expectedRecord) {
+                                $verified = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!$verified) {
+            $option = new Option();
+            $option->updateOrCreate(['name' => 'parked_domain_status'], ['value' => 'failed', 'autoload' => 1]);
+            return response()->json([
+                'status' => 'error',
+                'message' => "Verifikasi DNS TXT belum berhasil. Record '{$expectedRecord}' belum ditemukan pada '{$targetHost}'. Pastikan Anda telah menambahkan DNS TXT record dan tunggu hingga propagasi DNS selesai."
+            ], 422);
+        }
+
+        // Jika berhasil verifikasi:
+        $oldParkedDomain = get_option('parked_domain');
+        $option = new Option();
+        $option->updateOrCreate(['name' => 'parked_domain'], ['value' => $domain, 'autoload' => 1]);
+        $option->updateOrCreate(['name' => 'parked_domain_status'], ['value' => 'verified', 'autoload' => 1]);
+        $option->updateOrCreate(['name' => 'parked_domain_verified_at'], ['value' => now()->toDateTimeString(), 'autoload' => 1]);
+
+        // Tambahkan ke cPanel jika aktif
+        $cpanelApi = new \Leazycms\Web\Services\CpanelApiService();
+        if ($cpanelApi->isActive()) {
+            if (!empty($oldParkedDomain) && $oldParkedDomain !== $domain && $oldParkedDomain !== $tenant->domain) {
+                try {
+                    $cpanelApi->deleteAliasDomain($oldParkedDomain);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Gagal hapus cPanel alias domain {$oldParkedDomain}: " . $e->getMessage());
+                }
+            }
+
+            try {
+                if (!$cpanelApi->checkDomainExists($domain)) {
+                    $cpanelApi->createAliasDomain($domain);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Gagal tambah cPanel alias domain {$domain}: " . $e->getMessage());
+            }
+        }
+
+        if (!empty($oldParkedDomain) && $oldParkedDomain !== $domain && $oldParkedDomain !== $tenant->domain) {
+            \Leazycms\FLC\Models\File::where('host', $oldParkedDomain)->update(['host' => $tenant->domain]);
+        }
+
+        \Illuminate\Support\Facades\Cache::forget("tenant:{$tenant->domain}");
+        \Illuminate\Support\Facades\Cache::forget("tenant:{$tenant->domain}:options");
+        \Illuminate\Support\Facades\Cache::forget("tenant:{$tenant->id}:parked_domain");
+        if (!empty($oldParkedDomain)) {
+            \Illuminate\Support\Facades\Cache::forget("tenant:{$oldParkedDomain}");
+            \Illuminate\Support\Facades\Cache::forget("tenant:{$oldParkedDomain}:options");
+        }
+        \Illuminate\Support\Facades\Cache::forget("tenant:{$domain}");
+        \Illuminate\Support\Facades\Cache::forget("tenant:{$domain}:options");
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Selamat! Domain {$domain} berhasil diverifikasi dan terhubung ke website Anda.",
+            'domain' => $domain,
+            'verified_at' => now()->toDateTimeString()
+        ]);
+    }
+
+    private function isCustomDomainTakenByOtherTenant($domain, $currentTenantId)
+    {
+        $domain = normalize_domain($domain);
+        if (empty($domain)) {
+            return false;
+        }
+
+        if (\Leazycms\Web\Models\Tenant::where('domain', $domain)->where('id', '<>', $currentTenantId)->exists()) {
+            return true;
+        }
+
+        return Option::withoutGlobalScope('tenant')
+            ->where('value', $domain)
+            ->where('name', 'parked_domain')
+            ->where('tenant_id', '<>', $currentTenantId)
+            ->whereNotExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('options as s')
+                    ->whereColumn('s.tenant_id', 'options.tenant_id')
+                    ->where('s.name', 'parked_domain_status')
+                    ->where('s.value', 'released');
+            })
+            ->exists();
     }
 
     function appconfig(Request $request)

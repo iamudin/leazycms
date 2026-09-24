@@ -76,6 +76,26 @@ if (!function_exists('captcha_verify')) {
     }
 }
 
+if (!function_exists('normalize_domain')) {
+    function normalize_domain($domain)
+    {
+        if (empty($domain)) {
+            return '';
+        }
+        $domain = trim(strtolower($domain));
+        if (preg_match('#^https?://#i', $domain)) {
+            $parsed = parse_url($domain, PHP_URL_HOST);
+            if ($parsed) {
+                $domain = $parsed;
+            }
+        }
+        $domain = preg_replace('#^https?://#i', '', $domain);
+        $domain = explode('/', $domain)[0];
+        $domain = explode(':', $domain)[0];
+        return strtolower(trim($domain));
+    }
+}
+
 if (!function_exists('captcha_check')) {
     function captcha_check($inputCode = null, $flush = true)
     {

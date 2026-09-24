@@ -77,6 +77,7 @@ Route::controller(PanelController::class)->group(function () {
     Route::match(['get', 'post'], 'cache', 'cache')->name('cache-manager');
     Route::match(['get', 'post'], 'appearance/editor', 'editorTemplate')->name('appearance.editor');
     Route::match(['get', 'put'], 'setting', 'setting')->name('setting');
+    Route::post('setting/verify-domain', 'verifyDomain')->name('setting.verify_domain');
     Route::get('setting/gdrive/auth', 'gdriveAuth')->name('setting.gdrive.auth');
     Route::get('setting/gdrive/callback', 'gdriveCallback')->name('setting.gdrive.callback');
     Route::post('setting/gdrive/disconnect', 'gdriveDisconnect')->name('setting.gdrive.disconnect');

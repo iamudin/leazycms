@@ -359,23 +359,47 @@
                                             readonly style="background-color: #f1f5f9;">
                                     </div>
                                     <small class="text-muted">Subdomain asli yang diberikan saat pertama kali mendaftar.</small>
-                                </div>
+                                </div>                                @php
+                                    $currentParkedDomain = get_option('parked_domain');
+                                    $parkedStatus = get_option('parked_domain_status');
+                                    $parkedVerifiedAt = get_option('parked_domain_verified_at');
+                                    $parkedToken = get_option('parked_domain_token');
+                                @endphp
+
+                                @if (!empty($currentParkedDomain) && $parkedStatus === 'verified')
+                                    <div class="alert alert-success d-flex align-items-center mb-3">
+                                        <i class="fa fa-check-circle fa-2x mr-3 text-success"></i>
+                                        <div>
+                                            <strong>Domain Kustom Terverifikasi & Aktif!</strong>
+                                            <div class="small">Domain <code>{{ $currentParkedDomain }}</code> telah berhasil diverifikasi dan terhubung ke website Anda {{ $parkedVerifiedAt ? 'sejak ' . $parkedVerifiedAt : '' }}.</div>
+                                        </div>
+                                    </div>
+                                @elseif (!empty($currentParkedDomain) && $parkedStatus === 'failed')
+                                    <div class="alert alert-danger d-flex align-items-center mb-3">
+                                        <i class="fa fa-exclamation-circle fa-2x mr-3 text-danger"></i>
+                                        <div>
+                                            <strong>Verifikasi DNS TXT Tertunda / Gagal</strong>
+                                            <div class="small">Record verifikasi belum terdeteksi. Silakan periksa pengaturan TXT record pada DNS domain Anda dan klik <em>Cek & Verifikasi Domain</em> kembali.</div>
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div class="form-group mb-3">
-                                    <label class="font-weight-bold text-dark small mb-1">Domain Kustom / Parkir Domain (Custom
-                                        Domain)</label>
-                                    <div class="input-group input-group-sm">
+                                    <label class="font-weight-bold text-dark small mb-1">Domain Kustom / Parkir Domain (Custom Domain)</label>
+                                    <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text bg-white"><i class="fa fa-globe text-primary"></i></span>
                                         </div>
-                                        <input type="text" name="parked_domain" class="form-control font-weight-bold"
+                                        <input type="text" name="parked_domain" id="input_parked_domain" class="form-control font-weight-bold"
                                             placeholder="contoh: namasekolah.sch.id atau bisnisanda.com"
-                                            value="{{ get_option('parked_domain') }}">
+                                            value="{{ $currentParkedDomain }}">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" id="btn-verify-domain" onclick="verifyCustomDomain()">
+                                                <i class="fa fa-shield" id="icon-verify-domain"></i> <span id="text-verify-domain">Cek & Verifikasi Domain</span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted">Masukkan nama domain kustom pribadi tanpa <code>http://</code> atau
-                                        <code>https://</code>. <em>Dilarang menggunakan subdomain dari
-                                            {{ parse_url(config('app.url'), PHP_URL_HOST) }}</em>. Kosongkan jika ingin kembali
-                                        menggunakan subdomain bawaan.</small>
+                                    <small class="text-muted d-block mt-1">Masukkan nama domain kustom pribadi tanpa <code>http://</code> atau <code>https://</code>. <em>Dilarang menggunakan subdomain dari {{ parse_url(config('app.url'), PHP_URL_HOST) }}</em>. Kosongkan lalu klik <strong>Simpan Perubahan</strong> jika ingin kembali menggunakan subdomain bawaan.</small>
                                 </div>
 
                                 <div class="card bg-light border p-3 rounded mb-3">
@@ -383,8 +407,7 @@
                                         <i class="fa fa-server text-danger mr-1"></i> Panduan Konfigurasi DNS di Registrar Domain Anda:
                                     </h6>
                                     <p class="small text-muted mb-2">
-                                        Sebelum menyimpan, pastikan Anda telah mengatur <strong>DNS Management</strong> pada domain
-                                        Anda:
+                                        Sebelum domain dapat aktif dan disimpan, Anda <strong>wajib melakukan verifikasi kepemilikan domain</strong> dengan menambahkan DNS record berikut pada DNS Management registrar domain Anda:
                                     </p>
                                     <div class="table-responsive bg-white rounded border">
                                         <table class="table table-sm table-bordered m-0 small">
@@ -397,6 +420,12 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                <tr class="table-warning">
+                                                    <td><span class="badge badge-warning">TXT</span></td>
+                                                    <td><code>_webprofile</code></td>
+                                                    <td><code style="word-break: break-all;">wp-domain-verification={{ $parkedToken }}</code></td>
+                                                    <td><strong>Wajib untuk verifikasi</strong> kepemilikan domain (klik tombol <em>Cek & Verifikasi Domain</em> di atas)</td>
+                                                </tr>
                                                 <tr>
                                                     <td><span class="badge badge-primary">A Record</span></td>
                                                     <td><code>@</code></td>
@@ -414,9 +443,7 @@
                                         </table>
                                     </div>
                                     <div class="alert alert-warning small mt-2 mb-0 py-2">
-                                        <i class="fa fa-exclamation-triangle"></i> <strong>Catatan Otomatis:</strong> Setelah domain
-                                        tersimpan, pengunjung yang mengakses subdomain bawaan lama akan <strong>otomatis dialihkan
-                                            (redirect)</strong> ke domain kustom Anda.
+                                        <i class="fa fa-exclamation-triangle"></i> <strong>Catatan Otomatis:</strong> Setelah domain berhasil diverifikasi dan tersimpan, pengunjung yang mengakses subdomain bawaan lama akan <strong>otomatis dialihkan (redirect)</strong> ke domain kustom Anda.
                                     </div>
                                 </div>
                             </div>
@@ -519,6 +546,63 @@
                     }
                 });
             });
+
+            function verifyCustomDomain() {
+                let domainInput = $('#input_parked_domain');
+                let domainVal = $.trim(domainInput.val());
+                if (!domainVal) {
+                    if (typeof notif === 'function') {
+                        notif('Silakan masukkan domain kustom terlebih dahulu.', 'warning');
+                    } else {
+                        alert('Silakan masukkan domain kustom terlebih dahulu.');
+                    }
+                    domainInput.focus();
+                    return;
+                }
+
+                let btn = $('#btn-verify-domain');
+                let icon = $('#icon-verify-domain');
+                let text = $('#text-verify-domain');
+                let origText = text.text();
+
+                btn.prop('disabled', true);
+                icon.attr('class', 'fa fa-spinner fa-spin');
+                text.text('Memverifikasi DNS...');
+
+                $.ajax({
+                    url: "{{ route('setting.verify_domain') }}",
+                    type: 'POST',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        domain: domainVal
+                    },
+                    success: function(res) {
+                        btn.prop('disabled', false);
+                        icon.attr('class', 'fa fa-check-circle');
+                        text.text('Terverifikasi');
+                        let msg = res.message || 'Domain berhasil diverifikasi!';
+                        if (typeof notif === 'function') {
+                            notif(msg, 'success');
+                        } else {
+                            alert(msg);
+                        }
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1200);
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false);
+                        icon.attr('class', 'fa fa-shield');
+                        text.text(origText);
+                        let errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Verifikasi domain gagal.';
+                        if (typeof notif === 'function') {
+                            notif(errMsg, 'danger');
+                        } else {
+                            alert(errMsg);
+                        }
+                    }
+                });
+            }
         </script>
     @endpush
 @endsection

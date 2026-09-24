@@ -36,6 +36,30 @@
                                 otomatis mengambil hostname-nya.</small>
                         </div>
                         <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Custom Domain / Parkir Domain (Opsional)</label>
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fa fa-globe"></i></span>
+                                </div>
+                                <input class="form-control form-control-sm" name="parked_domain" id="input_parked_domain" type="text"
+                                    placeholder="Contoh: domainanda.com atau namasekolah.sch.id"
+                                    value="{{ old('parked_domain', $options['parked_domain'] ?? '') }}">
+                            </div>
+                            <small class="text-muted">Domain kustom milik tenant tanpa <code>http://</code> atau <code>https://</code>. Kosongkan jika tenant hanya menggunakan subdomain bawaan.</small>
+                            @if(!empty($options['parked_domain']))
+                                @php
+                                    $domainStatus = $options['parked_domain_status'] ?? 'verified';
+                                    $badgeColor = $domainStatus === 'verified' ? 'success' : ($domainStatus === 'pending' ? 'warning' : 'secondary');
+                                @endphp
+                                <div class="mt-1 small">
+                                    Status Domain: <span class="badge badge-{{ $badgeColor }}">{{ ucfirst($domainStatus) }}</span>
+                                    @if(!empty($options['parked_domain_verified_at']))
+                                        <span class="text-muted ml-1">(Diverifikasi: {{ $options['parked_domain_verified_at'] }})</span>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                        <div class="form-group mt-2 mb-2">
                             <label class="mb-0">Kapasitas Penyimpanan (MB)</label>
                             <input class="form-control form-control-sm" name="disk_space" type="number"
                                 placeholder="Misal: 500"

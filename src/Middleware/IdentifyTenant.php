@@ -40,12 +40,19 @@ class IdentifyTenant
                             ->first();
 
                         if ($parkedOption) {
-                            $t = Tenant::where('id', $parkedOption->tenant_id)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
-                            if ($t) {
-                                $data = $t->getRawOriginal();
-                                $data['is_parked_domain'] = true;
-                                $data['matched_parked_domain'] = $host;
-                                return $data;
+                            $status = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                                ->where('tenant_id', $parkedOption->tenant_id)
+                                ->where('name', 'parked_domain_status')
+                                ->value('value');
+
+                            if ($status === 'verified' || is_null($status)) {
+                                $t = Tenant::where('id', $parkedOption->tenant_id)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
+                                if ($t) {
+                                    $data = $t->getRawOriginal();
+                                    $data['is_parked_domain'] = true;
+                                    $data['matched_parked_domain'] = $host;
+                                    return $data;
+                                }
                             }
                         }
 
@@ -105,6 +112,15 @@ class IdentifyTenant
                 $parkedDomain = Cache::rememberForever(
                     "tenant:{$tenant->id}:parked_domain",
                     function () use ($tenant) {
+                        $status = Option::withoutGlobalScope('tenant')
+                            ->where('tenant_id', $tenant->id)
+                            ->where('name', 'parked_domain_status')
+                            ->value('value');
+
+                        if ($status !== 'verified' && !is_null($status)) {
+                            return '';
+                        }
+
                         return Option::withoutGlobalScope('tenant')
                             ->where('tenant_id', $tenant->id)
                             ->where('name', 'parked_domain')
