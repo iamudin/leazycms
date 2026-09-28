@@ -50,25 +50,67 @@
         let ticking = false;
 
         function updateProgress() {
+            const target = document.querySelector('.summernote-content');
+            if (!target) {
+                container.classList.remove('is-active');
+                bar.style.width = '0%';
+                bar.classList.remove('is-finished');
+                return;
+            }
+
+            const rect = target.getBoundingClientRect();
+            const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+            // Deteksi header sticky/fixed jika ada
+            let headerOffset = 0;
+            const header = document.querySelector('header.sticky, header.fixed, nav.sticky, nav.fixed, #main-navbar');
+            if (header) {
+                const headerRect = header.getBoundingClientRect();
+                headerOffset = Math.max(0, headerRect.bottom);
+            }
+
+            // Posisi awal pembacaan (.summernote-content) relatif terhadap batas baca atas
+            const startPoint = rect.top - headerOffset;
+
+            // Sebelum mencapai .summernote-content: sembunyikan progress bar (0%)
+            if (startPoint > 0) {
+                container.classList.remove('is-active');
+                bar.style.width = '0%';
+                bar.classList.remove('is-finished');
+                return;
+            }
+
+            // Tampilkan progress bar saat mulai memasuki .summernote-content
+            container.classList.add('is-active');
+
+            const targetHeight = target.offsetHeight;
+            const availableHeight = Math.max(1, windowHeight - headerOffset);
+
+            // Total jarak scroll dari awal div sampai selesai div penutupnya:
+            // Konten panjang: selesai saat dasar div penutup mencapai dasar viewport
+            // Konten pendek: selesai saat div penutup telah terlewati
+            let totalScrollable = targetHeight > availableHeight
+                ? (targetHeight - availableHeight)
+                : targetHeight;
+
+            if (totalScrollable <= 0) totalScrollable = 1;
+
+            const scrolled = Math.max(0, -startPoint);
+            let percentage = (scrolled / totalScrollable) * 100;
+
+            // Jika posisi scroll telah mencapai bagian paling bawah halaman
             const doc = document.documentElement;
             const body = document.body;
             const scrollTop = window.pageYOffset || doc.scrollTop || (body ? body.scrollTop : 0) || 0;
             const scrollHeight = Math.max(
                 body ? body.scrollHeight : 0, doc ? doc.scrollHeight : 0,
-                body ? body.offsetHeight : 0, doc ? doc.offsetHeight : 0,
-                body ? body.clientHeight : 0, doc ? doc.clientHeight : 0
+                body ? body.offsetHeight : 0, doc ? doc.offsetHeight : 0
             );
-            const clientHeight = doc ? doc.clientHeight : window.innerHeight;
-            const totalScrollable = scrollHeight - clientHeight;
-
-            if (totalScrollable <= 10) {
-                container.classList.remove('is-active');
-                bar.style.width = '0%';
-                return;
+            if (scrollTop + windowHeight >= scrollHeight - 3) {
+                percentage = 100;
             }
 
-            container.classList.add('is-active');
-            const percentage = Math.min(100, Math.max(0, (scrollTop / totalScrollable) * 100));
+            percentage = Math.min(100, Math.max(0, percentage));
             bar.style.width = percentage + '%';
 
             if (percentage >= 99) {

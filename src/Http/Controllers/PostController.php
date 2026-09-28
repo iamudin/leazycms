@@ -555,7 +555,7 @@ class PostController extends Controller implements HasMiddleware
                         break;
                     case 'rich-text':
                         $cleanRich = isset($request->$fieldname) ? strip_tags($request->$fieldname, $allowed_tags) : null;
-                        $custom_field[$fieldname] = !empty($cleanRich) ? wrap_summernote_content($cleanRich) : $cleanRich;
+                        $custom_field[$fieldname] = !empty($cleanRich) ? $cleanRich : $cleanRich;
                         break;
                     default:
                         $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;
