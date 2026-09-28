@@ -447,17 +447,17 @@
             if (prop.startsWith('mso-') || prop.startsWith('-mso-') || prop.startsWith('panose-')) continue;
             if (valLower.includes('windowtext') || valLower.includes('expression(') || valLower.includes('javascript:')) continue;
 
-            // 2. Discard Word typography overrides (font-family, pt font sizes, Word line heights)
+            // 2. Discard typography overrides from any external source (font-family, pt font sizes, line heights)
             if (prop === 'font-family') continue;
             if (prop === 'font-size') {
                 if (valLower.includes('pt') || valLower.includes('in') || valLower.includes('cm')) continue;
-                if (tagName === 'p' || tagName === 'span') continue;
+                if (tagName === 'p' || tagName === 'span' || tagName === 'div') continue;
             }
             if (prop === 'line-height') {
                 if (valLower === 'normal' || valLower.endsWith('%') || valLower.includes('pt') || valLower.includes('in') || valLower.includes('cm')) continue;
             }
 
-            // 3. Discard Word margins and paddings with cm/pt/in
+            // 3. Discard external margins and paddings
             if (prop.startsWith('margin')) {
                 if (valLower.includes('cm') || valLower.includes('pt') || valLower.includes('in') || valLower.includes('0.0001')) continue;
             }
@@ -465,8 +465,9 @@
                 if (valLower.includes('cm') || valLower.includes('pt') || valLower.includes('in')) continue;
             }
 
-            // 4. Discard Word page/tab artifacts
+            // 4. Discard Word page/tab artifacts and external positioning
             if (prop === 'tab-interval' || (prop === 'text-indent' && valLower.includes('-')) || prop === 'word-wrap' || prop === 'white-space') continue;
+            if (prop === 'position' || prop === 'z-index' || prop === 'top' || prop === 'left' || prop === 'right' || prop === 'bottom') continue;
 
             // 5. Safe alignment
             if (prop === 'text-align') {
@@ -508,15 +509,17 @@
                 }
             }
 
-            // 10. Safe color & background-color (not default Word black/windowtext)
+            // 10. Safe custom text color (exclude default dark/black/grey colors that break theme)
             if (prop === 'color') {
-                if (valLower !== '#000000' && valLower !== '#000' && valLower !== 'black' && valLower !== '#222222' && valLower !== '#333333') {
+                if (['#000000', '#000', 'black', '#111111', '#222222', '#333333', '#444444', 'rgb(0, 0, 0)', 'rgb(0,0,0)', 'rgb(34, 34, 34)', 'rgb(34,34,34)'].indexOf(valLower) === -1) {
                     cleanRules.push('color: ' + val);
                 }
                 continue;
             }
+
+            // 11. Safe custom background color (exclude white/transparent that clash with dark theme)
             if (prop === 'background-color' || prop === 'background') {
-                if (valLower !== 'transparent' && valLower !== '#ffffff' && valLower !== '#fff' && valLower !== 'white') {
+                if (['transparent', '#ffffff', '#fff', 'white', 'rgb(255, 255, 255)', 'rgb(255,255,255)'].indexOf(valLower) === -1) {
                     cleanRules.push(prop + ': ' + val);
                 }
                 continue;
@@ -524,6 +527,18 @@
         }
 
         return cleanRules.join('; ');
+    }
+
+    function cleanPlainText(text) {
+        if (!text || typeof text !== 'string') return '';
+        return text
+            // Clean zero-width spaces, BOM, invisible marks, directional controls
+            .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2060]/g, '')
+            // Clean non-printable control characters (keep \r, \n, \t)
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+            // Replace non-breaking spaces with standard space
+            .replace(/\u00A0/g, ' ')
+            .trim();
     }
 
     function cleanWordHtml(html) {
@@ -536,8 +551,11 @@
             return '<img src="' + src + '">';
         });
 
-        // 2. Remove VML conditional blocks (contains duplicate v:shape markup)
-        clean = clean.replace(/<!--\[if gte vml 1\]>[\s\S]*?<!\[endif\]-->/gi, '');
+        // 2. Remove VML conditional blocks and shapes completely (eliminates duplicate text from Word fallback)
+        clean = clean.replace(/<v:(?:shape|shapetype|group|rect|oval|line|polyline|curve|roundrect|textbox)[\s\S]*?<\/v:(?:shape|shapetype|group|rect|oval|line|polyline|curve|roundrect|textbox)>/gi, '');
+        clean = clean.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '');
+        clean = clean.replace(/<!\[if[\s\S]*?\]>/gi, '');
+        clean = clean.replace(/<!\[endif\]>/gi, '');
 
         // 3. Remove Word fields and revisions
         clean = clean.replace(/<!--\[if supportFields\]>[\s\S]*?<!\[endif\]-->/gi, '');
@@ -556,12 +574,7 @@
         clean = clean.replace(/<!--\[if\s+!supportLists\]>[\s\S]*?<!\[endif\]-->/gi, '');
         clean = clean.replace(/<!\[if\s+!supportLists\]>[\s\S]*?<!\[endif\]>/gi, '');
 
-        // 6. Remove all other conditional comments and tags
-        clean = clean.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '');
-        clean = clean.replace(/<!\[if[\s\S]*?\]>/gi, '');
-        clean = clean.replace(/<!\[endif\]>/gi, '');
-
-        // 7. Remove all standard HTML comments (including StartFragment/EndFragment)
+        // 6. Remove all standard HTML comments (including StartFragment/EndFragment, WordPress Gutenberg comments)
         clean = clean.replace(/<!--[\s\S]*?-->/gi, '');
 
         // 8. Remove unwanted document structure, styles, scripts, and XML metadata
@@ -578,8 +591,9 @@
         // 9. Remove namespaced tags (e.g. <o:p>, </o:p>, <w:sdt>, etc.)
         clean = clean.replace(/<\/?\w+:[^>]*>/gi, '');
 
-        // 10. Clean zero-width spaces and control characters
-        clean = clean.replace(/[\u200B-\u200D\uFEFF]/g, '');
+        // 10. Clean zero-width spaces, invisible characters, and control characters
+        clean = clean.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2060]/g, '');
+        clean = clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
         var container = document.createElement('div');
         container.innerHTML = clean;
@@ -678,8 +692,44 @@
             'sub': [], 'sup': [], 'small': [], 'code': [], 'pre': [], 'hr': [], 'br': []
         };
 
+        // Allowed class patterns (only standard Bootstrap & CMS classes)
+        var ALLOWED_CLASS_PATTERNS = [
+            /^table(?:-(?:bordered|striped|hover|sm|dark|light|responsive))?$/,
+            /^thead-(?:dark|light)$/,
+            /^text-(?:left|center|right|justify|muted|primary|secondary|success|danger|warning|info|dark|light)$/,
+            /^float-(?:left|right|none)$/,
+            /^d-(?:block|inline|inline-block|flex)$/,
+            /^img-(?:fluid|thumbnail)$/,
+            /^rounded(?:-(?:top|right|bottom|left|circle|pill|0))?$/,
+            /^alert(?:-(?:primary|secondary|success|danger|warning|info|light|dark))?$/,
+            /^badge(?:-(?:primary|secondary|success|danger|warning|info|light|dark))?$/,
+            /^lead$/,
+            /^blockquote-footer$/,
+            /^summernote-content$/,
+            /^selected-img$/
+        ];
+
+        function isClassAllowed(className) {
+            if (!className) return false;
+            for (var p = 0; p < ALLOWED_CLASS_PATTERNS.length; p++) {
+                if (ALLOWED_CLASS_PATTERNS[p].test(className)) return true;
+            }
+            return false;
+        }
+
         function sanitizeNode(node) {
             if (!node) return;
+
+            // Clean text nodes from zero-width spaces and control characters
+            if (node.nodeType === 3) {
+                if (node.nodeValue) {
+                    node.nodeValue = node.nodeValue
+                        .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2060]/g, '')
+                        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                }
+                return;
+            }
+
             if (node.nodeType === 1) {
                 var tagName = node.tagName.toLowerCase();
 
@@ -703,7 +753,21 @@
                     }
                 }
 
-                // 3. Word Section wrapper <div>: unwrap if it is Word's outer page wrapper (WordSection1)
+                // 3. Unwrap Google Docs wrapper element (<b id="docs-internal-guid-..."> or <span id="docs-internal-guid-...">)
+                if (node.id && node.id.indexOf('docs-internal-guid') !== -1) {
+                    var parent = node.parentNode;
+                    if (parent) {
+                        var children = Array.from(node.childNodes);
+                        for (var g = 0; g < children.length; g++) {
+                            parent.insertBefore(children[g], node);
+                            sanitizeNode(children[g]);
+                        }
+                        parent.removeChild(node);
+                        return;
+                    }
+                }
+
+                // 4. Word Section wrapper <div>: unwrap if it is Word's outer page wrapper (WordSection1)
                 if (tagName === 'div' && node.className && /^wordsection\d*$/i.test(node.className.trim())) {
                     var parent = node.parentNode;
                     if (parent) {
@@ -717,7 +781,7 @@
                     }
                 }
 
-                // 4. If tag is NOT in ALLOWED_TAGS, unwrap it (preserve inner text & elements)
+                // 5. If tag is NOT in ALLOWED_TAGS, unwrap it (preserve inner text & elements)
                 if (!ALLOWED_TAGS[tagName]) {
                     var parent = node.parentNode;
                     if (parent) {
@@ -731,7 +795,7 @@
                     }
                 }
 
-                // 5. Convert styled <span> to semantic formatting tags (b, i, u, s, sup, sub)
+                // 6. Convert styled <span> to semantic formatting tags (b, i, u, s, sup, sub)
                 if (tagName === 'span' && node.style) {
                     var s = node.style;
                     var isBold = (s.fontWeight === 'bold' || parseInt(s.fontWeight, 10) >= 700);
@@ -772,7 +836,7 @@
                     }
                 }
 
-                // 6. Clean attributes
+                // 7. Clean attributes
                 var allowedList = ALLOWED_ATTRS[tagName] || [];
                 var attrs = Array.from(node.attributes);
 
@@ -786,8 +850,8 @@
                         continue;
                     }
 
-                    // Remove namespaced attributes (v:*, o:*, w:*, m:*, x:*, xmlns:*, mso-*)
-                    if (attrName.includes(':') || attrName.startsWith('xmlns') || attrName.startsWith('mso-') || attrName === 'v:shapes') {
+                    // Remove namespaced attributes (v:*, o:*, w:*, m:*, x:*, xmlns:*, mso-*, data-react*, etc.)
+                    if (attrName.includes(':') || attrName.startsWith('xmlns') || attrName.startsWith('mso-') || attrName === 'v:shapes' || attrName.startsWith('data-react') || attrName.startsWith('data-v-') || attrName.startsWith('ng-')) {
                         node.removeAttribute(attrs[i].name);
                         continue;
                     }
@@ -801,7 +865,7 @@
                     // Tag-specific attribute sanitization
                     if (attrName === 'class') {
                         var classes = attrVal.split(/\s+/).filter(function(cls) {
-                            return cls && !/^(?:mso|wordsection|msocom)/i.test(cls);
+                            return isClassAllowed(cls);
                         });
                         if (classes.length > 0) {
                             node.setAttribute('class', classes.join(' '));
@@ -820,7 +884,7 @@
                             node.removeAttribute('href');
                         }
                     } else if (attrName === 'id') {
-                        if (/^(?:_com_|_msocom_|_GoBack)/i.test(attrVal)) {
+                        if (/^(?:_com_|_msocom_|_GoBack|docs-internal-guid|div-gpt-ad|post-|attachment_)/i.test(attrVal)) {
                             node.removeAttribute('id');
                         }
                     } else if (attrName === 'align') {
@@ -831,14 +895,14 @@
                     }
                 }
 
-                // 7. Enforce LeazyCMS iframe rules
+                // 8. Enforce LeazyCMS iframe rules
                 if (tagName === 'iframe') {
                     node.removeAttribute('width');
                     node.removeAttribute('height');
                     node.setAttribute('style', 'width:100%;height:500px;');
                 }
 
-                // 8. Unwrap empty span tags
+                // 9. Unwrap empty span tags
                 if (tagName === 'span' && node.attributes.length === 0) {
                     var parentSpan = node.parentNode;
                     if (parentSpan) {
@@ -865,8 +929,24 @@
             sanitizeNode(rootNodes[k]);
         }
 
+        // 10. Clean empty paragraphs / divs at the beginning and end
+        var first = container.firstElementChild;
+        while (first && (first.tagName.toLowerCase() === 'p' || first.tagName.toLowerCase() === 'div') && (!first.textContent.trim() && !first.querySelector('img, iframe'))) {
+            var next = first.nextElementSibling;
+            first.remove();
+            first = next;
+        }
+        var last = container.lastElementChild;
+        while (last && (last.tagName.toLowerCase() === 'p' || last.tagName.toLowerCase() === 'div') && (!last.textContent.trim() && !last.querySelector('img, iframe'))) {
+            var prev = last.previousElementSibling;
+            last.remove();
+            last = prev;
+        }
+
         return container.innerHTML;
     }
+
+    var cleanPastedHtml = cleanWordHtml;
 
     function normalizeClipboardFile(file) {
         if (!file) return file;
@@ -1305,106 +1385,111 @@
                 },
 
                 onPaste: function (e) {
+                    var now = Date.now();
+                    if (window.isSummernotePastingInProgress && (now - (window.lastSummernotePasteStartTime || 0) < 250)) {
+                        if (e && e.preventDefault) e.preventDefault();
+                        var ev = e.originalEvent || e;
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        return;
+                    }
+                    window.isSummernotePastingInProgress = true;
+                    window.lastSummernotePasteStartTime = now;
+                    setTimeout(function() { window.isSummernotePastingInProgress = false; }, 300);
+
+                    // Mencegah aksi paste bawaan browser sepenuhnya agar konten kotor tidak tertempel
+                    if (e && e.preventDefault) e.preventDefault();
                     var event = e.originalEvent || e;
+                    if (event && event.preventDefault) event.preventDefault();
+                    if (e && e.stopPropagation) e.stopPropagation();
+                    if (event && event.stopPropagation) event.stopPropagation();
+                    if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
+                    if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
+
                     var clipboardData = event.clipboardData || window.clipboardData;
                     if (!clipboardData) return;
 
-                    var html = clipboardData.getData('text/html');
-                    var rtf = clipboardData.getData('text/rtf');
+                    var html = clipboardData.getData('text/html') || '';
+                    var rtf = clipboardData.getData('text/rtf') || '';
+                    var plainText = clipboardData.getData('text/plain') || '';
                     var files = clipboardData.files;
                     var items = clipboardData.items;
 
-                    // Case A: Pure image paste (Snipping tool, screenshot, image file)
-                    if ((!html || html.trim().length === 0) && ((files && files.length > 0) || (items && items.length > 0))) {
-                        var imageFiles = [];
-                        if (files && files.length > 0) {
-                            for (var f = 0; f < files.length; f++) {
-                                if (files[f].type && files[f].type.startsWith('image/')) {
-                                    imageFiles.push(normalizeClipboardFile(files[f]));
-                                }
-                            }
-                        } else if (items && items.length > 0) {
-                            for (var it = 0; it < items.length; it++) {
-                                if (items[it].type && items[it].type.startsWith('image/')) {
-                                    var blob = items[it].getAsFile();
-                                    if (blob) imageFiles.push(normalizeClipboardFile(blob));
-                                }
+                    var $target = (window.currentSummernoteObj && window.currentSummernoteObj.context) ? window.currentSummernoteObj.context : ($('#editor').length ? $('#editor') : $(this));
+
+                    // Periksa apakah terdapat file gambar dari clipboard (screenshot / file)
+                    var imageFiles = [];
+                    if (files && files.length > 0) {
+                        for (var f = 0; f < files.length; f++) {
+                            if (files[f].type && files[f].type.startsWith('image/')) {
+                                imageFiles.push(normalizeClipboardFile(files[f]));
                             }
                         }
-
-                        if (imageFiles.length > 0) {
-                            e.preventDefault();
-                            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                            if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
-                            window.isSummernotePasting = true;
-                            window.lastSummernotePasteTime = Date.now();
-
-                            var $target = (window.currentSummernoteObj && window.currentSummernoteObj.context) ? window.currentSummernoteObj.context : ($(this).length ? $(this) : $('#editor'));
-
-                            var pureUploadPromises = imageFiles.map(function(imgFile) {
-                                var tempId = 'sn-img-preload-' + Math.random().toString(36).substring(2, 9);
-                                var preloaderObj = createImagePreloaderNode(imgFile, tempId);
-                                $target.summernote('insertNode', preloaderObj.$node[0]);
-
-                                return new Promise(function(resolve) {
-                                    uploadSummernoteImage(imgFile, function(uploadedUrl) {
-                                        var $newImg = $('<img>').attr('src', uploadedUrl);
-                                        var $ph = $('#' + tempId);
-                                        if ($ph.length) {
-                                            $ph.replaceWith($newImg);
-                                        } else {
-                                            $target.summernote('insertNode', $newImg[0]);
-                                        }
-                                        if (preloaderObj.previewUrl) {
-                                            try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
-                                        }
-                                        resolve(uploadedUrl);
-                                    }, function() {
-                                        var $ph = $('#' + tempId);
-                                        if ($ph.length) {
-                                            $ph.remove();
-                                        }
-                                        if (preloaderObj.previewUrl) {
-                                            try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
-                                        }
-                                        if (typeof notif === 'function') {
-                                            notif('Gagal mengunggah gambar!', 'error');
-                                        }
-                                        resolve(null);
-                                    });
-                                });
-                            });
-
-                            Promise.all(pureUploadPromises).then(function() {
-                                updateSummernoteCounter();
-                                setTimeout(function() { window.isSummernotePasting = false; }, 300);
-                            }).catch(function() {
-                                updateSummernoteCounter();
-                                setTimeout(function() { window.isSummernotePasting = false; }, 300);
-                            });
-                            return;
+                    } else if (items && items.length > 0) {
+                        for (var it = 0; it < items.length; it++) {
+                            if (items[it].type && items[it].type.startsWith('image/')) {
+                                var blob = items[it].getAsFile();
+                                if (blob) imageFiles.push(normalizeClipboardFile(blob));
+                            }
                         }
                     }
 
-                    // Case B: HTML Paste (Word Desktop, Word Online, Webpage, Editor)
-                    if (html && html.trim().length > 0) {
-                        e.preventDefault();
-                        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                        if (event && event.stopImmediatePropagation) event.stopImmediatePropagation();
+                    var hasHtmlImages = /<img[^>]*>|data:image\/|file:\/\//i.test(html);
+                    var rtfImages = extractImagesFromRtf(rtf);
+                    var hasRtfImages = rtfImages.length > 0;
+                    var hasTables = /<table[^>]*>[\s\S]*?<\/table>/i.test(html);
+
+                    // KASUS 1: Pure Image Paste (Screenshot, Snipping Tool, Salin File Gambar)
+                    if ((!html || html.trim().length === 0) && imageFiles.length > 0) {
+                        window.isSummernotePasting = true;
+                        window.lastSummernotePasteTime = Date.now();
+
+                        var pureUploadPromises = imageFiles.map(function(imgFile) {
+                            var tempId = 'sn-img-preload-' + Math.random().toString(36).substring(2, 9);
+                            var preloaderObj = createImagePreloaderNode(imgFile, tempId);
+                            $target.summernote('insertNode', preloaderObj.$node[0]);
+
+                            return new Promise(function(resolve) {
+                                uploadSummernoteImage(imgFile, function(uploadedUrl) {
+                                    var $newImg = $('<img>').attr('src', uploadedUrl);
+                                    var $ph = $('#' + tempId);
+                                    if ($ph.length) {
+                                        $ph.replaceWith($newImg);
+                                    } else {
+                                        $target.summernote('insertNode', $newImg[0]);
+                                    }
+                                    if (preloaderObj.previewUrl) {
+                                        try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
+                                    }
+                                    resolve(uploadedUrl);
+                                }, function() {
+                                    var $ph = $('#' + tempId);
+                                    if ($ph.length) $ph.remove();
+                                    if (preloaderObj.previewUrl) {
+                                        try { URL.revokeObjectURL(preloaderObj.previewUrl); } catch(e) {}
+                                    }
+                                    if (typeof notif === 'function') {
+                                        notif('Gagal mengunggah gambar!', 'error');
+                                    }
+                                    resolve(null);
+                                });
+                            });
+                        });
+
+                        Promise.all(pureUploadPromises).then(function() {
+                            updateSummernoteCounter();
+                            setTimeout(function() { window.isSummernotePasting = false; }, 300);
+                        }).catch(function() {
+                            updateSummernoteCounter();
+                            setTimeout(function() { window.isSummernotePasting = false; }, 300);
+                        });
+                        return;
+                    }
+
+                    // KASUS 2: Konten Word / HTML yang memiliki Gambar atau Tabel
+                    if (html && (hasHtmlImages || hasRtfImages || imageFiles.length > 0 || hasTables)) {
                         window.isSummernotePasting = true;
                         window.isPastingHtml = true;
                         window.lastSummernotePasteTime = Date.now();
-
-                        var rtfImages = extractImagesFromRtf(rtf);
-                        var itemBlobs = [];
-                        if (items && items.length > 0) {
-                            for (var k = 0; k < items.length; k++) {
-                                if (items[k].type && items[k].type.startsWith('image/')) {
-                                    var b = items[k].getAsFile();
-                                    if (b) itemBlobs.push(b);
-                                }
-                            }
-                        }
 
                         var cleanedHtml = cleanWordHtml(html);
                         var tempContainer = document.createElement('div');
@@ -1420,11 +1505,8 @@
                             });
                             var finalCleanHtml = tempContainer.innerHTML;
                             setSummernoteEditable(true);
-                            if (window.currentSummernoteObj && window.currentSummernoteObj.context) {
-                                window.currentSummernoteObj.context.summernote('pasteHTML', finalCleanHtml);
-                            } else {
-                                $('#editor').summernote('pasteHTML', finalCleanHtml);
-                            }
+                            $target.summernote('pasteHTML', finalCleanHtml);
+                            updateSummernoteCounter();
                             setTimeout(function() {
                                 window.isSummernotePasting = false;
                                 window.isPastingHtml = false;
@@ -1451,8 +1533,8 @@
                                 if (rtfImages && rtfImages[fileImgIndex]) {
                                     cacheSrc = rtfImages[fileImgIndex];
                                     fileObj = dataURLtoFile(cacheSrc, 'word_img_' + Math.random().toString(36).substr(2, 7));
-                                } else if (itemBlobs && itemBlobs[fileImgIndex]) {
-                                    fileObj = itemBlobs[fileImgIndex];
+                                } else if (imageFiles && imageFiles[fileImgIndex]) {
+                                    fileObj = imageFiles[fileImgIndex];
                                 }
 
                                 fileImgIndex++;
@@ -1477,7 +1559,7 @@
                                 '<div class="progress" style="width: 140px; height: 10px; margin: 0; border-radius: 5px;"><div id="word-paste-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 0%;"></div></div>' +
                                 '</div>');
 
-                            var $targetEditor = window.currentSummernoteObj && window.currentSummernoteObj.context ? window.currentSummernoteObj.context.next('.note-editor') : $('.note-editor').first();
+                            var $targetEditor = $target.next('.note-editor').length ? $target.next('.note-editor') : $('.note-editor').first();
                             if ($targetEditor.length) {
                                 $targetEditor.before($progressAlert);
                             }
@@ -1526,6 +1608,55 @@
                         } else {
                             pasteFinalHtml();
                         }
+                        return;
+                    }
+
+                    // KASUS 3: Teks Murni / Konten Standar (Mode Cerdas: Pertahankan Teks Bersih yang sudah di-clear)
+                    var textToClean = plainText;
+                    if (!textToClean || textToClean.trim().length === 0) {
+                        if (html && html.trim().length > 0) {
+                            var tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            textToClean = tempDiv.textContent || tempDiv.innerText || '';
+                        }
+                    }
+
+                    if (textToClean && textToClean.trim().length > 0) {
+                        window.isSummernotePasting = true;
+                        window.lastSummernotePasteTime = Date.now();
+
+                        var cleanText = cleanPlainText(textToClean);
+                        var htmlResult = '';
+
+                        function escapeHtml(str) {
+                            return str
+                                .replace(/&/g, '&amp;')
+                                .replace(/</g, '&lt;')
+                                .replace(/>/g, '&gt;')
+                                .replace(/"/g, '&quot;')
+                                .replace(/'/g, '&#039;');
+                        }
+
+                        if (!cleanText.includes('\n')) {
+                            htmlResult = escapeHtml(cleanText);
+                        } else {
+                            var paragraphs = cleanText.split(/\r?\n\r?\n+/);
+                            for (var p = 0; p < paragraphs.length; p++) {
+                                var trimmedP = paragraphs[p].trim();
+                                if (trimmedP.length > 0) {
+                                    var withBreaks = escapeHtml(trimmedP).replace(/\r?\n/g, '<br>');
+                                    htmlResult += '<p>' + withBreaks + '</p>';
+                                }
+                            }
+                            if (!htmlResult) {
+                                htmlResult = '<p><br></p>';
+                            }
+                        }
+
+                        $target.summernote('pasteHTML', htmlResult);
+                        updateSummernoteCounter();
+                        setTimeout(function() { window.isSummernotePasting = false; }, 300);
+                        return;
                     }
                 },
 

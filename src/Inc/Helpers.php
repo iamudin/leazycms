@@ -2754,6 +2754,29 @@ if (!function_exists('strip_summernote_wrap')) {
         return $trimmed;
     }
 }
+if (!function_exists('clean_summernote_content')) {
+    function clean_summernote_content($content)
+    {
+        if (empty($content) || !is_string($content)) {
+            return $content;
+        }
+
+        // 1. Bersihkan zero-width spaces, BOM, invisible marks, dan karakter kontrol
+        $content = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2060}]/u', '', $content);
+        $content = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $content);
+
+        // 2. Hapus komentar HTML (<!-- ... -->)
+        $content = preg_replace('/<!--[\s\S]*?-->/', '', $content);
+
+        // 3. Hapus atribut on* event handlers (onclick, onload, onerror, dll.)
+        $content = preg_replace('/\s+on[a-z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $content);
+
+        // 4. Hapus javascript: links pada href
+        $content = preg_replace('/\s+href\s*=\s*["\']\s*javascript:[^"\']*["\']/i', ' href="#"', $content);
+
+        return $content;
+    }
+}
 if (!function_exists('utf8_clean')) {
     function utf8_clean($data)
     {
@@ -2764,13 +2787,15 @@ if (!function_exists('utf8_clean')) {
             return $data;
         }
         if (mb_check_encoding($data, 'UTF-8')) {
-            return $data;
+            $cleaned = $data;
+        } else {
+            $converted = mb_convert_encoding($data, 'UTF-8', 'Windows-1252, ISO-8859-1, UTF-8');
+            if (!mb_check_encoding($converted, 'UTF-8')) {
+                $converted = mb_convert_encoding($converted, 'UTF-8', 'UTF-8');
+            }
+            $cleaned = $converted;
         }
-        $converted = mb_convert_encoding($data, 'UTF-8', 'Windows-1252, ISO-8859-1, UTF-8');
-        if (!mb_check_encoding($converted, 'UTF-8')) {
-            $converted = mb_convert_encoding($converted, 'UTF-8', 'UTF-8');
-        }
-        return $converted;
+        return preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2060}]/u', '', $cleaned);
     }
 }
 if (!function_exists('init_wabutton')) {
