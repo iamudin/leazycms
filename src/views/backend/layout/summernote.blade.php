@@ -428,88 +428,434 @@
 
     var SN_LOADING_SVG = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22120%22%20height%3D%2280%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%23f3f4f6%22%20rx%3D%226%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%239ca3af%22%20font-family%3D%22sans-serif%22%3E%E2%8F%B3%20Mengunggah...%3C%2Ftext%3E%3C%2Fsvg%3E";
 
+    function cleanCssStyle(styleText, tagName) {
+        if (!styleText || typeof styleText !== 'string') return '';
+        var parts = styleText.split(';');
+        var cleanRules = [];
+
+        for (var i = 0; i < parts.length; i++) {
+            var part = parts[i].trim();
+            if (!part) continue;
+            var colonIdx = part.indexOf(':');
+            if (colonIdx === -1) continue;
+
+            var prop = part.substring(0, colonIdx).trim().toLowerCase();
+            var val = part.substring(colonIdx + 1).trim();
+            var valLower = val.toLowerCase();
+
+            // 1. Discard MSO properties, expressions, script injections, and invalid Word colors
+            if (prop.startsWith('mso-') || prop.startsWith('-mso-') || prop.startsWith('panose-')) continue;
+            if (valLower.includes('windowtext') || valLower.includes('expression(') || valLower.includes('javascript:')) continue;
+
+            // 2. Discard Word typography overrides (font-family, pt font sizes, Word line heights)
+            if (prop === 'font-family') continue;
+            if (prop === 'font-size') {
+                if (valLower.includes('pt') || valLower.includes('in') || valLower.includes('cm')) continue;
+                if (tagName === 'p' || tagName === 'span') continue;
+            }
+            if (prop === 'line-height') {
+                if (valLower === 'normal' || valLower.endsWith('%') || valLower.includes('pt') || valLower.includes('in') || valLower.includes('cm')) continue;
+            }
+
+            // 3. Discard Word margins and paddings with cm/pt/in
+            if (prop.startsWith('margin')) {
+                if (valLower.includes('cm') || valLower.includes('pt') || valLower.includes('in') || valLower.includes('0.0001')) continue;
+            }
+            if (prop.startsWith('padding') && (tagName === 'p' || tagName === 'span')) {
+                if (valLower.includes('cm') || valLower.includes('pt') || valLower.includes('in')) continue;
+            }
+
+            // 4. Discard Word page/tab artifacts
+            if (prop === 'tab-interval' || (prop === 'text-indent' && valLower.includes('-')) || prop === 'word-wrap' || prop === 'white-space') continue;
+
+            // 5. Safe alignment
+            if (prop === 'text-align') {
+                if (['left', 'center', 'right', 'justify'].indexOf(valLower) !== -1) {
+                    cleanRules.push('text-align: ' + valLower);
+                }
+                continue;
+            }
+
+            // 6. Safe vertical alignment
+            if (prop === 'vertical-align') {
+                if (['top', 'middle', 'bottom', 'sub', 'super', 'baseline'].indexOf(valLower) !== -1) {
+                    cleanRules.push('vertical-align: ' + valLower);
+                }
+                continue;
+            }
+
+            // 7. Safe float
+            if (prop === 'float') {
+                if (['left', 'right', 'none'].indexOf(valLower) !== -1) {
+                    cleanRules.push('float: ' + valLower);
+                }
+                continue;
+            }
+
+            // 8. Table, cell & container styling
+            if (tagName === 'table' || tagName === 'td' || tagName === 'th' || tagName === 'tr' || tagName === 'div') {
+                if (prop.startsWith('border') || prop.startsWith('padding') || prop.startsWith('background') || prop === 'width' || prop === 'height') {
+                    cleanRules.push(prop + ': ' + val);
+                    continue;
+                }
+            }
+
+            // 9. Image styling
+            if (tagName === 'img') {
+                if (prop === 'width' || prop === 'height' || prop === 'max-width' || prop === 'display' || prop.startsWith('margin')) {
+                    cleanRules.push(prop + ': ' + val);
+                    continue;
+                }
+            }
+
+            // 10. Safe color & background-color (not default Word black/windowtext)
+            if (prop === 'color') {
+                if (valLower !== '#000000' && valLower !== '#000' && valLower !== 'black' && valLower !== '#222222' && valLower !== '#333333') {
+                    cleanRules.push('color: ' + val);
+                }
+                continue;
+            }
+            if (prop === 'background-color' || prop === 'background') {
+                if (valLower !== 'transparent' && valLower !== '#ffffff' && valLower !== '#fff' && valLower !== 'white') {
+                    cleanRules.push(prop + ': ' + val);
+                }
+                continue;
+            }
+        }
+
+        return cleanRules.join('; ');
+    }
+
     function cleanWordHtml(html) {
         if (!html) return '';
 
-        var clean = html
-            .replace(/<!--[\s\S]*?-->/gi, '')
-            .replace(/<xml[\s\S]*?<\/xml>/gi, '')
-            .replace(/<style[\s\S]*?<\/style>/gi, '')
-            .replace(/<script[\s\S]*?<\/script>/gi, '')
-            .replace(/<meta[^>]*>/gi, '')
-            .replace(/<link[^>]*>/gi, '')
-            .replace(/<\/?\w+:[^>]*>/gi, '');
+        var clean = html;
+
+        // 1. Convert VML imagedata to <img> if present (e.g. Word drawing/vml images)
+        clean = clean.replace(/<v:imagedata[^>]*src=["']?([^"'>\s]+)["']?[^>]*>/gi, function(match, src) {
+            return '<img src="' + src + '">';
+        });
+
+        // 2. Remove VML conditional blocks (contains duplicate v:shape markup)
+        clean = clean.replace(/<!--\[if gte vml 1\]>[\s\S]*?<!\[endif\]-->/gi, '');
+
+        // 3. Remove Word fields and revisions
+        clean = clean.replace(/<!--\[if supportFields\]>[\s\S]*?<!\[endif\]-->/gi, '');
+        clean = clean.replace(/<del[^>]*class=["']?msoDel["']?[^>]*>[\s\S]*?<\/del>/gi, '');
+
+        // 4. Remove Word reviewer comments and comment strings completely
+        clean = clean.replace(/<div[^>]*style=["'][^"']*mso-element:\s*comment-list[^"']*["'][\s\S]*?<\/div>/gi, '');
+        clean = clean.replace(/<div[^>]*style=["'][^"']*mso-element:\s*comment[^"']*["'][\s\S]*?<\/div>/gi, '');
+        clean = clean.replace(/<div[^>]*class=["']?msocomtxt["']?[^>]*>[\s\S]*?<\/div>/gi, '');
+        clean = clean.replace(/<span[^>]*class=["']?MsoCommentReference["']?[^>]*>[\s\S]*?<\/span>/gi, '');
+        clean = clean.replace(/<a[^>]*class=["']?msocomanchor["']?[^>]*>[\s\S]*?<\/a>/gi, '');
+        clean = clean.replace(/<a[^>]*href=["']?#_msocom_\d+["']?[^>]*>[\s\S]*?<\/a>/gi, '');
+        clean = clean.replace(/<hr[^>]*class=["']?msocomoff["']?[^>]*>/gi, '');
+
+        // 5. Remove fake list bullets and spaces inside conditional comments
+        clean = clean.replace(/<!--\[if\s+!supportLists\]>[\s\S]*?<!\[endif\]-->/gi, '');
+        clean = clean.replace(/<!\[if\s+!supportLists\]>[\s\S]*?<!\[endif\]>/gi, '');
+
+        // 6. Remove all other conditional comments and tags
+        clean = clean.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '');
+        clean = clean.replace(/<!\[if[\s\S]*?\]>/gi, '');
+        clean = clean.replace(/<!\[endif\]>/gi, '');
+
+        // 7. Remove all standard HTML comments (including StartFragment/EndFragment)
+        clean = clean.replace(/<!--[\s\S]*?-->/gi, '');
+
+        // 8. Remove unwanted document structure, styles, scripts, and XML metadata
+        clean = clean.replace(/<xml[\s\S]*?<\/xml>/gi, '');
+        clean = clean.replace(/<style[\s\S]*?<\/style>/gi, '');
+        clean = clean.replace(/<script[\s\S]*?<\/script>/gi, '');
+        clean = clean.replace(/<head[\s\S]*?<\/head>/gi, '');
+        clean = clean.replace(/<title[\s\S]*?<\/title>/gi, '');
+        clean = clean.replace(/<meta[^>]*>/gi, '');
+        clean = clean.replace(/<link[^>]*>/gi, '');
+        clean = clean.replace(/<!DOCTYPE[^>]*>/gi, '');
+        clean = clean.replace(/<\?xml[^>]*\?>/gi, '');
+
+        // 9. Remove namespaced tags (e.g. <o:p>, </o:p>, <w:sdt>, etc.)
+        clean = clean.replace(/<\/?\w+:[^>]*>/gi, '');
+
+        // 10. Clean zero-width spaces and control characters
+        clean = clean.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
         var container = document.createElement('div');
         container.innerHTML = clean;
+
+        // Convert Word list paragraphs (MsoListParagraph) into semantic <ul> / <ol> lists
+        var msoListItems = container.querySelectorAll('p.MsoListParagraph, p.MsoListParagraphCxSpFirst, p.MsoListParagraphCxSpMiddle, p.MsoListParagraphCxSpLast, p[style*="mso-list"]');
+        if (msoListItems.length > 0) {
+            var currentList = null;
+            msoListItems.forEach(function(p) {
+                var text = p.textContent.trim();
+                var isNumbered = /^\d+[\.\)]\s*/.test(text);
+                var listType = isNumbered ? 'ol' : 'ul';
+
+                var prev = p.previousElementSibling;
+                if (!prev || prev.tagName.toLowerCase() !== listType) {
+                    currentList = document.createElement(listType);
+                    p.parentNode.insertBefore(currentList, p);
+                } else {
+                    currentList = prev;
+                }
+                var li = document.createElement('li');
+                while (p.firstChild) {
+                    li.appendChild(p.firstChild);
+                }
+                if (isNumbered && li.firstChild && li.firstChild.nodeType === 3) {
+                    li.firstChild.textContent = li.firstChild.textContent.replace(/^\s*\d+[\.\)]\s*/, '');
+                }
+                currentList.appendChild(li);
+                p.remove();
+            });
+        }
+
+        // Allowed tags definition in LeazyCMS for Summernote
+        var ALLOWED_TAGS = {
+            'div': true,
+            'p': true,
+            'h1': true, 'h2': true, 'h3': true, 'h4': true, 'h5': true, 'h6': true,
+            'b': true, 'strong': true,
+            'i': true, 'em': true,
+            'u': true,
+            's': true, 'strike': true,
+            'sub': true, 'sup': true, 'small': true,
+            'ul': true, 'ol': true, 'li': true,
+            'br': true, 'hr': true,
+            'img': true, 'a': true, 'iframe': true,
+            'figcaption': true, 'figure': true,
+            'blockquote': true, 'quote': true,
+            'table': true, 'thead': true, 'tbody': true, 'tfoot': true,
+            'tr': true, 'th': true, 'td': true,
+            'caption': true, 'colgroup': true, 'col': true,
+            'span': true,
+            'pre': true, 'code': true
+        };
+
+        // Tags to completely discard along with their contents
+        var DISCARD_TAGS = {
+            'script': true, 'style': true, 'meta': true, 'link': true,
+            'xml': true, 'title': true, 'head': true,
+            'applet': true, 'object': true, 'form': true,
+            'input': true, 'button': true, 'select': true, 'textarea': true,
+            'canvas': true, 'audio': true
+        };
+
+        // Allowed attributes per tag
+        var ALLOWED_ATTRS = {
+            'div': ['class', 'style', 'id'],
+            'p': ['class', 'style', 'align'],
+            'h1': ['class', 'style', 'align'],
+            'h2': ['class', 'style', 'align'],
+            'h3': ['class', 'style', 'align'],
+            'h4': ['class', 'style', 'align'],
+            'h5': ['class', 'style', 'align'],
+            'h6': ['class', 'style', 'align'],
+            'a': ['href', 'target', 'title', 'rel', 'class', 'id'],
+            'img': ['src', 'alt', 'title', 'class', 'style', 'id', 'data-uploading'],
+            'iframe': ['src', 'frameborder', 'allowfullscreen', 'allow', 'style', 'scrolling', 'title'],
+            'table': ['class', 'style', 'border', 'cellpadding', 'cellspacing', 'width', 'align'],
+            'thead': ['class', 'style', 'align', 'valign'],
+            'tbody': ['class', 'style', 'align', 'valign'],
+            'tfoot': ['class', 'style', 'align', 'valign'],
+            'tr': ['class', 'style', 'align', 'valign'],
+            'th': ['class', 'style', 'colspan', 'rowspan', 'width', 'height', 'align', 'valign'],
+            'td': ['class', 'style', 'colspan', 'rowspan', 'width', 'height', 'align', 'valign'],
+            'caption': ['class', 'style', 'align'],
+            'colgroup': ['class', 'style', 'span', 'width'],
+            'col': ['class', 'style', 'span', 'width'],
+            'ol': ['class', 'style', 'start', 'type'],
+            'ul': ['class', 'style'],
+            'li': ['class', 'style'],
+            'blockquote': ['class', 'style', 'cite'],
+            'quote': ['class', 'style'],
+            'figure': ['class', 'style'],
+            'figcaption': ['class', 'style'],
+            'span': ['class', 'style'],
+            'b': [], 'strong': [], 'i': [], 'em': [], 'u': [], 's': [], 'strike': [],
+            'sub': [], 'sup': [], 'small': [], 'code': [], 'pre': [], 'hr': [], 'br': []
+        };
 
         function sanitizeNode(node) {
             if (!node) return;
             if (node.nodeType === 1) {
                 var tagName = node.tagName.toLowerCase();
 
-                if (tagName === 'font' || tagName === 'center' || tagName === 'o:p' || tagName === 'w:sdt') {
-                    var parent = node.parentNode;
-                    if (parent) {
-                        while (node.firstChild) {
-                            parent.insertBefore(node.firstChild, node);
-                        }
-                        parent.removeChild(node);
-                    }
+                // 1. Discard non-allowed dangerous / metadata nodes
+                if (DISCARD_TAGS[tagName]) {
+                    if (node.parentNode) node.parentNode.removeChild(node);
                     return;
                 }
 
-                var attrs = Array.from(node.attributes);
-                for (var i = 0; i < attrs.length; i++) {
-                    var attrName = attrs[i].name.toLowerCase();
-                    if (tagName === 'img') {
-                        if (attrName !== 'src' && attrName !== 'id' && attrName !== 'data-uploading' && attrName !== 'alt' && attrName !== 'title') {
-                            node.removeAttribute(attrs[i].name);
-                        }
-                    } else if (tagName === 'iframe') {
-                        if (attrName !== 'src' && attrName !== 'frameborder' && attrName !== 'allowfullscreen' && attrName !== 'allow' && attrName !== 'style' && attrName !== 'scrolling' && attrName !== 'allowtransparency') {
-                            node.removeAttribute(attrs[i].name);
-                        }
-                    } else if (tagName === 'a') {
-                        if (attrName !== 'href' && attrName !== 'target') {
-                            node.removeAttribute(attrs[i].name);
-                        }
-                    } else {
-                        node.removeAttribute(attrs[i].name);
+                // 2. Remove Word comment elements & bookmark anchors
+                if (node.id && (/^(?:_com_|_msocom_)/i.test(node.id))) {
+                    if (node.parentNode) node.parentNode.removeChild(node);
+                    return;
+                }
+                if (tagName === 'a') {
+                    var nameAttr = node.getAttribute('name') || '';
+                    var hrefAttr = node.getAttribute('href') || '';
+                    if (/^(?:_GoBack|_Toc|_Hlk)/i.test(nameAttr) || /^#_msocom_/i.test(hrefAttr)) {
+                        if (node.parentNode) node.parentNode.removeChild(node);
+                        return;
                     }
                 }
 
+                // 3. Word Section wrapper <div>: unwrap if it is Word's outer page wrapper (WordSection1)
+                if (tagName === 'div' && node.className && /^wordsection\d*$/i.test(node.className.trim())) {
+                    var parent = node.parentNode;
+                    if (parent) {
+                        var children = Array.from(node.childNodes);
+                        for (var c = 0; c < children.length; c++) {
+                            parent.insertBefore(children[c], node);
+                            sanitizeNode(children[c]);
+                        }
+                        parent.removeChild(node);
+                        return;
+                    }
+                }
+
+                // 4. If tag is NOT in ALLOWED_TAGS, unwrap it (preserve inner text & elements)
+                if (!ALLOWED_TAGS[tagName]) {
+                    var parent = node.parentNode;
+                    if (parent) {
+                        var children = Array.from(node.childNodes);
+                        for (var c = 0; c < children.length; c++) {
+                            parent.insertBefore(children[c], node);
+                            sanitizeNode(children[c]);
+                        }
+                        parent.removeChild(node);
+                        return;
+                    }
+                }
+
+                // 5. Convert styled <span> to semantic formatting tags (b, i, u, s, sup, sub)
+                if (tagName === 'span' && node.style) {
+                    var s = node.style;
+                    var isBold = (s.fontWeight === 'bold' || parseInt(s.fontWeight, 10) >= 700);
+                    var isItalic = (s.fontStyle === 'italic');
+                    var isUnderline = (s.textDecoration && s.textDecoration.indexOf('underline') !== -1);
+                    var isStrike = (s.textDecoration && s.textDecoration.indexOf('line-through') !== -1);
+                    var isSuper = (s.verticalAlign === 'super');
+                    var isSub = (s.verticalAlign === 'sub');
+
+                    if (isBold || isItalic || isUnderline || isStrike || isSuper || isSub) {
+                        var wrapper = null;
+                        var target = null;
+                        function addWrap(tag) {
+                            var el = document.createElement(tag);
+                            if (!wrapper) {
+                                wrapper = el;
+                                target = el;
+                            } else {
+                                target.appendChild(el);
+                                target = el;
+                            }
+                        }
+                        if (isBold) addWrap('strong');
+                        if (isItalic) addWrap('em');
+                        if (isUnderline) addWrap('u');
+                        if (isStrike) addWrap('s');
+                        if (isSuper) addWrap('sup');
+                        if (isSub) addWrap('sub');
+
+                        while (node.firstChild) {
+                            target.appendChild(node.firstChild);
+                        }
+                        node.appendChild(wrapper);
+                        s.fontWeight = '';
+                        s.fontStyle = '';
+                        s.textDecoration = '';
+                        s.verticalAlign = '';
+                    }
+                }
+
+                // 6. Clean attributes
+                var allowedList = ALLOWED_ATTRS[tagName] || [];
+                var attrs = Array.from(node.attributes);
+
+                for (var i = 0; i < attrs.length; i++) {
+                    var attrName = attrs[i].name.toLowerCase();
+                    var attrVal = attrs[i].value;
+
+                    // Remove on* event handlers (XSS protection)
+                    if (attrName.startsWith('on')) {
+                        node.removeAttribute(attrs[i].name);
+                        continue;
+                    }
+
+                    // Remove namespaced attributes (v:*, o:*, w:*, m:*, x:*, xmlns:*, mso-*)
+                    if (attrName.includes(':') || attrName.startsWith('xmlns') || attrName.startsWith('mso-') || attrName === 'v:shapes') {
+                        node.removeAttribute(attrs[i].name);
+                        continue;
+                    }
+
+                    // Remove attributes not in the allowed list for this tag
+                    if (allowedList.indexOf(attrName) === -1) {
+                        node.removeAttribute(attrs[i].name);
+                        continue;
+                    }
+
+                    // Tag-specific attribute sanitization
+                    if (attrName === 'class') {
+                        var classes = attrVal.split(/\s+/).filter(function(cls) {
+                            return cls && !/^(?:mso|wordsection|msocom)/i.test(cls);
+                        });
+                        if (classes.length > 0) {
+                            node.setAttribute('class', classes.join(' '));
+                        } else {
+                            node.removeAttribute('class');
+                        }
+                    } else if (attrName === 'style') {
+                        var cleanedStyle = cleanCssStyle(attrVal, tagName);
+                        if (cleanedStyle) {
+                            node.setAttribute('style', cleanedStyle);
+                        } else {
+                            node.removeAttribute('style');
+                        }
+                    } else if (attrName === 'href') {
+                        if (attrVal.trim().toLowerCase().startsWith('javascript:')) {
+                            node.removeAttribute('href');
+                        }
+                    } else if (attrName === 'id') {
+                        if (/^(?:_com_|_msocom_|_GoBack)/i.test(attrVal)) {
+                            node.removeAttribute('id');
+                        }
+                    } else if (attrName === 'align') {
+                        var al = attrVal.trim().toLowerCase();
+                        if (['left', 'center', 'right', 'justify'].indexOf(al) === -1) {
+                            node.removeAttribute('align');
+                        }
+                    }
+                }
+
+                // 7. Enforce LeazyCMS iframe rules
                 if (tagName === 'iframe') {
                     node.removeAttribute('width');
                     node.removeAttribute('height');
                     node.setAttribute('style', 'width:100%;height:500px;');
                 }
 
-                if (tagName === 'div') {
-                    var p = document.createElement('p');
-                    while (node.firstChild) {
-                        p.appendChild(node.firstChild);
-                    }
-                    if (node.parentNode) {
-                        node.parentNode.replaceChild(p, node);
-                        node = p;
-                    }
-                }
-
+                // 8. Unwrap empty span tags
                 if (tagName === 'span' && node.attributes.length === 0) {
                     var parentSpan = node.parentNode;
                     if (parentSpan) {
-                        while (node.firstChild) {
-                            parentSpan.insertBefore(node.firstChild, node);
+                        var children = Array.from(node.childNodes);
+                        for (var s = 0; s < children.length; s++) {
+                            parentSpan.insertBefore(children[s], node);
+                            sanitizeNode(children[s]);
                         }
                         parentSpan.removeChild(node);
                         return;
                     }
                 }
 
-                var children = Array.from(node.childNodes);
-                for (var j = 0; j < children.length; j++) {
-                    sanitizeNode(children[j]);
+                // Recurse over child nodes
+                var childNodes = Array.from(node.childNodes);
+                for (var j = 0; j < childNodes.length; j++) {
+                    sanitizeNode(childNodes[j]);
                 }
             }
         }
