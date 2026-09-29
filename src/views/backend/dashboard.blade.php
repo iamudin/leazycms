@@ -170,7 +170,7 @@
                   </td>
                   <td style="padding: 12px 16px; vertical-align: middle;">
                     <span  class="font-weight-bold text-decoration-none" style="font-weight: 600; color: #0f172a; text-decoration: none;" onmouseover="this.style.color='#0d6efd';" onmouseout="this.style.color='#0f172a';" >
-                      {{ $row->title }}
+                      {!! $row->title ?? '<i>Tidak Ada</i>' !!}
                     </span>
                     <br>
                        @if(config('modules.multisite_enabled') && is_main_domain())
