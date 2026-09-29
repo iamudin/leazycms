@@ -146,8 +146,7 @@
               <tr>
                 <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 140px;">Waktu</th>
                 <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 130px;">Modul</th>
-                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0;">Judul Konten</th>
-                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 140px;">Pembuat</th>
+                <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0;">Nama Data</th>
                 <th style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; width: 100px; text-align: center;">Status</th>
               </tr>
             </thead>
@@ -173,14 +172,11 @@
                     <span  class="font-weight-bold text-decoration-none" style="font-weight: 600; color: #0f172a; text-decoration: none;" onmouseover="this.style.color='#0d6efd';" onmouseout="this.style.color='#0f172a';" >
                       {{ $row->title }}
                     </span>
-                  </td>
-                  <td style="padding: 12px 16px; vertical-align: middle;">
-                    <div class="d-flex align-items-center gap-2">
-                     
-                      <span class="text-truncate" style="max-width: 110px; color: #334155; font-weight: 500;">
-                        {{ $row->user?->name ?? 'Admin' }}<br><small class="badge badge-success">{{ ucfirst($row->user->level) }}</small>
-                      </span>
-                    </div>
+                    <br>
+                       @if(config('modules.multisite_enabled') && is_main_domain())
+                        <small class="text-muted"> <i class="fa fa-globe"></i> {{ $row->tenant?->domain ?? '-' }}</small>   | 
+                        @endif
+                      <small class="text-muted"><i class="fa fa-user"></i> {{ $row->user?->name ?? 'Admin' }}</small> <sup class="badge badge-default">({{ ucfirst($row->user->level) }})</sup></small>
                   </td>
                   <td style="padding: 12px 16px; vertical-align: middle; text-align: center;">
                     @if($row->status == 'draft')

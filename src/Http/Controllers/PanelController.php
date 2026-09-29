@@ -439,12 +439,17 @@ class PanelController extends Controller implements HasMiddleware
         $posts = $user->isAdmin()
             ? Post::whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray()
             : Post::whereBelongsTo($user)->whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
-        $lastpublish = Post::select(['created_at', 'id', 'user_id', 'status', 'type', 'title'])
+            $select = ['created_at', 'id', 'user_id', 'status', 'type', 'title', 'slug'];
+       if(config('modules.multisite_enabled') && is_main_domain()){
+        $select[] = 'tenant_id';
+       }
+            $lastpublish = Post::select($select)
             ->with('user')
-            ->whereIn('type', $type_list)
-            ->latest('created_at')
-            ->limit(5)
-            ->get();
+            ->whereIn('type', $type_list);
+            if(config('modules.multisite_enabled') && is_main_domain()){
+                $lastpublish->with('tenant');
+            }
+           $lastpublish =  $lastpublish->latest('created_at')->limit(5)->get();
 
         $domain = $request->get('domain');
 
