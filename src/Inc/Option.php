@@ -108,7 +108,9 @@ if (!function_exists('disallow_option_key')) {
             'allow_manage_user',
             'allow_park_domain',
             'max_image_width',
-            'bebas_iklan'
+            'bebas_iklan',
+            'master_ads',
+            'master_tenant_notice'
         ];
 
         // 1. Jika parameter adalah ARRAY: Daftarkan/tambahkan key secara dinamis

@@ -4322,3 +4322,53 @@ if (!function_exists('get_custom_sitemaps')) {
         return config('modules.custom_sitemaps', []);
     }
 }
+
+if (!function_exists('get_master_tenant_notice')) {
+    /**
+     * Mengambil data popup pengumuman master tenant
+     *
+     * @return array|null
+     */
+    function get_master_tenant_notice()
+    {
+        if (!config('modules.multisite_enabled')) {
+            return null;
+        }
+
+        $raw = get_option('master_tenant_notice');
+        if (empty($raw)) {
+            $raw = \Illuminate\Support\Facades\Cache::rememberForever(
+                "tenant:master:notice",
+                function () {
+                    if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                        return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                            ->whereNull('tenant_id')
+                            ->where('name', 'master_tenant_notice')
+                            ->value('value');
+                    }
+                    return null;
+                }
+            );
+        }
+
+        if (empty($raw)) {
+            return null;
+        }
+
+        $notice = is_array($raw) ? $raw : json_decode($raw, true);
+        if (!is_array($notice) || empty($notice['enabled'])) {
+            return null;
+        }
+
+        // Jika target dispesifikasikan ke tenant tertentu
+        if (!empty($notice['target']) && $notice['target'] === 'selected') {
+            $targetTenants = (array) ($notice['target_tenants'] ?? []);
+            $currentTenantId = (app()->has('tenant') && function_exists('tenant') && tenant()) ? tenant()->id : null;
+            if (!$currentTenantId || !in_array($currentTenantId, $targetTenants)) {
+                return null;
+            }
+        }
+
+        return $notice;
+    }
+}

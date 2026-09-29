@@ -313,7 +313,7 @@ class PostController extends Controller implements HasMiddleware
             return redirect(admin_url(get_post_type()))->with('danger', get_module_info('title') . ' Tidak Ditemukan');
         }
         $field = (!empty($data->data_field)) ? collect($data->data_field) : [];
-        $looping_data = $data->data_loop ? (collect($module->form->looping_data)->where([0], 'Sort')->first() ? collect($data->data_loop)->sortBy('sort') : $data->data_loop) : [];
+        $looping_data = isset($data->data_loop) && $data->data_loop ? (isset($module->form?->looping_data) ? collect($module->form->looping_data)->where([0], 'Sort')->first() ? collect($data->data_loop)->sortBy('sort') : $data->data_loop : $data->data_loop) : [];
         return view('cms::backend.posts.form', [
             'post' => $data,
             'looping_data' => $looping_data,

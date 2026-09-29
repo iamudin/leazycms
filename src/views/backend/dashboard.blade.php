@@ -213,6 +213,10 @@
     </div>
   </div>
 
+  @if(config('modules.multisite_enabled') && !is_main_domain())
+    @include('cms::backend.tenants.notice-popup')
+  @endif
+
   @push('scripts')
     <script>
       document.addEventListener('DOMContentLoaded', function () {

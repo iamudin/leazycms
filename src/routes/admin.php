@@ -130,6 +130,10 @@ Route::controller(TenantController::class)->group(function () {
     // Ads Master Configuration
     Route::get('tenant/ads-config/form', 'adsConfigForm')->name('tenant.ads.form');
     Route::post('tenant/ads-config/save', 'adsConfigSave')->name('tenant.ads.save');
+
+    // Tenant Notice Popup Configuration
+    Route::get('tenant/notice-config/form', 'noticeConfigForm')->name('tenant.notice.form');
+    Route::post('tenant/notice-config/save', 'noticeConfigSave')->name('tenant.notice.save');
 });
 }
 if (config('modules.app_master')) {

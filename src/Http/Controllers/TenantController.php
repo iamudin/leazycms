@@ -1095,4 +1095,91 @@ class TenantController extends Controller implements HasMiddleware
             'message' => 'Daftar Iklan Induk berhasil disimpan!'
         ]);
     }
+
+    public function noticeConfigForm()
+    {
+        $noticeRaw = Option::withoutGlobalScope('tenant')
+            ->whereNull('tenant_id')
+            ->where('name', 'master_tenant_notice')
+            ->value('value');
+
+        $notice = $noticeRaw ? (is_array($noticeRaw) ? $noticeRaw : json_decode($noticeRaw, true)) : [];
+        if (!is_array($notice)) {
+            $notice = [];
+        }
+
+        $defaultNotice = [
+            'enabled' => 0,
+            'title' => 'Imbauan Penting: Lakukan Backup Data Secara Rutin',
+            'type' => 'warning',
+            'icon' => 'fa-database',
+            'content' => "<p>Yth. Administrator Website Tenant,</p>\n<p>Demi menjaga keamanan, integritas, dan kelangsungan data website Anda, kami mengimbau seluruh pengelola untuk <strong>melakukan backup data secara rutin</strong> (database dan berkas media penting) secara berkala.</p>\n<ul>\n    <li>Simpan salinan berkas cadangan di media penyimpanan yang aman (Google Drive / Komputer lokal).</li>\n    <li>Lakukan pemeriksaan rutin terhadap konten dan akun pengguna pada website Anda.</li>\n    <li>Hubungi Administrator Pusat jika mengalami kendala teknis atau pertanyaan lebih lanjut.</li>\n</ul>\n<p class=\"mb-0 text-muted small\"><i class=\"fa fa-info-circle\"></i> Terima kasih atas perhatian dan kerjasamanya.</p>",
+            'action_btn_text' => '',
+            'action_btn_url' => '',
+            'action_btn_target' => '_blank',
+            'close_btn_text' => 'Saya Mengerti',
+            'frequency' => 'session',
+            'target' => 'all',
+            'target_tenants' => [],
+        ];
+
+        $notice = array_merge($defaultNotice, $notice);
+
+        $tenants = Tenant::select('id', 'name', 'domain')->orderBy('name')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'notice' => $notice,
+            'tenants' => $tenants,
+        ]);
+    }
+
+    public function noticeConfigSave(Request $request)
+    {
+        $enabled = $request->boolean('enabled') ? 1 : 0;
+        $title = strip_tags($request->input('title', 'Imbauan'));
+        $type = in_array($request->input('type'), ['warning', 'info', 'danger', 'primary', 'success']) ? $request->input('type') : 'warning';
+        $icon = strip_tags($request->input('icon', ''));
+        $content = $request->input('content', '');
+        $actionBtnText = strip_tags($request->input('action_btn_text', ''));
+        $actionBtnUrl = filter_var($request->input('action_btn_url', ''), FILTER_SANITIZE_URL) ?: '';
+        $actionBtnTarget = in_array($request->input('action_btn_target'), ['_blank', '_self']) ? $request->input('action_btn_target') : '_blank';
+        $closeBtnText = strip_tags($request->input('close_btn_text', 'Saya Mengerti')) ?: 'Saya Mengerti';
+        $frequency = in_array($request->input('frequency'), ['always', 'session', 'daily']) ? $request->input('frequency') : 'session';
+        $target = in_array($request->input('target'), ['all', 'selected']) ? $request->input('target') : 'all';
+        $targetTenants = is_array($request->input('target_tenants')) ? array_map('intval', $request->input('target_tenants')) : [];
+
+        $data = [
+            'enabled' => $enabled,
+            'title' => $title,
+            'type' => $type,
+            'icon' => $icon,
+            'content' => $content,
+            'action_btn_text' => $actionBtnText,
+            'action_btn_url' => $actionBtnUrl,
+            'action_btn_target' => $actionBtnTarget,
+            'close_btn_text' => $closeBtnText,
+            'frequency' => $frequency,
+            'target' => $target,
+            'target_tenants' => $targetTenants,
+            'updated_at' => time(),
+        ];
+
+        Option::withoutGlobalScope('tenant')->updateOrInsert(
+            ['name' => 'master_tenant_notice', 'tenant_id' => null],
+            ['value' => json_encode($data), 'autoload' => 1]
+        );
+
+        $mainHost = parse_url(config('app.url'), PHP_URL_HOST);
+        Cache::forget("tenant:master:{$mainHost}:options");
+        Cache::forget("tenant:master:options");
+        Cache::forget("tenant:master:notice");
+        Cache::forget("default:options");
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pengaturan popup pengumuman tenant berhasil disimpan!'
+        ]);
+    }
 }
+
