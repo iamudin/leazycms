@@ -1,27 +1,133 @@
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-2 px-0">
     @php
         $showDomain = $showDomain ?? (config('modules.multisite_enabled') && is_main_domain() && empty($domain));
+        $months = $months ?? [
+            '01' => 'Januari',
+            '02' => 'Februari',
+            '03' => 'Maret',
+            '04' => 'April',
+            '05' => 'Mei',
+            '06' => 'Juni',
+            '07' => 'Juli',
+            '08' => 'Agustus',
+            '09' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember',
+        ];
+        $selectedMonth = $selectedMonth ?? request('month', date('m'));
+        $selectedYear = $selectedYear ?? (int) request('year', date('Y'));
+        $availableYears = $availableYears ?? [date('Y')];
+
+        $chartLabels = $pageChart->map(function($p) use ($selectedMonth, $months) {
+            if ($selectedMonth === 'all') {
+                $parts = explode('-', $p->date);
+                $m = $parts[1] ?? '';
+                return ($months[$m] ?? $m) . (isset($parts[0]) ? ' ' . $parts[0] : '');
+            }
+            return date('d M', strtotime($p->date));
+        });
     @endphp
 
-    {{-- HEADER + DOMAIN SWITCH --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    {{-- HEADER + FILTER (BULAN, TAHUN, DOMAIN) --}}
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 15px;">
+                <div>
+                    <h5 class="font-weight-bold m-0 text-dark" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa fa-chart-line text-primary"></i> Analytics Dashboard
+                    </h5>
+                    <div class="text-muted mt-1" style="font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <span>
+                            <i class="fa fa-calendar-o mr-1"></i> Periode: 
+                            <strong class="text-dark">
+                                @if($selectedMonth === 'all')
+                                    Tahun {{ $selectedYear }} (Semua Bulan)
+                                @else
+                                    {{ $months[$selectedMonth] ?? $selectedMonth }} {{ $selectedYear }}
+                                @endif
+                            </strong>
+                        </span>
+                        @if(isset($totalViews))
+                            <span class="badge badge-light border text-primary" style="font-size: 11px; font-weight: 600;">
+                                <i class="fa fa-eye mr-1"></i> {{ number_format($totalViews) }} Page Views
+                            </span>
+                        @endif
+                        @if(isset($uniquePeriod))
+                            <span class="badge badge-light border text-success" style="font-size: 11px; font-weight: 600;">
+                                <i class="fa fa-users mr-1"></i> {{ number_format($uniquePeriod) }} Pengunjung Unik
+                            </span>
+                        @endif
+                        @if(!empty($domain))
+                            <span class="badge badge-light border text-secondary" style="font-size: 11px; font-weight: 600;">
+                                <i class="fa fa-globe mr-1"></i> {{ $domain }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
 
-        <h4 class="font-weight-bold">Analytics Dashboard Monthly</h4>
+                <form method="GET" action="{{ route('panel.dashboard') }}" class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                    {{-- Filter Bulan --}}
+                    <div class="input-group input-group-sm" style="width: auto;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-light text-muted border-right-0" style="border-radius: 8px 0 0 8px; font-size: 12px;" title="Filter Bulan">
+                                <i class="fa fa-calendar"></i>
+                            </span>
+                        </div>
+                        <select name="month" onchange="this.form.submit()" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 130px; height: 32px;" title="Pilih Bulan">
+                            <option value="all" {{ $selectedMonth === 'all' ? 'selected' : '' }}>Semua Bulan</option>
+                            @foreach($months as $mNum => $mName)
+                                <option value="{{ $mNum }}" {{ $selectedMonth == $mNum ? 'selected' : '' }}>
+                                    {{ $mName }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-        <form method="GET">
-            <select name="domain" onchange="this.form.submit()" class="form-control">
+                    {{-- Filter Tahun --}}
+                    <div class="input-group input-group-sm" style="width: auto;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-light text-muted border-right-0" style="border-radius: 8px 0 0 8px; font-size: 12px;" title="Filter Tahun">
+                                <i class="fa fa-clock-o"></i>
+                            </span>
+                        </div>
+                        <select name="year" onchange="this.form.submit()" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 90px; height: 32px;" title="Pilih Tahun">
+                            @foreach($availableYears as $y)
+                                <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>
+                                    {{ $y }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                <option value="">All Domains</option>
+                    {{-- Filter Domain --}}
+                    @if(isset($domains) && count($domains) > 0)
+                        <div class="input-group input-group-sm" style="width: auto;">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light text-muted border-right-0" style="border-radius: 8px 0 0 8px; font-size: 12px;" title="Filter Domain">
+                                    <i class="fa fa-globe"></i>
+                                </span>
+                            </div>
+                            <select name="domain" onchange="this.form.submit()" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 140px; height: 32px;" title="Pilih Domain">
+                                <option value="">Semua Domain</option>
+                                @foreach($domains as $d)
+                                    <option value="{{ $d }}" {{ $domain == $d ? 'selected' : '' }}>
+                                        {{ $d }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
 
-                @foreach($domains as $d)
-                    <option value="{{$d}}" {{$domain == $d ? 'selected' : ''}}>
-                        {{$d}}
-                    </option>
-                @endforeach
+                    @if(request()->has('month') || request()->has('year') || request()->has('domain'))
+                        <a href="{{ route('panel.dashboard') }}" class="btn btn-sm btn-light border text-secondary" style="font-size: 11px; font-weight: 600; border-radius: 8px; padding: 4px 10px; height: 32px; display: inline-flex; align-items: center;" title="Reset Filter">
+                            <i class="fa fa-refresh mr-1"></i> Reset
+                        </a>
+                    @endif
+                </form>
 
-            </select>
-        </form>
-
+            </div>
+        </div>
     </div>
 
 
@@ -72,8 +178,11 @@
 
         <div class="col-md-8 mb-4">
             <div class="card shadow">
-                <div class="card-header font-weight-bold">
-                    Page Views
+                <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fa fa-line-chart text-primary mr-1"></i> Page Views</span>
+                    <small class="badge badge-light border font-weight-normal text-muted" style="font-size: 11px;">
+                        {{ $selectedMonth === 'all' ? 'Tahun ' . $selectedYear : ($months[$selectedMonth] ?? $selectedMonth) . ' ' . $selectedYear }}
+                    </small>
                 </div>
                 <div class="card-body">
                     <canvas id="pageChart"></canvas>
@@ -193,6 +302,7 @@
                 </div>
 
                 <div class="card-body p-0">
+        <div class="table-responsive">
 
                     <table class="table table-sm table-striped mb-0">
 
@@ -236,6 +346,7 @@
                     </table>
 
                 </div>
+                </div>
 
             </div>
 
@@ -278,7 +389,7 @@
 
         data: {
 
-            labels: {!! json_encode($pageChart->pluck('date')) !!},
+            labels: {!! json_encode($chartLabels) !!},
 
             datasets: [{
 

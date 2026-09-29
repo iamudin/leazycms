@@ -448,8 +448,6 @@ class PanelController extends Controller implements HasMiddleware
 
         $domain = $request->get('domain');
 
-        $rangeStart = now()->subDays(29)->toDateString();
-        $rangeEnd = now()->toDateString();
         $tenantId = (!is_main_domain() && app()->has('tenant')) ? tenant()->id : null;
         $showDomain = config('modules.multisite_enabled') && is_main_domain() && empty($domain);
 
@@ -458,6 +456,59 @@ class PanelController extends Controller implements HasMiddleware
             ->distinct()
             ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
             ->pluck('domain');
+
+        // Filter Bulan & Tahun
+        $availableYears = DB::table('analytics_daily')
+            ->selectRaw('DISTINCT YEAR(date) as year')
+            ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
+            ->pluck('year')
+            ->filter()
+            ->map(fn($y) => (int) $y)
+            ->toArray();
+
+        $currentYear = (int) date('Y');
+        if (!in_array($currentYear, $availableYears)) {
+            $availableYears[] = $currentYear;
+        }
+        rsort($availableYears);
+
+        $selectedYear = (int) $request->input('year', $currentYear);
+        if ($selectedYear < 2000 || $selectedYear > 2100) {
+            $selectedYear = $currentYear;
+        }
+
+        $selectedMonth = $request->input('month', date('m'));
+        $months = [
+            '01' => 'Januari',
+            '02' => 'Februari',
+            '03' => 'Maret',
+            '04' => 'April',
+            '05' => 'Mei',
+            '06' => 'Juni',
+            '07' => 'Juli',
+            '08' => 'Agustus',
+            '09' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember',
+        ];
+
+        if ($selectedMonth && $selectedMonth !== 'all') {
+            $monthNum = (int) $selectedMonth;
+            if ($monthNum >= 1 && $monthNum <= 12) {
+                $selectedMonth = str_pad($monthNum, 2, '0', STR_PAD_LEFT);
+                $rangeStart = Carbon::create($selectedYear, $monthNum, 1)->startOfMonth()->toDateString();
+                $rangeEnd = Carbon::create($selectedYear, $monthNum, 1)->endOfMonth()->toDateString();
+            } else {
+                $selectedMonth = date('m');
+                $rangeStart = Carbon::create($selectedYear, (int)$selectedMonth, 1)->startOfMonth()->toDateString();
+                $rangeEnd = Carbon::create($selectedYear, (int)$selectedMonth, 1)->endOfMonth()->toDateString();
+            }
+        } else {
+            $selectedMonth = 'all';
+            $rangeStart = Carbon::create($selectedYear, 1, 1)->startOfYear()->toDateString();
+            $rangeEnd = Carbon::create($selectedYear, 12, 31)->endOfYear()->toDateString();
+        }
 
         $visitorsQuery = DB::table('analytics_visitors')
             ->where('last_seen_at', '>=', now()->subMinutes(5));
@@ -487,6 +538,15 @@ class PanelController extends Controller implements HasMiddleware
             ->when($domain, fn($q) => $q->where('domain', $domain))
             ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
             ->where('date', today()->toDateString())
+            ->where('type', 'unique_total')
+            ->where('key', 'site')
+            ->sum('count') ?? 0;
+
+        $totalViews = (clone $dailyQuery)
+            ->where('type', 'page_view')
+            ->sum('count') ?? 0;
+
+        $uniquePeriod = (clone $dailyQuery)
             ->where('type', 'unique_total')
             ->where('key', 'site')
             ->sum('count') ?? 0;
@@ -552,12 +612,21 @@ class PanelController extends Controller implements HasMiddleware
             ->orderByDesc('total')
             ->get();
 
-        $pageChart = (clone $dailyQuery)
-            ->select('date', DB::raw('SUM(count) as total'))
-            ->where('type', 'page_view')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        if ($selectedMonth === 'all') {
+            $pageChart = (clone $dailyQuery)
+                ->select(DB::raw('SUBSTRING(date, 1, 7) as date'), DB::raw('SUM(count) as total'))
+                ->where('type', 'page_view')
+                ->groupBy(DB::raw('SUBSTRING(date, 1, 7)'))
+                ->orderBy('date')
+                ->get();
+        } else {
+            $pageChart = (clone $dailyQuery)
+                ->select('date', DB::raw('SUM(count) as total'))
+                ->where('type', 'page_view')
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
+        }
 
 
         // LIST DOMAIN
@@ -595,6 +664,8 @@ class PanelController extends Controller implements HasMiddleware
             'realtimeList' => $realtimeList,
             'realtimeVisitors' => $realtimeVisitors,
             'uniqueToday' => $uniqueToday,
+            'totalViews' => $totalViews,
+            'uniquePeriod' => $uniquePeriod,
             'topPages' => $topPages,
             'topKeywords' => $topKeywords,
             'topReferrers' => $topReferrers,
@@ -603,7 +674,13 @@ class PanelController extends Controller implements HasMiddleware
             'domains' => $domains,
             'deviceSummary' => $deviceSummary,
             'currentDomain' => $domain,
-            'showDomain' => $showDomain
+            'showDomain' => $showDomain,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'availableYears' => $availableYears,
+            'months' => $months,
+            'rangeStart' => $rangeStart,
+            'rangeEnd' => $rangeEnd,
 
         ]);
     }
