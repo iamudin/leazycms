@@ -199,7 +199,7 @@ class Post extends BaseModel
     }
     public function user()
     {
-        return $this->belongsTo(User::class)->select(['id', 'name', 'url', 'photo','level']);
+        return $this->belongsTo(User::class)->select(['id', 'name', 'url', 'photo', 'level']);
     }
 
     public function tags()
@@ -376,6 +376,15 @@ class Post extends BaseModel
     public function getFieldAttribute()
     {
         return is_array($this->data_field) ? (object) $this->data_field : $this->data_field;
+    }
+
+    public function field(?string $key = null, $default = null)
+    {
+        if (is_null($key)) {
+            return null;
+        }
+
+        return data_get($this->data_field, $key, $default);
     }
     public function getDataAttribute()
     {
@@ -1180,7 +1189,7 @@ class Post extends BaseModel
                 if (!isset($tree[$year]['months'][$month])) {
                     $tree[$year]['months'][$month] = [
                         'count' => 0,
-                        'name' => function_exists('blnindo') ? blnindo($month) : date('F', mktime(0, 0, 0, (int)$month, 10)),
+                        'name' => function_exists('blnindo') ? blnindo($month) : date('F', mktime(0, 0, 0, (int) $month, 10)),
                         'days' => []
                     ];
                 }

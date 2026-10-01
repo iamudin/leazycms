@@ -218,7 +218,7 @@ class CreateModuleCommand extends Command
             $this->line("   1. Cek ketersediaan modul : <comment>@if(current_module_exists('{$slug}'))</comment>");
             $this->line("   2. Ambil data di Beranda   : <comment>\${$slug} = query()->index_limit('{$slug}', 4);</comment>");
             $this->line("   3. Link Navigasi Header   : <comment><a href=\"{{ url('/{$slug}') }}\">{$title}</a></comment>");
-            $this->line("   4. Akses Custom Field     : <comment>{{ \$detail->field->nama_field ?? '' }}</comment>");
+            $this->line("   4. Akses Custom Field     : <comment>{{ \$detail->field('nama_field') }}</comment> atau <comment>{{ \$detail->field->nama_field ?? '' }}</comment>");
             if ($hasLooping) {
                 $this->line("   5. Akses Data Looping     : <comment>@foreach(\$detail->data as \$item) ... @endforeach</comment>");
             }

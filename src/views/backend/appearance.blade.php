@@ -83,7 +83,6 @@
                 
                 @if(is_main_domain() || get_option('can_upload_template', 'N') === 'Y')
                 <form action="{{ URL::full() }}" method="post" enctype="multipart/form-data" id="formUploadTemplate" class="mb-2">
-                    @csrf
                     @if(is_main_domain())
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold text-dark mb-1">Pilih Folder Template:</label>
