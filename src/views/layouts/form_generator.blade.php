@@ -1,4 +1,8 @@
 @php
+    $mod = $mod ?? (isset($module) ? get_module($module) : null);
+    if (!$mod || (config('modules.multisite_enabled') && function_exists('disallow_modules') && !empty($module) && disallow_modules($module))) {
+        return;
+    }
     $form_id = $form_id ?? ('lz-form-' . $module . '-' . uniqid());
     $action = $action ?? post_form_url($module);
     $submit_text = $submit_text ?? 'Kirim';

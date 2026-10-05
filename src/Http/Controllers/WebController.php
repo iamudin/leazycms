@@ -53,6 +53,10 @@ class WebController extends Controller
             abort(404, 'Modul tidak ditemukan.');
         }
 
+        if (config('modules.multisite_enabled') && function_exists('disallow_modules') && disallow_modules($module)) {
+            abort(404, 'Modul tidak ditemukan.');
+        }
+
         // 1. Anti-Spam Honeypot check
         if ($request->filled('_lz_hp')) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -514,6 +518,10 @@ class WebController extends Controller
     {
         $mod = get_module($module);
         if (!$mod) {
+            abort(404, 'Modul tidak ditemukan.');
+        }
+
+        if (config('modules.multisite_enabled') && function_exists('disallow_modules') && disallow_modules($module)) {
             abort(404, 'Modul tidak ditemukan.');
         }
 

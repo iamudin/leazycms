@@ -2037,6 +2037,64 @@ if (!function_exists('get_module')) {
         return json_decode(json_encode($modules->sort()));
     }
 }
+
+if (!function_exists('disallow_modules')) {
+    /**
+     * Dapatkan daftar modul yang dinonaktifkan atau cek apakah modul dilarang (disallow) pada multisite.
+     *
+     * @param string|array|null $module Nama modul untuk dicek, array untuk mendaftarkan modul terlarang, atau null untuk mengambil semua list.
+     * @return array|bool
+     */
+    function disallow_modules($module = null)
+    {
+        $disallowed = [];
+
+        if (config('modules.multisite_enabled')) {
+            $tenant = app()->bound('tenant') ? app('tenant') : (function_exists('tenant') ? tenant() : null);
+            $tenantModules = $tenant ? ($tenant->modules ?? []) : [];
+
+            if (is_string($tenantModules)) {
+                $tenantModules = json_decode($tenantModules, true) ?? [];
+            }
+            if (is_array($tenantModules)) {
+                $disallowed = array_merge($disallowed, $tenantModules);
+            }
+
+            $configDisallowed = config('modules.disallow_modules', []);
+            if (is_string($configDisallowed)) {
+                $configDisallowed = json_decode($configDisallowed, true) ?? [];
+            }
+            if (is_array($configDisallowed)) {
+                $disallowed = array_merge($disallowed, $configDisallowed);
+            }
+        }
+
+        // Jika parameter array: daftarkan/tambahkan modul yang dilarang secara dinamis
+        if (is_array($module)) {
+            $currentConfig = config('modules.disallow_modules', []);
+            if (is_string($currentConfig)) {
+                $currentConfig = json_decode($currentConfig, true) ?? [];
+            }
+            $merged = array_values(array_unique(array_merge((array) $currentConfig, $module)));
+            config(['modules.disallow_modules' => $merged]);
+            return array_values(array_unique(array_merge($disallowed, $merged)));
+        }
+
+        $disallowed = array_values(array_unique(array_filter($disallowed)));
+
+        // Jika parameter null: kembalikan seluruh array modul yang dilarang
+        if ($module === null) {
+            return $disallowed;
+        }
+
+        // Jika parameter string: cek apakah modul tersebut dilarang
+        $targetModule = strtolower(trim((string) $module));
+        $normalizedDisallowed = array_map(fn($m) => strtolower(trim((string) $m)), $disallowed);
+
+        return in_array($targetModule, $normalizedDisallowed, true);
+    }
+}
+
 if (!function_exists('blnindo')) {
     function blnindo(string $month)
     {
@@ -4454,11 +4512,19 @@ if (!function_exists('post_form')) {
      *
      * @param string $module Module name (e.g. 'ppdb', 'buku-tamu', 'guru', etc.)
      * @param array $options Configuration options (title_as_id, fields, title, title_field, status, redirect, submit_text, ajax, class, etc.)
-     * @return \Illuminate\Contracts\View\View
+     * @return \Illuminate\Contracts\View\View|string|null
      */
     function post_form(string $module, array $options = [])
     {
         $mod = get_module($module);
+        if (!$mod) {
+            return null;
+        }
+
+        if (config('modules.multisite_enabled') && function_exists('disallow_modules') && disallow_modules($module)) {
+            return null;
+        }
+
         $action = $options['action'] ?? post_form_url($module);
         $titleAsId = !empty($options['title_as_id']) ? $options['title_as_id'] : ($mod->form->title_as_id ?? false);
 
@@ -4728,6 +4794,14 @@ if (!function_exists('post_form_open')) {
     function post_form_open(string $module, array $options = []): string
     {
         $mod = get_module($module);
+        if (!$mod) {
+            return '';
+        }
+
+        if (config('modules.multisite_enabled') && function_exists('disallow_modules') && disallow_modules($module)) {
+            return '';
+        }
+
         $action = $options['action'] ?? post_form_url($module);
         $method = $options['method'] ?? 'POST';
         $class = $options['class'] ?? '';
@@ -4815,11 +4889,19 @@ if (!function_exists('post_tracker')) {
      *
      * @param string $module Module name
      * @param array $options Configuration options
-     * @return \Illuminate\Contracts\View\View
+     * @return \Illuminate\Contracts\View\View|null
      */
     function post_tracker(string $module, array $options = [])
     {
         $mod = get_module($module);
+        if (!$mod) {
+            return null;
+        }
+
+        if (config('modules.multisite_enabled') && function_exists('disallow_modules') && disallow_modules($module)) {
+            return null;
+        }
+
         $action = $options['action'] ?? post_track_url($module);
 
         $data = [
