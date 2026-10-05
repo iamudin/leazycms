@@ -18,13 +18,15 @@ Route::get('files', [PanelController::class, 'files'])->name('files');
 Route::get('global-media-list', [PanelController::class, 'globalMediaList'])->name('global.media.list');
 Route::match(['get', 'post'], 'security/blocked-ip', [PanelController::class, 'blockedIps'])->name('blocked-ip');
 Route::delete('security/blocked-ip/{blockedIp}', [PanelController::class, 'blockedIps'])->name('blocked-ip.destroy');
-Route::post('print/posts', [PostController::class, 'printPosts'])->name('print.posts');
+Route::match(['get', 'post'], 'print/posts', [PostController::class, 'printPosts'])->name('print.posts');
+Route::match(['get', 'post'], 'print/post/{id}', [PostController::class, 'printDetail'])->name('post.print_detail');
 Route::get('posts/filter-options', [PostController::class, 'filterOptions'])->name('posts.filter_options');
 foreach (get_module() as $value) {
     Route::controller(PostController::class)->group(function () use ($value) {
         if (in_array('index', $value->route)) {
             Route::get($value->name, 'index')->name($value->name);
             Route::post($value->name, 'datatable')->name($value->name . '.datatable');
+            Route::match(['get', 'post'], $value->name . '/{id}/print', 'printDetail')->name($value->name . '.print_detail');
         }
         if (in_array('create', $value->route)) {
 

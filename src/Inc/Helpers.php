@@ -66,10 +66,11 @@ if (!function_exists('captcha_verify')) {
             return false;
         }
 
-        $isValid = trim((string) $inputCode) === trim((string) $sessionCode);
+        $isValid = strcasecmp(trim((string) $inputCode), trim((string) $sessionCode)) === 0;
 
         if ($flush) {
             session()->forget('captcha_code');
+            session()->forget('captcha_token');
         }
 
         return $isValid;
@@ -354,8 +355,8 @@ if (!function_exists('add_view_stats')) {
 }
 function error500Msg($requestId)
 {
- 
-return "<!DOCTYPE html>
+
+    return "<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
@@ -2533,7 +2534,7 @@ if (!function_exists('set_header_seo')) {
         $current_module = get_module($data->type);
         $desctitle = !Str::contains($current_module->title, Str::of($data->title)->explode(' ')[0]) ? $current_module->title . ' ' . $data->title : $data->title;
         return array(
-            'post' => (object)[
+            'post' => (object) [
                 'user' => $data->user,
                 'created_at' => $data->created_at,
                 'updated_at' => $data->updated_at,
@@ -2761,18 +2762,27 @@ if (!function_exists('clean_summernote_content')) {
             return $content;
         }
 
-        // 1. Bersihkan zero-width spaces, BOM, invisible marks, dan karakter kontrol
+        // 1. Bersihkan null byte, zero-width spaces, BOM, invisible marks, dan karakter kontrol
+        $content = str_replace("\0", '', $content);
         $content = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{200E}\x{200F}\x{202A}-\x{202E}\x{2060}]/u', '', $content);
         $content = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $content);
 
         // 2. Hapus komentar HTML (<!-- ... -->)
         $content = preg_replace('/<!--[\s\S]*?-->/', '', $content);
 
-        // 3. Hapus atribut on* event handlers (onclick, onload, onerror, dll.)
-        $content = preg_replace('/\s+on[a-z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $content);
+        // 3. Hapus tag script, style, object, embed, applet, meta, link, base, form, button, input beserta isinya
+        $content = preg_replace('/<\s*(?:script|style|object|embed|applet|meta|link|base|form|button|input)\b[^>]*>.*?<\s*\/\s*(?:script|style|object|embed|applet|meta|link|base|form|button|input)\s*>/is', '', $content);
+        $content = preg_replace('/<\s*(?:script|style|object|embed|applet|meta|link|base|form|button|input)\b[^>]*\/?>/is', '', $content);
 
-        // 4. Hapus javascript: links pada href
-        $content = preg_replace('/\s+href\s*=\s*["\']\s*javascript:[^"\']*["\']/i', ' href="#"', $content);
+        // 4. Hapus seluruh atribut event handler on* (onclick, onload, onerror, onmouseover, dll.)
+        $content = preg_replace('/\s+on[a-z0-9_-]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/is', '', $content);
+
+        // 5. Hapus URI skema berbahaya javascript:, vbscript:, data:text/html pada href, src, dsb.
+        $content = preg_replace('/\s+(href|src|action|formaction|poster|background)\s*=\s*["\']\s*(?:javascript|vbscript|data\s*:\s*text\/html)[^"\']*["\']/is', ' $1="#"', $content);
+        $content = preg_replace('/\s+(href|src|action|formaction|poster|background)\s*=\s*(?:javascript|vbscript):[^\s>]*/is', ' $1="#"', $content);
+
+        // 6. Hapus CSS expression() atau behavior dalam inline style
+        $content = preg_replace('/\s+style\s*=\s*["\'][^"\']*(?:expression|behavior|javascript|vbscript)[^"\']*["\']/is', '', $content);
 
         return $content;
     }
@@ -4119,10 +4129,10 @@ if (!function_exists('get_master_ad')) {
         static $cachedAds = null;
         if ($cachedAds === null) {
             $adsRaw = get_option('master_ads', '[]');
-            $adsList = is_array($adsRaw) ? $adsRaw : (is_object($adsRaw) ? (array)$adsRaw : json_decode($adsRaw, true));
+            $adsList = is_array($adsRaw) ? $adsRaw : (is_object($adsRaw) ? (array) $adsRaw : json_decode($adsRaw, true));
             if (is_array($adsList) && !empty($adsList)) {
                 $cachedAds = array_values(array_filter($adsList, function ($item) {
-                    $itemArr = is_object($item) ? (array)$item : (is_array($item) ? $item : []);
+                    $itemArr = is_object($item) ? (array) $item : (is_array($item) ? $item : []);
                     $status = $itemArr['status'] ?? 0;
                     $isActive = in_array($status, [1, '1', true, 'true', 'active', 'on'], true);
                     return $isActive && !empty($itemArr['image']);
@@ -4137,7 +4147,7 @@ if (!function_exists('get_master_ad')) {
         }
 
         $filtered = array_values(array_filter($cachedAds, function ($item) use ($category) {
-            $itemArr = is_object($item) ? (array)$item : (is_array($item) ? $item : []);
+            $itemArr = is_object($item) ? (array) $item : (is_array($item) ? $item : []);
             $cat = $itemArr['category'] ?? 'in_article';
             if ($category === 'all' || $cat === 'all') {
                 return true;
@@ -4150,7 +4160,7 @@ if (!function_exists('get_master_ad')) {
         }
 
         $rawSelected = $filtered[array_rand($filtered)];
-        $selected = is_object($rawSelected) ? (array)$rawSelected : (is_array($rawSelected) ? $rawSelected : []);
+        $selected = is_object($rawSelected) ? (array) $rawSelected : (is_array($rawSelected) ? $rawSelected : []);
         if (!empty($selected['image']) && str_starts_with($selected['image'], '/media/')) {
             $selected['image'] = url($selected['image']);
         }
@@ -4174,16 +4184,16 @@ if (!function_exists('render_master_ad')) {
             return '';
         }
 
-        $adArr = is_object($ad) ? (array)$ad : (is_array($ad) ? $ad : []);
+        $adArr = is_object($ad) ? (array) $ad : (is_array($ad) ? $ad : []);
         $adTitle = htmlspecialchars($adArr['title'] ?? '');
         $badgeText = !empty($adTitle) ? $adTitle : 'Iklan';
-        $adLink  = !empty($adArr['link']) ? $adArr['link'] : '#';
+        $adLink = !empty($adArr['link']) ? $adArr['link'] : '#';
         $adImage = $adArr['image'] ?? '';
 
-        $wrapperStyle = match($category) {
+        $wrapperStyle = match ($category) {
             'widget_calendar' => 'margin: 12px 0 0 0; padding-top: 10px; border-top: 1px solid var(--cal-border, #e2e8f0); text-align: center; max-width: 100%; clear: both;',
-            'in_feed'         => 'margin: 0px auto; text-align: center; max-width: 100%; clear: both; width: 100%;',
-            default           => 'margin: 12px auto; text-align: center; max-width: 100%; clear: both;',
+            'in_feed' => 'margin: 0px auto; text-align: center; max-width: 100%; clear: both; width: 100%;',
+            default => 'margin: 12px auto; text-align: center; max-width: 100%; clear: both;',
         };
         return '
         <div class="tenant-global-ad-slot tenant-ad-' . e($category) . ' ' . e($extraClass) . '" style="' . $wrapperStyle . '">
@@ -4372,3 +4382,513 @@ if (!function_exists('get_master_tenant_notice')) {
         return $notice;
     }
 }
+
+if (!function_exists('generate_post_title_id')) {
+    /**
+     * Generate unique post title / registration ID (e.g. PPDB-02102026-A8K2)
+     * Format: [KODE MODUL]-ddmmyyyy-[4 karakter acak]
+     *
+     * @param string $module Module name
+     * @param mixed $options Boolean, string prefix, or array config
+     * @return string
+     */
+    function generate_post_title_id(string $module, $options = []): string
+    {
+        $prefix = null;
+        $separator = '-';
+        $dateFormat = 'dmY';
+        $randomLength = 4;
+
+        if (is_string($options) && !empty($options) && $options !== '1' && $options !== 'true') {
+            $prefix = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $options));
+        } elseif (is_array($options)) {
+            $prefix = !empty($options['prefix']) ? strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string) $options['prefix'])) : null;
+            $separator = $options['separator'] ?? '-';
+            $dateFormat = $options['format'] ?? 'dmY';
+            $randomLength = (int) ($options['length'] ?? 4);
+            if ($randomLength < 3)
+                $randomLength = 4;
+        }
+
+        if (empty($prefix)) {
+            $prefix = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $module));
+        }
+
+        $dateStr = now()->format($dateFormat);
+
+        do {
+            // Karakter alfanumerik kapital & angka jelas (hindari O, 0, I, 1 yang ambigu)
+            $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+            $randomStr = '';
+            for ($i = 0; $i < $randomLength; $i++) {
+                $randomStr .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+
+            $candidate = $prefix . $separator . $dateStr . $separator . $randomStr;
+
+            $query = \Leazycms\Web\Models\Post::onType($module)->where('title', $candidate);
+            if (config('modules.multisite_enabled') && function_exists('tenant') && tenant()) {
+                $query->where('tenant_id', tenant('id'));
+            }
+            $exists = $query->exists();
+        } while ($exists);
+
+        return $candidate;
+    }
+}
+
+if (!function_exists('post_form_url')) {
+    function post_form_url(string $module): string
+    {
+        return url('form-submit/' . $module);
+    }
+}
+
+if (!function_exists('post_form')) {
+    /**
+     * Generate HTML form for creating/inserting posts in a module with data_field support
+     *
+     * @param string $module Module name (e.g. 'ppdb', 'buku-tamu', 'guru', etc.)
+     * @param array $options Configuration options (title_as_id, fields, title, title_field, status, redirect, submit_text, ajax, class, etc.)
+     * @return \Illuminate\Contracts\View\View
+     */
+    function post_form(string $module, array $options = [])
+    {
+        $mod = get_module($module);
+        $action = $options['action'] ?? post_form_url($module);
+        $titleAsId = !empty($options['title_as_id']) ? $options['title_as_id'] : ($mod->form->title_as_id ?? false);
+
+        $fields = $options['fields'] ?? null;
+        if (empty($fields) && $mod) {
+            $fields = [];
+
+            // Standard Title field: hanya disertakan jika title_as_id tidak diaktifkan
+            if (!$titleAsId) {
+                $titleLabel = $mod->datatable->data_title ?? 'Judul';
+                $fields[] = [
+                    $titleLabel,
+                    [
+                        'type' => 'title',
+                        'name' => 'title',
+                        'required' => true,
+                        'placeholder' => 'Masukkan ' . strtolower($titleLabel),
+                    ]
+                ];
+            }
+
+            // Category field if module has category enabled
+            if (!empty($mod->form->category)) {
+                $categoryLabel = $options['category_label']
+                    ?? $options['category_title']
+                    ?? $options['kategori_label']
+                    ?? $options['kategori_title']
+                    ?? (is_string($options['category'] ?? null) ? $options['category'] : null)
+                    ?? ($options['category']['label'] ?? null)
+                    ?? ($options['kategori']['label'] ?? null)
+                    ?? ($mod->form->category_label ?? null)
+                    ?? ($mod->datatable->data_category ?? null)
+                    ?? 'Kategori';
+
+                $categoryRequired = isset($options['category_required'])
+                    ? (bool) $options['category_required']
+                    : (isset($options['category']['required'])
+                        ? (bool) $options['category']['required']
+                        : false);
+
+                $categoryPlaceholder = $options['category_placeholder']
+                    ?? ($options['category']['placeholder'] ?? ('-- Pilih ' . $categoryLabel . ' --'));
+
+                $categories = \Leazycms\Web\Models\Category::whereType($module)->get()->pluck('name', 'id')->toArray();
+                if (!empty($categories)) {
+                    $fields[] = [
+                        $categoryLabel,
+                        [
+                            'type' => 'category',
+                            'name' => 'category_id',
+                            'required' => $categoryRequired,
+                            'options' => $categories,
+                            'placeholder' => $categoryPlaceholder
+                        ]
+                    ];
+                }
+            }
+
+            // Thumbnail / Media if enabled
+            if (!empty($mod->form->thumbnail)) {
+                $mediaLabel = $options['media_label']
+                    ?? $options['media_title']
+                    ?? $options['thumbnail_label']
+                    ?? $options['thumbnail_title']
+                    ?? $options['foto_label']
+                    ?? (is_string($options['media'] ?? null) ? $options['media'] : null)
+                    ?? ($options['media']['label'] ?? null)
+                    ?? ($options['thumbnail']['label'] ?? null)
+                    ?? ($mod->form->thumbnail_label ?? null)
+                    ?? ($mod->form->media_label ?? null)
+                    ?? ($mod->datatable->data_media ?? null)
+                    ?? ($mod->datatable->data_thumbnail ?? null)
+                    ?? 'Foto / Media';
+
+                $mediaRequired = isset($options['media_required'])
+                    ? (bool) $options['media_required']
+                    : (isset($options['media']['required'])
+                        ? (bool) $options['media']['required']
+                        : false);
+
+                $mediaHelper = $options['media_helper']
+                    ?? ($options['media']['helper'] ?? 'Format: JPG, PNG, WEBP');
+
+                $mediaAccept = $options['media_accept']
+                    ?? ($options['media']['accept'] ?? 'image/*');
+
+                $fields[] = [
+                    $mediaLabel,
+                    [
+                        'type' => 'media',
+                        'name' => 'media',
+                        'required' => $mediaRequired,
+                        'accept' => $mediaAccept,
+                        'helper' => $mediaHelper
+                    ]
+                ];
+            }
+
+            // Description if enabled
+            if (!empty($mod->form->description)) {
+                $fields[] = [
+                    'Deskripsi Singkat',
+                    [
+                        'type' => 'description',
+                        'name' => 'description',
+                        'required' => false,
+                    ]
+                ];
+            }
+
+            // Custom fields from module definition
+            if (!empty($mod->form->custom_field)) {
+                $exceptList = (array) ($options['except'] ?? $options['exclude'] ?? []);
+                $exceptKeys = array_map(fn($k) => _us($k), $exceptList);
+
+                foreach ($mod->form->custom_field as $cf) {
+                    $label = $cf[0] ?? '';
+                    $meta = $cf[1] ?? [];
+                    if (is_object($meta))
+                        $meta = (array) $meta;
+
+                    // Pengecualian field admin-only atau public=false
+                    if (isset($meta['public']) && $meta['public'] === false) {
+                        continue;
+                    }
+                    if (!empty($meta['admin_only']) || !empty($meta['hide_public'])) {
+                        continue;
+                    }
+
+                    $cfKey = _us($meta['key'] ?? $label);
+                    $isExcluded = false;
+                    foreach ($exceptKeys as $ex) {
+                        if ($cfKey === $ex || \Illuminate\Support\Str::is($ex, $cfKey) || \Illuminate\Support\Str::contains($cfKey, $ex)) {
+                            $isExcluded = true;
+                            break;
+                        }
+                    }
+                    if ($isExcluded) {
+                        continue;
+                    }
+
+                    $fields[] = $cf;
+                }
+            }
+
+            // Content / Editor if enabled
+            if (!empty($mod->form->editor)) {
+                $fields[] = [
+                    'Isi / Keterangan',
+                    [
+                        'type' => 'content',
+                        'name' => 'content',
+                        'required' => false,
+                    ]
+                ];
+            }
+        }
+
+        // Jika title_as_id aktif dan fields diberikan secara manual, filter out field title
+        if ($titleAsId && !empty($fields)) {
+            $fields = array_values(array_filter($fields, function ($f) {
+                $meta = $f[1] ?? [];
+                if (is_array($meta)) {
+                    if (($meta['type'] ?? '') === 'title' || ($meta['name'] ?? '') === 'title') {
+                        return false;
+                    }
+                } elseif (is_string($meta) && $meta === 'title') {
+                    return false;
+                }
+                return true;
+            }));
+        }
+
+        // Jika label media dikustomisasi dan fields diberikan secara manual, sesuaikan labelnya
+        if (!empty($fields)) {
+            $customMediaLabel = $options['media_label']
+                ?? $options['media_title']
+                ?? $options['thumbnail_label']
+                ?? $options['thumbnail_title']
+                ?? $options['foto_label']
+                ?? (is_string($options['media'] ?? null) ? $options['media'] : null)
+                ?? ($options['media']['label'] ?? null)
+                ?? ($options['thumbnail']['label'] ?? null);
+
+            if ($customMediaLabel) {
+                foreach ($fields as &$f) {
+                    $meta = $f[1] ?? [];
+                    if (is_array($meta) && (($meta['type'] ?? '') === 'media' || ($meta['name'] ?? '') === 'media')) {
+                        $f[0] = $customMediaLabel;
+                    }
+                }
+                unset($f);
+            }
+
+            $customCategoryLabel = $options['category_label']
+                ?? $options['category_title']
+                ?? $options['kategori_label']
+                ?? $options['kategori_title']
+                ?? (is_string($options['category'] ?? null) ? $options['category'] : null)
+                ?? ($options['category']['label'] ?? null)
+                ?? ($options['kategori']['label'] ?? null);
+
+            if ($customCategoryLabel) {
+                foreach ($fields as &$f) {
+                    $meta = $f[1] ?? [];
+                    if (is_array($meta) && (($meta['type'] ?? '') === 'category' || ($meta['name'] ?? '') === 'category_id' || ($meta['type'] ?? '') === 'category_id')) {
+                        $f[0] = $customCategoryLabel;
+                    }
+                }
+                unset($f);
+            }
+        }
+
+        $hasCaptcha = isset($options['captcha'])
+            ? !empty($options['captcha'])
+            : (!empty($mod->form->captcha));
+
+        $captchaLabel = $options['captcha_label']
+            ?? $options['captcha_title']
+            ?? (is_array($options['captcha'] ?? null) ? ($options['captcha']['label'] ?? $options['captcha']['title'] ?? null) : null)
+            ?? (is_string($options['captcha'] ?? null) ? $options['captcha'] : null)
+            ?? 'Kode Keamanan';
+
+        $captchaPlaceholder = $options['captcha_placeholder']
+            ?? (is_array($options['captcha'] ?? null) ? ($options['captcha']['placeholder'] ?? null) : null)
+            ?? 'Ketik 5 digit kode di atas';
+
+        $data = [
+            'module' => $module,
+            'mod' => $mod,
+            'action' => $action,
+            'fields' => $fields ?? [],
+            'options' => $options,
+            'title_as_id' => $titleAsId,
+            'status' => $options['status'] ?? 'publish',
+            'title_field' => $options['title_field'] ?? null,
+            'redirect' => $options['redirect'] ?? null,
+            'success_message' => $options['success_message'] ?? 'Data berhasil disimpan.',
+            'submit_text' => $options['submit_text'] ?? 'Kirim',
+            'submit_class' => $options['submit_class'] ?? '',
+            'form_class' => $options['class'] ?? '',
+            'form_id' => $options['id'] ?? ('lz-form-' . $module . '-' . uniqid()),
+            'ajax' => $options['ajax'] ?? false,
+            'has_captcha' => $hasCaptcha,
+            'captcha_label' => $captchaLabel,
+            'captcha_placeholder' => $captchaPlaceholder,
+        ];
+
+        return \Illuminate\Support\Facades\View::make('cms::layouts.form_generator', $data);
+    }
+}
+
+if (!function_exists('form_generator')) {
+    /**
+     * Alias for post_form()
+     */
+    function form_generator(string $module, array $options = [])
+    {
+        return post_form($module, $options);
+    }
+}
+
+if (!function_exists('post_form_open')) {
+    /**
+     * Open a manual HTML form for inserting posts
+     */
+    function post_form_open(string $module, array $options = []): string
+    {
+        $mod = get_module($module);
+        $action = $options['action'] ?? post_form_url($module);
+        $method = $options['method'] ?? 'POST';
+        $class = $options['class'] ?? '';
+        $id = $options['id'] ?? ('form-' . $module);
+        $enctype = 'multipart/form-data';
+        $csrf = csrf_field();
+        $status = $options['status'] ?? 'publish';
+        $redirect = $options['redirect'] ?? '';
+        $titleField = $options['title_field'] ?? '';
+        $titleAsId = !empty($options['title_as_id']) ? $options['title_as_id'] : ($mod->form->title_as_id ?? false);
+        $titleAsIdStr = is_array($titleAsId) ? json_encode($titleAsId) : ($titleAsId === true ? '1' : (string) ($titleAsId ?: ''));
+        $successMsg = $options['success_message'] ?? 'Data berhasil disimpan.';
+        $exceptList = (array) ($options['except'] ?? $options['exclude'] ?? []);
+        $exceptKeys = array_map(fn($k) => _us($k), $exceptList);
+        $exceptString = implode(',', $exceptKeys);
+        $hasCaptcha = isset($options['captcha'])
+            ? !empty($options['captcha'])
+            : (!empty($mod->form->captcha));
+        $captchaStr = $hasCaptcha ? '1' : '0';
+
+        // HMAC Signature untuk proteksi status, redirect, title_as_id, captcha, dan field pengecualian dari manipulasi
+        $sigPayload = $module . '|' . $status . '|' . ($titleField ?? '') . '|' . ($redirect ?? '') . '|' . $exceptString . '|' . $titleAsIdStr . '|' . $captchaStr;
+        $sig = hash_hmac('sha256', $sigPayload, config('app.key'));
+
+        $safeAction = htmlspecialchars($action, ENT_QUOTES, 'UTF-8');
+        $safeClass = htmlspecialchars($class, ENT_QUOTES, 'UTF-8');
+        $safeId = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
+        $safeStatus = htmlspecialchars($status, ENT_QUOTES, 'UTF-8');
+        $safeRedirect = htmlspecialchars($redirect, ENT_QUOTES, 'UTF-8');
+        $safeTitleField = htmlspecialchars($titleField, ENT_QUOTES, 'UTF-8');
+        $safeTitleAsId = htmlspecialchars($titleAsIdStr, ENT_QUOTES, 'UTF-8');
+        $safeSuccessMsg = htmlspecialchars($successMsg, ENT_QUOTES, 'UTF-8');
+        $safeExcept = htmlspecialchars($exceptString, ENT_QUOTES, 'UTF-8');
+
+        $html = "<form action=\"{$safeAction}\" method=\"{$method}\" enctype=\"{$enctype}\" class=\"{$safeClass}\" id=\"{$safeId}\">";
+        $html .= $csrf;
+        $html .= "<div style=\"display:none !important; opacity:0; position:absolute; left:-9999px;\" aria-hidden=\"true\"><input type=\"text\" name=\"_lz_hp\" value=\"\" tabindex=\"-1\" autocomplete=\"off\"></div>";
+        $html .= "<input type=\"hidden\" name=\"_lz_sig\" value=\"{$sig}\">";
+        $html .= "<input type=\"hidden\" name=\"_lz_ts\" value=\"" . time() . "\">";
+        $html .= "<input type=\"hidden\" name=\"_status\" value=\"{$safeStatus}\">";
+        if ($exceptString) {
+            $html .= "<input type=\"hidden\" name=\"_except\" value=\"{$safeExcept}\">";
+        }
+        if ($redirect) {
+            $html .= "<input type=\"hidden\" name=\"_redirect\" value=\"{$safeRedirect}\">";
+        }
+        if ($titleField) {
+            $html .= "<input type=\"hidden\" name=\"_title_field\" value=\"{$safeTitleField}\">";
+        }
+        if (!empty($titleAsIdStr)) {
+            $html .= "<input type=\"hidden\" name=\"_title_as_id\" value=\"{$safeTitleAsId}\">";
+        }
+        if ($hasCaptcha) {
+            $html .= "<input type=\"hidden\" name=\"_captcha\" value=\"1\">";
+        }
+        $html .= "<input type=\"hidden\" name=\"_success_message\" value=\"{$safeSuccessMsg}\">";
+
+        return $html;
+    }
+}
+
+if (!function_exists('post_form_close')) {
+    /**
+     * Close a manual HTML form
+     */
+    function post_form_close(): string
+    {
+        return "</form>";
+    }
+}
+
+if (!function_exists('post_track_url')) {
+    /**
+     * Get tracking submission URL
+     */
+    function post_track_url(string $module): string
+    {
+        return url('lz-track/' . $module);
+    }
+}
+
+if (!function_exists('post_tracker')) {
+    /**
+     * Generate HTML search/tracking widget for public data lookup (by NIK, NIP, NISN, dll)
+     *
+     * @param string $module Module name
+     * @param array $options Configuration options
+     * @return \Illuminate\Contracts\View\View
+     */
+    function post_tracker(string $module, array $options = [])
+    {
+        $mod = get_module($module);
+        $action = $options['action'] ?? post_track_url($module);
+
+        $data = [
+            'module' => $module,
+            'mod' => $mod,
+            'action' => $action,
+            'options' => $options,
+            'title' => $options['title'] ?? ('Tracking & Cek Status ' . ($mod->title ?? ucfirst($module))),
+            'description' => $options['description'] ?? 'Masukkan nomor identitas (NIK / NIP / NISN / No. Pendaftaran) untuk melakukan pengecekan data.',
+            'field' => $options['field'] ?? ($options['by'] ?? null),
+            'field_label' => $options['field_label'] ?? 'Nomor Identitas (NIK / NIP / NISN / No. Pendaftaran)',
+            'placeholder' => $options['placeholder'] ?? 'Contoh: 3201xxxxxxxxxxxx',
+            'submit_text' => $options['submit_text'] ?? 'Cek Status',
+            'ajax' => $options['ajax'] ?? true,
+            'show_fields' => $options['show_fields'] ?? [],
+            'class' => $options['class'] ?? '',
+            'tracker_id' => $options['id'] ?? ('lz-tracker-' . $module . '-' . uniqid()),
+        ];
+
+        return \Illuminate\Support\Facades\View::make('cms::layouts.data_tracker', $data);
+    }
+}
+
+if (!function_exists('data_tracker')) {
+    /**
+     * Alias for post_tracker()
+     */
+    function data_tracker(string $module, array $options = [])
+    {
+        return post_tracker($module, $options);
+    }
+}
+
+if (!function_exists('track_post')) {
+    /**
+     * Direct query helper to find post by custom_field or title for tracking
+     *
+     * @param string $module
+     * @param string|array $fields
+     * @param string $keyword
+     * @return \Leazycms\Web\Models\Post|null
+     */
+    function track_post(string $module, $fields, string $keyword)
+    {
+        $keyword = trim((string) $keyword);
+        $keyword = str_replace("\0", '', $keyword);
+        $keyword = mb_substr(strip_tags($keyword), 0, 100);
+
+        if (empty($keyword)) {
+            return null;
+        }
+
+        $searchFields = is_array($fields) ? $fields : explode(',', (string) $fields);
+        // SQLi Prevention: whitelist hanya alfanumerik dan underscore
+        $searchFields = array_unique(array_filter(array_map(function ($f) {
+            return preg_replace('/[^a-zA-Z0-9_]/', '', (string) $f);
+        }, $searchFields)));
+
+        $query = \Leazycms\Web\Models\Post::onType($module)->published();
+        if (config('modules.multisite_enabled') && function_exists('tenant') && tenant()) {
+            $query->where('tenant_id', tenant('id'));
+        }
+
+        $query->where(function ($q) use ($searchFields, $keyword) {
+            foreach ($searchFields as $sf) {
+                if (!empty($sf)) {
+                    $q->orWhere('data_field->' . $sf, $keyword);
+                }
+            }
+            $q->orWhere('title', $keyword);
+        });
+
+        return $query->latest()->first();
+    }
+}
+

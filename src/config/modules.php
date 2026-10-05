@@ -37,7 +37,7 @@ return [
             'public' => true,
             'active' => true,
         ],
-        
+
         'pengumuman' => [
             'position' => 3,
             'name' => 'pengumuman',
@@ -891,7 +891,7 @@ return [
             'cache' => false,
             'active' => true,
         ],
-         'report-bug' => [
+        'report-bug' => [
             'position' => 11,
             'name' => 'report-bug',
             'title' => 'Lapor Admin',
@@ -900,7 +900,7 @@ return [
             'icon' => 'fa-bug',
             'route' => ['index', 'create', 'show', 'update', 'delete'],
             'datatable' => [
-                'custom_column' => ['Keterangan','Bukti Screenshoot','Status Laporan'],
+                'custom_column' => ['Keterangan', 'Bukti Screenshoot', 'Status Laporan'],
                 'data_title' => 'Subjek Laporan Masalah',
             ],
             'form' => [
@@ -913,9 +913,9 @@ return [
                 'looping_name' => 'Daftar Menu',
                 'looping_data' => false,
                 'custom_field' => [
-                    ['Keterangan', ['type'=>'rich-text','required' => true]],
-                    ['Bukti Screenshoot', ['required' => true,'type'=>'file','mime_type'=>'image/png,image/jpeg,image/gif,image/webp','required' => true]],
-                    ['Status Laporan', ['type'=>['Baru','Diproses','Selesai'], 'only_user_id' => 1]]
+                    ['Keterangan', ['type' => 'rich-text', 'required' => true]],
+                    ['Bukti Screenshoot', ['required' => true, 'type' => 'file', 'mime_type' => 'image/png,image/jpeg,image/gif,image/webp', 'required' => true]],
+                    ['Status Laporan', ['type' => ['Baru', 'Diproses', 'Selesai'], 'only_user_id' => 1]]
                 ],
             ],
             'web' => [
@@ -1606,10 +1606,10 @@ return [
     'option' => array(),
     'used' => array(),
     'cpanel_api' => [
-        'host' => env('CPANEL_HOST',null),
-        'username' => env('CPANEL_USERNAME',null),
-        'api_token' => env('CPANEL_API_TOKEN',null),
-        'default_directory' => env('CPANEL_DEFAULT_DIRECTORY',null),
+        'host' => env('CPANEL_HOST', null),
+        'username' => env('CPANEL_USERNAME', null),
+        'api_token' => env('CPANEL_API_TOKEN', null),
+        'default_directory' => env('CPANEL_DEFAULT_DIRECTORY', null),
     ],
     'admin_path' => env('ADMIN_PATH', 'WVdSdGFXND0'),
     'current' => null,

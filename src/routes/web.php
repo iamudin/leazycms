@@ -75,10 +75,12 @@ if ($webroute = get_non_domain_routes()) {
 Route::match(['get', 'post'], '/', [WebController::class, 'home'])->name('home')->middleware(['public', TrackVisitor::class]);
 Route::get('logo.webp', [Leazycms\Web\Http\Controllers\VisitorStatsController::class, 'logoGenerator'])->name('logo');
 Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
+Route::post('form-submit/{module}', [WebController::class, 'formSubmit'])->name('post.form.submit')->middleware(['public', TrackVisitor::class, 'throttle:20,1']);
+Route::match(['get', 'post'], 'lz-track/{module}', [WebController::class, 'track'])->name('post.track')->middleware(['public', TrackVisitor::class, 'throttle:30,1']);
 
 Route::match(['get', 'post'], '/{slug}', [WebController::class, 'detail'])
     ->where('slug', '(?!(?:' . implode('|', array_merge(
-        [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.icon', 'logo.webp', 'stats.webp', 'lz-tts'],
+        [admin_path(), 'search', 'tags', 'log-viewer', 'author', 'sitemap.xml', 'favicon.icon', 'logo.webp', 'stats.webp', 'lz-tts', 'form-submit', 'lz-track'],
         $modules->pluck('name')->toArray()
     )) . ')$)[a-zA-Z0-9-_]+')
     ->middleware(['public', TrackVisitor::class]);

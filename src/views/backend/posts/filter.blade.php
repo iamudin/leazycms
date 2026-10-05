@@ -171,7 +171,11 @@ function submitPrintFilter() {
         return false;
     }
     @endif
-    $('.submit-filter').click();
+    if (typeof window.printFilteredPosts === 'function') {
+        window.printFilteredPosts();
+    } else {
+        $('.submit-filter').click();
+    }
 }
 
 @if($multisiteEnabled)

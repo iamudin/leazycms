@@ -222,6 +222,7 @@ class CreateModuleCommand extends Command
             if ($hasLooping) {
                 $this->line("   5. Akses Data Looping     : <comment>@foreach(\$detail->data as \$item) ... @endforeach</comment>");
             }
+            $this->line("   " . ($hasLooping ? '6' : '5') . ". Form Generator Publik  : <comment>{!! post_form('{$slug}') !!}</comment>");
         } else {
             $this->warn("Modul tidak disimpan. Anda dapat menyalin kode pratinjau di atas secara manual.");
         }

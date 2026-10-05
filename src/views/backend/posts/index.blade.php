@@ -3,7 +3,8 @@
 
   <div class="row">
     <!-- Modern Background Watermark -->
-    <i class="fa {{get_module_info('icon')}}" style="position: fixed; right: -5%; top: 20%; font-size: 80vh; color: rgba(0, 0, 0, 0.1); z-index: 0; pointer-events: none; transform: rotate(-15deg);"></i>
+    <i class="fa {{get_module_info('icon')}}"
+      style="position: fixed; right: -5%; top: 20%; font-size: 80vh; color: rgba(0, 0, 0, 0.1); z-index: 0; pointer-events: none; transform: rotate(-15deg);"></i>
 
     <div class="col-lg-12 mb-3" style="position: relative; z-index: 1;">
       <h3 style="font-weight:normal;float:left;"> <i class="fa {{get_module_info('icon')}}" aria-hidden="true"></i>
@@ -20,8 +21,8 @@
                 title="Lihat di Halaman Web Utama"></i> Lihat di Web</a>
           @endif
           @if(!empty($module->guide))
-            <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#guideModal"> <i
-                class="fa fa-question" aria-hidden title="Lihat Panduan"></i> Panduan Modul</button>
+            <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#guideModal"> <i class="fa fa-question"
+                aria-hidden title="Lihat Panduan"></i> Panduan Modul</button>
           @endif
         </div>
       </div>
@@ -39,10 +40,10 @@
             ->when(!$canSeeAll, fn($q) => $q->whereBelongsTo($user))
             ->withTrashed()
             ->selectRaw("
-                            SUM(deleted_at IS NULL AND status = 'publish') as publish,
-                            SUM(deleted_at IS NULL AND status = 'draft') as draft,
-                            SUM(deleted_at IS NOT NULL) as trash
-                        ")->first();
+                                      SUM(deleted_at IS NULL AND status = 'publish') as publish,
+                                      SUM(deleted_at IS NULL AND status = 'draft') as draft,
+                                      SUM(deleted_at IS NOT NULL) as trash
+                                  ")->first();
 
           $publish = $counts->publish ?? 0;
           $draft = $counts->draft ?? 0;
@@ -54,7 +55,8 @@
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-            <h4 id="count-publish" class="counter-effect" data-target="{{ $publish }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+            <h4 id="count-publish" class="counter-effect" data-target="{{ $publish }}"
+              style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
               0</h4>
             <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
               Dipublikasi</p>
@@ -69,7 +71,8 @@
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #fd7e14 0%, #e85d04 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-            <h4 id="count-draft" class="counter-effect" data-target="{{ $draft }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+            <h4 id="count-draft" class="counter-effect" data-target="{{ $draft }}"
+              style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
               0</h4>
             <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
               Draft</p>
@@ -85,7 +88,9 @@
                 style="position: relative; overflow: hidden; background: linear-gradient(135deg, #6f42c1 0%, #59359a 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
                 onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
                 onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-                <h4 id="count-category" class="counter-effect" data-target="{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+                <h4 id="count-category" class="counter-effect"
+                  data-target="{{ \Leazycms\Web\Models\Category::onType(get_post_type())->count() }}"
+                  style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
                   0</h4>
                 <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
                   Kategori</p>
@@ -101,7 +106,8 @@
             style="position: relative; overflow: hidden; background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; transition: all 0.2s;"
             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
-            <h4 id="count-trash" class="counter-effect" data-target="{{ $trash }}" style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
+            <h4 id="count-trash" class="counter-effect" data-target="{{ $trash }}"
+              style="margin: 0; font-weight: bold; font-size: 26px; color: #ffffff; position: relative; z-index: 2;">
               0</h4>
             <p style="margin: 5px 0 0; font-size: 14px; color: rgba(255,255,255,0.85); position: relative; z-index: 2;">
               Sampah</p>
@@ -144,37 +150,43 @@
       </div>
       <style>
         .dataTables_wrapper {
-            background: rgba(255, 255, 255, 0.3) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-            position: relative;
-            z-index: 1;
+          background: rgba(255, 255, 255, 0.3) !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+          padding: 15px;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+          position: relative;
+          z-index: 1;
         }
+
         table.dataTable {
-            background: transparent !important;
+          background: transparent !important;
         }
+
         table.dataTable tbody tr {
-            background-color: rgba(255, 255, 255, 0.2) !important;
+          background-color: rgba(255, 255, 255, 0.2) !important;
         }
+
         table.dataTable tbody tr.odd {
-            background-color: rgba(255, 255, 255, 0.4) !important;
+          background-color: rgba(255, 255, 255, 0.4) !important;
         }
+
         table.dataTable tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.6) !important;
+          background-color: rgba(255, 255, 255, 0.6) !important;
         }
-        table.dataTable tbody td, table.dataTable thead th {
-            background-color: transparent !important;
-            border-color: rgba(0, 0, 0, 0.05) !important;
+
+        table.dataTable tbody td,
+        table.dataTable thead th {
+          background-color: transparent !important;
+          border-color: rgba(0, 0, 0, 0.05) !important;
         }
+
         table.dataTable thead {
-            background: rgba(255, 255, 255, 0.5) !important;
+          background: rgba(255, 255, 255, 0.5) !important;
         }
       </style>
-      <table class="display table table-hover table-bordered datatable table-striped"
-        style="width:100%;">
+      <table class="display table table-hover table-bordered datatable table-striped" style="width:100%;">
         <thead style="text-transform:uppercase;color:#444;font-size:small; background: rgba(255, 255, 255, 0.4);">
           <tr>
             <th style="width:10px;vertical-align: middle">
@@ -186,7 +198,8 @@
               </div>
             </th>
             @if(current_module()->web->sortable ?? false)
-              <th style="width:10px;vertical-align: middle" title="Tarik &amp; Lepas untuk mengubah urutan"><i class="fa fa-sort-amount-up"></i></th>
+              <th style="width:10px;vertical-align: middle" title="Tarik &amp; Lepas untuk mengubah urutan"><i
+                  class="fa fa-sort-amount-up"></i></th>
             @endif
             @if(isset(current_module()->datatable?->index_column) && current_module()->datatable?->index_column == true)
               <th style="width:10px;vertical-align: middle">#</th>
@@ -265,7 +278,7 @@
 
           <!-- Daftar komentar -->
           <ul id="commentList" class="list-group"></ul>
-          
+
           <!-- Paginasi komentar -->
           <div id="commentPagination" class="mt-3 d-flex justify-content-center"></div>
         </div>
@@ -352,13 +365,13 @@
         } else {
 
           content = `
-                                                                                                                                                                                                                                                                                                                          <div class="text-center">
-                                                                                                                                                                                                                                                                                                                              <p>File tidak dapat dilihat.</p>
-                                                                                                                                                                                                                                                                                                                              <a href="${url}" class="btn btn-primary" download>
-                                                                                                                                                                                                                                                                                                                                  Download File
-                                                                                                                                                                                                                                                                                                                              </a>
-                                                                                                                                                                                                                                                                                                                          </div>
-                                                                                                                                                                                                                                                                                                                      `;
+                                                                                                                                                                                                                                                                                                                              <div class="text-center">
+                                                                                                                                                                                                                                                                                                                                  <p>File tidak dapat dilihat.</p>
+                                                                                                                                                                                                                                                                                                                                  <a href="${url}" class="btn btn-primary" download>
+                                                                                                                                                                                                                                                                                                                                      Download File
+                                                                                                                                                                                                                                                                                                                                  </a>
+                                                                                                                                                                                                                                                                                                                              </div>
+                                                                                                                                                                                                                                                                                                                          `;
         }
 
         $('#mediaContent').html(content);
@@ -366,108 +379,108 @@
       });
     </script>
     <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      function showComments(postId, page = 1) {
-        $("#commentLoader").show();
-        $("#commentList").empty();
-        $("#commentPagination").empty();
-        $("#modalPostId").text("");
-        $("#commentModal").modal("show");
+      document.addEventListener("DOMContentLoaded", function () {
+        function showComments(postId, page = 1) {
+          $("#commentLoader").show();
+          $("#commentList").empty();
+          $("#commentPagination").empty();
+          $("#modalPostId").text("");
+          $("#commentModal").modal("show");
 
-        $.ajax({
-          url: `{{ route('comments.get', '') }}/${postId}?page=${page}`,
-          method: "GET",
-          success: function (res) {
-            $("#commentLoader").hide();
-            $("#modalPostId").text(res.title);
-            let comments = res.comments || [];
+          $.ajax({
+            url: `{{ route('comments.get', '') }}/${postId}?page=${page}`,
+            method: "GET",
+            success: function (res) {
+              $("#commentLoader").hide();
+              $("#modalPostId").text(res.title);
+              let comments = res.comments || [];
 
-            if (comments.length === 0) {
-              $("#commentList").append(`<li class="list-group-item text-muted">Belum ada komentar</li>`);
-            } else {
-              comments.forEach(c => {
-                let metaHtml = '';
-                try {
+              if (comments.length === 0) {
+                $("#commentList").append(`<li class="list-group-item text-muted">Belum ada komentar</li>`);
+              } else {
+                comments.forEach(c => {
+                  let metaHtml = '';
+                  try {
                     let metaObj = typeof c.comment_meta === 'string' ? JSON.parse(c.comment_meta) : c.comment_meta;
                     if (metaObj && typeof metaObj === 'object' && Object.keys(metaObj).length > 0) {
-                        metaHtml += '<div class="mt-2 p-2 bg-light border rounded" style="font-size:0.85em;"><strong class="text-muted d-block mb-1">Informasi Tambahan:</strong><ul class="list-unstyled mb-0">';
-                        for (let key in metaObj) {
-                            let val = metaObj[key];
-                            let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                            
-                            if (val && typeof val === 'string' && (val.match(/\.(webp|pdf)$/i) || val.startsWith('/media') || val.startsWith('/storage/'))) {
-                                if (val.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-                                    metaHtml += `<li><strong>${displayKey}:</strong> <br><a href="${val}" target="_blank"><img src="${val}" style="max-height: 80px; max-width: 100%;" class="img-thumbnail mt-1"></a></li>`;
-                                } else {
-                                    metaHtml += `<li><strong>${displayKey}:</strong> <a href="${val}" target="_blank" class="badge badge-info"><i class="fa fa-download"></i> Unduh Lampiran</a></li>`;
-                                }
-                            } else {
-                                metaHtml += `<li><strong>${displayKey}:</strong> ${val}</li>`;
-                            }
+                      metaHtml += '<div class="mt-2 p-2 bg-light border rounded" style="font-size:0.85em;"><strong class="text-muted d-block mb-1">Informasi Tambahan:</strong><ul class="list-unstyled mb-0">';
+                      for (let key in metaObj) {
+                        let val = metaObj[key];
+                        let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                        if (val && typeof val === 'string' && (val.match(/\.(webp|pdf)$/i) || val.startsWith('/media') || val.startsWith('/storage/'))) {
+                          if (val.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                            metaHtml += `<li><strong>${displayKey}:</strong> <br><a href="${val}" target="_blank"><img src="${val}" style="max-height: 80px; max-width: 100%;" class="img-thumbnail mt-1"></a></li>`;
+                          } else {
+                            metaHtml += `<li><strong>${displayKey}:</strong> <a href="${val}" target="_blank" class="badge badge-info"><i class="fa fa-download"></i> Unduh Lampiran</a></li>`;
+                          }
+                        } else {
+                          metaHtml += `<li><strong>${displayKey}:</strong> ${val}</li>`;
                         }
-                        metaHtml += '</ul></div>';
+                      }
+                      metaHtml += '</ul></div>';
                     }
-                } catch(e) { console.error('Error parsing comment meta', e); }
+                  } catch (e) { console.error('Error parsing comment meta', e); }
 
-                let contactHtml = '';
-                if (c.email) contactHtml += `<i class="fa fa-envelope"></i> ${c.email}`;
-                if (c.link) contactHtml += `<a href="${c.link}" target="_blank" class="text-muted ml-1" title="${c.link}"><i class="fa fa-link"></i></a>`;
+                  let contactHtml = '';
+                  if (c.email) contactHtml += `<i class="fa fa-envelope"></i> ${c.email}`;
+                  if (c.link) contactHtml += `<a href="${c.link}" target="_blank" class="text-muted ml-1" title="${c.link}"><i class="fa fa-link"></i></a>`;
 
-                $("#commentList").append(`
-                  <li class="list-group-item">
-                    <strong>
-                      <i class="fa fa-user"></i> ${c.name} ${contactHtml}
-                      <span class="float-right ml-2"> <code><i class="fa fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString("id-ID", {
-                        day: "numeric", month: "long", year: "numeric"
-                      }) + " " + new Date(c.created_at).toLocaleTimeString("id-ID", {
-                        hour: "2-digit", minute: "2-digit"
-                      })}</code></span>
-                    </strong>
-                    <br>
-                    <div style="font-size:0.9em; margin-top:5px;">${c.content}</div>
-                    ${metaHtml}
-                  </li>
-                `);
-              });
-              
-              // Render pagination
-              if (res.last_page > 1) {
+                  $("#commentList").append(`
+                      <li class="list-group-item">
+                        <strong>
+                          <i class="fa fa-user"></i> ${c.name} ${contactHtml}
+                          <span class="float-right ml-2"> <code><i class="fa fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString("id-ID", {
+                    day: "numeric", month: "long", year: "numeric"
+                  }) + " " + new Date(c.created_at).toLocaleTimeString("id-ID", {
+                    hour: "2-digit", minute: "2-digit"
+                  })}</code></span>
+                        </strong>
+                        <br>
+                        <div style="font-size:0.9em; margin-top:5px;">${c.content}</div>
+                        ${metaHtml}
+                      </li>
+                    `);
+                });
+
+                // Render pagination
+                if (res.last_page > 1) {
                   let paginationHtml = '<ul class="pagination pagination-sm">';
-                  
+
                   // Prev
                   if (res.current_page > 1) {
-                      paginationHtml += `<li class="page-item"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${res.current_page - 1})">Prev</a></li>`;
+                    paginationHtml += `<li class="page-item"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${res.current_page - 1})">Prev</a></li>`;
                   } else {
-                      paginationHtml += `<li class="page-item disabled"><a class="page-link">Prev</a></li>`;
+                    paginationHtml += `<li class="page-item disabled"><a class="page-link">Prev</a></li>`;
                   }
-                  
+
                   // Pages
                   for (let p = 1; p <= res.last_page; p++) {
-                      paginationHtml += `<li class="page-item ${p === res.current_page ? 'active' : ''}"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${p})">${p}</a></li>`;
+                    paginationHtml += `<li class="page-item ${p === res.current_page ? 'active' : ''}"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${p})">${p}</a></li>`;
                   }
-                  
+
                   // Next
                   if (res.current_page < res.last_page) {
-                      paginationHtml += `<li class="page-item"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${res.current_page + 1})">Next</a></li>`;
+                    paginationHtml += `<li class="page-item"><a class="page-link pointer" onclick="window.show_comment(${postId}, ${res.current_page + 1})">Next</a></li>`;
                   } else {
-                      paginationHtml += `<li class="page-item disabled"><a class="page-link">Next</a></li>`;
+                    paginationHtml += `<li class="page-item disabled"><a class="page-link">Next</a></li>`;
                   }
-                  
+
                   paginationHtml += '</ul>';
                   $("#commentPagination").html(paginationHtml);
-              }
+                }
 
+              }
+            },
+            error: function (xhr) {
+              $("#commentLoader").hide();
+              $("#commentList").append(`<li class="list-group-item text-danger">Gagal memuat komentar</li>`);
             }
-          },
-          error: function (xhr) {
-            $("#commentLoader").hide();
-            $("#commentList").append(`<li class="list-group-item text-danger">Gagal memuat komentar</li>`);
-          }
-        });
-      }
-      
-      window.show_comment = showComments;
-    });
+          });
+        }
+
+        window.show_comment = showComments;
+      });
     </script>
     <script>
       $(function () {
@@ -549,15 +562,15 @@
       });
 
 
-      window.filterStatusCard = function(status) {
+      window.filterStatusCard = function (status) {
         @if(config('modules.multisite_enabled') && is_main_domain())
-        if ($('#tenant_id').length && !$('#tenant_id').val()) {
-          $('#filter-modal').modal('show');
-          if (typeof swal === 'function') {
-            swal("Perhatian", "Silakan pilih domain tenant terlebih dahulu pada filter!", "info");
+          if ($('#tenant_id').length && !$('#tenant_id').val()) {
+            $('#filter-modal').modal('show');
+            if (typeof swal === 'function') {
+              swal("Perhatian", "Silakan pilih domain tenant terlebih dahulu pada filter!", "info");
+            }
+            return;
           }
-          return;
-        }
         @endif
         $('#status').val(status).trigger('change');
       };
@@ -616,6 +629,42 @@
           }
         });
       });
+
+      // Cetak filtered posts PDF
+      window.printFilteredPosts = function () {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ route('print.posts') }}";
+        form.target = '_blank';
+
+        var params = {
+          _token: "{{ csrf_token() }}",
+          type: "{{ get_post_type() }}",
+          search: $('input[type=search]').val() || '',
+          status: $('#status').val() || '',
+          category_id: $('#category_id').val() || '',
+          tag_id: $('#tag_id').val() || '',
+          parent_id: $('#parent_id').val() || '',
+          tenant_id: $('#tenant_id').val() || '',
+          user_id: $('#user_id').val() || '',
+          from_date: $('#from_date').val() || '',
+          to_date: $('#to_date').val() || ''
+        };
+
+        for (var key in params) {
+          if (params.hasOwnProperty(key)) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = params[key];
+            form.appendChild(input);
+          }
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      };
 
       // Counter effect
       document.addEventListener('DOMContentLoaded', function () {

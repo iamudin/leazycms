@@ -396,8 +396,8 @@
         {{-- Left Column: Content, Title, Custom Fields --}}
         <div class="col-lg-9">
             {{-- Title Input Card --}}
-            <div class="title-box-container">
-                @if(isset($module->form?->editable_title) && $module->form?->editable_title == true || !isset($module->form?->editable_title))
+            <div class="title-box-container" id="title-box-container">
+                @if((isset($module->form?->editable_title) && $module->form?->editable_title == true || !isset($module->form?->editable_title)) && empty($module->form?->title_as_id))
                     <textarea data-toggle="tooltip" minlength="5" maxlength="200" title="Masukkan {{ $module->datatable->data_title }}" required name="title"
                         placeholder="Masukkan {{ $module->datatable->data_title }}..." rows="1"
                         class="form-control autosize-title"
@@ -412,9 +412,9 @@
                         </small>
                     </div>
                 @else
-                    <input type="hidden" name="title" value="{{ $post->title ?? null }}">
+                    <input type="hidden" name="title" id="post-title-input" value="{{ $post->title ?? null }}">
                     <small class="text-muted">{{ $module->datatable->data_title }}</small>
-                    <h3 class="font-weight-bold text-dark mt-1">{{ $post->title ?? null }}</h3>
+                    <h3 class="font-weight-bold text-dark mt-1" id="post-title-heading">{{ $post->title ?? '(ID Otomatis digenerate sistem saat disimpan)' }}</h3>
                 @endif
             </div>
 
@@ -1064,6 +1064,28 @@
 
                     if (typeof response === 'string' && response.includes('<html')) {
                         let newDoc = new DOMParser().parseFromString(response, 'text/html');
+
+                        // Update Title Container / Title Heading (ID unik / Title)
+                        let newTitleContainer = newDoc.getElementById('title-box-container');
+                        let currentTitleContainer = document.getElementById('title-box-container');
+                        if (newTitleContainer && currentTitleContainer) {
+                            currentTitleContainer.innerHTML = newTitleContainer.innerHTML;
+                        }
+
+                        let newTitleHeading = newDoc.getElementById('post-title-heading');
+                        let currentTitleHeading = document.getElementById('post-title-heading');
+                        if (newTitleHeading && currentTitleHeading) {
+                            if (currentTitleHeading.textContent !== newTitleHeading.textContent) {
+                                currentTitleHeading.textContent = newTitleHeading.textContent;
+                                $(currentTitleHeading).hide().fadeIn('fast');
+                            }
+                        }
+
+                        let newTitleInput = newDoc.querySelector('input[name="title"]');
+                        let currentTitleInput = document.querySelector('input[name="title"]');
+                        if (newTitleInput && currentTitleInput) {
+                            currentTitleInput.value = newTitleInput.value;
+                        }
 
                         // Update Thumbnail Image
                         let newThumb = newDoc.getElementById('thumb');

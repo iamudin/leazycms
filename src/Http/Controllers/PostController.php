@@ -37,14 +37,39 @@ class PostController extends Controller implements HasMiddleware
 
     public function printPosts(Request $request)
     {
-        $module = get_module($request->type);
-        $query = Post::query()->whereType($request->type);
-        if ($request->status) {
-            $query->where('status', $request->status);
+        $type = $request->type ?: get_post_type();
+        $module = get_module($type);
+        if (!$module) {
+            abort(404, 'Modul tidak ditemukan.');
         }
-        if ($request->category_id) {
-            $query->where('category_id', $request->category_id);
+
+        $user = $request->user();
+        $canSeeAll = $user->isAdmin() || !$user->hasRole($module->name, 'admin', true);
+
+        $query = Post::query()->whereType($module->name)
+            ->withTenant()
+            ->when(!$canSeeAll, fn($q) => $q->whereBelongsTo($user));
+
+        if ($status = $request->status) {
+            if ($status === 'sampah') {
+                $query->onlyTrashed();
+            } elseif ($status === 'disematkan') {
+                $query->where(fn($q) => $q->where('pinned', 'Y')->orWhere('pinned', 1));
+            } else {
+                $query->where('status', $status);
+            }
+        } else {
+            $query->whereNull('deleted_at');
         }
+
+        if ($category_id = $request->category_id) {
+            $query->where('category_id', $category_id);
+        }
+
+        if ($parent_id = $request->parent_id) {
+            $query->where('parent_id', $parent_id);
+        }
+
         if ($tenant = $request->tenant_id ?? $request->tenant) {
             if ($tenant === 'main') {
                 $query->whereNull('tenant_id');
@@ -56,25 +81,173 @@ class PostController extends Controller implements HasMiddleware
                 });
             }
         }
+
         if ($request->from_date && $request->to_date) {
-            $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
+            $from = $request->from_date;
+            $to = $request->to_date;
+            if (strtotime($from) <= strtotime($to)) {
+                $query->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
+            } else {
+                $query->whereDate('created_at', $from);
+            }
+        } elseif ($request->from_date) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        } elseif ($request->to_date) {
+            $query->whereDate('created_at', '<=', $request->to_date);
         }
+
         if ($request->user_id) {
             $query->where('user_id', $request->user_id);
         }
+
         if ($request->tag_id) {
             $query->whereHas('tags', function ($q) use ($request) {
                 $q->where('tags.id', $request->tag_id);
             });
         }
-        $posts = $query->with('category', 'user', 'tags')->get();
+
+        if ($search = ($request->search ?? $request->q ?? $request->keyword)) {
+            $query->where(function ($q) use ($search, $module) {
+                $q->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('data_field', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%')
+                    ->orWhere('keyword', 'like', '%' . $search . '%');
+                if ($module->form->category) {
+                    $q->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    });
+                }
+                if ($module->form->post_parent) {
+                    $q->orWhereHas('parent', function ($q) use ($search) {
+                        $q->where('title', 'like', '%' . $search . '%');
+                    });
+                }
+            });
+        }
+
+        if ($module->web->sortable ?? false) {
+            $query->orderBy('sort', 'ASC')->orderBy('id', 'DESC');
+        } else {
+            $query->orderBy('id', 'DESC');
+        }
+
+        $posts = $query->with('category', 'user', 'tags', 'parent')->get();
+
+        // Ambil daftar custom columns dari modul
+        $rawCustom = $module->datatable->custom_column ?? $module->form->custom_column ?? [];
+        if ($rawCustom && !is_array($rawCustom)) {
+            $customColumns = [$rawCustom];
+        } elseif (is_array($rawCustom)) {
+            $customColumns = $rawCustom;
+        } else {
+            $customColumns = [];
+        }
+
+        $filters = [
+            'status' => $request->status,
+            'category_id' => $request->category_id,
+            'search' => $search,
+            'from_date' => $request->from_date,
+            'to_date' => $request->to_date,
+            'user_id' => $request->user_id,
+        ];
+
         $html = View::make('cms::backend.posts.print', [
             'posts' => $posts,
-            'module' => $module
+            'module' => $module,
+            'customColumns' => $customColumns,
+            'filters' => $filters,
         ])->render();
 
-        $pdf = PDF::loadHTML($html)->setOption('page-width', '330')->setPaper('a4', 'landscape');
-        return $pdf->stream('laporan-posts-' . date('Y-m-d-His') . '.pdf');
+        $pdf = PDF::loadHTML($html)
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('rekap-' . Str::slug($module->title ?? $module->name) . '-' . date('Ymd-His') . '.pdf');
+    }
+
+    public function printDetail(Request $request, $id)
+    {
+        $post = Post::with('category', 'user', 'tags', 'parent')->findOrFail($id);
+        $module = get_module($post->type);
+        if (!$module) {
+            abort(404, 'Modul tidak ditemukan.');
+        }
+
+        $theme = template(); // contoh: 'theme-ma-alhuda'
+        $printLayout = $module->datatable->print_layout
+            ?? $module->form->print_layout
+            ?? null;
+
+        $viewData = [
+            'post' => $post,
+            'module' => $module,
+            'data' => $post->data_field ?? [],
+            'title' => $post->title,
+        ];
+
+        $html = null;
+
+        // 1. Jika print_layout ditentukan pada konfigurasi modul (misal: 'namamodule.print')
+        if ($printLayout) {
+            $layoutClean = trim($printLayout, '/.');
+            $candidates = [
+                resource_path("views/template/{$theme}/{$layoutClean}.blade.php"),
+                resource_path("views/template/{$theme}/" . str_replace('.', '/', $layoutClean) . ".blade.php"),
+                resource_path("views/template/{$theme}/" . str_replace('/', '.', $layoutClean) . ".blade.php"),
+            ];
+
+            foreach ($candidates as $filePath) {
+                if (\Illuminate\Support\Facades\File::exists($filePath)) {
+                    $html = View::file($filePath, $viewData)->render();
+                    break;
+                }
+            }
+
+            if (!$html) {
+                $bladeView = 'template.' . $theme . '.' . str_replace('/', '.', $layoutClean);
+                if (View::exists($bladeView)) {
+                    $html = View::make($bladeView, $viewData)->render();
+                }
+            }
+        }
+
+        // 2. Jika belum ketemu, cari konvensi template di folder tema: template/{theme}/{namamodule}.print.blade.php
+        if (!$html) {
+            $moduleCandidates = [
+                resource_path("views/template/{$theme}/{$module->name}.print.blade.php"),
+                resource_path("views/template/{$theme}/{$module->name}/print.blade.php"),
+                resource_path("views/template/{$theme}/{$module->name}-print.blade.php"),
+            ];
+
+            foreach ($moduleCandidates as $filePath) {
+                if (\Illuminate\Support\Facades\File::exists($filePath)) {
+                    $html = View::file($filePath, $viewData)->render();
+                    break;
+                }
+            }
+
+            if (!$html && View::exists("template.{$theme}.{$module->name}.print")) {
+                $html = View::make("template.{$theme}.{$module->name}.print", $viewData)->render();
+            }
+        }
+
+        // 3. Fallback: Template default detail print bawaan sistem
+        if (!$html) {
+            $html = View::make('cms::backend.posts.print-detail', $viewData)->render();
+        }
+
+        $pdf = PDF::loadHTML($html)
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setPaper('a4', 'portrait');
+
+        $docTitle = !empty($post->data_field['no_pendaftaran'])
+            ? $post->data_field['no_pendaftaran']
+            : ($post->title ?? 'detail-' . $post->id);
+
+        return $pdf->download('cetak-' . Str::slug($docTitle) . '.pdf');
     }
 
     public function filterOptions(Request $request)
@@ -378,6 +551,15 @@ class PostController extends Controller implements HasMiddleware
         }
         $uniq = '';
 
+        $isTitlePlaceholder = empty($request->title) || str_contains((string) $request->title, 'Otomatis digenerate');
+        if ($isTitlePlaceholder && !empty($module->form->title_as_id)) {
+            $request->merge([
+                'title' => function_exists('generate_post_title_id')
+                    ? generate_post_title_id($module->name, $module->form->title_as_id)
+                    : (strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $module->name)) . '-' . now()->format('dmY') . '-' . strtoupper(\Illuminate\Support\Str::random(4)))
+            ]);
+        }
+
         if ($module->form->unique_title) {
             $uniq = 'unique:posts,title,' . $post->id . ',id,type,' . $post->type . ',deleted_at,NULL';
             if (config('modules.multisite_enabled')) {
@@ -414,7 +596,7 @@ class PostController extends Controller implements HasMiddleware
                 'min:5',
                 'max:200',
                 function ($attribute, $value, $fail) use ($forbiddenWords, $post, $module) {
-                    $nonSpace = preg_replace('/\s+/u', '', (string)$value);
+                    $nonSpace = preg_replace('/\s+/u', '', (string) $value);
                     if (mb_strlen($nonSpace) < 5) {
                         $fail(($module->datatable->data_title ?? 'Judul') . ' minimal 5 karakter di luar spasi.');
                         return;
@@ -446,11 +628,11 @@ class PostController extends Controller implements HasMiddleware
                         $query = Post::onType($post->type)
                             ->where('slug', $value)
                             ->whereNotIn('id', [$post->id]);
-                        
+
                         if (config('modules.multisite_enabled')) {
                             $query->where('tenant_id', $post->tenant_id);
                         }
-                        
+
                         if ($query->exists()) {
                             $fail('URL/Slug tersebut sudah dipakai oleh post lain.');
                         }
@@ -498,7 +680,7 @@ class PostController extends Controller implements HasMiddleware
                     $slug = str($request->title)->slug();
                 }
             }
-    
+
             $data = $request->validate($post_field);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -570,6 +752,13 @@ class PostController extends Controller implements HasMiddleware
             $data['data_field'] = $custom_field ?? [];
         }
         $data['data_field'] = array_merge(['last_editor' => Auth::user()->name], $custom_field);
+        if (!empty($module->form->title_as_id)) {
+            foreach (['no_pendaftaran', 'nomor_pendaftaran', 'kode_pendaftaran', 'id_pendaftaran'] as $regCandidate) {
+                if (empty($data['data_field'][$regCandidate])) {
+                    $data['data_field'][$regCandidate] = $data['title'];
+                }
+            }
+        }
         if ($request->hasFile('media')) {
             $data['media'] = $post->addFile([
                 'file' => $request->file('media'),
@@ -659,7 +848,7 @@ class PostController extends Controller implements HasMiddleware
             $newCat = \Leazycms\Web\Models\Category::firstOrCreate([
                 'name' => $catName,
                 'type' => $post->type,
-                'url' => '/'.$post->type.'/'.str($catName)->slug(),
+                'url' => '/' . $post->type . '/' . str($catName)->slug(),
                 'tenant_id' => config('modules.multisite_enabled') ? tenant()->id : null
             ], [
                 'slug' => str($catName)->slug()
@@ -671,7 +860,7 @@ class PostController extends Controller implements HasMiddleware
         Cache::forget(get_current_host() . ':' . $post->type);
         Cache::forget(get_current_host() . ':' . $post->id);
         $this->recache(get_post_type());
-        
+
         return back()->with('success', $module->title . ' Berhasil diperbarui');
     }
     public function recache($type)
@@ -744,9 +933,9 @@ class PostController extends Controller implements HasMiddleware
             ->map(fn($label) => _us($label)) // konversi di sini
             ->values()
             ->all();
-            
+
         $badge_fields = collect($current_module->form->custom_field)
-            ->filter(function($field) {
+            ->filter(function ($field) {
                 $meta = $field[1] ?? null;
                 $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
                 return is_array($type);
@@ -901,7 +1090,7 @@ class PostController extends Controller implements HasMiddleware
             $shortcut = $current_module->web->detail && $row->shortcut && $row->status == 'publish' ? ' <a href="javascript:void(0)" class="pointer" onclick="copy(\'' . url($row->shortcut) . '\')" title="Pengunjung / pembaca dari Shortcut Link. Klik untuk copy shortcut link"><i class="fa fa-qrcode"></i> ' . $row->shortcut_counter . '</a>' : '';
 
             $tenant = $row->tenant && $maindomain ? '<i class="fa fa-globe"></i> ' . utf8_clean($row->tenant?->domain) : null;
-            $b = '<b class="text-primary">' . $tit . '</b>'.$redirect.'<br>';
+            $b = '<b class="text-primary">' . $tit . '</b>' . $redirect . '<br>';
             $b .= '<small class="text-muted">' . $locked . ' ' . $pin . ' ' . $category . ' ' . $label . ' ' . $tags . ' ' . $shortcut . ' ' . $tenant . '</small>';
             return $b;
         });
@@ -984,7 +1173,7 @@ class PostController extends Controller implements HasMiddleware
                         // Tampilkan sebagai badge jika tipe datanya array (pilihan)
                         $badgeColor = 'badge-primary';
                         $valLower = strtolower(trim($value));
-                        
+
                         if (in_array($valLower, ['selesai', 'sukses', 'aktif', 'active', 'success', 'done'])) {
                             $badgeColor = 'badge-success';
                         } elseif (in_array($valLower, ['diproses', 'pending', 'menunggu', 'waiting', 'progress'])) {
@@ -1068,9 +1257,14 @@ class PostController extends Controller implements HasMiddleware
         $dt->addColumn('action', function ($row) use ($current_module) {
 
             $btn = '<div class="btn-group float-right">';
-            $btn .= $current_module->web->detail == true && $row->status=="publish"  ? '<a title="Lihat di website" href="' . $row->link . '" target="_blank"  class="btn btn-primary btn-sm"> <i class="fa fa-globe"></i></a>' : '';
+            $btn .= $current_module->web->detail == true && $row->status == "publish" ? '<a title="Lihat di website" href="' . $row->link . '" target="_blank"  class="btn btn-primary btn-sm"> <i class="fa fa-globe"></i></a>' : '';
             if (empty($row->deleted_at)) {
                 $btn .= Route::has($row->type . '.edit') ? '<a title="Edit data" href="' . route(get_post_type() . '.edit', $row->id) . '"  class="btn btn-warning btn-sm"> <i class="fa fa-edit"></i> </a>' : '';
+                $hasPrintLayout = !empty(is_array($current_module->datatable ?? null) ? ($current_module->datatable['print_layout'] ?? null) : ($current_module->datatable->print_layout ?? null));
+                if ($hasPrintLayout) {
+                    $printRoute = Route::has(get_post_type() . '.print_detail') ? route(get_post_type() . '.print_detail', $row->id) : route('post.print_detail', $row->id);
+                    $btn .= '<a title="Cetak data" href="' . $printRoute . '" target="_blank" class="btn btn-secondary btn-sm"> <i class="fa fa-print"></i> </a>';
+                }
             } else {
                 $btn .= '<a title="Pulihkan data" href="' . route(get_post_type() . '.restore', $row->id) . '"  class="btn btn-info btn-sm"> <i class="fa fa-trash-restore" onclick="return confirm(\'Pulihkan data ini ?\')" title="Pulihkan Data"></i></a>';
             }
