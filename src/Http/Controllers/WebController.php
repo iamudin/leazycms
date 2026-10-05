@@ -329,8 +329,12 @@ class WebController extends Controller
         }
 
         $tenantId = null;
-        if (config('modules.multisite_enabled') && function_exists('tenant')) {
-            $tenantId = tenant('id');
+        if (config('modules.multisite_enabled') && function_exists('tenant') && app()->has('tenant')) {
+            $t = tenant();
+            $tenantId = $t?->id ?? (is_array($t) ? ($t['id'] ?? null) : null);
+            if ($tenantId !== null) {
+                $tenantId = (int) $tenantId;
+            }
         }
         $userId = Auth::id() ?? (User::where('level', 'admin')->value('id') ?? 1);
 
@@ -556,7 +560,11 @@ class WebController extends Controller
         // Query ke tabel posts menggunakan parameter binding
         $query = Post::onType($module)->published();
         if (config('modules.multisite_enabled') && function_exists('tenant') && tenant()) {
-            $query->where('tenant_id', tenant('id'));
+            $t = tenant();
+            $tId = $t?->id ?? (is_array($t) ? ($t['id'] ?? null) : null);
+            if ($tId) {
+                $query->where('tenant_id', (int) $tId);
+            }
         }
 
         $query->where(function ($q) use ($searchFields, $keyword) {

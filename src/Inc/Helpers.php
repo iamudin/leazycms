@@ -4428,7 +4428,11 @@ if (!function_exists('generate_post_title_id')) {
 
             $query = \Leazycms\Web\Models\Post::onType($module)->where('title', $candidate);
             if (config('modules.multisite_enabled') && function_exists('tenant') && tenant()) {
-                $query->where('tenant_id', tenant('id'));
+                $t = tenant();
+                $tId = $t?->id ?? (is_array($t) ? ($t['id'] ?? null) : null);
+                if ($tId) {
+                    $query->where('tenant_id', (int) $tId);
+                }
             }
             $exists = $query->exists();
         } while ($exists);
@@ -4876,7 +4880,11 @@ if (!function_exists('track_post')) {
 
         $query = \Leazycms\Web\Models\Post::onType($module)->published();
         if (config('modules.multisite_enabled') && function_exists('tenant') && tenant()) {
-            $query->where('tenant_id', tenant('id'));
+            $t = tenant();
+            $tId = $t?->id ?? (is_array($t) ? ($t['id'] ?? null) : null);
+            if ($tId) {
+                $query->where('tenant_id', (int) $tId);
+            }
         }
 
         $query->where(function ($q) use ($searchFields, $keyword) {
