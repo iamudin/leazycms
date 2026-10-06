@@ -55,7 +55,7 @@ class LoginController extends Controller
         }
 
         // Jika multisite aktif dan diakses dari domain/subdomain tenant (bukan main domain)
-        if (config('modules.multisite_enabled')  &&  env('LOGIN_FORM_REDIRECT_TO')) {
+        if (config('modules.multisite_enabled') && env('LOGIN_FORM_REDIRECT_TO')) {
             $redirectSetting = env('LOGIN_FORM_REDIRECT_TO');
             if ($redirectSetting) {
                 $target = is_string($redirectSetting) ? trim($redirectSetting) : 'dashboard';
@@ -78,7 +78,7 @@ class LoginController extends Controller
         $data['title'] = get_option('site_title');
         $data['description'] = get_option('site_description');
         $data['loginsubmit'] = url(admin_path());
-        $data['logo'] = get_option('logo');
+        $data['logo'] = (get_option('logo_title') && get_option('logo_description') && get_option('logo_image')) ? url('logo.webp') : (get_option('logo') && media_exists(get_option('logo')) ? get_option('logo') : noimage());
 
         $viewContent = view('cms::auth.login', ['data' => $data])->render();
 
@@ -176,7 +176,7 @@ class LoginController extends Controller
                 if ($request->ajax()) {
                     return response()->json(['status' => 'success', 'redirect' => $intendedUrl]);
                 }
-                
+
                 return redirect($intendedUrl);
             }
 
