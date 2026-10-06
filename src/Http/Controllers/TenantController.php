@@ -943,8 +943,8 @@ class TenantController extends Controller implements HasMiddleware
         $masterBrandLogo = Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->where('name', 'brand_logo')->value('value') ?: (Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->where('name', 'brand_icon')->value('value') ?: null);
 
         $logoPreviewHtml = '';
-        if ($masterBrandLogo && media_exists($masterBrandLogo)) {
-            $logoUrl = str_starts_with($masterBrandLogo, 'http') ? $masterBrandLogo : url('media/' . $masterBrandLogo);
+        if ($masterBrandLogo) {
+            $logoUrl = $masterBrandLogo;
             $logoPreviewHtml = '
             <div class="mb-2 p-2 bg-light rounded text-center" id="brandLogoPreviewWrapper" style="border: 1px dashed #ccc;">
                 <img src="' . e($logoUrl) . '" alt="Brand Logo" style="max-height: 48px; max-width: 150px; object-fit: contain;">
@@ -971,7 +971,7 @@ class TenantController extends Controller implements HasMiddleware
             <div class="form-group mb-2">
                 <label class="font-weight-bold mb-1">Brand Logo / Icon Master</label>
                 ' . $logoPreviewHtml . '
-                <input type="text" name="brand_logo" id="brandLogoFileInput" class="form-control-file form-control-sm" placeholder="URL atau path gambar..." onchange="let v=this.value.trim(); if(v && !v.match(/\.(webp|ico|gif|png)$/i)){ alert(\'Format didukung hanya .webp, .ico, .gif, atau .png!\'); this.value=\'\'; }">
+                <input value="'. $logoUrl .'" type="text" name="brand_logo" id="brandLogoFileInput" class="form-control-file form-control-sm" placeholder="URL atau path gambar..." onchange="let v=this.value.trim(); if(v && !v.match(/\.(webp|ico|gif|png)$/i)){ alert(\'Format didukung hanya .webp, .ico, .gif, atau .png!\'); this.value=\'\'; }">
                 <small class="text-muted">Format didukung: PNG, GIF, WEBP, ICO (Rasio 1:1 atau proporsional logo).</small>
             </div>
         </form>

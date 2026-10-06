@@ -9,7 +9,7 @@
         <a href="{{ get_option('brand_url') }}" target="_blank" rel="noopener noreferrer"
             style="display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; padding: 0 !important; color: #ffffff !important; font-weight: 700 !important; text-decoration: none !important; cursor: pointer !important; vertical-align: middle !important;">
             @if(!empty($brandLogo = get_option('brand_logo')))
-                <img src="{{ media($brandLogo)->url() }}" alt="{{ get_option('brand_name') }}"
+                <img src="{{ $brandLogo }}" alt="{{ get_option('brand_name') }}"
                     style="width: 16px !important; height: 16px !important; object-fit: contain !important; display: inline-block !important; vertical-align: middle !important; border-radius: 3px !important;"
                     onerror="this.style.display='none';">
             @else
