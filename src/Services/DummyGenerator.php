@@ -322,7 +322,7 @@ class DummyGenerator
                             $post->slug = $slug;
                             $post->redirect_to = $postData['redirect_to'] ?? null;
                             $post->description = $postData['description'] ?? null;
-                            $post->url = $type . '/' . $slug;
+                            $post->url =  $type != 'page' ? $type . '/' . $slug : $slug;
                             $post->status = 'publish';
                             $post->shortcut = Str::random(6);
                             $post->user_id = $userId;
