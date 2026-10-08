@@ -243,7 +243,11 @@ class PanelController extends Controller implements HasMiddleware
 
                 DB::table('options')->updateOrInsert($match, $updateData);
 
+                $mainHost = parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHttpHost();
+                cache()->forget("tenant:master:{$mainHost}:options");
                 cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
+                cache()->forget("tenant:master:options");
+                cache()->forget("default:options");
                 return back()->with('success', 'Status plugin berhasil diubah secara global.');
             }
         }

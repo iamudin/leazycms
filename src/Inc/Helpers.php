@@ -685,9 +685,15 @@ function protectedContentView($slug, $requestId = null, $error = null)
 if (!function_exists('get_disabled_plugins')) {
     function get_disabled_plugins()
     {
-        $str = get_option('disabled_plugins');
-        $arr = $str ? json_decode($str, true) : [];
-        return is_array($arr) ? $arr : [];
+        $val = get_option('disabled_plugins');
+        if (is_array($val)) {
+            return $val;
+        }
+        if (is_string($val) && $val !== '') {
+            $arr = json_decode($val, true);
+            return is_array($arr) ? $arr : [];
+        }
+        return [];
     }
 }
 
