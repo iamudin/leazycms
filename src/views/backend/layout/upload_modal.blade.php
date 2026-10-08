@@ -11,6 +11,49 @@
     .media-grid-item:hover .btn-delete-media {
         opacity: 1;
     }
+
+    .upload-dropzone {
+        border: 2px dashed #007bff;
+        border-radius: 12px;
+        background: #f8fafc;
+        padding: 35px 20px;
+        cursor: pointer;
+        transition: all 0.25s ease-in-out;
+        max-width: 500px;
+        margin: 0 auto;
+        position: relative;
+    }
+    .upload-dropzone:hover {
+        background: #f0f7ff;
+        border-color: #0056b3;
+    }
+    .upload-dropzone.dragover {
+        background: #e3f2fd !important;
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+        transform: scale(1.01);
+    }
+    .upload-dropzone .dropzone-icon {
+        font-size: 46px;
+        color: #007bff;
+        margin-bottom: 12px;
+        transition: transform 0.2s ease;
+    }
+    .upload-dropzone:hover .dropzone-icon,
+    .upload-dropzone.dragover .dropzone-icon {
+        transform: translateY(-3px);
+    }
+    .upload-dropzone .dropzone-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+    .upload-dropzone .dropzone-desc {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 16px;
+    }
 </style>
 <div class="modal fade" id="globalMediaModal" tabindex="-1" role="dialog" aria-labelledby="globalMediaModalLabel"
     aria-hidden="true">
@@ -80,9 +123,16 @@
                             style="display:none; max-width: 500px; margin: 0 auto 15px; text-align: left;"></div>
 
                         <div id="g-upload-ui">
-                            <button type="button" class="btn btn-success btn-lg" id="btn-trigger-upload">
-                                <i class="fa fa-folder-open"></i> Buka File Explorer
-                            </button>
+                            <div class="upload-dropzone" id="g-dropzone">
+                                <div class="dropzone-icon">
+                                    <i class="fa fa-cloud-upload"></i>
+                                </div>
+                                <div class="dropzone-title">Tarik & Lepaskan file di sini</div>
+                                <div class="dropzone-desc">atau klik tombol di bawah untuk memilih file</div>
+                                <button type="button" class="btn btn-primary px-4 shadow-sm" id="btn-trigger-upload">
+                                    <i class="fa fa-folder-open mr-1"></i> Buka File Explorer
+                                </button>
+                            </div>
                         </div>
 
                         <div id="g-pre-upload-preview" class="mt-4"
@@ -756,8 +806,7 @@
             });
         }
 
-        $('#g-ajax-upload-input').on('change', async function () {
-            let files = this.files;
+        async function processFilesForUpload(files) {
             if (!files || files.length === 0) return;
 
             // Show a simple loading indicator while compressing
@@ -852,8 +901,59 @@
                 $('#g-upload-ui').hide();
                 $('#g-pre-upload-preview').show();
             } else {
-                $(this).val(''); // Reset
+                $('#g-ajax-upload-input').val(''); // Reset
                 $('#g-upload-ui').show();
+            }
+        }
+
+        $('#g-ajax-upload-input').on('change', function () {
+            processFilesForUpload(this.files);
+        });
+
+        // Click on dropzone triggers file picker
+        $('#g-dropzone').on('click', function (e) {
+            if ($(e.target).is('#btn-trigger-upload') || $(e.target).closest('#btn-trigger-upload').length) {
+                return;
+            }
+            $('#btn-trigger-upload').trigger('click');
+        });
+
+        // Drag and drop events for dropzone
+        let $dropzone = $('#g-dropzone');
+        $dropzone.on('dragenter dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $dropzone.addClass('dragover');
+        });
+
+        $dropzone.on('dragleave dragend', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $dropzone.removeClass('dragover');
+        });
+
+        $dropzone.on('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $dropzone.removeClass('dragover');
+            let dt = e.originalEvent.dataTransfer || e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                processFilesForUpload(dt.files);
+            }
+        });
+
+        // Support drag and drop anywhere on modal window
+        $('#globalMediaModal').on('dragover', function (e) {
+            e.preventDefault();
+        });
+        $('#globalMediaModal').on('drop', function (e) {
+            if (!$(e.target).closest('#g-dropzone').length && !$(e.target).closest('#g-pre-upload-preview').length) {
+                e.preventDefault();
+                $('#g-upload-tab').tab('show');
+                let dt = e.originalEvent.dataTransfer || e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    processFilesForUpload(dt.files);
+                }
             }
         });
 
