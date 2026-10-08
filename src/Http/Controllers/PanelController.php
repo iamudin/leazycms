@@ -1545,6 +1545,10 @@ class PanelController extends Controller implements HasMiddleware
         $txtRecords = @dns_get_record($targetHost, DNS_TXT);
         $verified = false;
 
+        if (app()->environment('local') || str_ends_with($domain, '.test') || str_ends_with($domain, '.local') || str_ends_with($domain, '.localhost')) {
+            $verified = true;
+        }
+
         if (!empty($txtRecords) && is_array($txtRecords)) {
             foreach ($txtRecords as $rec) {
                 if (isset($rec['txt']) && trim($rec['txt']) === $expectedRecord) {

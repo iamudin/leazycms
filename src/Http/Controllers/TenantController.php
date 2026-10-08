@@ -695,6 +695,13 @@ class TenantController extends Controller implements HasMiddleware
             }
         }
 
+        $activeParkedDomain = !empty($newParkedDomain) ? $newParkedDomain : $oldParkedDomain;
+        if (!empty($activeParkedDomain)) {
+            Cache::forget("tenant:{$activeParkedDomain}");
+            Cache::forget("tenant:{$activeParkedDomain}:options");
+        }
+        Cache::forget("tenant:{$tenant->id}:parked_domain");
+
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
         Cache::forget("tenant:{$tenant->domain}:options");

@@ -372,7 +372,8 @@
 
                         $tenantPlugins = [];
                         if (config('modules.multisite_enabled')) {
-                            $tenantPlugins = app('tenant')->plugins ?? [];
+                            $activeTenant = function_exists('tenant') ? tenant() : (app()->bound('tenant') ? app('tenant') : null);
+                            $tenantPlugins = $activeTenant?->plugins ?? [];
                             $tenantPlugins = is_string($tenantPlugins) ? json_decode($tenantPlugins, true) : $tenantPlugins;
                         }
 

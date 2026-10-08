@@ -439,44 +439,13 @@ class CmsServiceProvider extends ServiceProvider
             $host = request()->getHost();
 
             if (\Leazycms\Web\Middleware\IdentifyTenant::$currentTenant === null) {
-                $tenantData = \Illuminate\Support\Facades\Cache::rememberForever(
-                    "tenant:$host",
-                    function () use ($host) {
-                        $t = \Leazycms\Web\Models\Tenant::whereDomain($host)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
-                        if ($t) {
-                            return $t->getRawOriginal();
-                        }
-
-                        // Fallback custom domain plugin
-                        if (class_exists(\Leazycms\Web\Models\Option::class)) {
-                            $option = \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')->where('value', $host)->where('name', 'like', '%-domain')->whereNotNull('tenant_id')->first();
-                            if ($option) {
-                                $t = \Leazycms\Web\Models\Tenant::where('id', $option->tenant_id)->whereIn('status', ['active', 'suspended', 'maintenance'])->first();
-                                if ($t) {
-                                    $data = $t->getRawOriginal();
-                                    $data['is_plugin_custom_domain'] = true;
-                                    return $data;
-                                }
-                            }
-                        }
-                        return null;
-                    }
-                );
-
-                if ($tenantData) {
-                    if (isset($tenantData['modules']) && is_array($tenantData['modules'])) {
-                        $tenantData['modules'] = json_encode($tenantData['modules']);
-                    }
-                    $tenant = new \Leazycms\Web\Models\Tenant();
-                    $tenant->setRawAttributes($tenantData, true);
-                    $tenant->exists = true;
-                    \Leazycms\Web\Middleware\IdentifyTenant::$currentTenant = $tenant;
-                }
+                \Leazycms\Web\Middleware\IdentifyTenant::$currentTenant = \Leazycms\Web\Models\Tenant::resolveByHost($host);
             }
 
             $currentTenant = \Leazycms\Web\Middleware\IdentifyTenant::$currentTenant;
 
             if ($currentTenant) {
+                app()->instance('tenant', $currentTenant);
                 $options = \Illuminate\Support\Facades\Cache::rememberForever("tenant:{$currentTenant->domain}:options", function () use ($currentTenant) {
                     return \Leazycms\Web\Models\Option::where('tenant_id', $currentTenant->id)->pluck('value', 'name')->toArray();
                 });
