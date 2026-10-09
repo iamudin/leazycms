@@ -256,6 +256,9 @@
   </div>
   @include('cms::backend.posts.filter')
   @include('cms::backend.posts.datatable')
+  @if(need_sync_dummy())
+    @include('cms::backend.posts.sync_dummy')
+  @endif
 
   <!-- Modal Komentar -->
   <div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel"
@@ -598,38 +601,6 @@
       });
     </script>
     <script>
-      $(document).on('click', '.btn-sync-dummy', function () {
-        swal({
-          title: "Sinkronisasi Data Dummy?",
-          text: "Data dummy untuk modul ini akan ditambahkan.",
-          type: "info",
-          showCancelButton: true,
-          confirmButtonText: "Ya, Sinkronkan!",
-          cancelButtonText: "Batal",
-          closeOnConfirm: false,
-          showLoaderOnConfirm: true
-        }, function (isConfirm) {
-          if (isConfirm) {
-            $.ajax({
-              url: "{{ route(get_post_type() . '.sync_dummy') }}",
-              type: 'POST',
-              data: {
-                _token: $('meta[name="csrf-token"]').attr('content')
-              },
-              success: function (response) {
-                swal("Berhasil!", response.message, "success");
-                setTimeout(() => {
-                  location.reload();
-                }, 1500);
-              },
-              error: function (xhr) {
-                swal("Gagal!", "Gagal melakukan sinkronisasi data dummy.", "error");
-              }
-            });
-          }
-        });
-      });
-
       // Cetak filtered posts PDF
       window.printFilteredPosts = function () {
         var form = document.createElement('form');

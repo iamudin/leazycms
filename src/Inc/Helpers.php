@@ -3839,31 +3839,33 @@ if (!function_exists('need_sync_dummy')) {
         if (!$currentType)
             return false;
 
-        $dummyFile = resource_path('views/template/' . template() . '/dummy.json');
-        if (file_exists($dummyFile)) {
+        $dummyFile = \Leazycms\Web\Services\DummyGenerator::getDummyFilePath($currentType);
+        if ($dummyFile && file_exists($dummyFile)) {
             $dummyData = json_decode(file_get_contents($dummyFile), true);
             if ($dummyData) {
                 $categories = $dummyData['categories'] ?? null;
                 $posts = $dummyData['posts'] ?? null;
 
-                if (is_array($categories)) {
+                if (is_array($categories) && count($categories) > 0) {
+                    $existingCatSlugs = \Leazycms\Web\Models\Category::onType($currentType)->pluck('slug')->flip()->all();
                     foreach ($categories as $cat) {
-                        $type = $cat['type'] ?? null;
+                        $type = $cat['type'] ?? $currentType;
                         if ($type === $currentType) {
-                            $slug = $cat['slug'] ?? \Str::slug($cat['name']);
-                            if (!\Leazycms\Web\Models\Category::onType($type)->where('slug', $slug)->exists()) {
+                            $slug = $cat['slug'] ?? \Illuminate\Support\Str::slug($cat['name'] ?? '');
+                            if ($slug && !isset($existingCatSlugs[$slug])) {
                                 return true;
                             }
                         }
                     }
                 }
 
-                if (is_array($posts)) {
+                if (is_array($posts) && count($posts) > 0) {
+                    $existingPostSlugs = \Leazycms\Web\Models\Post::onType($currentType)->pluck('slug')->flip()->all();
                     foreach ($posts as $post) {
-                        $type = $post['type'] ?? null;
+                        $type = $post['type'] ?? $currentType;
                         if ($type === $currentType) {
-                            $slug = $post['slug'] ?? \Str::slug($post['title']);
-                            if (!\Leazycms\Web\Models\Post::onType($type)->where('slug', $slug)->exists()) {
+                            $slug = $post['slug'] ?? \Illuminate\Support\Str::slug($post['title'] ?? '');
+                            if ($slug && !isset($existingPostSlugs[$slug])) {
                                 return true;
                             }
                         }

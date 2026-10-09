@@ -83,6 +83,19 @@ class TailwindCommand extends Command
     background-clip: text;
 }
 
+/* Pastikan status toggle icon & utility display tidak tertimpa oleh library pihak ketiga */
+.dark .dark\:hidden {
+    display: none !important;
+}
+html:not(.dark) .dark\:inline,
+html:not(.dark) .dark\:inline-block,
+html:not(.dark) .dark\:block {
+    display: none !important;
+}
+html.dark .dark\:inline {
+    display: inline-block !important;
+}
+
 CSS;
             File::put($sourceInputCss, $starterCss);
             $this->info("✅ Berhasil membuat file input: <info>resources/views/template/{$slug}/assets/css/input.css</info>");
@@ -184,6 +197,20 @@ CSS;
                 $relativePath = str_replace(base_path() . '/', '', $headerPath);
                 $this->info("🧹 Tailwind CDN lama telah dibersihkan dari: <info>{$relativePath}</info>");
             }
+
+            // Pastikan style.css tidak diletakkan sebelum Font Awesome (agar display utility Tailwind tidak tertimpa)
+            if (preg_match('/<link[^>]*font-awesome[^>]*>/i', $content)) {
+                $stylePos = strpos($content, "template_asset('assets/css/style.css')");
+                if ($stylePos === false) {
+                    $stylePos = strpos($content, 'template_asset("assets/css/style.css")');
+                }
+                preg_match('/<link[^>]*font-awesome[^>]*>/i', $content, $faMatch, PREG_OFFSET_CAPTURE);
+                if ($faMatch && $stylePos !== false && $stylePos < $faMatch[0][1]) {
+                    $content = preg_replace('/<link[^>]*template_asset\(["\']assets\/css\/style\.css["\']\)[^>]*>\s*/i', '', $content);
+                    $content = preg_replace('/(<link[^>]*font-awesome[^>]*>\s*)/i', "$1    " . $cssTag . "\n", $content, 1);
+                    File::put($headerPath, $content);
+                }
+            }
             return;
         }
 
@@ -239,12 +266,20 @@ CSS;
             $cleanColorBlock = preg_replace('/[a-zA-Z0-9_-]+\s*:\s*\{[^}]+\}/s', '', $colorBlock);
             if (preg_match_all('/([a-zA-Z0-9_-]+)\s*:\s*[\'"]([#a-zA-Z0-9_-]+)[\'"]/', $cleanColorBlock, $colMatches, PREG_SET_ORDER)) {
                 foreach ($colMatches as $cm) {
-                    $key = strtolower($cm[1]);
+                    $rawKey = $cm[1];
                     $val = $cm[2];
-                    if ($key === 'default') {
+                    if (strtolower($rawKey) === 'default') {
                         $themeVars[] = "    --color-brand: {$val};";
                     } else {
-                        $themeVars[] = "    --color-{$key}: {$val};";
+                        $themeVars[] = "    --color-{$rawKey}: {$val};";
+                        $lowerKey = strtolower($rawKey);
+                        if ($lowerKey !== $rawKey) {
+                            $themeVars[] = "    --color-{$lowerKey}: {$val};";
+                        }
+                        $kebabKey = strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $rawKey));
+                        if ($kebabKey !== $rawKey && $kebabKey !== $lowerKey) {
+                            $themeVars[] = "    --color-{$kebabKey}: {$val};";
+                        }
                     }
                 }
             }

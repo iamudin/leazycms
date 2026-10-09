@@ -1459,17 +1459,104 @@ class PostController extends Controller implements HasMiddleware
 
     public function syncDummy(Request $request)
     {
-        $dummyFile = resource_path('views/template/' . template() . '/dummy.json');
+        @ini_set('max_execution_time', '300');
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
 
+        $currentType = get_post_type();
+        $userId = $request->user()->id ?? 1;
+        $module = current_module();
+        $dummyFile = DummyGenerator::getDummyFilePath($currentType);
 
-        $typesProcessed = DummyGenerator::syncFromJson($dummyFile, $request->user()->id ?? 1);
+        $action = $request->input('action');
+
+        if ($action === 'init') {
+            try {
+                $result = DummyGenerator::prepareTasks($currentType, $module, $dummyFile, $userId);
+                return response()->json(array_merge(['success' => true], $result));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Dummy sync init error: " . $e->getMessage(), [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menginisialisasi sinkronisasi: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
+        if ($action === 'batch') {
+            try {
+                $mode = $request->input('mode');
+                $syncId = $request->input('sync_id');
+                $batchIndex = $request->input('batch_index');
+
+                if ($mode === 'server' || ($syncId && $batchIndex !== null)) {
+                    $items = DummyGenerator::getSyncBatch($syncId, $batchIndex);
+                } else {
+                    $items = $request->input('items', []);
+                }
+
+                $processed = DummyGenerator::processBatch($items, $currentType, $userId);
+                $titles = [];
+                if (is_array($items)) {
+                    foreach ($items as $it) {
+                        $titles[] = $it['title'] ?? 'Data dummy';
+                    }
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'processed' => $processed,
+                    'titles' => $titles,
+                    'message' => 'Berhasil memproses ' . $processed . ' data'
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Dummy sync batch error: " . $e->getMessage(), [
+                    'sync_id' => $request->input('sync_id'),
+                    'batch_index' => $request->input('batch_index'),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memproses batch: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
+        if ($action === 'finish') {
+            $syncId = $request->input('sync_id');
+            if ($syncId) {
+                DummyGenerator::cleanupSyncBatches($syncId);
+            }
+            if ($currentType) {
+                $this->recache($currentType);
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Data dummy berhasil disinkronisasi'
+            ]);
+        }
+
+        if ($action === 'cancel') {
+            $syncId = $request->input('sync_id');
+            if ($syncId) {
+                DummyGenerator::cleanupSyncBatches($syncId);
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Sinkronisasi dibatalkan'
+            ]);
+        }
+
+        $typesProcessed = DummyGenerator::syncFromJson($dummyFile, $userId, $currentType);
 
         // Smart Dummy Generator (Fallback)
-        $currentType = get_post_type();
         if ($currentType && !Post::onType($currentType)->exists()) {
-            $module = current_module();
-            DummyGenerator::generateFallback($currentType, $module, $request->user()->id ?? 1);
-
+            DummyGenerator::generateFallback($currentType, $module, $userId);
             $typesProcessed[$currentType] = true;
         }
 
