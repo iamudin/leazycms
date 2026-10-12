@@ -337,6 +337,11 @@
                         href="{{ admin_url('tags') }}"><i class="app-menu__icon fa fa-hashtag "></i>
                         <span class="app-menu__label ">Tags</span></a>
                 </li>
+                <li>
+                    <a class="app-menu__item {{ Request::is(admin_path() . '/media-manager*') ? 'active' : '' }}"
+                        href="{{ admin_url('media-manager') }}"><i class="app-menu__icon fa fa-picture-o"></i>
+                        <span class="app-menu__label">Media Manager</span></a>
+                </li>
                 @if (is_main_domain())
                     <li title="Komentar Pengunjung">
                         <a class="app-menu__item {{ Request::is(admin_path() . '/comments') ? 'active' : '' }}"

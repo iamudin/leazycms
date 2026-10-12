@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use Leazycms\Web\Http\Controllers\AppMasterController;
 use Leazycms\Web\Http\Controllers\CategoryController;
+use Leazycms\Web\Http\Controllers\MediaManagerController;
 use Leazycms\Web\Http\Controllers\PanelController;
 use Leazycms\Web\Http\Controllers\PollingController;
 use Leazycms\Web\Http\Controllers\PostController;
@@ -9,6 +10,15 @@ use Leazycms\Web\Http\Controllers\TagController;
 use Leazycms\Web\Http\Controllers\TenantController;
 use Leazycms\Web\Http\Controllers\ThemeController;
 use Leazycms\Web\Http\Controllers\UserController;
+
+Route::controller(MediaManagerController::class)->prefix('media-manager')->name('media-manager.')->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/list', 'list')->name('list');
+    Route::post('/upload', 'upload')->name('upload');
+    Route::get('/check-usage/{id}', 'checkUsage')->name('check-usage');
+    Route::delete('/destroy/{id}', 'destroy')->name('destroy');
+    Route::post('/edit-image/{id}', 'editImage')->name('edit-image');
+});
 
 Route::post('files/upload_image_summernote', [PostController::class, 'uploadImageSummernote'])->name('upload_image_summernote');
 Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileSummernote'])->name('upload_file_summernote');
