@@ -50,7 +50,8 @@ class PanelController extends Controller implements HasMiddleware
                         ->where('name', 'parked_domain')
                         ->value('value') ?: '';
                 });
-                if ($parkedDomain === '') $parkedDomain = null;
+                if ($parkedDomain === '')
+                    $parkedDomain = null;
                 $allowedHosts = array_values(array_filter([
                     $tenant->domain,
                     $parkedDomain,
@@ -321,7 +322,6 @@ class PanelController extends Controller implements HasMiddleware
     }
     function comments(Request $request, Comment $comment)
     {
-        abort_if(!is_main_domain(), 404);
         if ($request->isMethod('delete')) {
             $comment->delete();
         }
@@ -443,17 +443,17 @@ class PanelController extends Controller implements HasMiddleware
         $posts = $user->isAdmin()
             ? Post::whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray()
             : Post::whereBelongsTo($user)->whereIn('type', $type_list)->selectRaw('type, COUNT(*) as count')->groupBy('type')->pluck('count', 'type')->toArray();
-            $select = ['created_at', 'id', 'user_id', 'status', 'type', 'title', 'slug'];
-       if(config('modules.multisite_enabled') && is_main_domain()){
-        $select[] = 'tenant_id';
-       }
-            $lastpublish = Post::select($select)
+        $select = ['created_at', 'id', 'user_id', 'status', 'type', 'title', 'slug'];
+        if (config('modules.multisite_enabled') && is_main_domain()) {
+            $select[] = 'tenant_id';
+        }
+        $lastpublish = Post::select($select)
             ->with('user')
             ->whereIn('type', $type_list);
-            if(config('modules.multisite_enabled') && is_main_domain()){
-                $lastpublish->with('tenant');
-            }
-           $lastpublish =  $lastpublish->latest('created_at')->limit(5)->get();
+        if (config('modules.multisite_enabled') && is_main_domain()) {
+            $lastpublish->with('tenant');
+        }
+        $lastpublish = $lastpublish->latest('created_at')->limit(5)->get();
 
         $domain = $request->get('domain');
 
@@ -510,8 +510,8 @@ class PanelController extends Controller implements HasMiddleware
                 $rangeEnd = Carbon::create($selectedYear, $monthNum, 1)->endOfMonth()->toDateString();
             } else {
                 $selectedMonth = date('m');
-                $rangeStart = Carbon::create($selectedYear, (int)$selectedMonth, 1)->startOfMonth()->toDateString();
-                $rangeEnd = Carbon::create($selectedYear, (int)$selectedMonth, 1)->endOfMonth()->toDateString();
+                $rangeStart = Carbon::create($selectedYear, (int) $selectedMonth, 1)->startOfMonth()->toDateString();
+                $rangeEnd = Carbon::create($selectedYear, (int) $selectedMonth, 1)->endOfMonth()->toDateString();
             }
         } else {
             $selectedMonth = 'all';
@@ -2125,7 +2125,8 @@ class PanelController extends Controller implements HasMiddleware
                                         $zipFilePath = $candidate;
                                         break 2;
                                     }
-                                } catch (\Throwable $e) {}
+                                } catch (\Throwable $e) {
+                                }
 
                                 $tempDownloadedFile = storage_path('app/temp-template-' . uniqid() . '.zip');
                                 $stream = \Illuminate\Support\Facades\Storage::disk($d)->readStream($tp);
@@ -2144,7 +2145,8 @@ class PanelController extends Controller implements HasMiddleware
                                     break 2;
                                 }
                             }
-                        } catch (\Throwable $e) {}
+                        } catch (\Throwable $e) {
+                        }
                     }
                 }
             }
@@ -2694,7 +2696,8 @@ class PanelController extends Controller implements HasMiddleware
                                 if (is_string($candidate) && file_exists($candidate)) {
                                     $zipPath = $candidate;
                                 }
-                            } catch (\Throwable $e) {}
+                            } catch (\Throwable $e) {
+                            }
 
                             if (empty($zipPath)) {
                                 $tempBackupFile = storage_path('app/leazycms-transfer/imports/temp-backup-' . uniqid() . '.zip');
@@ -3033,7 +3036,8 @@ class PanelController extends Controller implements HasMiddleware
                         if (is_string($candidate) && file_exists($candidate)) {
                             $path = $candidate;
                         }
-                    } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                    }
 
                     if (empty($path)) {
                         $tempPluginFile = storage_path('app/temp_plugins/temp-install-' . uniqid() . '.zip');
@@ -3104,9 +3108,9 @@ class PanelController extends Controller implements HasMiddleware
     {
         admin_only();
 
-       if (!File::isDirectory(resource_path('plugins'))) {
-                File::makeDirectory(resource_path('plugins'), 0755, true);
-           }
+        if (!File::isDirectory(resource_path('plugins'))) {
+            File::makeDirectory(resource_path('plugins'), 0755, true);
+        }
 
         $cloudKey = $this->getOrRegisterCloudKey();
         if (!$cloudKey) {

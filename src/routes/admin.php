@@ -24,7 +24,6 @@ Route::post('files/upload_image_summernote', [PostController::class, 'uploadImag
 Route::post('files/upload_file_summernote', [PostController::class, 'uploadFileSummernote'])->name('upload_file_summernote');
 Route::match(['get', 'post', 'delete'], 'comments/{comment?}', [PanelController::class, 'comments'])->name('comments');
 Route::get('comments-get/{post?}', [PanelController::class, 'get_comments'])->name('comments.get');
-Route::get('files', [PanelController::class, 'files'])->name('files');
 Route::get('global-media-list', [PanelController::class, 'globalMediaList'])->name('global.media.list');
 Route::match(['get', 'post'], 'security/blocked-ip', [PanelController::class, 'blockedIps'])->name('blocked-ip');
 Route::delete('security/blocked-ip/{blockedIp}', [PanelController::class, 'blockedIps'])->name('blocked-ip.destroy');
@@ -47,7 +46,7 @@ foreach (get_module() as $value) {
             Route::get($value->name . '/{id}/edit', 'edit')->name($value->name . '.edit');
             Route::put($value->name . '/{post}/edit', 'update')->name($value->name . '.update');
         }
-     
+
         if (in_array('delete', $value->route)) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
             Route::post($value->name . '/bulkaction', 'bulkaction')->name($value->name . '.bulkaction');
@@ -121,33 +120,33 @@ Route::controller(UserController::class)->group(function () {
     Route::match(['get', 'post'], 'account', 'account')->name('user.account');
 });
 
-if(config('modules.multisite_enabled')) {
-Route::controller(TenantController::class)->group(function () {
-    Route::get('tenant', 'index')->name('tenant.index');
-    Route::post('tenant', 'datatable')->name('tenant.datatable');
-    Route::get('tenant/create', 'create')->name('tenant.create');
-    Route::post('tenant/create', 'store')->name('tenant.store');
-    Route::get('tenant/{tenant}/login', 'loginToTenant')->name('tenant.login');
-    Route::get('tenant/{tenant}/edit', 'edit')->name('tenant.edit');
-    Route::put('tenant/{tenant}/edit', 'update')->name('tenant.update');
-    Route::delete('tenant/{tenant}/edit', 'destroy')->name('tenant.destroy');
-    
-    // cPanel API Configuration
-    Route::post('tenant/cpanel-config/form', 'cpanelApiConfigForm')->name('tenant.cpanel.form');
-    Route::post('tenant/cpanel-config/save', 'cpanelApiConfigSave')->name('tenant.cpanel.save');
+if (config('modules.multisite_enabled')) {
+    Route::controller(TenantController::class)->group(function () {
+        Route::get('tenant', 'index')->name('tenant.index');
+        Route::post('tenant', 'datatable')->name('tenant.datatable');
+        Route::get('tenant/create', 'create')->name('tenant.create');
+        Route::post('tenant/create', 'store')->name('tenant.store');
+        Route::get('tenant/{tenant}/login', 'loginToTenant')->name('tenant.login');
+        Route::get('tenant/{tenant}/edit', 'edit')->name('tenant.edit');
+        Route::put('tenant/{tenant}/edit', 'update')->name('tenant.update');
+        Route::delete('tenant/{tenant}/edit', 'destroy')->name('tenant.destroy');
 
-    // Brand Master Configuration
-    Route::get('tenant/brand-config/form', 'brandConfigForm')->name('tenant.brand.form');
-    Route::post('tenant/brand-config/save', 'brandConfigSave')->name('tenant.brand.save');
+        // cPanel API Configuration
+        Route::post('tenant/cpanel-config/form', 'cpanelApiConfigForm')->name('tenant.cpanel.form');
+        Route::post('tenant/cpanel-config/save', 'cpanelApiConfigSave')->name('tenant.cpanel.save');
 
-    // Ads Master Configuration
-    Route::get('tenant/ads-config/form', 'adsConfigForm')->name('tenant.ads.form');
-    Route::post('tenant/ads-config/save', 'adsConfigSave')->name('tenant.ads.save');
+        // Brand Master Configuration
+        Route::get('tenant/brand-config/form', 'brandConfigForm')->name('tenant.brand.form');
+        Route::post('tenant/brand-config/save', 'brandConfigSave')->name('tenant.brand.save');
 
-    // Tenant Notice Popup Configuration
-    Route::get('tenant/notice-config/form', 'noticeConfigForm')->name('tenant.notice.form');
-    Route::post('tenant/notice-config/save', 'noticeConfigSave')->name('tenant.notice.save');
-});
+        // Ads Master Configuration
+        Route::get('tenant/ads-config/form', 'adsConfigForm')->name('tenant.ads.form');
+        Route::post('tenant/ads-config/save', 'adsConfigSave')->name('tenant.ads.save');
+
+        // Tenant Notice Popup Configuration
+        Route::get('tenant/notice-config/form', 'noticeConfigForm')->name('tenant.notice.form');
+        Route::post('tenant/notice-config/save', 'noticeConfigSave')->name('tenant.notice.save');
+    });
 }
 if (config('modules.app_master')) {
     Route::controller(AppMasterController::class)->group(function () {
