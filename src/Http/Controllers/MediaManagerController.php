@@ -695,16 +695,28 @@ class MediaManagerController extends Controller
         }
 
         $request->validate([
-            'image_data' => 'required|string|max:15000000',
+            'image_file' => 'nullable|file|mimes:jpeg,jpg,png,webp,gif|max:25600',
+            'image_data' => 'nullable|string|max:25000000',
             'action' => 'required|in:overwrite,new',
             'new_name' => 'nullable|string|max:100',
         ]);
 
+        if (!$request->hasFile('image_file') && !$request->filled('image_data')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data gambar tidak ditemukan.',
+            ], 422);
+        }
+
         try {
-            $base64Data = $request->image_data;
+            if ($request->hasFile('image_file')) {
+                $rawSource = $request->file('image_file');
+            } else {
+                $rawSource = $request->image_data;
+            }
 
             // Decode image via Intervention Image
-            $image = Image::decode($base64Data);
+            $image = Image::decode($rawSource);
 
             // Tentukan format encoding sesuai ekstensi asli
             $targetExt = in_array($ext, ['webp', 'png', 'jpg', 'jpeg']) ? $ext : 'webp';
@@ -712,7 +724,13 @@ class MediaManagerController extends Controller
                 $targetExt = 'jpeg';
             }
 
-            $encodedBytes = $image->encodeUsingFileExtension($targetExt, quality: 92)->toString();
+            try {
+                $encodedBytes = $image->encodeUsingFileExtension($targetExt, quality: 92)->toString();
+            } catch (\Throwable $encodeEx) {
+                // Fallback jika format webp tidak didukung GD di hosting
+                $targetExt = ($ext === 'png') ? 'png' : 'jpeg';
+                $encodedBytes = $image->encodeUsingFileExtension($targetExt, quality: 90)->toString();
+            }
 
             if ($request->action === 'overwrite') {
                 $newSizeBytes = strlen($encodedBytes);

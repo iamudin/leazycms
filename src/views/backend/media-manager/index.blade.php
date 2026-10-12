@@ -1,7 +1,7 @@
 @extends('cms::backend.layout.app', ['title' => 'Media Manager'])
 
 @section('content')
-    <link rel="stylesheet" href="{{ url('backend/css/cropper.min.css') }}">
+    <link rel="stylesheet" href="{{ url('backend/css/cropper.min.css') }}" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';">
 
     <style>
         /* Styling Media Manager */
@@ -814,6 +814,11 @@
     @push('scripts')
         <script src="{{ url('backend/js/plugins/cropper.min.js') }}"></script>
         <script>
+            if (typeof Cropper === 'undefined') {
+                document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"><\/script>');
+            }
+        </script>
+        <script>
             // State Media Manager
             let currentCategory = 'all';
             let currentExtension = 'all';
@@ -1512,19 +1517,22 @@
                 $('#editor-file-name').text(fileName);
 
                 let img = document.getElementById('editor-image-preview');
-                img.src = freshUrl;
+                img.crossOrigin = 'anonymous';
+
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
 
                 $('#modalImageEditor').modal('show');
 
-                // Inisialisasi Cropper setelah modal tampil
-                setTimeout(function () {
-                    if (cropper) {
-                        cropper.destroy();
-                    }
+                let initCropper = function () {
+                    if (cropper) cropper.destroy();
                     cropper = new Cropper(img, {
                         viewMode: 2,
                         dragMode: 'move',
                         autoCropArea: 0.9,
+                        checkCrossOrigin: true,
                         restore: false,
                         guides: true,
                         center: true,
@@ -1538,7 +1546,16 @@
                             $('#editor-crop-dimensions').text(`${w} x ${h} px`);
                         }
                     });
-                }, 300);
+                };
+
+                img.onload = function () {
+                    setTimeout(initCropper, 150);
+                };
+
+                img.src = freshUrl;
+                if (img.complete) {
+                    setTimeout(initCropper, 200);
+                }
             }
 
             function closeImageEditor() {
@@ -1594,72 +1611,96 @@
                 btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Menyimpan...');
 
                 // Ambil data canvas gambar hasil edit
-                let canvas = cropper.getCroppedCanvas({
-                    maxWidth: 4096,
-                    maxHeight: 4096,
-                    imageSmoothingQuality: 'high'
-                });
-
-                if (!canvas) {
+                let canvas = null;
+                try {
+                    canvas = cropper.getCroppedCanvas({
+                        maxWidth: 2560,
+                        maxHeight: 2560,
+                        imageSmoothingQuality: 'high'
+                    });
+                } catch (canvasEx) {
+                    console.error("Cropper canvas error:", canvasEx);
                     btn.prop('disabled', false).html(origHtml);
-                    notifyAlert('danger', 'Gagal mengambil hasil canvas gambar.');
+                    notifyAlert('danger', 'Gagal memproses crop: ' + (canvasEx.message || 'Izin CORS ditolak oleh browser'));
                     return;
                 }
 
-                let base64Image = canvas.toDataURL('image/webp', 0.92);
+                if (!canvas) {
+                    btn.prop('disabled', false).html(origHtml);
+                    notifyAlert('danger', 'Gagal mengambil hasil crop gambar.');
+                    return;
+                }
 
-                $.ajax({
-                    url: `${ROUTES.editImage}/${activeEditingFile.id}`,
-                    method: 'POST',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        action: action,
-                        image_data: base64Image
-                    },
-                    success: function (res) {
-                        btn.prop('disabled', false).html(origHtml);
-                        closeImageEditor();
+                let sendPayload = function (formData) {
+                    $.ajax({
+                        url: `${ROUTES.editImage}/${activeEditingFile.id}`,
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (res) {
+                            btn.prop('disabled', false).html(origHtml);
+                            closeImageEditor();
 
-                        if (res.status === 'success') {
-                            notifyAlert('success', res.message);
+                            if (res.status === 'success') {
+                                notifyAlert('success', res.message);
 
-                            if (res.disk_info) {
-                                updateDiskStatsUI(res.disk_info);
-                            }
-
-                            if (res.mode === 'overwrite' && res.file) {
-                                // Reload HANYA gambar yang di-edit di dalam list tanpa me-reload seluruh list
-                                updateEditedMediaCard(res.file);
-                            } else if (res.mode === 'new' && res.file) {
-                                // Mode file baru: tambahkan kartu baru di awal grid jika sesuai filter
-                                let matchesCategory = (currentCategory === 'all' || currentCategory === 'image');
-                                let matchesExt = (currentExtension === 'all' || currentExtension.toLowerCase() === res.file.extension.toLowerCase());
-
-                                if (matchesCategory && matchesExt) {
-                                    renderGridCard(res.file, true);
-                                    let newCard = $(`#media-card-${res.file.id}`);
-                                    if (newCard.length > 0) {
-                                        newCard.addClass('mm-card-updated');
-                                        setTimeout(function () {
-                                            newCard.removeClass('mm-card-updated');
-                                        }, 2200);
-                                    }
+                                if (res.disk_info) {
+                                    updateDiskStatsUI(res.disk_info);
                                 }
 
-                                let count = parseInt($('#stat-total-files').text().replace(/\./g, '')) || 0;
-                                $('#stat-total-files').text((count + 1).toLocaleString('id-ID'));
+                                if (res.mode === 'overwrite' && res.file) {
+                                    // Reload HANYA gambar yang di-edit di dalam list tanpa me-reload seluruh list
+                                    updateEditedMediaCard(res.file);
+                                } else if (res.mode === 'new' && res.file) {
+                                    // Mode file baru: tambahkan kartu baru di awal grid jika sesuai filter
+                                    let matchesCategory = (currentCategory === 'all' || currentCategory === 'image');
+                                    let matchesExt = (currentExtension === 'all' || currentExtension.toLowerCase() === res.file.extension.toLowerCase());
+
+                                    if (matchesCategory && matchesExt) {
+                                        renderGridCard(res.file, true);
+                                        let newCard = $(`#media-card-${res.file.id}`);
+                                        if (newCard.length > 0) {
+                                            newCard.addClass('mm-card-updated');
+                                            setTimeout(function () {
+                                                newCard.removeClass('mm-card-updated');
+                                            }, 2200);
+                                        }
+                                    }
+
+                                    let count = parseInt($('#stat-total-files').text().replace(/\./g, '')) || 0;
+                                    $('#stat-total-files').text((count + 1).toLocaleString('id-ID'));
+                                }
                             }
+                        },
+                        error: function (xhr) {
+                            btn.prop('disabled', false).html(origHtml);
+                            let msg = 'Gagal menyimpan perubahan gambar.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            notifyAlert('danger', msg);
                         }
-                    },
-                    error: function (xhr) {
-                        btn.prop('disabled', false).html(origHtml);
-                        let msg = 'Gagal menyimpan perubahan gambar.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            msg = xhr.responseJSON.message;
+                    });
+                };
+
+                let formData = new FormData();
+                formData.append('_token', "{{ csrf_token() }}");
+                formData.append('action', action);
+
+                if (canvas.toBlob) {
+                    canvas.toBlob(function (blob) {
+                        if (blob) {
+                            formData.append('image_file', blob, (activeEditingFile.fileName || 'edited.webp'));
+                        } else {
+                            formData.append('image_data', canvas.toDataURL('image/webp', 0.92));
                         }
-                        notifyAlert('danger', msg);
-                    }
-                });
+                        sendPayload(formData);
+                    }, 'image/webp', 0.92);
+                } else {
+                    formData.append('image_data', canvas.toDataURL('image/webp', 0.92));
+                    sendPayload(formData);
+                }
             }
 
             // ==========================================
