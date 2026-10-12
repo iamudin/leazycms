@@ -3847,7 +3847,10 @@ if (!function_exists('need_sync_dummy')) {
                 $posts = $dummyData['posts'] ?? null;
 
                 if (is_array($categories) && count($categories) > 0) {
-                    $existingCatSlugs = \Leazycms\Web\Models\Category::onType($currentType)->pluck('slug')->flip()->all();
+                    $existingCatSlugs = array_fill_keys(
+                        \Leazycms\Web\Models\Category::onType($currentType)->whereNotNull('slug')->pluck('slug')->filter(fn($s) => is_string($s) && $s !== '')->all(),
+                        true
+                    );
                     foreach ($categories as $cat) {
                         $type = $cat['type'] ?? $currentType;
                         if ($type === $currentType) {
@@ -3860,7 +3863,10 @@ if (!function_exists('need_sync_dummy')) {
                 }
 
                 if (is_array($posts) && count($posts) > 0) {
-                    $existingPostSlugs = \Leazycms\Web\Models\Post::onType($currentType)->pluck('slug')->flip()->all();
+                    $existingPostSlugs = array_fill_keys(
+                        \Leazycms\Web\Models\Post::onType($currentType)->whereNotNull('slug')->pluck('slug')->filter(fn($s) => is_string($s) && $s !== '')->all(),
+                        true
+                    );
                     foreach ($posts as $post) {
                         $type = $post['type'] ?? $currentType;
                         if ($type === $currentType) {

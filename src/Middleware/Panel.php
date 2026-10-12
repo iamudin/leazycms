@@ -94,6 +94,15 @@ class Panel
                     ]
                 ]);
             }
+            if ($request->is($admin_path . '/' . $modul->name . '/delete-all')) {
+
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Hapus Semua ' . $modul->title,
+                    ]
+                ]);
+            }
             if ($request->is($admin_path . '/' . $modul->name . '/reorder')) {
                 config([
                     'modules.current' => [

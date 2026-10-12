@@ -344,8 +344,14 @@ class DummyGenerator
                 $posts = $dummyData['posts'] ?? [];
 
                 // Preload existing slugs dalam hash map O(1) untuk lookup instan ribuan data
-                $existingCatSlugs = Category::onType($currentType)->pluck('slug')->flip()->all();
-                $existingPostSlugs = Post::onType($currentType)->pluck('slug')->flip()->all();
+                $existingCatSlugs = array_fill_keys(
+                    Category::onType($currentType)->whereNotNull('slug')->pluck('slug')->filter(fn($s) => is_string($s) && $s !== '')->all(),
+                    true
+                );
+                $existingPostSlugs = array_fill_keys(
+                    Post::onType($currentType)->whereNotNull('slug')->pluck('slug')->filter(fn($s) => is_string($s) && $s !== '')->all(),
+                    true
+                );
 
                 // Filter categories for current type
                 if (is_array($categories)) {

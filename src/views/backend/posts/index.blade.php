@@ -121,20 +121,27 @@
       @include('cms::backend.layout.error')
       <div>
         <div class="mb-2 bulkaction float-left" style="display: none">
-          <select id="bulkAction" class="form-control-sm form-control-select">
-            <option value="">Pilih tindakan</option>
-            <option value="delete">Hapus</option>
-            <option value="draft">Draft</option>
-            <option value="publish">Publikasikan</option>
-          </select>
-          <button type="button" id="applyAction" class="btn btn-primary btn-sm">Submit</button>
+          <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <span class="badge badge-primary px-2 py-1 font-weight-bold" id="bulk-selected-badge" style="font-size: 12px;">
+              <span id="bulk-selected-count">0</span> data dipilih
+            </span>
+            <select id="bulkAction" class="form-control-sm form-control-select">
+              <option value="">Pilih tindakan...</option>
+              <option value="delete">Hapus</option>
+              <option value="draft">Draft</option>
+              <option value="publish">Publikasikan</option>
+            </select>
+            <button type="button" id="applyAction" class="btn btn-primary btn-sm">Submit</button>
+            <button type="button" id="clearSelection" class="btn btn-outline-secondary btn-sm" title="Batalkan semua pilihan">
+              <i class="fa fa-times"></i> Batal Pilih
+            </button>
+          </div>
         </div>
         <div class="mb-4 text-right ">
           <div class="btn-group">
             @if(need_sync_dummy())
               <button type="button" class="btn btn-success btn-sm btn-sync-dummy">
                 <i class="fas fa-sync" aria-hidden="true"></i> Sinkron Data Dummy
-
               </button>
             @endif
             @if(Route::has(get_post_type() . '.create'))
@@ -143,8 +150,14 @@
                     aria-hidden></i> Tambah {{ $module->title }} Baru</a>
               @endif
             @endif
+                @if(in_array('delete', $module->route) && (auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'delete', true)))
+              <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#modal-delete-all" title="Hapus semua data modul ini">
+                <i class="fas fa-trash-alt"></i> Hapus Semua Data
+              </button>
+            @endif
             <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i
                 class="fas fa-filter"></i> Filter</button>
+        
           </div>
         </div>
       </div>
@@ -256,6 +269,7 @@
   </div>
   @include('cms::backend.posts.filter')
   @include('cms::backend.posts.datatable')
+  @include('cms::backend.posts.delete_all_modal')
   @if(need_sync_dummy())
     @include('cms::backend.posts.sync_dummy')
   @endif
@@ -487,80 +501,209 @@
     </script>
     <script>
       $(function () {
-        $('#select-all').prop('checked', false);
-        $('#bulkAction').val('');
-        $('#select-all').click(function () {
-          var isChecked = this.checked;
-          $('.dt-checkbox').prop('checked', isChecked);
-          toggleActionButton();
-        });
+        var selectedPostIds = new Set();
+        window.selectedPostIds = selectedPostIds;
 
-        $(document).on('change', '.dt-checkbox', function () {
-          toggleActionButton();
-        });
+        function updateCheckboxUI() {
+          var totalSelected = selectedPostIds.size;
+          $('#bulk-selected-count').text(totalSelected);
 
-        function toggleActionButton() {
-          var selectedCount = $('.dt-checkbox:checked').length;
-
-          if (selectedCount > 0) {
+          if (totalSelected > 0) {
             $('.bulkaction').prop('disabled', false).fadeIn();
           } else {
             $('.bulkaction').prop('disabled', true).fadeOut();
           }
+
+          var pageCheckboxes = $('.dt-checkbox');
+          if (pageCheckboxes.length > 0) {
+            var allChecked = true;
+            pageCheckboxes.each(function () {
+              var val = $(this).val();
+              if (selectedPostIds.has(val)) {
+                $(this).prop('checked', true);
+              } else {
+                $(this).prop('checked', false);
+                allChecked = false;
+              }
+            });
+            $('#select-all').prop('checked', allChecked);
+          } else {
+            $('#select-all').prop('checked', false);
+          }
         }
 
-        $('#applyAction').click(function () {
-          var selectedIds = [];
-          $('.dt-checkbox:checked').each(function () {
-            selectedIds.push($(this).val());
-          });
+        // Event saat draw.dt (halaman berpindah, pagination, search, filter, reload)
+        $(document).on('draw.dt', '.datatable', function () {
+          updateCheckboxUI();
+        });
 
-          var action = $('#bulkAction').val();
-          if (selectedIds.length > 0 && action) {
-            swal(
-              {
-                title: "Anda yakin dengan tindakan ini ?",
-                text: "Semua data terkait akan berimbas atas tindakan ini",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Iya, Lakukan!",
-                cancelButtonText: "Tidak, Batalkan!",
-                closeOnConfirm: false,
-                closeOnCancel: false,
-              },
-              function (isConfirm) {
-                if (isConfirm) {
-                  $.ajax({
-                    url: "{{ route(get_post_type() . '.bulkaction') }}",
-                    type: 'POST',
-                    data: {
-                      _token: $('meta[name="csrf-token"]').attr('content'),
-                      id: selectedIds,
-                      action: action,
-                    },
-                    success: function (response) {
-                      swal("Berhasil", "Tindakan Berhasil dilakukan", "success");
-
-                      $('#select-all').prop('checked', false);
-                      $('.bulkaction').prop('disabled', true).fadeOut();
-                      $(".datatable").DataTable().ajax.reload();
-                    },
-                    error: function (xhr) {
-                      $('#select-all').prop('checked', false);
-                      swal("Gagal", "Tindakan gagal dilakukan", "error");
-
-                    }
-                  });
-
-                  swal.close();
-                } else {
-                  swal("Dibatalkan", "Tindakan dibatalkan", "error");
-                }
-              }
-            );
-
-
+        // Event saat checkbox per baris diubah
+        $(document).on('change', '.dt-checkbox', function () {
+          var val = $(this).val();
+          if (this.checked) {
+            selectedPostIds.add(val);
+          } else {
+            selectedPostIds.delete(val);
           }
+          updateCheckboxUI();
+        });
+
+        // Event saat select-all di header diklik
+        $('#select-all').on('click', function () {
+          var isChecked = this.checked;
+          $('.dt-checkbox').each(function () {
+            var val = $(this).val();
+            $(this).prop('checked', isChecked);
+            if (isChecked) {
+              selectedPostIds.add(val);
+            } else {
+              selectedPostIds.delete(val);
+            }
+          });
+          updateCheckboxUI();
+        });
+
+        // Tombol Batal Pilih
+        $('#clearSelection').on('click', function () {
+          selectedPostIds.clear();
+          $('.dt-checkbox').prop('checked', false);
+          $('#select-all').prop('checked', false);
+          updateCheckboxUI();
+        });
+
+        // Eksekusi Bulk Action (termasuk item dari page lain)
+        $('#applyAction').click(function () {
+          var selectedIds = Array.from(selectedPostIds);
+          var action = $('#bulkAction').val();
+
+          if (selectedIds.length === 0) {
+            if (typeof swal === 'function') {
+              swal("Perhatian", "Pilih data terlebih dahulu melalui checkbox!", "warning");
+            } else {
+              alert("Pilih data terlebih dahulu melalui checkbox!");
+            }
+            return;
+          }
+
+          if (!action) {
+            if (typeof swal === 'function') {
+              swal("Perhatian", "Silakan pilih tindakan yang ingin dilakukan!", "warning");
+            } else {
+              alert("Silakan pilih tindakan yang ingin dilakukan!");
+            }
+            return;
+          }
+
+          var actionLabel = action === 'delete' ? 'Hapus' : (action === 'draft' ? 'Jadikan Draft' : 'Publikasikan');
+
+          swal(
+            {
+              title: actionLabel + " " + selectedIds.length + " data terpilih?",
+              text: "Tindakan akan diterapkan pada " + selectedIds.length + " data yang dipilih (termasuk dari halaman lain).",
+              type: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Iya, Lakukan!",
+              cancelButtonText: "Tidak, Batalkan!",
+              closeOnConfirm: false,
+              closeOnCancel: false,
+            },
+            function (isConfirm) {
+              if (isConfirm) {
+                $.ajax({
+                  url: "{{ route(get_post_type() . '.bulkaction') }}",
+                  type: 'POST',
+                  data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    id: selectedIds,
+                    action: action,
+                  },
+                  success: function (response) {
+                    swal("Berhasil", selectedIds.length + " data berhasil diproses.", "success");
+                    selectedPostIds.clear();
+                    $('#select-all').prop('checked', false);
+                    $('#bulkAction').val('');
+                    updateCheckboxUI();
+                    $(".datatable").DataTable().ajax.reload(null, false);
+                  },
+                  error: function (xhr) {
+                    var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Tindakan gagal dilakukan";
+                    swal("Gagal", errMsg, "error");
+                  }
+                });
+              } else {
+                swal("Dibatalkan", "Tindakan dibatalkan", "error");
+              }
+            }
+          );
+        });
+
+        // Handler Konfirmasi Input Kata HAPUS pada Modal Delete All
+        $('#confirmDeleteAllText').on('input', function () {
+          var val = $(this).val().trim().toUpperCase();
+          if (val === 'HAPUS') {
+            $('#btn-execute-delete-all').prop('disabled', false);
+          } else {
+            $('#btn-execute-delete-all').prop('disabled', true);
+          }
+        });
+
+        // Eksekusi Hapus Semua Data
+        $('#btn-execute-delete-all').click(function () {
+          var deleteType = $('input[name="delete_all_type"]:checked').val();
+          var scope = $('input[name="delete_all_scope"]:checked').val();
+          var $btn = $(this);
+
+          $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Sedang Menghapus...');
+
+          var postData = {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            delete_type: deleteType,
+            scope: scope,
+          };
+
+          if (scope === 'filtered') {
+            postData.status = $("#status").val();
+            postData.user_id = $("#user_id").val();
+            postData.from_date = $("#from_date").val();
+            postData.to_date = $("#to_date").val();
+            postData.search = $("input[type=search]").val();
+            @if(current_module()->form->post_parent)
+            postData.parent_id = $("#parent_id").val();
+            @endif
+            @if(current_module()->form->category)
+            postData.category_id = $("#category_id").val();
+            @endif
+            @if(current_module()->form->tag)
+            postData.tag_id = $("#tag_id").val();
+            @endif
+            @if(config('modules.multisite_enabled') && is_main_domain())
+            postData.tenant_id = $("#tenant_id").val();
+            @endif
+          }
+
+          $.ajax({
+            url: "{{ route(get_post_type() . '.delete_all') }}",
+            type: 'POST',
+            data: postData,
+            success: function (response) {
+              $('#modal-delete-all').modal('hide');
+              $('#confirmDeleteAllText').val('');
+              $btn.prop('disabled', true).html('<i class="fas fa-trash-alt mr-1"></i> Hapus Semua Data');
+
+              swal("Berhasil!", response.message, "success");
+
+              selectedPostIds.clear();
+              $('#select-all').prop('checked', false);
+              updateCheckboxUI();
+
+              $(".datatable").DataTable().ajax.reload();
+            },
+            error: function (xhr) {
+              $btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> Hapus Semua Data');
+              var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Gagal menghapus data.";
+              swal("Gagal!", errMsg, "error");
+            }
+          });
         });
       });
 

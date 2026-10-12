@@ -1410,10 +1410,23 @@ class PostController extends Controller implements HasMiddleware
         $ids = $request->id;
         $action = $request->action;
 
+        if ($action === 'delete_all') {
+            return $this->deleteAll($request);
+        }
+
         if (is_array($ids) && count($ids) > 0) {
+            @ini_set('max_execution_time', '300');
+            @set_time_limit(300);
+            @ini_set('memory_limit', '512M');
+
+            $baseQuery = query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids);
+            if (!$request->user()->isAdmin()) {
+                $baseQuery->whereBelongsTo($request->user());
+            }
+
             switch ($action) {
                 case 'delete':
-                    $posts = query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->get();
+                    $posts = $baseQuery->get();
                     foreach ($posts as $post) {
                         if ($post->trashed() || (empty($post->title) && $post->status == 'draft')) {
                             $post->forceDelete();
@@ -1423,19 +1436,120 @@ class PostController extends Controller implements HasMiddleware
                     }
                     break;
                 case 'draft':
-                    query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->update(['status' => 'draft', 'deleted_at' => null]);
+                    $baseQuery->update(['status' => 'draft', 'deleted_at' => null]);
                     break;
                 case 'publish':
-                    query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids)->update(['status' => 'publish', 'deleted_at' => null]);
+                    $baseQuery->update(['status' => 'publish', 'deleted_at' => null]);
                     break;
                 default:
                     break;
             }
+            $this->recache(get_post_type());
             return response()->json(['message' => 'Success'], 200);
 
         }
 
         return response()->json(['message' => 'No files selected.'], 400);
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $postType = get_post_type();
+        $request->user()->hasRole($postType, 'delete');
+
+        $deleteType = $request->input('delete_type', 'trash'); // 'trash' atau 'permanent'
+        $scope = $request->input('scope', 'all'); // 'all' atau 'filtered'
+
+        $query = query()->withTrashed()->onType($postType);
+
+        // Multisite / Tenant scope
+        if (config('modules.multisite_enabled') && is_main_domain()) {
+            $tenant = $request->input('tenant_id');
+            if ($tenant === 'main') {
+                $query->whereNull('tenant_id');
+            } elseif ($tenant && is_numeric($tenant)) {
+                $query->where('tenant_id', $tenant);
+            }
+        }
+
+        // Jika bukan admin, hanya data miliknya sendiri
+        if (!$request->user()->isAdmin()) {
+            $query->whereBelongsTo($request->user());
+        }
+
+        // Scope filter
+        if ($scope === 'filtered') {
+            $status = $request->input('status');
+            if ($status) {
+                if ($status === 'sampah') {
+                    $query->onlyTrashed();
+                } elseif ($status === 'disematkan') {
+                    $query->whereNull('deleted_at')->where('pinned', 1);
+                } else {
+                    $query->whereNull('deleted_at')->where('status', $status);
+                }
+            }
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
+            if ($request->filled('parent_id')) {
+                $query->where('parent_id', $request->parent_id);
+            }
+            if ($request->filled('tag_id')) {
+                $tagId = $request->tag_id;
+                $query->whereHas('tags', fn($q) => $q->where('tags.id', $tagId));
+            }
+            if ($request->filled('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+            if ($request->filled('from_date')) {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            }
+            if ($request->filled('to_date')) {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                        ->orWhere('content', 'like', "%{$search}%");
+                });
+            }
+        }
+
+        @ini_set('max_execution_time', '300');
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+
+        $totalDeleted = 0;
+        if ($deleteType === 'permanent') {
+            // Hapus permanen menggunakan chunkById
+            $query->chunkById(200, function ($posts) use (&$totalDeleted) {
+                foreach ($posts as $post) {
+                    $post->forceDelete();
+                    $totalDeleted++;
+                }
+            });
+        } else {
+            // Soft delete (pindahkan ke sampah untuk data aktif)
+            $nonTrashed = (clone $query)->whereNull('deleted_at');
+            $nonTrashed->chunkById(200, function ($posts) use (&$totalDeleted) {
+                foreach ($posts as $post) {
+                    $post->delete();
+                    $totalDeleted++;
+                }
+            });
+        }
+
+        $this->recache($postType);
+
+        $actionText = $deleteType === 'permanent' ? 'secara permanen' : 'ke kotak sampah';
+        return response()->json([
+            'success' => true,
+            'message' => "Berhasil menghapus {$totalDeleted} data {$actionText}.",
+            'total' => $totalDeleted
+        ]);
     }
 
     public function reorder(Request $request)
