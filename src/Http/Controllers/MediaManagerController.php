@@ -62,6 +62,28 @@ class MediaManagerController extends Controller
     }
 
     /**
+     * Dapatkan URL file.
+     * Jika multisite enable, panggil via URL host milik file.
+     *
+     * @param \Leazycms\FLC\Models\File|object|string $file
+     * @param string|null $host
+     * @return string
+     */
+    protected function getFileUrl($file, ?string $host = null): string
+    {
+        $fileName = is_object($file) ? ($file->file_name ?? '') : (string) $file;
+        $fileHost = $host ?? (is_object($file) ? ($file->host ?? null) : null);
+
+        if (config('modules.multisite_enabled') && !empty($fileHost)) {
+            $cleanHost = preg_replace('#^https?://#i', '', rtrim($fileHost, '/'));
+            $scheme = (request()->secure() || str_starts_with((string) config('app.url'), 'https://')) ? 'https' : 'http';
+            return $scheme . '://' . $cleanHost . '/media/' . ltrim($fileName, '/');
+        }
+
+        return url('media/' . ltrim($fileName, '/'));
+    }
+
+    /**
      * Query dasar file sesuai izin host / tenant.
      */
     protected function baseFileQuery(Request $request)
@@ -191,7 +213,7 @@ class MediaManagerController extends Controller
             $isDoc = in_array($ext, $docExts);
             $isArchive = in_array($ext, $archiveExts);
 
-            $fileUrl = url('media/' . $item->file_name);
+            $fileUrl = $this->getFileUrl($item);
             $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? '?size=small&time=' . time() : '');
 
             return [
@@ -210,6 +232,7 @@ class MediaManagerController extends Controller
                 'is_archive' => $isArchive,
                 'url' => $fileUrl,
                 'thumb_url' => $thumbUrl,
+                'host' => $item->host,
                 'uploader' => $item->user?->name ?? 'System',
                 'created_at' => $item->created_at ? $item->created_at->translatedFormat('d M Y H:i') : '-',
                 'created_raw' => $item->created_at ? $item->created_at->toISOString() : null,
@@ -298,7 +321,8 @@ class MediaManagerController extends Controller
                         'id' => $finalFile->id,
                         'file_name' => $finalFile->file_name,
                         'file_size' => $this->formatBytes($finalFile->file_size),
-                        'url' => url('media/' . $finalFile->file_name),
+                        'url' => $this->getFileUrl($finalFile),
+                        'host' => $finalFile->host,
                     ];
                 }
             } else {
@@ -628,8 +652,9 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => url('media/' . $file->file_name) . '?time=' . time(),
-                        'thumb_url' => url('media/' . $file->file_name) . '?size=small&time=' . time(),
+                        'url' => $this->getFileUrl($file) . '?time=' . time(),
+                        'thumb_url' => $this->getFileUrl($file) . '?size=small&time=' . time(),
+                        'host' => $file->host,
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
                     ],
@@ -688,8 +713,9 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => url('media/' . $newFile->file_name),
-                        'thumb_url' => url('media/' . $newFile->file_name) . '?size=small&time=' . time(),
+                        'url' => $this->getFileUrl($newFile),
+                        'thumb_url' => $this->getFileUrl($newFile) . '?size=small&time=' . time(),
+                        'host' => $newFile->host,
                         'uploader' => Auth::user()?->name ?? 'System',
                         'created_at' => $newFile->created_at ? $newFile->created_at->translatedFormat('d M Y H:i') : Carbon::now()->translatedFormat('d M Y H:i'),
                     ],

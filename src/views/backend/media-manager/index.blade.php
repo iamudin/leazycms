@@ -583,6 +583,7 @@
                                     Ukuran: <span id="preview-meta-size" class="font-weight-bold text-dark">-</span> &bull;
                                     Tipe: <span id="preview-meta-type" class="badge badge-secondary">-</span> &bull;
                                     Diupload: <span id="preview-meta-date">-</span>
+                                    <span id="preview-meta-host-wrap" style="display: none;"> &bull; Host: <span id="preview-meta-host" class="badge badge-info text-white font-weight-normal">-</span></span>
                                 </div>
                             </div>
                             <div class="col-md-5 text-md-right">
@@ -992,6 +993,7 @@
                             <div class="mm-file-name" title="${safeName}">${safeName}</div>
                             <div class="mm-file-meta">
                                 <span><i class="fa fa-clock-o mr-1"></i>${safeCreated}</span>
+                                ${item.host ? `<span class="text-truncate ml-1 text-muted" title="Host: ${escapeHtml(item.host)}" style="max-width: 110px;"><i class="fa fa-globe mr-1"></i>${escapeHtml(item.host)}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -1136,6 +1138,12 @@
                 $('#preview-meta-size').text(item.file_size_formatted);
                 $('#preview-meta-type').text(item.extension);
                 $('#preview-meta-date').text(item.created_at);
+                if (item.host) {
+                    $('#preview-meta-host').text(item.host);
+                    $('#preview-meta-host-wrap').show();
+                } else {
+                    $('#preview-meta-host-wrap').hide();
+                }
                 $('#btn-download-preview').attr('href', cleanUrl);
 
                 let area = $('#preview-content-area');
