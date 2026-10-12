@@ -16,11 +16,14 @@
             background: #fff;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
-            padding: 16px 20px;
+            padding: 14px 18px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 14px;
+            width: 100%;
+            height: 100%;
+            min-height: 86px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
@@ -30,13 +33,15 @@
         }
 
         .mm-stat-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
+            flex-shrink: 0;
         }
 
         .mm-filter-pill {
@@ -363,41 +368,70 @@
 
         <!-- Statistik Bar -->
         <div class="col-12 mb-3">
-            <div class="row" style="margin-left: -6px; margin-right: -6px;">
-                <div class="col-md-3 col-6 mb-2 px-1">
-                    <div class="mm-card-stats">
+            <div class="row align-items-stretch" style="margin-left: -6px; margin-right: -6px;">
+                <!-- Card 1: Total Media -->
+                <div class="col-md-3 col-6 mb-2 px-1 d-flex">
+                    <div class="mm-card-stats w-100">
                         <div class="mm-stat-icon" style="background: #e0f2fe; color: #0284c7;">
                             <i class="fa fa-folder-open"></i>
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 0;">
                             <div class="text-muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">
                                 Total Media</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a;" id="stat-total-files">
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;" id="stat-total-files">
                                 {{ number_format($totalFiles, 0, ',', '.') }}
+                            </div>
+                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Semua file terdaftar">
+                                <i class="fa fa-files-o mr-1 text-primary"></i>Semua file library
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 mb-2 px-1">
-                    <div class="mm-card-stats">
+
+                <!-- Card 2: Ukuran Penyimpanan / Kuota Disk -->
+                <div class="col-md-3 col-6 mb-2 px-1 d-flex">
+                    <div class="mm-card-stats w-100">
                         <div class="mm-stat-icon" style="background: #fef3c7; color: #d97706;">
                             <i class="fa fa-database"></i>
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 0;">
                             <div class="text-muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">
                                 Ukuran Penyimpanan</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a;" id="stat-total-size">
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;" id="stat-total-size">
                                 {{ $totalSizeFormatted }}
+                                @if(isset($diskInfo))
+                                    @if($diskInfo['is_unmetered'])
+                                        <span class="badge badge-light border text-muted ml-1" style="font-size: 10px; font-weight: 600;">Unmetered</span>
+                                    @else
+                                        <span style="font-size: 12px; font-weight: 600; color: #64748b;"> / {{ $diskInfo['limit_mb'] }} MB</span>
+                                    @endif
+                                @endif
                             </div>
+                            @if(isset($diskInfo) && !$diskInfo['is_unmetered'])
+                                <div class="progress mt-1" style="height: 4px; border-radius: 2px;" title="{{ $diskInfo['percent_used'] }}% terpakai">
+                                    <div id="stat-disk-progress" class="progress-bar {{ $diskInfo['percent_used'] >= 90 ? 'bg-danger' : ($diskInfo['percent_used'] >= 75 ? 'bg-warning' : 'bg-success') }}"
+                                        role="progressbar" style="width: {{ $diskInfo['percent_used'] }}%;"></div>
+                                </div>
+                                <div id="stat-disk-remaining" class="text-truncate" style="font-size: 10px; color: {{ $diskInfo['percent_used'] >= 90 ? '#dc2626' : '#64748b' }}; margin-top: 2px; line-height: 1.2;"
+                                    title="Sisa: {{ $diskInfo['remaining_formatted'] }} ({{ $diskInfo['percent_used'] }}%)">
+                                    Sisa: {{ $diskInfo['remaining_formatted'] }} ({{ $diskInfo['percent_used'] }}%)
+                                </div>
+                            @else
+                                <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Kapasitas ruang disk">
+                                    <i class="fa fa-hdd-o mr-1 text-warning"></i>Kapasitas penyimpanan
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 mb-2 px-1">
-                    <div class="mm-card-stats">
+
+                <!-- Card 3: Gambar Terunggah -->
+                <div class="col-md-3 col-6 mb-2 px-1 d-flex">
+                    <div class="mm-card-stats w-100">
                         <div class="mm-stat-icon" style="background: #dcfce7; color: #16a34a;">
                             <i class="fa fa-file-image-o"></i>
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 0;">
                             <div class="text-muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">
                                 Gambar Terunggah</div>
                             @php
@@ -406,22 +440,31 @@
                                     $imgCount += ($extensionsList[$ie] ?? 0);
                                 }
                             @endphp
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a;">
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;">
                                 {{ number_format($imgCount, 0, ',', '.') }}
+                            </div>
+                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Foto dan visual grafis">
+                                <i class="fa fa-picture-o mr-1 text-success"></i>Visual & foto
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 mb-2 px-1">
-                    <div class="mm-card-stats">
+
+                <!-- Card 4: Format Ekstensi -->
+                <div class="col-md-3 col-6 mb-2 px-1 d-flex">
+                    <div class="mm-card-stats w-100">
                         <div class="mm-stat-icon" style="background: #f1f5f9; color: #475569;">
                             <i class="fa fa-tags"></i>
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 0;">
                             <div class="text-muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">
                                 Format Ekstensi</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a;">{{ $extensionsList->count() }}
-                                Jenis</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;">
+                                {{ $extensionsList->count() }} Jenis
+                            </div>
+                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Kelompok tipe file terdeteksi">
+                                <i class="fa fa-th-large mr-1 text-secondary"></i>Kategori ekstensi
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -782,6 +825,38 @@
             let cropper = null;
             let activeEditingFile = null;
             let currentPreviewUrl = '';
+            let tenantDiskLimit = @json($diskInfo ?? null);
+
+            function formatFileSize(bytes) {
+                if (!bytes || bytes <= 0) return '0 B';
+                let k = 1024;
+                let sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                let i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function updateDiskStatsUI(diskInfo) {
+                if (!diskInfo) return;
+                tenantDiskLimit = diskInfo;
+                if (!diskInfo.is_unmetered) {
+                    $('#stat-total-size').html(`${diskInfo.used_formatted} <span style="font-size: 12px; font-weight: 600; color: #64748b;"> / ${diskInfo.limit_mb} MB</span>`);
+                    let progressBar = $('#stat-disk-progress');
+                    let remainingText = $('#stat-disk-remaining');
+                    if (progressBar.length) {
+                        progressBar.css('width', diskInfo.percent_used + '%');
+                        progressBar.removeClass('bg-success bg-warning bg-danger');
+                        if (diskInfo.percent_used >= 90) progressBar.addClass('bg-danger');
+                        else if (diskInfo.percent_used >= 75) progressBar.addClass('bg-warning');
+                        else progressBar.addClass('bg-success');
+                    }
+                    if (remainingText.length) {
+                        remainingText.text(`Sisa: ${diskInfo.remaining_formatted} (${diskInfo.percent_used}%)`);
+                        remainingText.css('color', diskInfo.percent_used >= 90 ? '#dc2626' : '#64748b');
+                    }
+                } else {
+                    $('#stat-total-size').html(`${diskInfo.used_formatted} <span class="badge badge-light border text-muted ml-1" style="font-size: 10px; font-weight: 600;">Unmetered</span>`);
+                }
+            }
 
             const ROUTES = {
                 list: "{{ route('media-manager.list') }}",
@@ -1068,20 +1143,106 @@
             }
 
             // ==========================================
+            // KOMPRESI GAMBAR DI SISI CLIENT (.webp)
+            // ==========================================
+            async function compressImageClientSide(file) {
+                let ext = file.name.split('.').pop().toLowerCase();
+                if (!['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+                    return file;
+                }
+
+                return new Promise((resolve) => {
+                    let reader = new FileReader();
+                    reader.onload = function (event) {
+                        let img = new Image();
+                        img.onload = function () {
+                            let width = img.width;
+                            let height = img.height;
+                            let maxWidth = {{ (int) (function_exists('get_option') && get_option('max_image_width') ? get_option('max_image_width') : 1500) }};
+                            if (maxWidth <= 0) {
+                                maxWidth = 1500;
+                            }
+
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            } else if (ext === 'webp') {
+                                resolve(file);
+                                return;
+                            }
+
+                            let canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            let ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            canvas.toBlob(function (blob) {
+                                if (!blob) {
+                                    resolve(file);
+                                    return;
+                                }
+                                let newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.webp';
+                                let newFile = new File([blob], newFileName, { type: 'image/webp', lastModified: Date.now() });
+                                resolve(newFile);
+                            }, 'image/webp', 0.95);
+                        };
+                        img.onerror = function () {
+                            resolve(file);
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.onerror = function () {
+                        resolve(file);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // ==========================================
             // UPLOAD HANDLER (LANGSUNG DARI PERANGKAT)
             // ==========================================
-            function handleFileUpload(fileList) {
+            async function handleFileUpload(fileList) {
                 if (!fileList || fileList.length === 0) return;
 
-                let formData = new FormData();
+                $('#mm-upload-progress').slideDown(200);
+                $('#mm-upload-progress-bar').css('width', '10%');
+                $('#mm-upload-progress-percent').text('Memproses...');
+
+                // 1. Kompresi file gambar di sisi client (browser canvas -> .webp)
+                let processedFiles = [];
                 for (let i = 0; i < fileList.length; i++) {
-                    formData.append('media[]', fileList[i]);
+                    try {
+                        let comp = await compressImageClientSide(fileList[i]);
+                        processedFiles.push(comp);
+                    } catch (e) {
+                        processedFiles.push(fileList[i]);
+                    }
+                }
+
+                // 2. Client-side disk space check dengan ukuran file setelah kompresi
+                if (tenantDiskLimit && !tenantDiskLimit.is_unmetered) {
+                    let totalSelectedBytes = 0;
+                    for (let i = 0; i < processedFiles.length; i++) {
+                        totalSelectedBytes += (processedFiles[i].size || 0);
+                    }
+                    if (tenantDiskLimit.remaining_bytes <= 0 || totalSelectedBytes > tenantDiskLimit.remaining_bytes) {
+                        let selFormatted = formatFileSize(totalSelectedBytes);
+                        $('#mm-upload-progress').slideUp(200);
+                        notifyAlert('danger', `<strong>Kapasitas Disk Tidak Mencukupi!</strong><br>Total file yang dipilih (${selFormatted}) melebihi sisa kuota penyimpanan (${tenantDiskLimit.remaining_formatted} dari ${tenantDiskLimit.limit_mb} MB). Silakan hapus file lama terlebih dahulu.`);
+                        $('#mm-file-input').val('');
+                        return;
+                    }
+                }
+
+                let formData = new FormData();
+                for (let i = 0; i < processedFiles.length; i++) {
+                    formData.append('media[]', processedFiles[i]);
                 }
                 formData.append('_token', "{{ csrf_token() }}");
 
-                $('#mm-upload-progress').slideDown(200);
-                $('#mm-upload-progress-bar').css('width', '15%');
-                $('#mm-upload-progress-percent').text('15%');
+                $('#mm-upload-progress-bar').css('width', '25%');
+                $('#mm-upload-progress-percent').text('Mengunggah...');
 
                 $.ajax({
                     url: ROUTES.upload,
@@ -1110,6 +1271,9 @@
 
                         if (res.status === 'success') {
                             notifyAlert('success', res.message);
+                            if (res.disk_info) {
+                                updateDiskStatsUI(res.disk_info);
+                            }
                             loadMedia(1, false);
                         }
                     },
@@ -1119,6 +1283,9 @@
                         let msg = 'Gagal mengupload file.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
+                        }
+                        if (xhr.responseJSON && xhr.responseJSON.disk_info) {
+                            updateDiskStatsUI(xhr.responseJSON.disk_info);
                         }
                         notifyAlert('danger', msg);
                     }
@@ -1306,6 +1473,10 @@
                             notifyAlert('success', res.message);
                         }
 
+                        if (res.disk_info) {
+                            updateDiskStatsUI(res.disk_info);
+                        }
+
                         $(`#media-card-${id}`).fadeOut(300, function () {
                             $(this).remove();
                             let count = parseInt($('#stat-total-files').text().replace(/\./g, '')) || 0;
@@ -1451,6 +1622,10 @@
 
                         if (res.status === 'success') {
                             notifyAlert('success', res.message);
+
+                            if (res.disk_info) {
+                                updateDiskStatsUI(res.disk_info);
+                            }
 
                             if (res.mode === 'overwrite' && res.file) {
                                 // Reload HANYA gambar yang di-edit di dalam list tanpa me-reload seluruh list

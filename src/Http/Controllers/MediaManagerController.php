@@ -105,6 +105,55 @@ class MediaManagerController extends Controller
     }
 
     /**
+     * Dapatkan informasi batas disk space tenant (dalam bytes).
+     * Mengembalikan null jika bukan multisite atau berada di main domain.
+     */
+    protected function getTenantDiskLimitInfo(Request $request): ?array
+    {
+        if (!config('modules.multisite_enabled') || is_main_domain()) {
+            return null;
+        }
+
+        $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
+        if (!$tenant) {
+            return null;
+        }
+
+        $limitMB = (int) ($tenant->disk_space ?? 0);
+        $usedBytes = (int) $this->baseFileQuery($request)->sum('file_size');
+
+        if ($limitMB <= 0) {
+            return [
+                'is_unmetered' => true,
+                'limit_mb' => 0,
+                'limit_bytes' => 0,
+                'limit_formatted' => 'Unmetered',
+                'used_bytes' => $usedBytes,
+                'used_formatted' => $this->formatBytes($usedBytes),
+                'remaining_bytes' => PHP_INT_MAX,
+                'remaining_formatted' => 'Unlimited',
+                'percent_used' => 0,
+            ];
+        }
+
+        $limitBytes = $limitMB * 1024 * 1024;
+        $remainingBytes = max(0, $limitBytes - $usedBytes);
+        $percentUsed = min(100, round(($usedBytes / $limitBytes) * 100, 1));
+
+        return [
+            'is_unmetered' => false,
+            'limit_mb' => $limitMB,
+            'limit_bytes' => $limitBytes,
+            'limit_formatted' => $limitMB . ' MB',
+            'used_bytes' => $usedBytes,
+            'used_formatted' => $this->formatBytes($usedBytes),
+            'remaining_bytes' => $remainingBytes,
+            'remaining_formatted' => $this->formatBytes($remainingBytes),
+            'percent_used' => $percentUsed,
+        ];
+    }
+
+    /**
      * Halaman Utama Media Manager (Grid View).
      */
     public function index(Request $request)
@@ -121,10 +170,13 @@ class MediaManagerController extends Controller
             return strtolower(pathinfo($name, PATHINFO_EXTENSION));
         })->filter()->countBy()->sortDesc();
 
+        $diskInfo = $this->getTenantDiskLimitInfo($request);
+
         return view('cms::backend.media-manager.index', [
             'totalFiles' => $totalFiles,
             'totalSizeFormatted' => $totalSizeFormatted,
             'extensionsList' => $extensionsList,
+            'diskInfo' => $diskInfo,
         ]);
     }
 
@@ -274,6 +326,32 @@ class MediaManagerController extends Controller
             $files = [$files];
         }
 
+        // 1. Validasi kuota disk space tenant sebelum mulai upload
+        $diskInfo = $this->getTenantDiskLimitInfo($request);
+        if ($diskInfo && !$diskInfo['is_unmetered']) {
+            if ($diskInfo['used_bytes'] >= $diskInfo['limit_bytes'] || $diskInfo['remaining_bytes'] <= 0) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kapasitas disk tenant telah penuh (' . $diskInfo['used_formatted'] . ' dari total ' . $diskInfo['limit_mb'] . ' MB). Silakan hapus file lama terlebih dahulu sebelum mengunggah file baru.',
+                    'disk_info' => $diskInfo,
+                ], 422);
+            }
+
+            $incomingTotalBytes = 0;
+            foreach ($files as $file) {
+                if ($file && $file->isValid()) {
+                    $incomingTotalBytes += (int) $file->getSize();
+                }
+            }
+            if ($incomingTotalBytes > $diskInfo['remaining_bytes']) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kapasitas disk tenant tidak mencukupi! File yang dipilih (' . $this->formatBytes($incomingTotalBytes) . ') melebihi sisa kuota penyimpanan (' . $diskInfo['remaining_formatted'] . ' dari total ' . $diskInfo['limit_mb'] . ' MB). Silakan hapus file lama terlebih dahulu.',
+                    'disk_info' => $diskInfo,
+                ], 422);
+            }
+        }
+
         $uploadedResults = [];
         $errors = [];
 
@@ -281,6 +359,16 @@ class MediaManagerController extends Controller
             if (!$file || !$file->isValid()) {
                 $errors[] = 'File tidak valid atau rusak.';
                 continue;
+            }
+
+            // Validasi sisa kuota tenant per file
+            if ($diskInfo && !$diskInfo['is_unmetered']) {
+                $runningUsed = (int) $this->baseFileQuery($request)->sum('file_size');
+                $fileBytes = (int) $file->getSize();
+                if ($runningUsed >= $diskInfo['limit_bytes'] || ($runningUsed + $fileBytes) > $diskInfo['limit_bytes']) {
+                    $errors[] = 'File "' . $file->getClientOriginalName() . '" batal diunggah karena kuota penyimpanan tenant (' . $diskInfo['limit_mb'] . ' MB) telah habis.';
+                    continue;
+                }
             }
 
             $fileHash = md5_file($file->getRealPath());
@@ -335,6 +423,7 @@ class MediaManagerController extends Controller
                 'status' => 'success',
                 'message' => count($uploadedResults) . ' file berhasil diunggah.',
                 'uploaded' => $uploadedResults,
+                'disk_info' => $this->getTenantDiskLimitInfo($request),
                 'errors' => $errors,
             ]);
         }
@@ -342,8 +431,9 @@ class MediaManagerController extends Controller
         return response()->json([
             'status' => 'error',
             'message' => count($errors) > 0 ? implode(' ', $errors) : 'Gagal mengunggah file.',
+            'disk_info' => $this->getTenantDiskLimitInfo($request),
             'errors' => $errors,
-        ], 400);
+        ], 422);
     }
 
     /**
@@ -575,6 +665,7 @@ class MediaManagerController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'File "' . $fileName . '" berhasil dihapus secara permanen.',
+                'disk_info' => $this->getTenantDiskLimitInfo($request),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -624,10 +715,21 @@ class MediaManagerController extends Controller
             $encodedBytes = $image->encodeUsingFileExtension($targetExt, quality: 92)->toString();
 
             if ($request->action === 'overwrite') {
+                $newSizeBytes = strlen($encodedBytes);
+                $diffBytes = $newSizeBytes - (int) $file->file_size;
+                $diskInfo = $this->getTenantDiskLimitInfo($request);
+                if ($diskInfo && !$diskInfo['is_unmetered'] && $diffBytes > 0 && $diffBytes > $diskInfo['remaining_bytes']) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Ukuran gambar hasil edit melebihi sisa kapasitas disk tenant. Sisa kuota: ' . $diskInfo['remaining_formatted'] . '.',
+                        'disk_info' => $diskInfo,
+                    ], 422);
+                }
+
                 // TIMPA GAMBAR ASLI
                 Storage::disk($file->disk)->put($file->file_path, $encodedBytes);
 
-                $file->file_size = strlen($encodedBytes);
+                $file->file_size = $newSizeBytes;
                 $file->updated_at = now();
                 $file->save();
 
@@ -658,9 +760,20 @@ class MediaManagerController extends Controller
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
                     ],
+                    'disk_info' => $this->getTenantDiskLimitInfo($request),
                 ]);
             } else {
                 // SIMPAN SEBAGAI FILE BARU
+                $diskInfo = $this->getTenantDiskLimitInfo($request);
+                $newSizeBytes = strlen($encodedBytes);
+                if ($diskInfo && !$diskInfo['is_unmetered'] && $newSizeBytes > $diskInfo['remaining_bytes']) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Kapasitas disk tenant tidak mencukupi untuk menyimpan gambar baru (' . $this->formatBytes($newSizeBytes) . '). Sisa kuota: ' . $diskInfo['remaining_formatted'] . '.',
+                        'disk_info' => $diskInfo,
+                    ], 422);
+                }
+
                 $customName = $request->filled('new_name') ? Str::slug($request->new_name) : pathinfo($file->file_name, PATHINFO_FILENAME) . '-edited';
                 $newFileName = $customName . '-' . Str::lower(Str::random(4)) . '.' . ($targetExt === 'jpeg' ? 'jpg' : $targetExt);
 
@@ -699,6 +812,7 @@ class MediaManagerController extends Controller
                     'status' => 'success',
                     'mode' => 'new',
                     'message' => 'Gambar baru "' . $newFileName . '" berhasil disimpan ke Media Library!',
+                    'disk_info' => $this->getTenantDiskLimitInfo($request),
                     'file' => [
                         'id' => $newFile->id,
                         'file_name' => $newFile->file_name,
