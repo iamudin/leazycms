@@ -1,7 +1,8 @@
 @extends('cms::backend.layout.app', ['title' => 'Media Manager'])
 
 @section('content')
-    <link rel="stylesheet" href="{{ url('backend/css/cropper.min.css') }}" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';">
+    <link rel="stylesheet" href="{{ url('backend/css/cropper.min.css') }}"
+        onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';">
 
     <style>
         /* Styling Media Manager */
@@ -256,9 +257,11 @@
                 box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.95);
                 transform: scale(1.03);
             }
+
             50% {
                 box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.4);
             }
+
             100% {
                 box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
                 transform: scale(1);
@@ -378,10 +381,12 @@
                         <div style="flex: 1; min-width: 0;">
                             <div class="text-muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">
                                 Total Media</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;" id="stat-total-files">
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;"
+                                id="stat-total-files">
                                 {{ number_format($totalFiles, 0, ',', '.') }}
                             </div>
-                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Semua file terdaftar">
+                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;"
+                                title="Semua file terdaftar">
                                 <i class="fa fa-files-o mr-1 text-primary"></i>Semua file library
                             </div>
                         </div>
@@ -397,27 +402,34 @@
                         <div style="flex: 1; min-width: 0;">
                             <div class="text-muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">
                                 Ukuran Penyimpanan</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;" id="stat-total-size">
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;"
+                                id="stat-total-size">
                                 {{ $totalSizeFormatted }}
                                 @if(isset($diskInfo))
                                     @if($diskInfo['is_unmetered'])
-                                        <span class="badge badge-light border text-muted ml-1" style="font-size: 10px; font-weight: 600;">Unmetered</span>
+                                        <span class="badge badge-light border text-muted ml-1"
+                                            style="font-size: 10px; font-weight: 600;">Unmetered</span>
                                     @else
-                                        <span style="font-size: 12px; font-weight: 600; color: #64748b;"> / {{ $diskInfo['limit_mb'] }} MB</span>
+                                        <span style="font-size: 12px; font-weight: 600; color: #64748b;"> /
+                                            {{ $diskInfo['limit_mb'] }} MB</span>
                                     @endif
                                 @endif
                             </div>
                             @if(isset($diskInfo) && !$diskInfo['is_unmetered'])
-                                <div class="progress mt-1" style="height: 4px; border-radius: 2px;" title="{{ $diskInfo['percent_used'] }}% terpakai">
-                                    <div id="stat-disk-progress" class="progress-bar {{ $diskInfo['percent_used'] >= 90 ? 'bg-danger' : ($diskInfo['percent_used'] >= 75 ? 'bg-warning' : 'bg-success') }}"
+                                <div class="progress mt-1" style="height: 4px; border-radius: 2px;"
+                                    title="{{ $diskInfo['percent_used'] }}% terpakai">
+                                    <div id="stat-disk-progress"
+                                        class="progress-bar {{ $diskInfo['percent_used'] >= 90 ? 'bg-danger' : ($diskInfo['percent_used'] >= 75 ? 'bg-warning' : 'bg-success') }}"
                                         role="progressbar" style="width: {{ $diskInfo['percent_used'] }}%;"></div>
                                 </div>
-                                <div id="stat-disk-remaining" class="text-truncate" style="font-size: 10px; color: {{ $diskInfo['percent_used'] >= 90 ? '#dc2626' : '#64748b' }}; margin-top: 2px; line-height: 1.2;"
+                                <div id="stat-disk-remaining" class="text-truncate"
+                                    style="font-size: 10px; color: {{ $diskInfo['percent_used'] >= 90 ? '#dc2626' : '#64748b' }}; margin-top: 2px; line-height: 1.2;"
                                     title="Sisa: {{ $diskInfo['remaining_formatted'] }} ({{ $diskInfo['percent_used'] }}%)">
                                     Sisa: {{ $diskInfo['remaining_formatted'] }} ({{ $diskInfo['percent_used'] }}%)
                                 </div>
                             @else
-                                <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Kapasitas ruang disk">
+                                <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;"
+                                    title="Kapasitas ruang disk">
                                     <i class="fa fa-hdd-o mr-1 text-warning"></i>Kapasitas penyimpanan
                                 </div>
                             @endif
@@ -443,7 +455,8 @@
                             <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;">
                                 {{ number_format($imgCount, 0, ',', '.') }}
                             </div>
-                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Foto dan visual grafis">
+                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;"
+                                title="Foto dan visual grafis">
                                 <i class="fa fa-picture-o mr-1 text-success"></i>Visual & foto
                             </div>
                         </div>
@@ -462,7 +475,8 @@
                             <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2;">
                                 {{ $extensionsList->count() }} Jenis
                             </div>
-                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;" title="Kelompok tipe file terdeteksi">
+                            <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;"
+                                title="Kelompok tipe file terdeteksi">
                                 <i class="fa fa-th-large mr-1 text-secondary"></i>Kategori ekstensi
                             </div>
                         </div>
@@ -626,7 +640,9 @@
                                     Ukuran: <span id="preview-meta-size" class="font-weight-bold text-dark">-</span> &bull;
                                     Tipe: <span id="preview-meta-type" class="badge badge-secondary">-</span> &bull;
                                     Diupload: <span id="preview-meta-date">-</span>
-                                    <span id="preview-meta-host-wrap" style="display: none;"> &bull; Host: <span id="preview-meta-host" class="badge badge-info text-white font-weight-normal">-</span></span>
+                                    <span id="preview-meta-host-wrap" style="display: none;"> &bull; Host: <span
+                                            id="preview-meta-host"
+                                            class="badge badge-info text-white font-weight-normal">-</span></span>
                                 </div>
                             </div>
                             <div class="col-md-5 text-md-right">
@@ -726,13 +742,9 @@
                         Batal
                     </button>
                     <div class="d-flex" style="gap: 8px;">
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-save-as-new"
-                            onclick="saveEditedImage('new')">
-                            <i class="fa fa-copy mr-1"></i> Simpan sebagai File Baru
-                        </button>
                         <button type="button" class="btn btn-success btn-sm font-weight-bold" id="btn-save-overwrite"
                             onclick="saveEditedImage('overwrite')">
-                            <i class="fa fa-check mr-1"></i> Timpa File Asli
+                            <i class="fa fa-check mr-1"></i> Simpan
                         </button>
                     </div>
                 </div>
@@ -1051,33 +1063,33 @@
                 }
 
                 return `
-                    <div class="mm-item-card" id="media-card-${item.id}">
-                        <div class="mm-thumb-wrap">
-                            <span class="mm-badge-ext">${safeExt}</span>
-                            <span class="mm-badge-size">${safeSize}</span>
-                            ${thumbHtml}
-                            <div class="mm-overlay-actions">
-                                <button type="button" class="mm-action-btn" title="Preview File" onclick="openPreviewModal(${jsonItem}, event)">
-                                    <i class="fa fa-eye"></i>
-                                </button>
-                                <button type="button" class="mm-action-btn" title="Salin URL" onclick="copyMediaUrl(${jsonUrl}, event)">
-                                    <i class="fa fa-link"></i>
-                                </button>
-                                ${editBtn}
-                                <button type="button" class="mm-action-btn btn-delete" title="Hapus File" onclick="confirmDeleteMedia(${item.id}, ${jsonName}, event)">
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                            <div class="mm-item-card" id="media-card-${item.id}">
+                                <div class="mm-thumb-wrap">
+                                    <span class="mm-badge-ext">${safeExt}</span>
+                                    <span class="mm-badge-size">${safeSize}</span>
+                                    ${thumbHtml}
+                                    <div class="mm-overlay-actions">
+                                        <button type="button" class="mm-action-btn" title="Preview File" onclick="openPreviewModal(${jsonItem}, event)">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="mm-action-btn" title="Salin URL" onclick="copyMediaUrl(${jsonUrl}, event)">
+                                            <i class="fa fa-link"></i>
+                                        </button>
+                                        ${editBtn}
+                                        <button type="button" class="mm-action-btn btn-delete" title="Hapus File" onclick="confirmDeleteMedia(${item.id}, ${jsonName}, event)">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mm-info-wrap">
+                                    <div class="mm-file-name" title="${safeName}">${safeName}</div>
+                                    <div class="mm-file-meta">
+                                        <span><i class="fa fa-clock-o mr-1"></i>${safeCreated}</span>
+                                        ${item.host ? `<span class="text-truncate ml-1 text-muted" title="Host: ${escapeHtml(item.host)}" style="max-width: 110px;"><i class="fa fa-globe mr-1"></i>${escapeHtml(item.host)}</span>` : ''}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mm-info-wrap">
-                            <div class="mm-file-name" title="${safeName}">${safeName}</div>
-                            <div class="mm-file-meta">
-                                <span><i class="fa fa-clock-o mr-1"></i>${safeCreated}</span>
-                                ${item.host ? `<span class="text-truncate ml-1 text-muted" title="Host: ${escapeHtml(item.host)}" style="max-width: 110px;"><i class="fa fa-globe mr-1"></i>${escapeHtml(item.host)}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                        `;
             }
 
             function renderGridCard(item, prepend = false) {
@@ -1332,13 +1344,13 @@
                     area.html(`<iframe src="${item.url}" style="width: 100%; height: 500px; border: none; border-radius: 8px;"></iframe>`);
                 } else {
                     area.html(`
-                                <div class="py-5 text-center">
-                                    <i class="fa fa-file-text-o fa-5x text-secondary mb-3"></i>
-                                    <h5 class="font-weight-bold text-dark">${item.file_name}</h5>
-                                    <p class="text-muted" style="font-size: 13px;">Format ini tidak mendukung preview langsung di browser.</p>
-                                    <a href="${cleanUrl}" download class="btn btn-primary btn-sm"><i class="fa fa-download mr-1"></i> Unduh File</a>
-                                </div>
-                            `);
+                                        <div class="py-5 text-center">
+                                            <i class="fa fa-file-text-o fa-5x text-secondary mb-3"></i>
+                                            <h5 class="font-weight-bold text-dark">${item.file_name}</h5>
+                                            <p class="text-muted" style="font-size: 13px;">Format ini tidak mendukung preview langsung di browser.</p>
+                                            <a href="${cleanUrl}" download class="btn btn-primary btn-sm"><i class="fa fa-download mr-1"></i> Unduh File</a>
+                                        </div>
+                                    `);
                 }
 
                 $('#modalPreviewMedia').modal('show');
@@ -1400,14 +1412,14 @@
                                 $('#usage-posts-count').text(res.post_usages.length);
                                 res.post_usages.forEach(function (p) {
                                     postsList.append(`
-                                                <div class="usage-item-card">
-                                                    <div class="font-weight-bold text-dark">${p.title}</div>
-                                                    <div class="text-muted" style="font-size: 11px;">
-                                                        Tipe: <span class="badge badge-info">${p.type}</span> &bull; 
-                                                        Posisi: <span class="text-danger font-weight-bold">${p.used_in}</span>
-                                                    </div>
-                                                </div>
-                                            `);
+                                                        <div class="usage-item-card">
+                                                            <div class="font-weight-bold text-dark">${p.title}</div>
+                                                            <div class="text-muted" style="font-size: 11px;">
+                                                                Tipe: <span class="badge badge-info">${p.type}</span> &bull; 
+                                                                Posisi: <span class="text-danger font-weight-bold">${p.used_in}</span>
+                                                            </div>
+                                                        </div>
+                                                    `);
                                 });
                                 $('#usage-posts-section').show();
                             } else {
@@ -1421,11 +1433,11 @@
                                 $('#usage-options-count').text(res.option_usages.length);
                                 res.option_usages.forEach(function (o) {
                                     optionsList.append(`
-                                                <div class="usage-item-card" style="border-left-color: #f59e0b; background: #fffbeb;">
-                                                    <div class="font-weight-bold text-dark"><i class="fa fa-cog mr-1"></i> ${o.name}</div>
-                                                    <div class="text-muted" style="font-size: 11px;">Digunakan sebagai pengaturan situs / template</div>
-                                                </div>
-                                            `);
+                                                        <div class="usage-item-card" style="border-left-color: #f59e0b; background: #fffbeb;">
+                                                            <div class="font-weight-bold text-dark"><i class="fa fa-cog mr-1"></i> ${o.name}</div>
+                                                            <div class="text-muted" style="font-size: 11px;">Digunakan sebagai pengaturan situs / template</div>
+                                                        </div>
+                                                    `);
                                 });
                                 $('#usage-options-section').show();
                             } else {
