@@ -934,14 +934,16 @@ class PostController extends Controller implements HasMiddleware
 
         $customColumns = $current_module->datatable->custom_column;
         $childTypes = $current_module->datatable->child_count ?? [];
-        $custom_field = collect($current_module->form->custom_field)
+        $rawCustomFields = is_array($current_module->form->custom_field ?? null) ? $current_module->form->custom_field : [];
+
+        $custom_field = collect($rawCustomFields)
             ->filter(fn($field) => isset($field[1]) && is_array($field[1]))
             ->pluck(0)
             ->map(fn($label) => _us($label)) // konversi di sini
             ->values()
             ->all();
 
-        $badge_fields = collect($current_module->form->custom_field)
+        $badge_fields = collect($rawCustomFields)
             ->filter(function ($field) {
                 $meta = $field[1] ?? null;
                 $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
@@ -952,7 +954,7 @@ class PostController extends Controller implements HasMiddleware
             ->values()
             ->all();
 
-        $toggle_fields = collect($current_module->form->custom_field ?? [])
+        $toggle_fields = collect($rawCustomFields)
             ->filter(function ($field) {
                 $meta = $field[1] ?? null;
                 $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
@@ -964,7 +966,7 @@ class PostController extends Controller implements HasMiddleware
             ->all();
 
         $toggle_meta = [];
-        foreach ($current_module->form->custom_field ?? [] as $cf) {
+        foreach ($rawCustomFields as $cf) {
             $meta = $cf[1] ?? null;
             $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
             if ($type === 'toggle') {
@@ -982,7 +984,7 @@ class PostController extends Controller implements HasMiddleware
         }
 
         $summary_columns = get_module_summary_columns($current_module);
-        $currency_fields = collect($current_module->form->custom_field ?? [])
+        $currency_fields = collect($rawCustomFields)
             ->filter(function ($field) {
                 $meta = $field[1] ?? null;
                 $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
@@ -1540,8 +1542,9 @@ class PostController extends Controller implements HasMiddleware
         $fieldKey = _us($request->field);
 
         $module = get_module($post->type);
-        if ($module && !empty($module->form->custom_field)) {
-            $allowedToggleFields = collect($module->form->custom_field)
+        $moduleCustomFields = is_array($module?->form?->custom_field ?? null) ? $module->form->custom_field : [];
+        if (!empty($moduleCustomFields)) {
+            $allowedToggleFields = collect($moduleCustomFields)
                 ->filter(function ($cf) {
                     $meta = $cf[1] ?? null;
                     $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
@@ -1559,8 +1562,8 @@ class PostController extends Controller implements HasMiddleware
 
         $onText = 'True';
         $offText = 'False';
-        if ($module && !empty($module->form->custom_field)) {
-            foreach ($module->form->custom_field as $cf) {
+        if (!empty($moduleCustomFields)) {
+            foreach ($moduleCustomFields as $cf) {
                 if (_us($cf[0] ?? '') === $fieldKey) {
                     $meta = $cf[1] ?? null;
                     $onText = is_array($meta) ? ($meta['on'] ?? 'True') : ($meta->on ?? 'True');

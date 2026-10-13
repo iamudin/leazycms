@@ -2411,7 +2411,7 @@ if (!function_exists('get_module_summary_columns')) {
         }
 
         // 2. Dari form->custom_field jika ada 'summary' => true
-        if (!empty($module->form->custom_field)) {
+        if (!empty($module->form->custom_field) && is_array($module->form->custom_field)) {
             foreach ($module->form->custom_field as $cf) {
                 $label = $cf[0] ?? '';
                 $meta = $cf[1] ?? [];
@@ -2428,7 +2428,7 @@ if (!function_exists('get_module_summary_columns')) {
         }
 
         // 3. Lengkapi type dan prefix dari custom_field
-        if (!empty($module->form->custom_field)) {
+        if (!empty($module->form->custom_field) && is_array($module->form->custom_field)) {
             foreach ($module->form->custom_field as $cf) {
                 $label = $cf[0] ?? '';
                 $slug = _us($label);
