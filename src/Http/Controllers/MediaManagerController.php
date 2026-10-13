@@ -14,9 +14,109 @@ use Intervention\Image\Laravel\Facades\Image;
 use Leazycms\FLC\Models\File;
 use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Post;
+use Leazycms\Web\Models\Tenant;
 
 class MediaManagerController extends Controller
 {
+    /**
+     * Dapatkan parked domain milik tenant jika valid.
+     */
+    protected function getTenantParkedDomain($tenant): ?string
+    {
+        if (!$tenant) {
+            return null;
+        }
+
+        if (!empty($tenant->getAttribute('matched_parked_domain'))) {
+            return $tenant->getAttribute('matched_parked_domain');
+        }
+
+        $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
+            $status = Option::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('name', 'parked_domain_status')
+                ->value('value');
+
+            if ($status !== 'verified' && !is_null($status)) {
+                return '';
+            }
+
+            return Option::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('name', 'parked_domain')
+                ->value('value') ?: '';
+        });
+
+        if (empty($parkedDomain) && !is_main_domain() && function_exists('get_option')) {
+            $optStatus = get_option('parked_domain_status');
+            if ($optStatus === 'verified' || is_null($optStatus)) {
+                $parkedDomain = get_option('parked_domain') ?: '';
+            }
+        }
+
+        return !empty($parkedDomain) ? $parkedDomain : null;
+    }
+
+    /**
+     * Dapatkan host aktif untuk tenant / file saat ini.
+     * Jika multisite enabled:
+     * - Jika diakses dari subsite/tenant: gunakan active tenant domain (parked domain jika ada).
+     * - Jika diakses dari main domain: periksa tenant milik file berdasarkan host file,
+     *   lalu gunakan active domain tenant tersebut (parked domain jika ada).
+     * - Jika tidak ada parked domain atau bukan milik tenant: gunakan host bawaan file.
+     *
+     * @param string|null $fallbackHost
+     * @return string|null
+     */
+    protected function getActiveHost(?string $fallbackHost = null): ?string
+    {
+        if (!config('modules.multisite_enabled')) {
+            return $fallbackHost;
+        }
+
+        // 1. Jika diakses di lingkungan subsite/tenant yang aktif
+        if (!is_main_domain() && app()->has('tenant') && function_exists('tenant') && tenant()) {
+            $tenant = tenant();
+            $parkedDomain = $this->getTenantParkedDomain($tenant);
+
+            if (!empty($parkedDomain)) {
+                return $parkedDomain;
+            }
+
+            return $fallbackHost ?: $tenant->domain;
+        }
+
+        // 2. Jika diakses di main_domain (atau tanpa tenant aktif saat ini),
+        // cari tenant terkait berdasarkan host bawaan file untuk mendapatkan domain aktifnya
+        if (!empty($fallbackHost)) {
+            static $resolvedHostMap = [];
+
+            if (array_key_exists($fallbackHost, $resolvedHostMap)) {
+                return $resolvedHostMap[$fallbackHost];
+            }
+
+            $mainHost = parse_url(config('app.url'), PHP_URL_HOST);
+            if ($fallbackHost === $mainHost || $fallbackHost === request()->getHost()) {
+                return $resolvedHostMap[$fallbackHost] = $fallbackHost;
+            }
+
+            if (class_exists(Tenant::class)) {
+                $tenant = Tenant::resolveByHost($fallbackHost);
+                if ($tenant) {
+                    $parkedDomain = $this->getTenantParkedDomain($tenant);
+                    if (!empty($parkedDomain)) {
+                        return $resolvedHostMap[$fallbackHost] = $parkedDomain;
+                    }
+                    return $resolvedHostMap[$fallbackHost] = ($fallbackHost ?: $tenant->domain);
+                }
+            }
+
+            return $resolvedHostMap[$fallbackHost] = $fallbackHost;
+        }
+
+        return $fallbackHost;
+    }
+
     /**
      * Dapatkan daftar host yang diizinkan untuk multisite/tenant.
      */
@@ -25,15 +125,8 @@ class MediaManagerController extends Controller
         if (config('modules.multisite_enabled') && !is_main_domain()) {
             if (app()->has('tenant') && function_exists('tenant') && tenant()) {
                 $tenant = tenant();
-                $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
-                    return Option::withoutGlobalScope('tenant')
-                        ->where('tenant_id', $tenant->id)
-                        ->where('name', 'parked_domain')
-                        ->value('value') ?: '';
-                });
-                if ($parkedDomain === '') {
-                    $parkedDomain = null;
-                }
+                $parkedDomain = $this->getTenantParkedDomain($tenant);
+
                 return array_values(array_filter([
                     $tenant->domain,
                     $parkedDomain,
@@ -63,7 +156,7 @@ class MediaManagerController extends Controller
 
     /**
      * Dapatkan URL file.
-     * Jika multisite enable, panggil via URL host milik file.
+     * Jika multisite enable, panggil via URL host milik file atau host aktif.
      *
      * @param \Leazycms\FLC\Models\File|object|string $file
      * @param string|null $host
@@ -72,7 +165,7 @@ class MediaManagerController extends Controller
     protected function getFileUrl($file, ?string $host = null): string
     {
         $fileName = is_object($file) ? ($file->file_name ?? '') : (string) $file;
-        $fileHost = $host ?? (is_object($file) ? ($file->host ?? null) : null);
+        $fileHost = $host ?? $this->getActiveHost(is_object($file) ? ($file->host ?? null) : null);
 
         if (config('modules.multisite_enabled') && !empty($fileHost)) {
             $cleanHost = preg_replace('#^https?://#i', '', rtrim($fileHost, '/'));
@@ -98,7 +191,24 @@ class MediaManagerController extends Controller
             }
         } else {
             if ($request->filled('host') && $request->host !== 'all') {
-                $query->where('host', $request->host);
+                $hostFilter = $request->host;
+                if (config('modules.multisite_enabled') && class_exists(Tenant::class)) {
+                    $tenant = Tenant::resolveByHost($hostFilter);
+                    if ($tenant) {
+                        $parkedDomain = $this->getTenantParkedDomain($tenant);
+                        $matchedHosts = array_values(array_filter([
+                            $tenant->domain,
+                            $parkedDomain,
+                            $tenant->getAttribute('matched_parked_domain'),
+                            $hostFilter
+                        ]));
+                        $query->whereIn('host', $matchedHosts);
+                    } else {
+                        $query->where('host', $hostFilter);
+                    }
+                } else {
+                    $query->where('host', $hostFilter);
+                }
             }
         }
         return $query;
@@ -265,7 +375,8 @@ class MediaManagerController extends Controller
             $isDoc = in_array($ext, $docExts);
             $isArchive = in_array($ext, $archiveExts);
 
-            $fileUrl = $this->getFileUrl($item);
+            $host = $this->getActiveHost($item->host);
+            $fileUrl = $this->getFileUrl($item, $host);
             $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? '?size=small&time=' . time() : '');
 
             return [
@@ -284,7 +395,7 @@ class MediaManagerController extends Controller
                 'is_archive' => $isArchive,
                 'url' => $fileUrl,
                 'thumb_url' => $thumbUrl,
-                'host' => $item->host,
+                'host' => $host,
                 'uploader' => $item->user?->name ?? 'System',
                 'created_at' => $item->created_at ? $item->created_at->translatedFormat('d M Y H:i') : '-',
                 'created_raw' => $item->created_at ? $item->created_at->toISOString() : null,
@@ -405,12 +516,13 @@ class MediaManagerController extends Controller
                 $rawFileName = str_replace('/media/', '', $addResult);
                 $finalFile = File::where('file_name', $rawFileName)->first();
                 if ($finalFile) {
+                    $host = $this->getActiveHost($finalFile->host);
                     $uploadedResults[] = [
                         'id' => $finalFile->id,
                         'file_name' => $finalFile->file_name,
                         'file_size' => $this->formatBytes($finalFile->file_size),
-                        'url' => $this->getFileUrl($finalFile),
-                        'host' => $finalFile->host,
+                        'url' => $this->getFileUrl($finalFile, $host),
+                        'host' => $host,
                     ];
                 }
             } else {
@@ -754,6 +866,7 @@ class MediaManagerController extends Controller
                 // Bersihkan cache media
                 Cache::forget($file->host . ':media:' . $file->file_name);
 
+                $host = $this->getActiveHost($file->host);
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'overwrite',
@@ -772,9 +885,9 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => $this->getFileUrl($file) . '?time=' . time(),
-                        'thumb_url' => $this->getFileUrl($file) . '?size=small&time=' . time(),
-                        'host' => $file->host,
+                        'url' => $this->getFileUrl($file, $host) . '?time=' . time(),
+                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&time=' . time(),
+                        'host' => $host,
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
                     ],
@@ -826,6 +939,7 @@ class MediaManagerController extends Controller
                     ];
                 });
 
+                $newFileHost = $this->getActiveHost($newFile->host);
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'new',
@@ -845,9 +959,9 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => $this->getFileUrl($newFile),
-                        'thumb_url' => $this->getFileUrl($newFile) . '?size=small&time=' . time(),
-                        'host' => $newFile->host,
+                        'url' => $this->getFileUrl($newFile, $newFileHost),
+                        'thumb_url' => $this->getFileUrl($newFile, $newFileHost) . '?size=small&time=' . time(),
+                        'host' => $newFileHost,
                         'uploader' => Auth::user()?->name ?? 'System',
                         'created_at' => $newFile->created_at ? $newFile->created_at->translatedFormat('d M Y H:i') : Carbon::now()->translatedFormat('d M Y H:i'),
                     ],
