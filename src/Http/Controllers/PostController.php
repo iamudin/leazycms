@@ -724,6 +724,13 @@ class PostController extends Controller implements HasMiddleware
                 $meta = $value[1] ?? null;
                 $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
                 switch ($type) {
+                    case 'toggle':
+                        $val = $request->$fieldname;
+                        $onText = is_array($meta) ? ($meta['on'] ?? 'True') : ($meta->on ?? 'True');
+                        $onLower = strtolower(trim((string)$onText));
+                        $valLower = strtolower(trim((string)$val));
+                        $custom_field[$fieldname] = (in_array($valLower, ['true', '1', 'on', 'yes', $onLower], true) || $val === true || $val === 1) ? 'true' : 'false';
+                        break;
                     case 'file':
                         $mimeType = is_array($meta) ? ($meta['mime_type'] ?? null) : (is_object($meta) ? ($meta->mime_type ?? null) : null);
                         $isEncrypt = is_array($meta) ? ($meta['is_encrypt'] ?? false) : (is_object($meta) ? ($meta->is_encrypt ?? false) : false);
@@ -945,6 +952,47 @@ class PostController extends Controller implements HasMiddleware
             ->values()
             ->all();
 
+        $toggle_fields = collect($current_module->form->custom_field ?? [])
+            ->filter(function ($field) {
+                $meta = $field[1] ?? null;
+                $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                return $type === 'toggle';
+            })
+            ->pluck(0)
+            ->map(fn($label) => _us($label))
+            ->values()
+            ->all();
+
+        $toggle_meta = [];
+        foreach ($current_module->form->custom_field ?? [] as $cf) {
+            $meta = $cf[1] ?? null;
+            $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+            if ($type === 'toggle') {
+                $on = is_array($meta) ? ($meta['on'] ?? $meta['data_on'] ?? $meta['on_label'] ?? 'True') : ($meta->on ?? $meta->data_on ?? $meta->on_label ?? 'True');
+                $off = is_array($meta) ? ($meta['off'] ?? $meta['data_off'] ?? $meta['off_label'] ?? 'False') : ($meta->off ?? $meta->data_off ?? $meta->off_label ?? 'False');
+                $onStyle = is_array($meta) ? ($meta['onstyle'] ?? 'outline-success') : (is_object($meta) ? ($meta->onstyle ?? 'outline-success') : 'outline-success');
+                $offStyle = is_array($meta) ? ($meta['offstyle'] ?? 'outline-danger') : (is_object($meta) ? ($meta->offstyle ?? 'outline-danger') : 'outline-danger');
+                $toggle_meta[_us($cf[0])] = [
+                    'on' => $on,
+                    'off' => $off,
+                    'onstyle' => $onStyle,
+                    'offstyle' => $offStyle,
+                ];
+            }
+        }
+
+        $summary_columns = get_module_summary_columns($current_module);
+        $currency_fields = collect($current_module->form->custom_field ?? [])
+            ->filter(function ($field) {
+                $meta = $field[1] ?? null;
+                $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                return $type === 'currency';
+            })
+            ->pluck(0)
+            ->map(fn($label) => _us($label))
+            ->values()
+            ->all();
+
         if ($customColumns && !is_array($customColumns)) {
             $customColumns = [_us($customColumns)];
         } elseif (is_array($customColumns)) {
@@ -1109,13 +1157,47 @@ class PostController extends Controller implements HasMiddleware
             return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
         });
         foreach ($customColumns as $field) {
-            $dt->addColumn($field, function ($row) use ($field, $custom_field, $badge_fields) {
+            $dt->addColumn($field, function ($row) use ($field, $custom_field, $badge_fields, $toggle_fields, $toggle_meta, $summary_columns, $currency_fields) {
 
-                if (empty($row->data_field) || empty($row->data_field[$field])) {
+                if (in_array($field, $toggle_fields)) {
+                    $rawVal = $row->data_field[$field] ?? 'false';
+                    $onText = $toggle_meta[$field]['on'] ?? 'True';
+                    $offText = $toggle_meta[$field]['off'] ?? 'False';
+                    $onStyle = $toggle_meta[$field]['onstyle'] ?? 'outline-success';
+                    $offStyle = $toggle_meta[$field]['offstyle'] ?? 'outline-danger';
+                    $onLower = strtolower(trim((string)$onText));
+                    $valLower = strtolower(trim((string)$rawVal));
+                    $isChecked = in_array($valLower, ['true', '1', 'on', 'yes', $onLower], true) || $rawVal === true;
+                    return '<input type="checkbox"
+                        class="toggle-custom-field btn btn-primary"
+                        data-id="' . $row->id . '"
+                        data-field="' . e($field) . '"
+                        data-on="' . e($onText) . '"
+                        data-off="' . e($offText) . '"
+                        data-toggle="toggle"
+                        data-onstyle="' . e($onStyle) . '"
+                        data-offstyle="' . e($offStyle) . '"
+                        data-size="sm"
+                        ' . ($isChecked ? 'checked' : '') . '
+                    >';
+                }
+
+                if (empty($row->data_field) || !isset($row->data_field[$field]) || $row->data_field[$field] === '' || $row->data_field[$field] === null) {
                     return '<span>-</span>';
                 }
 
                 $value = $row->data_field[$field];
+
+                if (isset($summary_columns[$field]) || in_array($field, $currency_fields)) {
+                    $isCurrency = in_array($field, $currency_fields) || (($summary_columns[$field]['type'] ?? '') === 'currency');
+                    $prefix = $summary_columns[$field]['prefix'] ?? ($isCurrency ? 'Rp ' : '');
+                    $num = parse_currency_number($value);
+                    $isNegative = $num < 0;
+                    $formatted = number_format(abs($num), 0, ',', '.');
+                    $display = ($isNegative ? '-' : '') . $prefix . $formatted;
+                    $colorClass = $isNegative ? 'text-danger' : 'text-dark';
+                    return '<span class="font-weight-bold ' . $colorClass . ' dt-summary-cell" data-raw="' . $num . '">' . e($display) . '</span>';
+                }
 
                 if (is_string($value)) {
                     $value = utf8_clean($value);
@@ -1393,6 +1475,45 @@ class PostController extends Controller implements HasMiddleware
             'category' => $categoryCount
         ]);
 
+        if (!empty($summary_columns)) {
+            $dt->withQuery('summary', function ($filteredQuery = null) use ($summary_columns, $data) {
+                $clone = $filteredQuery ? clone $filteredQuery : clone $data;
+                if (method_exists($clone, 'getQuery')) {
+                    $clone->getQuery()->offset = null;
+                    $clone->getQuery()->limit = null;
+                    $clone->getQuery()->orders = null;
+                } else {
+                    $clone->offset = null;
+                    $clone->limit = null;
+                    $clone->orders = null;
+                }
+
+                $table = (new \Leazycms\Web\Models\Post)->getTable();
+                $records = $clone->select(["{$table}.id", "{$table}.data_field"])->get();
+
+                $totals = [];
+                foreach ($summary_columns as $f => $cfg) {
+                    $totals[$f] = 0.0;
+                }
+
+                foreach ($records as $record) {
+                    $df = $record->data_field;
+                    if (is_string($df)) {
+                        $df = json_decode($df, true) ?? [];
+                    }
+                    if (is_array($df)) {
+                        foreach ($summary_columns as $f => $cfg) {
+                            if (isset($df[$f])) {
+                                $totals[$f] += parse_currency_number($df[$f]);
+                            }
+                        }
+                    }
+                }
+
+                return $totals;
+            });
+        }
+
         return $dt->toJson(JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
     }
 
@@ -1404,6 +1525,77 @@ class PostController extends Controller implements HasMiddleware
         $post->save();
         $this->recache($post->type);
         return response()->json(['success' => true]);
+    }
+
+    public function updateToggleField(Request $request)
+    {
+        $request->validate([
+            'id' => 'required',
+            'field' => 'required|string',
+            'value' => 'required',
+        ]);
+
+        $post = Post::findOrFail($request->id);
+
+        $fieldKey = _us($request->field);
+
+        $module = get_module($post->type);
+        if ($module && !empty($module->form->custom_field)) {
+            $allowedToggleFields = collect($module->form->custom_field)
+                ->filter(function ($cf) {
+                    $meta = $cf[1] ?? null;
+                    $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                    return $type === 'toggle';
+                })
+                ->pluck(0)
+                ->map(fn($label) => _us($label))
+                ->values()
+                ->all();
+
+            if (!in_array($fieldKey, $allowedToggleFields)) {
+                return response()->json(['success' => false, 'message' => 'Field bukan bertipe toggle.'], 422);
+            }
+        }
+
+        $onText = 'True';
+        $offText = 'False';
+        if ($module && !empty($module->form->custom_field)) {
+            foreach ($module->form->custom_field as $cf) {
+                if (_us($cf[0] ?? '') === $fieldKey) {
+                    $meta = $cf[1] ?? null;
+                    $onText = is_array($meta) ? ($meta['on'] ?? 'True') : ($meta->on ?? 'True');
+                    $offText = is_array($meta) ? ($meta['off'] ?? 'False') : ($meta->off ?? 'False');
+                    break;
+                }
+            }
+        }
+
+        $val = $request->value;
+        $valLower = strtolower(trim((string)$val));
+        $onLower = strtolower(trim((string)$onText));
+        $boolVal = (in_array($valLower, ['true', '1', 'on', 'yes', $onLower], true) || $val === true || $val === 1) ? 'true' : 'false';
+
+        $data_field = $post->data_field ?? [];
+        if (!is_array($data_field)) {
+            $data_field = (array) $data_field;
+        }
+
+        $data_field[$fieldKey] = $boolVal;
+        if (Auth::check()) {
+            $data_field['last_editor'] = Auth::user()->name;
+        }
+
+        $post->data_field = $data_field;
+        $post->save();
+
+        $this->recache($post->type);
+
+        return response()->json([
+            'success' => true,
+            'field' => $fieldKey,
+            'value' => $boolVal,
+            'label' => $boolVal === 'true' ? $onText : $offText
+        ]);
     }
     function bulkaction(Request $request)
     {

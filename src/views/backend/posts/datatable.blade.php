@@ -9,6 +9,57 @@ window.addEventListener('DOMContentLoaded', function () {
         .find("th:contains('Dibuat')")[0]
         ?.cellIndex ?? 0;
 @endif
+@php
+    $moduleSummaryCols = get_module_summary_columns(current_module());
+@endphp
+@if(!empty($moduleSummaryCols))
+    var summaryConfig = {!! json_encode($moduleSummaryCols) !!};
+
+    function parseSummaryVal(val) {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        if (typeof val === 'string') {
+            var rawMatch = val.match(/data-raw=["']?(-?\d+(?:\.\d+)?)["']?/);
+            if (rawMatch && rawMatch[1]) {
+                return parseFloat(rawMatch[1]) || 0;
+            }
+            var clean = val.replace(/<[^>]*>/g, '').trim();
+            var isNeg = clean.indexOf('-') !== -1;
+            clean = clean.replace(/[^\d.,]/g, '');
+            if (!clean) return 0;
+            if (clean.indexOf('.') !== -1 && clean.indexOf(',') !== -1) {
+                if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
+                    clean = clean.replace(/\./g, '').replace(',', '.');
+                } else {
+                    clean = clean.replace(/,/g, '');
+                }
+            } else if (clean.indexOf('.') !== -1) {
+                clean = clean.replace(/\./g, '');
+            } else if (clean.indexOf(',') !== -1) {
+                clean = clean.replace(',', '.');
+            }
+            var num = parseFloat(clean);
+            return isNaN(num) ? 0 : (isNeg ? -num : num);
+        }
+        return 0;
+    }
+
+    function formatSummaryNumber(num, prefix) {
+        prefix = prefix || '';
+        if (typeof num !== 'number') {
+            num = parseFloat(num) || 0;
+        }
+        var isNeg = num < 0;
+        var absVal = Math.abs(num);
+        var parts = absVal.toFixed(2).split('.');
+        var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        var formatted = (isNeg ? '-' : '') + prefix + intPart;
+        if (parts[1] && parts[1] !== '00') {
+            formatted += ',' + parts[1];
+        }
+        return formatted;
+    }
+@endif
     var table = $('.datatable').DataTable({
 
         responsive: {
@@ -117,7 +168,48 @@ window.addEventListener('DOMContentLoaded', function () {
                 @endif
             }
         },
+@if(!empty($moduleSummaryCols))
+        footerCallback: function (row, data, start, end, display) {
+            var api = this.api();
+            var ajaxJson = api.ajax.json();
+            var allTotals = (ajaxJson && ajaxJson.summary) ? ajaxJson.summary : {};
+
+            var pageTotals = {};
+            Object.keys(summaryConfig).forEach(function (field) {
+                pageTotals[field] = 0;
+            });
+
+            api.rows({ page: 'current' }).data().each(function (rowData) {
+                Object.keys(summaryConfig).forEach(function (field) {
+                    if (rowData && typeof rowData[field] !== 'undefined') {
+                        pageTotals[field] += parseSummaryVal(rowData[field]);
+                    }
+                });
+            });
+
+            Object.keys(summaryConfig).forEach(function (field) {
+                var prefix = summaryConfig[field].prefix || '';
+                var pageSumFormatted = formatSummaryNumber(pageTotals[field], prefix);
+                var allSumFormatted = formatSummaryNumber(allTotals[field] || 0, prefix);
+
+                $('.sum-page-' + field).text(pageSumFormatted);
+                $('.sum-all-' + field).text(allSumFormatted);
+            });
+        },
+@endif
     });
+
+@if(!empty($moduleSummaryCols))
+    table.on('xhr.dt', function (e, settings, json, xhr) {
+        if (json && json.summary) {
+            Object.keys(summaryConfig).forEach(function (field) {
+                var prefix = summaryConfig[field].prefix || '';
+                var allSumFormatted = formatSummaryNumber(json.summary[field] || 0, prefix);
+                $('.sum-all-' + field).text(allSumFormatted);
+            });
+        }
+    });
+@endif
 
     function initToggle() {
         $('input[data-toggle="toggle"]').each(function () {
@@ -161,6 +253,40 @@ window.addEventListener('DOMContentLoaded', function () {
             error: function () {
                 alert("Gagal update status!");
                 $el.bootstrapToggle('toggle');
+            }
+        });
+
+    });
+
+    let updatingCustomToggle = false;
+    $(document).on('change', '.toggle-custom-field', function () {
+        if (updatingCustomToggle) return;
+
+        let $el = $(this);
+        let id = $el.data('id');
+        let field = $el.data('field');
+        let value = $el.prop('checked') ? 'true' : 'false';
+
+        $.ajax({
+            url: "{{ route('post.toggle_field') }}",
+            type: "POST",
+            data: {
+                id: id,
+                field: field,
+                value: value,
+                _token: "{{ csrf_token() }}"
+            },
+            success: function () {
+                if (typeof table !== 'undefined') {
+                    table.ajax.reload(null, false);
+                }
+            },
+            error: function (xhr) {
+                let msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Gagal update data!";
+                alert(msg);
+                updatingCustomToggle = true;
+                $el.bootstrapToggle('toggle');
+                updatingCustomToggle = false;
             }
         });
 

@@ -48,6 +48,8 @@
                 @include('cms::backend.posts.custom_field.rich-text')
             @elseif ($type == 'font-awesome')
                 @include('cms::backend.posts.custom_field.font-awesome')
+            @elseif ($type == 'toggle')
+                @include('cms::backend.posts.custom_field.toggle')
             @elseif ($type == 'option' || is_array($r[1]->type ?? null))
                 @include('cms::backend.posts.custom_field.option')
             @endif

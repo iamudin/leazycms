@@ -2348,6 +2348,105 @@ if (!function_exists('custom_field_without_break')) {
             ->reject(fn($item) => ($item[1]->type ?? null) === 'break');
     }
 }
+if (!function_exists('parse_currency_number')) {
+    function parse_currency_number($value): float
+    {
+        if (is_numeric($value) && !is_string($value)) {
+            return (float) $value;
+        }
+        if (empty($value) || !is_string($value)) {
+            return 0.0;
+        }
+        $str = trim(strip_tags((string) $value));
+        $isNegative = str_starts_with($str, '-') || str_contains($str, '-');
+        $str = preg_replace('/[^\d.,]/', '', $str);
+        if ($str === '') {
+            return 0.0;
+        }
+        // In Indonesian currency: dot is thousand separator, comma is decimal
+        if (strpos($str, '.') !== false && strpos($str, ',') !== false) {
+            if (strrpos($str, ',') > strrpos($str, '.')) {
+                $str = str_replace('.', '', $str);
+                $str = str_replace(',', '.', $str);
+            } else {
+                $str = str_replace(',', '', $str);
+            }
+        } elseif (strpos($str, '.') !== false) {
+            $str = str_replace('.', '', $str);
+        } elseif (strpos($str, ',') !== false) {
+            $str = str_replace(',', '.', $str);
+        }
+        $val = (float) $str;
+        return $isNegative ? -$val : $val;
+    }
+}
+if (!function_exists('get_module_summary_columns')) {
+    function get_module_summary_columns($module = null)
+    {
+        $module = $module ?: (function_exists('current_module') ? current_module() : null);
+        if (!$module) {
+            return [];
+        }
+
+        $summaryCols = [];
+
+        // 1. Dari datatable->summary
+        $dtSummary = $module->datatable->summary ?? [];
+        if ($dtSummary === true) {
+            $dtSummary = $module->datatable->custom_column ?? [];
+        }
+        if (is_string($dtSummary)) {
+            $dtSummary = [$dtSummary];
+        } elseif (is_object($dtSummary)) {
+            $dtSummary = (array) $dtSummary;
+        }
+
+        if (is_array($dtSummary)) {
+            foreach ($dtSummary as $k => $v) {
+                $colName = is_numeric($k) ? (string) $v : (string) $k;
+                $slug = _us($colName);
+                $options = is_array($v) ? $v : (is_object($v) ? (array) $v : []);
+                $summaryCols[$slug] = array_merge(['label' => $colName], $options);
+            }
+        }
+
+        // 2. Dari form->custom_field jika ada 'summary' => true
+        if (!empty($module->form->custom_field)) {
+            foreach ($module->form->custom_field as $cf) {
+                $label = $cf[0] ?? '';
+                $meta = $cf[1] ?? [];
+                if (is_object($meta)) {
+                    $meta = (array) $meta;
+                }
+                if (!empty($meta['summary'])) {
+                    $slug = _us($label);
+                    if (!isset($summaryCols[$slug])) {
+                        $summaryCols[$slug] = array_merge(['label' => $label], $meta);
+                    }
+                }
+            }
+        }
+
+        // 3. Lengkapi type dan prefix dari custom_field
+        if (!empty($module->form->custom_field)) {
+            foreach ($module->form->custom_field as $cf) {
+                $label = $cf[0] ?? '';
+                $slug = _us($label);
+                if (isset($summaryCols[$slug])) {
+                    $meta = $cf[1] ?? [];
+                    if (is_object($meta)) {
+                        $meta = (array) $meta;
+                    }
+                    $type = $meta['type'] ?? 'currency';
+                    $summaryCols[$slug]['type'] = $summaryCols[$slug]['type'] ?? $type;
+                    $summaryCols[$slug]['prefix'] = $summaryCols[$slug]['prefix'] ?? ($type === 'currency' ? 'Rp ' : '');
+                }
+            }
+        }
+
+        return $summaryCols;
+    }
+}
 function error403Msg($requestId = null)
 {
     $requestBlock = $requestId

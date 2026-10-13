@@ -371,6 +371,7 @@ class CreateModuleCommand extends Command
             'time' => 'Waktu / Jam (Timepicker)',
             'file' => 'Upload Berkas / Gambar / Dokumen (File)',
             'select' => 'Pilihan Dropdown (Select Box)',
+            'toggle' => 'Saklar Ya/Tidak (Toggle Switch: true / false)',
             'break' => 'Pemisah Bagian Form (Section Break Header)',
         ];
 

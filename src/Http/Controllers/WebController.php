@@ -435,7 +435,10 @@ class WebController extends Controller
                         }
                     }
                 } else {
-                    if ($request->has($cleanKey) && !isset($dataField[$cleanKey])) {
+                    if ($type === 'toggle') {
+                        $val = $request->input("field.{$cleanKey}", $request->input($cleanKey));
+                        $dataField[$cleanKey] = (in_array(strtolower((string)$val), ['true', '1', 'on', 'yes'], true) || $val === true || $val === 1) ? 'true' : 'false';
+                    } elseif ($request->has($cleanKey) && !isset($dataField[$cleanKey])) {
                         $val = $request->input($cleanKey);
                         $isRich = ($type === 'rich-text' || $type === 'editor');
                         $dataField[$cleanKey] = $sanitizeValue($val, $isRich);

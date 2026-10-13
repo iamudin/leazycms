@@ -40,10 +40,10 @@
             ->when(!$canSeeAll, fn($q) => $q->whereBelongsTo($user))
             ->withTrashed()
             ->selectRaw("
-                                      SUM(deleted_at IS NULL AND status = 'publish') as publish,
-                                      SUM(deleted_at IS NULL AND status = 'draft') as draft,
-                                      SUM(deleted_at IS NOT NULL) as trash
-                                  ")->first();
+                                                                                                                                                              SUM(deleted_at IS NULL AND status = 'publish') as publish,
+                                                                                                                                                              SUM(deleted_at IS NULL AND status = 'draft') as draft,
+                                                                                                                                                              SUM(deleted_at IS NOT NULL) as trash
+                                                                                                                                                          ")->first();
 
           $publish = $counts->publish ?? 0;
           $draft = $counts->draft ?? 0;
@@ -122,7 +122,8 @@
       <div>
         <div class="mb-2 bulkaction float-left" style="display: none">
           <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
-            <span class="badge badge-primary px-2 py-1 font-weight-bold" id="bulk-selected-badge" style="font-size: 12px;">
+            <span class="badge badge-primary px-2 py-1 font-weight-bold" id="bulk-selected-badge"
+              style="font-size: 12px;">
               <span id="bulk-selected-count">0</span> data dipilih
             </span>
             <select id="bulkAction" class="form-control-sm form-control-select">
@@ -132,7 +133,8 @@
               <option value="publish">Publikasikan</option>
             </select>
             <button type="button" id="applyAction" class="btn btn-primary btn-sm">Submit</button>
-            <button type="button" id="clearSelection" class="btn btn-outline-secondary btn-sm" title="Batalkan semua pilihan">
+            <button type="button" id="clearSelection" class="btn btn-outline-secondary btn-sm"
+              title="Batalkan semua pilihan">
               <i class="fa fa-times"></i> Batal Pilih
             </button>
           </div>
@@ -150,14 +152,15 @@
                     aria-hidden></i> Tambah {{ $module->title }} Baru</a>
               @endif
             @endif
-                @if(in_array('delete', $module->route) && (auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'delete', true)))
-              <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#modal-delete-all" title="Hapus semua data modul ini">
+            @if(in_array('delete', $module->route) && (auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'delete', true)))
+              <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#modal-delete-all"
+                title="Hapus semua data modul ini">
                 <i class="fas fa-trash-alt"></i> Hapus Semua Data
               </button>
             @endif
             <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i
                 class="fas fa-filter"></i> Filter</button>
-        
+
           </div>
         </div>
       </div>
@@ -197,6 +200,33 @@
 
         table.dataTable thead {
           background: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        table.dataTable tfoot {
+          background: rgba(248, 250, 252, 0.85) !important;
+          border-top: 2px solid #cbd5e1 !important;
+        }
+
+        table.dataTable tfoot th {
+          background-color: transparent !important;
+          border-color: rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .dt-summary-box {
+          transition: all 0.2s ease-in-out;
+        }
+
+        .dt-summary-box:hover {
+          border-color: #94a3b8 !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        @media (max-width: 767.98px) {
+          .dt-summary-box {
+            min-width: 100px !important;
+            font-size: 10px !important;
+            padding: 4px 6px !important;
+          }
         }
       </style>
       <table class="display table table-hover table-bordered datatable table-striped" style="width:100%;">
@@ -259,8 +289,106 @@
 
         </tbody>
 
+        @php
+          $summaryColumns = get_module_summary_columns(current_module());
+        @endphp
+        @if(!empty($summaryColumns))
+          <tfoot>
+            <tr>
+              <th style="vertical-align: middle;"></th>
+              @if(current_module()->web->sortable ?? false)
+                <th style="vertical-align: middle;"></th>
+              @endif
+              @if(isset(current_module()->datatable?->index_column) && current_module()->datatable?->index_column == true)
+                <th style="vertical-align: middle;"></th>
+              @endif
+              @if(current_module()->form->thumbnail)
+                <th style="vertical-align: middle;"></th>
+              @endif
+              <th style="vertical-align: middle;">
+                <div class="d-inline-flex align-items-center py-1 px-2 rounded"
+                  style="background: rgba(0, 0, 0, 0.05); font-weight: 700; font-size: 11px;">
+                  <i class="fa fa-calculator mr-1"></i> RINGKASAN
+                </div>
+                {{-- Ditampilkan pada mobile jika kolom custom ter-collapse --}}
+                <div class="d-md-none mt-2" style="font-size: 11px; font-weight: normal; text-transform: none;">
+                  @foreach ($summaryColumns as $colSlug => $sumConfig)
+                    <div class="p-1 mb-1 rounded text-left"
+                      style="background: rgba(255, 255, 255, 0.95); border: 1px solid #e2e8f0; line-height: 1.3;">
+                      <div class="font-weight-bold text-dark" style="font-size: 10px; text-transform: uppercase;">
+                        {{ $sumConfig['label'] ?? \Illuminate\Support\Str::headline($colSlug) }}
+                      </div>
+                      <div class="d-flex justify-content-between text-muted" style="font-size: 10px;">
+                        <span>Halaman</span>
+                        <span class="font-weight-bold text-dark sum-page-{{ $colSlug }}" data-field="{{ $colSlug }}"
+                          data-prefix="{{ $sumConfig['prefix'] ?? '' }}">0</span>
+                      </div>
+                      <div class="d-flex justify-content-between text-primary" style="font-size: 10px;">
+                        <span class="font-weight-bold">Total</span>
+                        <span class="font-weight-bold text-primary sum-all-{{ $colSlug }}" data-field="{{ $colSlug }}"
+                          data-prefix="{{ $sumConfig['prefix'] ?? '' }}">0</span>
+                      </div>
+                    </div>
+                  @endforeach
+                </div>
+              </th>
+              @if($parent = current_module()->form->post_parent)
+                <th style="vertical-align: middle;"></th>
+              @endif
+              @if($child_count = collect(current_module()->datatable->child_count ?? []))
+                @foreach($child_count as $type)
+                  <th style="vertical-align: middle;"></th>
+                @endforeach
+              @endif
+              @if($custom = current_module()->datatable->custom_column)
+                @php
+                  $customArr = is_array($custom) ? $custom : [$custom];
+                @endphp
+                @foreach ($customArr as $row)
+                  @php
+                    $colSlug = _us($row);
+                    $sumConfig = $summaryColumns[$colSlug] ?? null;
+                  @endphp
+                  @if($sumConfig)
+                    <th style="vertical-align: middle; padding: 6px 8px;">
+                      <div class="dt-summary-box shadow-sm rounded"
+                        style="background: #ffffff; border: 1px solid #e2e8f0; padding: 6px 10px; font-size: 11px; min-width: 130px; text-transform: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-1 text-muted"
+                          style="border-bottom: 1px dashed #e2e8f0; padding-bottom: 3px;">
+                          <span style="font-size: 10px; text-transform: uppercase; font-weight: 600;"><i
+                              class="fa fa-file-text-o mr-1"></i> Halaman</span>
+                          <span class="font-weight-bold text-dark sum-page-{{ $colSlug }}" data-field="{{ $colSlug }}"
+                            data-prefix="{{ $sumConfig['prefix'] ?? '' }}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center text-primary" style="padding-top: 1px;">
+                          <span style="font-size: 10px; text-transform: uppercase; font-weight: 700;"><i
+                              class="fa fa-database mr-1"></i> Total</span>
+                          <span class="font-weight-bold text-primary sum-all-{{ $colSlug }}" data-field="{{ $colSlug }}"
+                            data-prefix="{{ $sumConfig['prefix'] ?? '' }}">0</span>
+                        </div>
+                      </div>
+                    </th>
+                  @else
+                    <th style="vertical-align: middle;"></th>
+                  @endif
+                @endforeach
+              @endif
+              @if((isset(current_module()->datatable?->timestamps) && current_module()->datatable?->timestamps) || !isset(current_module()->datatable?->timestamps))
+                <th style="vertical-align: middle;"></th>
+                <th style="vertical-align: middle;"></th>
+              @endif
+              @if(current_module()->web->detail)
+                <th style="vertical-align: middle;"></th>
+              @endif
+              <th style="vertical-align: middle;"></th>
+              <th style="vertical-align: middle;"></th>
+            </tr>
+          </tfoot>
+        @endif
 
       </table>
+
+
 
     </div>
     <br>
@@ -382,13 +510,13 @@
         } else {
 
           content = `
-                                                                                                                                                                                                                                                                                                                              <div class="text-center">
-                                                                                                                                                                                                                                                                                                                                  <p>File tidak dapat dilihat.</p>
-                                                                                                                                                                                                                                                                                                                                  <a href="${url}" class="btn btn-primary" download>
-                                                                                                                                                                                                                                                                                                                                      Download File
-                                                                                                                                                                                                                                                                                                                                  </a>
-                                                                                                                                                                                                                                                                                                                              </div>
-                                                                                                                                                                                                                                                                                                                          `;
+                                                                                                                                                                                                                                                                                                                                                                              <div class="text-center">
+                                                                                                                                                                                                                                                                                                                                                                                  <p>File tidak dapat dilihat.</p>
+                                                                                                                                                                                                                                                                                                                                                                                  <a href="${url}" class="btn btn-primary" download>
+                                                                                                                                                                                                                                                                                                                                                                                      Download File
+                                                                                                                                                                                                                                                                                                                                                                                  </a>
+                                                                                                                                                                                                                                                                                                                                                                              </div>
+                                                                                                                                                                                                                                                                                                                                                                          `;
         }
 
         $('#mediaContent').html(content);
@@ -444,20 +572,20 @@
                   if (c.link) contactHtml += `<a href="${c.link}" target="_blank" class="text-muted ml-1" title="${c.link}"><i class="fa fa-link"></i></a>`;
 
                   $("#commentList").append(`
-                      <li class="list-group-item">
-                        <strong>
-                          <i class="fa fa-user"></i> ${c.name} ${contactHtml}
-                          <span class="float-right ml-2"> <code><i class="fa fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString("id-ID", {
+                                                                      <li class="list-group-item">
+                                                                        <strong>
+                                                                          <i class="fa fa-user"></i> ${c.name} ${contactHtml}
+                                                                          <span class="float-right ml-2"> <code><i class="fa fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString("id-ID", {
                     day: "numeric", month: "long", year: "numeric"
                   }) + " " + new Date(c.created_at).toLocaleTimeString("id-ID", {
                     hour: "2-digit", minute: "2-digit"
                   })}</code></span>
-                        </strong>
-                        <br>
-                        <div style="font-size:0.9em; margin-top:5px;">${c.content}</div>
-                        ${metaHtml}
-                      </li>
-                    `);
+                                                                        </strong>
+                                                                        <br>
+                                                                        <div style="font-size:0.9em; margin-top:5px;">${c.content}</div>
+                                                                        ${metaHtml}
+                                                                      </li>
+                                                                    `);
                 });
 
                 // Render pagination
@@ -668,18 +796,18 @@
             postData.to_date = $("#to_date").val();
             postData.search = $("input[type=search]").val();
             @if(current_module()->form->post_parent)
-            postData.parent_id = $("#parent_id").val();
+              postData.parent_id = $("#parent_id").val();
             @endif
             @if(current_module()->form->category)
-            postData.category_id = $("#category_id").val();
+              postData.category_id = $("#category_id").val();
             @endif
             @if(current_module()->form->tag)
-            postData.tag_id = $("#tag_id").val();
+              postData.tag_id = $("#tag_id").val();
             @endif
             @if(config('modules.multisite_enabled') && is_main_domain())
-            postData.tenant_id = $("#tenant_id").val();
+              postData.tenant_id = $("#tenant_id").val();
             @endif
-          }
+                                                          }
 
           $.ajax({
             url: "{{ route(get_post_type() . '.delete_all') }}",

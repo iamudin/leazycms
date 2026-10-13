@@ -495,6 +495,20 @@
                                         <span>{{ $placeholder ?: $label }}</span>
                                     </label>
 
+                                @elseif($type === 'toggle')
+                                    @php
+                                        $onLabel = is_array($meta) ? ($meta['on'] ?? 'True') : ($meta->on ?? 'True');
+                                        $offLabel = is_array($meta) ? ($meta['off'] ?? 'False') : ($meta->off ?? 'False');
+                                        $onLower = strtolower(trim((string)$onLabel));
+                                        $valLower = strtolower(trim((string)$oldVal));
+                                        $isToggleChecked = in_array($valLower, ['true', '1', 'on', 'yes', $onLower], true) || $oldVal === true;
+                                    @endphp
+                                    <input type="hidden" name="{{ $inputName }}" value="false">
+                                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                        <input type="checkbox" name="{{ $inputName }}" value="true" {{ $isToggleChecked ? 'checked' : '' }} {{ $required ? 'required' : '' }} onchange="this.nextElementSibling.textContent = this.checked ? '{{ addslashes($onLabel) }}' : '{{ addslashes($offLabel) }}'">
+                                        <span>{{ $isToggleChecked ? $onLabel : $offLabel }}</span>
+                                    </label>
+
                                 @else
                                     @php
                                         $inputType = 'text';
