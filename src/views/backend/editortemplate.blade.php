@@ -35,7 +35,7 @@
                                                 </div>
                                             </div>
                                         @endif
-                                        @if(isset($templateHasAssets) && $templateHasAssets)
+                                        @if(isset($templateHasAssets) && $templateHasAssets && empty($templateAssetsLinked))
                                             <div class="col-lg-12">
                                                 <div class="alert alert-info d-flex align-items-center justify-content-between" style="gap:12px">
                                                     <div>
@@ -66,8 +66,18 @@
                                                 @php
     $treeData = [];
     $data = getDirectoryContents(null, $treeData);
+    $hasModulesInTree = collect($treeData)->contains('name', 'modules.blade.php');
     renderTemplateFile($treeData);
                                                 @endphp
+                                                @if(config('modules.multisite_enabled') && is_main_domain() && !$hasModulesInTree)
+                                                    <ul style="padding:0 0 0 14px;list-style: none;margin:0">
+                                                        @php
+                                                            $activeEditFallback = request()->edit ? dec64(request()->edit) : '';
+                                                        @endphp
+                                                        <li><a href="{{ route('appearance.editor') }}?edit={{ enc64('/modules.blade.php') }}" style="{{ $activeEditFallback === '/modules.blade.php' ? 'font-weight:bold;color:#0d6efd;' : '' }}"><i class="fab fa-laravel text-danger"></i> modules.blade.php <span class="badge badge-secondary" style="font-size:9px;" title="Template: views/template/{{ template() }}/modules.blade.php">{{ template() }}</span></a></li>
+                                                        <li><a href="{{ route('appearance.editor') }}?edit={{ enc64('/global:modules.blade.php') }}" style="{{ $activeEditFallback === '/global:modules.blade.php' ? 'font-weight:bold;color:#0d6efd;' : '' }}"><i class="fab fa-laravel text-primary"></i> modules.blade.php <span class="badge badge-primary" style="font-size:9px;" title="Global: views/template/modules.blade.php">Global (views/template)</span></a></li>
+                                                    </ul>
+                                                @endif
                                                 <ul style="padding:0;list-style: none;margin:0">
                                                     <li> <i class="fa fa-file-code"></i> <a href="{{ url()->current() . '?edit=' . enc64("/styles.css") }}">
                                                             styles.css</a></li>
@@ -98,11 +108,19 @@
                                             <form action="{{ URL::full() }}" class="editorForm" method="post" enctype="multipart/form-data">
                                                 @csrf
                                                 @if($e = dec64(request()->edit))
-                                                    <h6> <i class="fa fa-edit"></i> {{  'Edit : ' . $e  }}
+                                                    @php
+                                                        $displayEditName = $e;
+                                                        if ($e === '/global:modules.blade.php') {
+                                                            $displayEditName = 'views/template/modules.blade.php (Global / Induk)';
+                                                        } elseif ($e === '/modules.blade.php' && config('modules.multisite_enabled') && is_main_domain()) {
+                                                            $displayEditName = 'views/template/' . template() . '/modules.blade.php (Template)';
+                                                        }
+                                                    @endphp
+                                                    <h6> <i class="fa fa-edit"></i> {{  'Edit : ' . $displayEditName  }}
                                                         @if(!str(basename($e))->contains(['modules.blade.php', 'home.blade.php', 'header.blade.php', 'footer.blade.php', 'styles.css', 'scripts.css']))<i
                                                             onclick="deleteFile('{{ $e }}')" class="fa fa-trash-o text-danger pointer"
                                                         title="Delete this file "></i>@endif
-                                                        @if(str(request()->edit)->contains('modules'))
+                                                        @if(str(request()->edit)->contains('modules') || str($e)->contains('modules'))
                                                             <span class="pointer badge badge-primary pull-right"><i class="fa fa-question-circle"></i> Petunjuk
                                                                 Custom Modul</span>
                                                         @endif

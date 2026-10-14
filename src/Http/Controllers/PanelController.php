@@ -2425,13 +2425,22 @@ if(!is_main_domain()){
             File::put($path . dec64($defaultfile), '<h1>Your Script Here</h1>');
         }
         $file = $request->edit ? dec64($request->edit) : dec64($defaultfile);
-        if (config('modules.multisite_enabled') && is_main_domain() && str($file)->contains('modules')) {
-            $path = resource_path('views/template');
+        if (config('modules.multisite_enabled') && is_main_domain()) {
+            if ($file === '/global:modules.blade.php') {
+                $path = resource_path('views/template');
+                $file = '/modules.blade.php';
+            }
+            if (!file_exists(resource_path('views/template/modules.blade.php'))) {
+                File::put(resource_path('views/template/modules.blade.php'), "<?php\n");
+            }
+            if (!file_exists($templateRootPath . '/modules.blade.php')) {
+                File::put($templateRootPath . '/modules.blade.php', "<?php\n");
+            }
+        } elseif (config('modules.multisite_enabled') && !is_main_domain() && str($file)->contains('modules')) {
+            $canEditModules = in_array(get_option('allow_edit_modules'), ['1', 1, 'true', true, 'Y', 'y'], true);
+            abort_if(!$canEditModules, 403, 'Akses edit modules tidak diizinkan.');
             if (!file_exists($path . $file)) {
-                $myfile = fopen($path . $file, "w") or die("Unable to open file!");
-                fwrite($myfile, '<h1>You Script Here</h1>');
-                fclose($myfile);
-                File::put($path . '/' . $file, 'You Script Here');
+                File::put($path . $file, '<?php' . PHP_EOL);
             }
         }
 

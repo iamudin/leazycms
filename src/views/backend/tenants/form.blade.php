@@ -166,6 +166,13 @@
                                 class="text-muted">Ceklis jika ingin mengizinkan login simultan / multi-login (login dari banyak perangkat secara bersamaan) pada tenant ini.</small>
                         </div>
 
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Izinkan Edit Modul Template (Allow Edit Modules) ?</label><br>
+                            <input type="hidden" name="options[allow_edit_modules]" value="0">
+                            <input name="options[allow_edit_modules]" id="allow-edit-modules-check" type="checkbox" value="1" {{ (old('options.allow_edit_modules') == '1' || in_array($options['allow_edit_modules'] ?? '0', ['1', 1, 'true', true, 'Y', 'y'], true)) ? 'checked' : '' }}> <small
+                                class="text-muted">Ceklis jika ingin mengizinkan tenant ini melihat dan mengedit berkas/folder modules pada editor template.</small>
+                        </div>
+
                         <script>
                             document.addEventListener('DOMContentLoaded', function () {
                                 const themeSelect = document.getElementById('theme-select');

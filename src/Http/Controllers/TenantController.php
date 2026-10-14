@@ -796,6 +796,9 @@ class TenantController extends Controller implements HasMiddleware
         if ($request->has('allow_multi_login') && !isset($options['allow_multi_login'])) {
             $options['allow_multi_login'] = $request->allow_multi_login ? "1" : "0";
         }
+        if ($request->has('allow_edit_modules') && !isset($options['allow_edit_modules'])) {
+            $options['allow_edit_modules'] = $request->allow_edit_modules ? "1" : "0";
+        }
         foreach ($options as $name => $value) {
             if ($name == 'google_verification_code' && !empty($value)) {
                 if (preg_match('/content=[\'"]([^\'"]+)[\'"]/i', $value, $matches)) {

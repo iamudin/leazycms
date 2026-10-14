@@ -3530,6 +3530,12 @@ if (!function_exists('renderTemplateFile')) {
             if (str($currentPath)->contains(['.git', 'assets', 'dummy'])) {
                 continue;
             }
+            if (!is_main_domain() && str($currentPath)->contains('modules')) {
+                $canEditModules = config('modules.multisite_enabled') && in_array(get_option('allow_edit_modules'), ['1', 1, 'true', true, 'Y', 'y'], true);
+                if (!$canEditModules) {
+                    continue;
+                }
+            }
             if (isset($item['children']) && !empty($item['children'])) {
                 echo '<li class="folder"> <i class="fa fa-folder"></i> ' . htmlspecialchars($item['name']) . ' <span class="pull-right text-danger"><i class="fa fa-folder-plus pointer" title="Create Folder" onclick="folderPrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-file-circle-plus pointer" title="Create File" onclick="filePrompt(\'' . $currentPath . '\')"></i> &nbsp; <i class="fa fa-trash-alt pointer" title="Delete Folder" onclick="deleteDir(\'' . $currentPath . '\')"></i> </span>';
                 renderTemplateFile($item['children'], $currentPath);
@@ -3538,8 +3544,19 @@ if (!function_exists('renderTemplateFile')) {
                 if (str($item['name'])->contains('json')) {
                     continue;
                 }
-                if (!is_main_domain() && str($currentPath)->contains('modules')) {
-                    continue;
+                if ($item['name'] === 'modules.blade.php' && $parentPath === '') {
+                    if (config('modules.multisite_enabled') && is_main_domain()) {
+                        $activeEdit = request()->edit ? dec64(request()->edit) : '';
+                        $isTplActive = $activeEdit === '/modules.blade.php';
+                        $isGlobalActive = $activeEdit === '/global:modules.blade.php';
+
+                        // 1. File modules dari views/template/namatemplate/
+                        echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64('/modules.blade.php') . '" style="' . ($isTplActive ? 'font-weight:bold;color:#0d6efd;' : '') . '"><i class="fab fa-laravel text-danger"></i> modules.blade.php <span class="badge badge-secondary" style="font-size:9px;" title="Template: views/template/' . template() . '/modules.blade.php">' . template() . '</span></a></li>';
+
+                        // 2. File modules dari views/template/ (Global)
+                        echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64('/global:modules.blade.php') . '" style="' . ($isGlobalActive ? 'font-weight:bold;color:#0d6efd;' : '') . '"><i class="fab fa-laravel text-primary"></i> modules.blade.php <span class="badge badge-primary" style="font-size:9px;" title="Global: views/template/modules.blade.php">Global (views/template)</span></a></li>';
+                        continue;
+                    }
                 }
                 echo '<li><a href="' . route('appearance.editor') . '?edit=' . enc64(htmlspecialchars($currentPath)) . '"><i class="fab fa-laravel text-danger"></i>  ' . htmlspecialchars($item['name']) . '</a></li>';
             } else {

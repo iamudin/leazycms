@@ -205,7 +205,7 @@
                             $module = $module->whereNotIn('name', $disallowedModules);
                         }
                     }
-                    $data = query()->selectedColumn()->whereIn('type', $module->pluck('name')->toArray())->with('category')->get();
+                    $data = query()->selectedColumn()->whereIn('type', $module->pluck('name')->toArray())->with('category')->limit(1)->get();
                 @endphp
                     @foreach($module as $row)
                     <div class="card">

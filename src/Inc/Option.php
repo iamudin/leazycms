@@ -110,7 +110,8 @@ if (!function_exists('disallow_option_key')) {
             'max_image_width',
             'bebas_iklan',
             'master_ads',
-            'master_tenant_notice'
+            'master_tenant_notice',
+            'allow_multi_login'
         ];
 
         // 1. Jika parameter adalah ARRAY: Daftarkan/tambahkan key secara dinamis
