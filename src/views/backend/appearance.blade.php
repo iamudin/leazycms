@@ -275,12 +275,33 @@
                         @foreach ($template_asset as $field)
                             @php
                                 $fieldName = $field[0] ?? '';
-                                $fieldType = $field[1] ?? 'text';
-                                $fieldExtra = $field[2] ?? null;
+                                $fieldMeta = $field[1] ?? 'text';
+                                $fieldDefault = null;
+                                $fieldHelper = null;
+                                $fieldRequired = false;
+                                
+                                if (is_array($fieldMeta) && isset($fieldMeta['type'])) {
+                                    $fieldType = $fieldMeta['type'];
+                                    $fieldDefault = $fieldMeta['default'] ?? null;
+                                    $fieldHelper = $fieldMeta['helper'] ?? null;
+                                    $fieldRequired = $fieldMeta['required'] ?? false;
+                                    $fieldExtra = $fieldMeta['mime_type'] ?? null;
+                                } elseif (is_object($fieldMeta) && isset($fieldMeta->type)) {
+                                    $fieldType = $fieldMeta->type;
+                                    $fieldDefault = $fieldMeta->default ?? null;
+                                    $fieldHelper = $fieldMeta->helper ?? null;
+                                    $fieldRequired = $fieldMeta->required ?? false;
+                                    $fieldExtra = $fieldMeta->mime_type ?? null;
+                                } else {
+                                    $fieldType = $fieldMeta;
+                                    $fieldDefault = (isset($field[2]) && (is_string($field[2]) || is_numeric($field[2]) || is_bool($field[2])) && $fieldType !== 'file' && $fieldType !== 'break' && !is_array($fieldType)) ? $field[2] : null;
+                                    $fieldRequired = isset($field[3]);
+                                    $fieldExtra = $field[2] ?? null;
+                                }
+
                                 $fieldSlug = _us($fieldName);
                                 $savedVal = get_option($fieldSlug);
-                                $fallbackDefault = (isset($fieldExtra) && is_string($fieldExtra) && $fieldType !== 'file' && $fieldType !== 'break' && !is_array($fieldType)) ? $fieldExtra : null;
-                                $displayVal = ($savedVal !== null && $savedVal !== '') ? $savedVal : $fallbackDefault;
+                                $displayVal = ($savedVal !== null && $savedVal !== '') ? $savedVal : ($fieldDefault ?? '');
 
                                 $colClass = 'col-lg-12';
                                 if (in_array($fieldName, ['Logo Title', 'Logo Description'])) {
@@ -352,10 +373,42 @@
                                 <input type="color" name="{{ $fieldSlug }}" class="form-control form-control-sm" style="width: 100%; max-width: 80px; height: 31px; padding: 2px;" value="{{ $displayVal ?: '#000000' }}">
                             @elseif($fieldType === 'textarea')
                                 <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
-                                <textarea @if (isset($field[3])) required @endif class="form-control form-control-sm" name="{{ $fieldSlug }}" rows="3" placeholder="Masukkan {{ $fieldName }}">{{ $displayVal }}</textarea>
+                                <textarea @if ($fieldRequired) required @endif class="form-control form-control-sm" name="{{ $fieldSlug }}" rows="3" placeholder="Masukkan {{ $fieldName }}">{{ $displayVal }}</textarea>
+                            @elseif($fieldType === 'toggle')
+                                @php
+                                    $onLabel = is_array($fieldMeta ?? null) ? ($fieldMeta['on'] ?? $fieldMeta['data_on'] ?? $fieldMeta['on_label'] ?? 'True') : ($fieldMeta->on ?? $fieldMeta->data_on ?? $fieldMeta->on_label ?? 'True');
+                                    $offLabel = is_array($fieldMeta ?? null) ? ($fieldMeta['off'] ?? $fieldMeta['data_off'] ?? $fieldMeta['off_label'] ?? 'False') : ($fieldMeta->off ?? $fieldMeta->data_off ?? $fieldMeta->off_label ?? 'False');
+                                    $onLower = strtolower(trim((string)$onLabel));
+                                    $valLower = strtolower(trim((string)$displayVal));
+                                    $isChecked = in_array($valLower, ['true', '1', 'on', 'yes', $onLower], true) || $displayVal === true;
+                                    $onStyle = is_array($fieldMeta ?? null) ? ($fieldMeta['onstyle'] ?? 'outline-success') : ($fieldMeta->onstyle ?? 'outline-success');
+                                    $offStyle = is_array($fieldMeta ?? null) ? ($fieldMeta['offstyle'] ?? 'outline-danger') : ($fieldMeta->offstyle ?? 'outline-danger');
+                                    $maxLen = max(mb_strlen((string)$onLabel), mb_strlen((string)$offLabel));
+                                    $toggleWidth = is_array($fieldMeta ?? null) && !empty($fieldMeta['width']) ? $fieldMeta['width'] : max(80, ($maxLen * 10) + 42);
+                                @endphp
+                                <small for="{{ $fieldSlug }}">{{ $fieldName }}</small>
+                                <div class="mt-1 mb-2">
+                                    <input type="hidden" name="{{ $fieldSlug }}" value="false">
+                                    <input type="checkbox"
+                                        id="toggle_{{ $fieldSlug }}"
+                                        name="{{ $fieldSlug }}"
+                                        value="true"
+                                        data-toggle="toggle"
+                                        data-on="{{ $onLabel }}"
+                                        data-off="{{ $offLabel }}"
+                                        data-onstyle="{{ $onStyle }}"
+                                        data-offstyle="{{ $offStyle }}"
+                                        data-size="sm"
+                                        data-width="{{ $toggleWidth }}"
+                                        {{ $isChecked ? 'checked' : '' }}
+                                        {{ $fieldRequired ? 'required' : '' }}>
+                                </div>
+                                @if(!empty($fieldHelper))
+                                    <small class="form-text text-muted mb-2">{{ $fieldHelper }}</small>
+                                @endif
                             @else
                                 <small class="font-weight-bold text-dark">{{ str($fieldName)->headline() }}</small><br>
-                                <input @if (isset($field[3])) required @endif type="{{ $fieldType }}"
+                                <input @if ($fieldRequired) required @endif type="{{ $fieldType }}"
                                     class="form-control form-control-sm mb-2" name="{{ $fieldSlug }}"
                                     placeholder="Masukkan {{ $fieldName }}" value="{{ $displayVal }}">
                             @endif
@@ -385,8 +438,63 @@
         <input type="hidden" name="url" id="install-cloud-url">
     </form>
 
-  @push('scripts')
+  @push('styles')
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <style>
+        .toggle.btn {
+            min-height: 30px;
+        }
+        .toggle.btn-sm {
+            min-height: 28px;
+        }
+        .toggle.btn .toggle-on,
+        .toggle.btn .toggle-off {
+            font-size: 11.5px !important;
+            font-weight: 600 !important;
+            line-height: 1.4 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            white-space: nowrap !important;
+        }
+        .toggle.btn .toggle-on {
+            padding: 4px 18px 4px 12px !important;
+        }
+        .toggle.btn .toggle-off {
+            padding: 4px 12px 4px 18px !important;
+        }
+    </style>
+  @endpush
 
+  @push('scripts')
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+    <script>
+        $(function () {
+            function initAppearanceToggles($ctx) {
+                if (typeof $.fn.bootstrapToggle === 'function') {
+                    $ctx.find('input[data-toggle="toggle"]').each(function () {
+                        if (!$(this).parent().hasClass('toggle')) {
+                            $(this).bootstrapToggle();
+                        }
+                        var w = $(this).data('width');
+                        if (w) {
+                            $(this).parent('.toggle').css('width', w + 'px');
+                        }
+                    });
+                }
+            }
+
+            initAppearanceToggles($(document));
+
+            // Pastikan ukuran dihitung ulang saat beralih ke tab Pengaturan
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr('href');
+                if (target === '#konfigurasi') {
+                    initAppearanceToggles($(target));
+                }
+            });
+        });
+    </script>
     @include('cms::backend.layout.js')
   @endpush
 @endsection

@@ -59,12 +59,29 @@ if (!function_exists('get_option')) {
                         $itemSlug = function_exists('_us') ? _us($itemLabel) : strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $itemLabel), '_'));
                         if ($itemSlug === $targetSlug) {
                             if (isset($item[1])) {
+                                $itemType = is_array($item[1]) ? ($item[1]['type'] ?? null) : (is_object($item[1]) ? ($item[1]->type ?? null) : $item[1]);
                                 if (is_array($item[1]) && array_key_exists('default', $item[1])) {
-                                    return $item[1]['default'];
+                                    $def = $item[1]['default'];
+                                    if ($itemType === 'toggle') {
+                                        return (in_array(strtolower(trim((string)$def)), ['true', '1', 'on', 'yes'], true) || $def === true) ? '1' : '0';
+                                    }
+                                    return $def;
                                 } elseif (is_object($item[1]) && isset($item[1]->default)) {
-                                    return $item[1]->default;
-                                } elseif (isset($item[2]) && is_string($item[2])) {
-                                    return $item[2];
+                                    $def = $item[1]->default;
+                                    if ($itemType === 'toggle') {
+                                        return (in_array(strtolower(trim((string)$def)), ['true', '1', 'on', 'yes'], true) || $def === true) ? '1' : '0';
+                                    }
+                                    return $def;
+                                } elseif (isset($item[2]) && (is_string($item[2]) || is_numeric($item[2]) || is_bool($item[2]))) {
+                                    $def = $item[2];
+                                    if ($itemType === 'toggle') {
+                                        return (in_array(strtolower(trim((string)$def)), ['true', '1', 'on', 'yes'], true) || $def === true) ? '1' : '0';
+                                    }
+                                    return (string)$def;
+                                }
+
+                                if ($itemType === 'toggle') {
+                                    return '0';
                                 }
                             }
                         }

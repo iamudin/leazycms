@@ -237,7 +237,7 @@
                             $fieldMime = $fieldMeta->mime_type ?? null;
                         } else {
                             $fieldType = $fieldMeta;
-                            $fieldDefault = (isset($field[2]) && is_string($field[2]) && $fieldType !== 'file' && $fieldType !== 'break' && !is_array($fieldType)) ? $field[2] : null;
+                            $fieldDefault = (isset($field[2]) && (is_string($field[2]) || is_numeric($field[2]) || is_bool($field[2])) && $fieldType !== 'file' && $fieldType !== 'break' && !is_array($fieldType)) ? $field[2] : null;
                             $fieldHelper = null;
                             $fieldRequired = isset($field[3]);
                             $fieldMime = ($fieldType === 'file' && isset($field[2])) ? $field[2] : null;
@@ -598,6 +598,41 @@
                         @endif
                     </div>
 
+                @elseif($fieldType === 'toggle')
+                    @php
+                        $onLabel = is_array($fieldMeta ?? null) ? ($fieldMeta['on'] ?? $fieldMeta['data_on'] ?? $fieldMeta['on_label'] ?? 'True') : ($fieldMeta->on ?? $fieldMeta->data_on ?? $fieldMeta->on_label ?? 'True');
+                        $offLabel = is_array($fieldMeta ?? null) ? ($fieldMeta['off'] ?? $fieldMeta['data_off'] ?? $fieldMeta['off_label'] ?? 'False') : ($fieldMeta->off ?? $fieldMeta->data_off ?? $fieldMeta->off_label ?? 'False');
+                        $onLower = strtolower(trim((string)$onLabel));
+                        $valLower = strtolower(trim((string)$displayVal));
+                        $isChecked = in_array($valLower, ['true', '1', 'on', 'yes', $onLower], true) || $displayVal === true;
+                        $onStyle = is_array($fieldMeta ?? null) ? ($fieldMeta['onstyle'] ?? 'outline-success') : ($fieldMeta->onstyle ?? 'outline-success');
+                        $offStyle = is_array($fieldMeta ?? null) ? ($fieldMeta['offstyle'] ?? 'outline-danger') : ($fieldMeta->offstyle ?? 'outline-danger');
+                        $maxLen = max(mb_strlen((string)$onLabel), mb_strlen((string)$offLabel));
+                        $toggleWidth = is_array($fieldMeta ?? null) && !empty($fieldMeta['width']) ? $fieldMeta['width'] : max(80, ($maxLen * 10) + 42);
+                    @endphp
+                    <div class="{{ $colClass }} mb-3">
+                        <small for="{{ $fieldSlug }}">{{ $fieldName }}</small>
+                        <div class="mt-1">
+                            <input type="hidden" name="{{ $fieldSlug }}" value="false">
+                            <input type="checkbox"
+                                id="toggle_{{ $fieldSlug }}"
+                                name="{{ $fieldSlug }}"
+                                value="true"
+                                data-toggle="toggle"
+                                data-on="{{ $onLabel }}"
+                                data-off="{{ $offLabel }}"
+                                data-onstyle="{{ $onStyle }}"
+                                data-offstyle="{{ $offStyle }}"
+                                data-size="sm"
+                                data-width="{{ $toggleWidth }}"
+                                {{ $isChecked ? 'checked' : '' }}
+                                {{ $fieldRequired ? 'required' : '' }}>
+                        </div>
+                        @if(!empty($fieldHelper))
+                            <small class="form-text text-muted mt-1">{{ $fieldHelper }}</small>
+                        @endif
+                    </div>
+
                 @else
                     <div class="{{ $colClass }} mb-3">
                         <label class="option-label" for="{{ $fieldSlug }}">
@@ -628,12 +663,49 @@
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <style>
+        .toggle.btn {
+            min-height: 30px;
+        }
+        .toggle.btn-sm {
+            min-height: 28px;
+        }
+        .toggle.btn .toggle-on,
+        .toggle.btn .toggle-off {
+            font-size: 11.5px !important;
+            font-weight: 600 !important;
+            line-height: 1.4 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            white-space: nowrap !important;
+        }
+        .toggle.btn .toggle-on {
+            padding: 4px 18px 4px 12px !important;
+        }
+        .toggle.btn .toggle-off {
+            padding: 4px 12px 4px 18px !important;
+        }
+    </style>
 @endpush
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
     <script>
         $(document).ready(function() {
+            if (typeof $.fn.bootstrapToggle === 'function') {
+                $('input[data-toggle="toggle"]').each(function () {
+                    if (!$(this).parent().hasClass('toggle')) {
+                        $(this).bootstrapToggle();
+                    }
+                    var w = $(this).data('width');
+                    if (w) {
+                        $(this).parent('.toggle').css('width', w + 'px');
+                    }
+                });
+            }
             if ($('.custom_summernote').length) {
                 $('.custom_summernote').summernote({
                     height: 220,

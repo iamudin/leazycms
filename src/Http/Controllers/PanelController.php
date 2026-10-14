@@ -822,6 +822,12 @@ if(!is_main_domain()){
                     } elseif ($request->has($key) && is_string($request->$key)) {
                         $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
                     }
+                } elseif ($fieldType === 'toggle') {
+                    $rawVal = $request->input($key);
+                    $valLower = strtolower(trim((string)$rawVal));
+                    $isTrue = in_array($valLower, ['true', '1', 'on', 'yes'], true) || $rawVal === true;
+                    $val = $isTrue ? '1' : '0';
+                    $option->updateOrCreate(['name' => $key], ['value' => $val, 'autoload' => 1]);
                 } else {
                     if ($request->has($key)) {
                         $val = $request->input($key);
@@ -836,7 +842,10 @@ if(!is_main_domain()){
                 }
             }
             if (config('modules.multisite_enabled')) {
-                Cache::forget('tenant:' . tenant()->domain . ':options');
+                if (function_exists('tenant') && tenant()) {
+                    Cache::forget('tenant:' . tenant()->domain . ':options');
+                }
+                cache()->forget("tenant:master:" . parse_url(config('app.url'), PHP_URL_HOST) . ":options");
             }
 
             return back()->with('success', 'Berhasil Diupdate');
@@ -1804,20 +1813,26 @@ if(!is_main_domain()){
                 if ($ar_ta) {
 
                     foreach ($ar_ta as $field) {
-                        if (isset($field[1]) && $field[1] === 'break') {
+                        $fieldName = $field[0] ?? '';
+                        $fieldMeta = $field[1] ?? 'text';
+                        $fieldType = is_array($fieldMeta) ? ($fieldMeta['type'] ?? 'text') : (is_object($fieldMeta) ? ($fieldMeta->type ?? 'text') : $fieldMeta);
+                        if (is_array($fieldMeta) && !isset($fieldMeta['type'])) {
+                            $fieldType = 'select';
+                        }
+                        if ($fieldType === 'break') {
                             continue;
                         }
-                        $key = _us($field[0]);
+                        $key = _us($fieldName);
                         if (config('modules.multisite_enabled') && !is_main_domain() && function_exists('disallow_option_key') && disallow_option_key($key)) {
                             continue;
                         }
-                        if ($field[1] == 'file') {
+                        if ($fieldType == 'file' || $fieldType == 'image') {
                             if ($request->hasFile($key)) {
                                 $value = (new Flc)->addFile([
                                     'file' => $request->file($key),
                                     'purpose' => $key,
                                     'width' => 1700,
-                                    'mime_type' => isset($field[2]) ? explode(',', $field[2]) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
+                                    'mime_type' => isset($field[2]) ? (is_array($field[2]) ? $field[2] : explode(',', $field[2])) : ['image/gif', 'image/jpeg', 'image/png', 'image/webp'],
                                     'self_upload' => true,
                                 ]);
 
@@ -1825,6 +1840,12 @@ if(!is_main_domain()){
                             } elseif ($request->has($key) && is_string($request->$key)) {
                                 $option->updateOrCreate(['name' => $key], ['value' => strip_tags($request->$key), 'autoload' => 1]);
                             }
+                        } elseif ($fieldType === 'toggle') {
+                            $rawVal = $request->input($key);
+                            $valLower = strtolower(trim((string)$rawVal));
+                            $isTrue = in_array($valLower, ['true', '1', 'on', 'yes'], true) || $rawVal === true;
+                            $val = $isTrue ? '1' : '0';
+                            $option->updateOrCreate(['name' => $key], ['value' => $val, 'autoload' => 1]);
                         } else {
                             if ($request->has($key)) {
                                 $val = $request->input($key);
