@@ -102,6 +102,23 @@ class TenantController extends Controller implements HasMiddleware
             ->addColumn('admin', function ($row) {
                 return $row->admin?->name ?? '-';
             })
+            ->addColumn('name', function ($row) {
+                $name = $row->name ?: '-';
+                $html = '<div class="font-weight-bold text-dark">' . e($name) . '</div>';
+                if ($row->created_at) {
+                    $createdAt = \Carbon\Carbon::parse($row->created_at);
+                    $fullDetail = $createdAt->translatedFormat('l, d F Y H:i:s');
+                    $dateStr = $createdAt->translatedFormat('d M Y, H:i');
+                    $diff = $createdAt->diffForHumans();
+                    $html .= '<div class="text-muted" style="font-size: 11px;" title="Waktu Dibuat: ' . e($fullDetail) . '">';
+                    $html .= '<i class="fa fa-clock-o text-secondary mr-1"></i>' . $dateStr . ' <span class="text-secondary">(' . $diff . ')</span>';
+                    $html .= '</div>';
+                }
+                return $html;
+            })
+            ->filterColumn('name', function ($query, $keyword) {
+                $query->where('name', 'like', "%{$keyword}%");
+            })
             ->addColumn('category', function ($row) {
                 $category = $row->options->where('name', 'category')->first()?->value;
                 return $category ? '<span class="badge badge-info">' . $category . '</span>' : '-';
@@ -197,7 +214,7 @@ class TenantController extends Controller implements HasMiddleware
                 }
                 return $html;
             })
-            ->rawColumns(['action', 'status', 'theme', 'resource', 'category', 'domain'])
+            ->rawColumns(['action', 'status', 'theme', 'resource', 'category', 'domain', 'name'])
             ->toJson();
     }
 
@@ -421,6 +438,10 @@ class TenantController extends Controller implements HasMiddleware
         $modules = collect(config('modules.menu', []))->pluck('title', 'name');
         $availablePlugins = $this->getAvailablePlugins();
         $options = Option::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->pluck('value', 'name')->toArray();
+        if ($tenant->id == 1) {
+            $defaultOpts = Option::withoutGlobalScope('tenant')->whereNull('tenant_id')->pluck('value', 'name')->toArray();
+            $options = array_merge($defaultOpts, $options);
+        }
         return view('cms::backend.tenants.form', compact('tenant', 'admin', 'options', 'themes', 'modules', 'availablePlugins'));
     }
 
@@ -705,6 +726,12 @@ class TenantController extends Controller implements HasMiddleware
         Cache::forget("tenant:{$oldDomain}");
         Cache::forget("tenant:{$domain}");
         Cache::forget("tenant:{$tenant->domain}:options");
+        if ($tenant->id == 1 || $tenant->domain == parse_url(config('app.url'), PHP_URL_HOST)) {
+            $mainHost = parse_url(config('app.url'), PHP_URL_HOST);
+            Cache::forget("tenant:master:{$mainHost}:options");
+            Cache::forget("tenant:master:options");
+            Cache::forget("default:options");
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -766,6 +793,9 @@ class TenantController extends Controller implements HasMiddleware
             self::deleteOptionsDefault();
         }
         $options = $request->input('options', []);
+        if ($request->has('allow_multi_login') && !isset($options['allow_multi_login'])) {
+            $options['allow_multi_login'] = $request->allow_multi_login ? "1" : "0";
+        }
         foreach ($options as $name => $value) {
             if ($name == 'google_verification_code' && !empty($value)) {
                 if (preg_match('/content=[\'"]([^\'"]+)[\'"]/i', $value, $matches)) {
@@ -776,6 +806,12 @@ class TenantController extends Controller implements HasMiddleware
                 ['name' => $name, 'tenant_id' => $tenant->id],
                 ['value' => is_string($value) ? strip_tags($value) : $value, 'autoload' => 1]
             );
+            if ($tenant->id == 1) {
+                DB::table('options')->updateOrInsert(
+                    ['name' => $name, 'tenant_id' => null],
+                    ['value' => is_string($value) ? strip_tags($value) : $value, 'autoload' => 1]
+                );
+            }
         }
     }
 

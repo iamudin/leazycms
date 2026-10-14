@@ -155,7 +155,6 @@
                 @php
                   $modInfo = get_module($row->type);
                   $icon = $modInfo->icon ?? 'fa-file-text-o';
-                  $editRoute = Route::has($row->type . '.show') ? route($row->type . '.show', $row->id) : (Route::has($row->type) ? route($row->type) : '#');
                 @endphp
                 <tr style="transition: background-color 0.15s ease-in-out;">
                   <td style="padding: 12px 16px; vertical-align: middle;">

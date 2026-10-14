@@ -448,8 +448,10 @@ class PanelController extends Controller implements HasMiddleware
             $select[] = 'tenant_id';
         }
         $lastpublish = Post::select($select)
-            ->with('user')
-            ->whereIn('type', $type_list);
+            ->with('user');
+if(!is_main_domain()){
+            $lastpublish->whereIn('type', $type_list);
+}
         if (config('modules.multisite_enabled') && is_main_domain()) {
             $lastpublish->with('tenant');
         }

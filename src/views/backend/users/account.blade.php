@@ -72,7 +72,7 @@
                 name="password_confirmation" type="password" placeholder="Masukkan ulang password">
               <small class="text-danger">Ketik Ulang Password</small>
             </div>
-            @if($user->isAdmin())
+            @if($user->isAdmin() && is_main_domain())
               <div class="form-group">
                 <small>Izinkan Login Multi</small>
                 <input type="checkbox" name="allow_multi_login" @if(get_option('allow_multi_login') == "1") checked @endif>

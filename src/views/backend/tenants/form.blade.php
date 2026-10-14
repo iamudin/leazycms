@@ -159,6 +159,13 @@
                                 class="text-muted">Ceklis jika ingin mengizinkan tenant ini mengelola pengguna / menampilkan menu User di sidebar tenant.</small>
                         </div>
 
+                        <div class="form-group mt-2 mb-2">
+                            <label class="mb-0">Izinkan Login Multi ?</label><br>
+                            <input type="hidden" name="options[allow_multi_login]" value="0">
+                            <input name="options[allow_multi_login]" id="allow-multi-login-check" type="checkbox" value="1" {{ (old('options.allow_multi_login') == '1' || in_array($options['allow_multi_login'] ?? '0', ['1', 1, 'true', true, 'Y', 'y'], true)) ? 'checked' : '' }}> <small
+                                class="text-muted">Ceklis jika ingin mengizinkan login simultan / multi-login (login dari banyak perangkat secara bersamaan) pada tenant ini.</small>
+                        </div>
+
                         <script>
                             document.addEventListener('DOMContentLoaded', function () {
                                 const themeSelect = document.getElementById('theme-select');

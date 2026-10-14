@@ -59,7 +59,7 @@ class UserController extends Controller implements HasMiddleware
                 $data['email_verified_at'] = null;
             }
 
-            if ($user->isAdmin()) {
+            if ($user->isAdmin() && is_main_domain()) {
                 \Leazycms\Web\Models\Option::updateOrCreate([
                     'name' => 'allow_multi_login',
                 ], [
