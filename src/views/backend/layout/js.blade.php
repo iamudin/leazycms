@@ -106,8 +106,8 @@
 
         const modalHtml = `
         <div class="modal fade" id="dynamicMediaModal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content shadow-lg border-0">
+            <div class="modal-dialog modal-lg modal-dialog-centered ">
+                <div class="modal-content shadow-lg border-0 ">
 
                     <div class="modal-header bg-light d-flex justify-content-between align-items-center">
 
