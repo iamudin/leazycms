@@ -1224,6 +1224,7 @@ class PostController extends Controller implements HasMiddleware
                                 return '<span
         data-media="' . e(media($value)->url()) . '"
         data-ext="' . e($ext) . '"
+        data-tag="' . e(media_tag($value)) . '"
         class="badge badge-pill py-1 btn-view-media text-primary"
         style="border:1px solid green; cursor:pointer;">
         <i class="fa fa-eye "></i> Lihat : ' . str($ext)->upper() . '

@@ -759,7 +759,7 @@
 
                         let mediaViewUrl = '{{ url("media") }}/' + fileName;
                         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'ico'].includes(ext)) {
-                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + mediaViewUrl + '" data-ext="' + ext + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + mediaViewUrl + '" data-ext="' + ext + '" data-tag="' + tag + '" data-size="' + rawSize + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
                         } else {
                             viewBtn = '<a href="' + mediaViewUrl + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
                         }
@@ -1195,7 +1195,7 @@
 
                         let mediaViewUrl = '{{ url("media") }}/' + savedFileName;
                         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'mp4', 'mkv', 'avi', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'ico'].includes(savedExt)) {
-                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + mediaViewUrl + '" data-ext="' + savedExt + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
+                            viewBtn = '<button type="button" class="btn btn-sm btn-light position-absolute btn-view-media" data-media="' + mediaViewUrl + '" data-ext="' + savedExt + '" data-tag="' + tag + '" data-size="' + rawSize + '" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Preview"><i class="fa fa-eye"></i></button>';
                         } else {
                             viewBtn = '<a href="' + mediaViewUrl + '" download class="btn btn-sm btn-light position-absolute btn-download-media" style="top: 2px; right: 2px; z-index: 10; padding: 2px 6px; font-size: 11px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="Download File"><i class="fa fa-download"></i></a>';
                         }

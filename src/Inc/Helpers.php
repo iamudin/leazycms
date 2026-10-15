@@ -5131,3 +5131,34 @@ if (!function_exists('track_post')) {
     }
 }
 
+if (!function_exists('media_tag')) {
+    function media_tag($file)
+    {
+        if (empty($file)) {
+            return md5(0);
+        }
+        $fileName = basename((string) $file);
+        if (empty($fileName)) {
+            return md5(0);
+        }
+        if (function_exists('media')) {
+            $m = media($fileName);
+            $data = $m ? $m->getData() : null;
+            $size = 0;
+            if ($data && isset($data->file_size) && $data->file_size !== null) {
+                $size = (int) $data->file_size;
+            }
+            if ($size <= 0 && $m) {
+                $m->size();
+                $data = $m->getData();
+                $size = (int) ($data->file_size ?? 0);
+            }
+            if ($size > 0) {
+                return md5($size);
+            }
+        }
+        return md5(0);
+    }
+}
+
+

@@ -6,7 +6,7 @@
 </div>
 @if(!empty($l?->$k) && media_exists($l?->$k))
     <div class="media-preview-wrapper align-items-center" style="display: inline-flex;">
-        <a target="_blank" class="file-{{ _us($r[0]) }}-{{ $y }} btn btn-xs btn-outline-info btn-view-media py-0 px-2 mr-1" data-ext="{{ str(media_extension($l?->$k))->lower() }}" data-media="{{ media($l?->$k)->url() }}" style="font-size: 11px; border-radius: 4px;">
+        <a target="_blank" class="file-{{ _us($r[0]) }}-{{ $y }} btn btn-xs btn-outline-info btn-view-media py-0 px-2 mr-1" data-ext="{{ str(media_extension($l?->$k))->lower() }}" data-media="{{ media($l?->$k)->url() }}" data-tag="{{ media_tag($l?->$k) }}" style="font-size: 11px; border-radius: 4px;">
             <i class="fa fa-file mr-1"></i> {{ strtoupper(get_ext($l?->$k)) }}
         </a>
         @if(!Route::is($post->type . '.show'))

@@ -491,8 +491,12 @@
 
         let file = $(this).data('media');
         let ext = $(this).data('ext');
-
-        let url = file;
+        let tag = $(this).data('tag') || (window.gmediaTags && window.gmediaTags[file.split('/').pop().split('?')[0]]) || '';
+        if (!tag && $(this).data('size') && typeof window.gmediaMd5 === 'function') {
+            tag = window.gmediaMd5(String($(this).data('size')));
+        }
+        let tagParam = tag ? (file.includes('?') ? '&tag=' + tag : '?tag=' + tag) : '';
+        let url = file + tagParam;
 
         let content = '';
 
