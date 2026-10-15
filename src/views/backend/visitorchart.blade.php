@@ -58,6 +58,11 @@
                                 <i class="fa fa-users mr-1"></i> {{ number_format($uniquePeriod) }} Pengunjung Unik
                             </span>
                         @endif
+                        @if(isset($totalCountriesCount) && $totalCountriesCount > 0)
+                            <span class="badge badge-light border text-info" style="font-size: 11px; font-weight: 600;">
+                                <i class="fa fa-globe mr-1"></i> {{ number_format($totalCountriesCount) }} Negara
+                            </span>
+                        @endif
                         @if(!empty($domain))
                             <span class="badge badge-light border text-secondary" style="font-size: 11px; font-weight: 600;">
                                 <i class="fa fa-globe mr-1"></i> {{ $domain }}
@@ -134,7 +139,7 @@
     {{-- STATS --}}
     <div class="row">
 
-        <div class="col-md-3 mb-3">
+        <div class="col-xl col-md-4 col-sm-6 mb-3">
             <div class="card text-white bg-primary shadow">
                 <div class="card-body">
                     <small>Realtime Visitors</small>
@@ -143,7 +148,7 @@
             </div>
         </div>
 
-        <div class="col-md-3 mb-3">
+        <div class="col-xl col-md-4 col-sm-6 mb-3">
             <div class="card text-white bg-purple shadow" style="background:#6f42c1">
                 <div class="card-body">
                     <small>Unique Today</small>
@@ -152,7 +157,16 @@
             </div>
         </div>
 
-        <div class="col-md-3 mb-3">
+        <div class="col-xl col-md-4 col-sm-6 mb-3">
+            <div class="card text-white shadow" style="background:#17a2b8">
+                <div class="card-body">
+                    <small>Negara Pengunjung</small>
+                    <h3>{{ $totalCountriesCount ?? (isset($topCountries) ? $topCountries->count() : 0) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-4 col-sm-6 mb-3">
             <div class="card text-white bg-success shadow">
                 <div class="card-body">
                     <small>Top Pages</small>
@@ -161,7 +175,7 @@
             </div>
         </div>
 
-        <div class="col-md-3 mb-3">
+        <div class="col-xl col-md-4 col-sm-6 mb-3">
             <div class="card text-white bg-warning shadow">
                 <div class="card-body">
                     <small>Keywords</small>
@@ -215,14 +229,38 @@
     {{-- TABLES --}}
     <div class="row">
 
-        <div class="col-md-4">
-            <div class="card shadow mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card shadow">
+                <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fa fa-globe text-primary mr-1"></i> Top Negara</span>
+                    <span class="badge badge-primary badge-pill">{{ isset($topCountries) ? $topCountries->count() : 0 }}</span>
+                </div>
+
+                <ul class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                    @forelse($topCountries ?? [] as $p)
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                @if($showDomain && isset($p->domain))
+                                    <small class="text-muted d-block">{{$p->domain}}</small>
+                                @endif
+                                <i class="fa fa-map-marker text-danger mr-1"></i> {{ $p->key }}
+                            </span>
+                            <strong>{{$p->total}}</strong>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-center text-muted py-3">Belum ada data negara</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card shadow">
                 <div class="card-header font-weight-bold">
                     Top Pages
                 </div>
 
-                <ul class="list-group list-group-flush">
-
+                <ul class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
                     @foreach($topPages as $p)
                         <li class="list-group-item d-flex justify-content-between">
                             <span>
@@ -234,20 +272,17 @@
                             <strong>{{$p->total}}</strong>
                         </li>
                     @endforeach
-
                 </ul>
             </div>
         </div>
 
-
-        <div class="col-md-4">
-            <div class="card shadow mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card shadow">
                 <div class="card-header font-weight-bold">
                     Top Keywords
                 </div>
 
-                <ul class="list-group list-group-flush">
-
+                <ul class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
                     @foreach($topKeywords as $p)
                         <li class="list-group-item d-flex justify-content-between">
                             <span>
@@ -259,20 +294,17 @@
                             <strong>{{$p->total}}</strong>
                         </li>
                     @endforeach
-
                 </ul>
             </div>
         </div>
 
-
-        <div class="col-md-4">
-            <div class="card shadow mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card shadow">
                 <div class="card-header font-weight-bold">
                     Referrers
                 </div>
 
-                <ul class="list-group list-group-flush">
-
+                <ul class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
                     @foreach($topReferrers as $p)
                         <li class="list-group-item d-flex justify-content-between">
                             <span>
@@ -284,7 +316,6 @@
                             <strong>{{$p->total}}</strong>
                         </li>
                     @endforeach
-
                 </ul>
             </div>
         </div>
@@ -297,55 +328,85 @@
 
             <div class="card shadow mb-4">
 
-                <div class="card-header font-weight-bold">
-                    Realtime Visitors (Last 5 Minutes)
+                <div class="card-header font-weight-bold d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <i class="fa fa-users text-primary mr-1"></i> Realtime Visitors (Last 5 Minutes)
+                        <span class="badge badge-primary ml-1">{{$realtimeVisitors}} Online</span>
+                    </div>
+
+                    @if(isset($onlineCountries) && $onlineCountries->count() > 0)
+                        <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0" style="gap: 6px;">
+                            <small class="text-muted mr-1 font-weight-normal"><i class="fa fa-globe text-info"></i> Negara Online:</small>
+                            @foreach($onlineCountries as $oc)
+                                <span class="badge badge-light border text-dark shadow-sm px-2 py-1" style="font-size: 11px;">
+                                    <i class="fa fa-map-marker text-danger"></i> {{ $oc->country }}: <strong class="text-primary">{{ $oc->total }}</strong>
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
 
                 <div class="card-body p-0">
-        <div class="table-responsive">
+                    <div class="table-responsive">
 
-                    <table class="table table-sm table-striped mb-0">
+                        <table class="table table-sm table-striped mb-0">
 
-                        <thead class="thead-light">
-                            <tr>
-                                @if($showDomain)
-                                    <th>Domain</th>
-                                @endif
-                                <th>Page</th>
-                                <th>Device</th><th>IP</th>
-                                <th>Referer</th><th>UA</th>
-                                <th>Last Activity</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            @forelse($realtimeList as $v)
-
+                            <thead class="thead-light">
                                 <tr>
                                     @if($showDomain)
-                                        <td>{{$v->domain}}</td>
+                                        <th>Domain</th>
                                     @endif
-                                    <td>{{$v->current_page}}</td>
-                                    <td>{{$v->device}}</td>
-                                    <td>{{$v->ip}}</td>
-                                    <td>{{$v->referrer}}</td><td>{{$v->user_agent}}</td>
-                                    <td>{{$v->last_seen_at}}</td>
+                                    <th>Page</th>
+                                    <th>Device</th>
+                                    <th>IP</th>
+                                    <th>Negara / Lokasi</th>
+                                    <th>Referer</th>
+                                    <th>UA</th>
+                                    <th>Last Activity</th>
                                 </tr>
+                            </thead>
 
-                            @empty
+                            <tbody>
 
-                                <tr>
-                                    <td colspan="{{$showDomain ? 7 : 6}}" class="text-center">No visitor online</td>
-                                </tr>
+                                @forelse($realtimeList as $v)
 
-                            @endforelse
+                                    <tr>
+                                        @if($showDomain)
+                                            <td>{{$v->domain}}</td>
+                                        @endif
+                                        <td>{{$v->current_page}}</td>
+                                        <td>{{$v->device}}</td>
+                                        <td><code>{{$v->ip}}</code></td>
+                                        <td>
+                                            @if(!empty($v->country))
+                                                <span class="badge badge-light border text-dark" title="{{ $v->region ? $v->region . ', ' : '' }}{{ $v->country }}">
+                                                    <i class="fa fa-globe text-info mr-1"></i>{{ $v->country }}
+                                                    @if(!empty($v->region))
+                                                        <small class="text-muted">({{ $v->region }})</small>
+                                                    @endif
+                                                </span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>{{$v->referrer}}</td>
+                                        <td class="text-truncate" style="max-width: 180px;" title="{{$v->user_agent}}">{{$v->user_agent}}</td>
+                                        <td>{{$v->last_seen_at}}</td>
+                                    </tr>
 
-                        </tbody>
+                                @empty
 
-                    </table>
+                                    <tr>
+                                        <td colspan="{{$showDomain ? 8 : 7}}" class="text-center py-3 text-muted">No visitor online</td>
+                                    </tr>
 
-                </div>
+                                @endforelse
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
                 </div>
 
             </div>

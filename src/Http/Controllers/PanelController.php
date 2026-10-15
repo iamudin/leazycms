@@ -640,7 +640,30 @@ if(!is_main_domain()){
         }
 
 
-        // LIST DOMAIN
+        // TOP COUNTRIES
+        $topCountriesQuery = (clone $dailyQuery)
+            ->where('type', 'country');
+
+        if ($showDomain) {
+            $topCountriesQuery
+                ->select('domain', 'key', DB::raw('SUM(count) as total'))
+                ->groupBy('domain', 'key');
+        } else {
+            $topCountriesQuery
+                ->select('key', DB::raw('SUM(count) as total'))
+                ->groupBy('key');
+        }
+
+        $topCountries = $topCountriesQuery
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $totalCountriesCount = (clone $dailyQuery)
+            ->where('type', 'country')
+            ->distinct('key')
+            ->count('key');
+
         $deviceSummary = DB::table('analytics_daily')
             ->select('key', DB::raw('SUM(count) as total'))
             ->where('type', 'device')
@@ -654,8 +677,15 @@ if(!is_main_domain()){
             ->groupBy('key')
             ->orderByDesc('total')
             ->get();
+
+        $onlineCountries = (clone $visitorsQuery)
+            ->select(DB::raw("COALESCE(NULLIF(country, ''), 'Unknown') as country"), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw("COALESCE(NULLIF(country, ''), 'Unknown')"))
+            ->orderByDesc('total')
+            ->get();
+
         $realtimeList = DB::table('analytics_visitors')
-            ->select('domain', 'current_page', 'device', 'referrer', 'ip', 'last_seen_at', 'user_agent')
+            ->select('domain', 'current_page', 'device', 'referrer', 'ip', 'last_seen_at', 'user_agent', 'country', 'region', 'city')
             ->when($domain, function ($q) use ($domain) {
                 $q->where('domain', $domain);
             })
@@ -674,6 +704,9 @@ if(!is_main_domain()){
             'domain' => $domain,
             'realtimeList' => $realtimeList,
             'realtimeVisitors' => $realtimeVisitors,
+            'onlineCountries' => $onlineCountries,
+            'topCountries' => $topCountries,
+            'totalCountriesCount' => $totalCountriesCount,
             'uniqueToday' => $uniqueToday,
             'totalViews' => $totalViews,
             'uniquePeriod' => $uniquePeriod,

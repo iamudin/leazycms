@@ -3,6 +3,7 @@
 namespace Leazycms\Web\Services;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Leazycms\Web\Support\DeviceDetector;
 
@@ -33,7 +34,7 @@ class AnalyticsService
 
         DB::transaction(function () use ($ip, $domain, $tenantId, $data, $now, $date, $page, $device, $referrer, $visitorKey, $user_agent) {
 
-            $isNewDailyVisitor = $this->upsertVisitor(
+            $visitorResult = $this->upsertVisitor(
                 ip: $ip,
                 domain: $domain,
                 tenantId: $tenantId,
@@ -62,9 +63,13 @@ class AnalyticsService
                 $this->incrementDaily($domain, $tenantId, $date, 'search', $keyword);
             }
 
-            if ($isNewDailyVisitor) {
+            if (!empty($visitorResult['is_new_daily'])) {
 
                 $this->incrementDaily($domain, $tenantId, $date, 'unique_total', 'site');
+
+                if (!empty($visitorResult['country'])) {
+                    $this->incrementDaily($domain, $tenantId, $date, 'country', $visitorResult['country']);
+                }
             }
         });
 
@@ -126,18 +131,32 @@ class AnalyticsService
         ?string $referrer,
         Carbon $now,
         string $today
-    ): bool {
+    ): array {
 
         $visitor = DB::table('analytics_visitors')
             ->where('domain', $domain)
             ->where('visitor_key', $visitorKey)
             ->first();
 
+        $dailyKey = "daily_visitor_{$domain}_{$today}_{$visitorKey}";
+        $isNewDaily = !Cache::has($dailyKey);
+        if ($isNewDaily) {
+            Cache::put($dailyKey, true, now()->endOfDay());
+        }
+
         if (!$visitor) {
+
+            $location = get_ip_info($ip);
+            $country = $location['country'] ?? null;
+            $region = $location['region'] ?? null;
+            $city = $location['city'] ?? null;
 
             $payload = [
                 'domain' => $domain,
                 'ip' => $ip,
+                'country' => $country,
+                'region' => $region,
+                'city' => $city,
                 'visitor_key' => $visitorKey,
                 'session_id' => $sessionId,
                 'current_page' => $currentPage,
@@ -157,12 +176,32 @@ class AnalyticsService
 
             DB::table('analytics_visitors')->insert($payload);
 
-            return true;
+            return [
+                'is_new_daily' => true,
+                'country' => $country,
+            ];
         }
 
-        $isNewDailyVisitor = $visitor->last_seen_date !== $today;
+        if ($visitor->last_seen_date !== $today) {
+            $isNewDaily = true;
+        }
+
+        $country = $visitor->country ?? null;
+        $region = $visitor->region ?? null;
+        $city = $visitor->city ?? null;
+
+        if (empty($country) && $ip) {
+            $location = get_ip_info($ip);
+            $country = $location['country'] ?? null;
+            $region = $location['region'] ?? null;
+            $city = $location['city'] ?? null;
+        }
 
         $update = [
+            'ip' => $ip,
+            'country' => $country,
+            'region' => $region,
+            'city' => $city,
             'session_id' => $sessionId,
             'current_page' => $currentPage,
             'device' => $device,
@@ -181,7 +220,10 @@ class AnalyticsService
             ->where('visitor_key', $visitorKey)
             ->update($update);
 
-        return $isNewDailyVisitor;
+        return [
+            'is_new_daily' => $isNewDaily,
+            'country' => $country,
+        ];
     }
 
     protected function incrementDaily(

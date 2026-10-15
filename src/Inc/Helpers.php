@@ -3512,10 +3512,29 @@ if (!function_exists('get_client_ip')) {
 if (!function_exists('get_ip_info')) {
     function get_ip_info($ip)
     {
-        if (!is_local()) {
-            $data = \Stevebauman\Location\Facades\Location::get($ip);
-            return $data ? ['countryCode' => str($data->countryCode)->lower(), 'country' => $data->countryName, 'city' => $data->cityName, 'region' => $data->regionName] : [];
-        } else {
+        if (empty($ip) || in_array($ip, ['127.0.0.1', '::1', 'localhost'], true)) {
+            return [];
+        }
+
+        // Jangan lookup jika merupakan IP private/lokal
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return [];
+        }
+
+        try {
+            return \Illuminate\Support\Facades\Cache::remember('ip_location_' . $ip, now()->addDays(7), function () use ($ip) {
+                if (class_exists(\Stevebauman\Location\Facades\Location::class)) {
+                    $data = \Stevebauman\Location\Facades\Location::get($ip);
+                    return $data ? [
+                        'countryCode' => str($data->countryCode ?? '')->lower(),
+                        'country' => $data->countryName ?? null,
+                        'city' => $data->cityName ?? null,
+                        'region' => $data->regionName ?? null,
+                    ] : [];
+                }
+                return [];
+            });
+        } catch (\Throwable $e) {
             return [];
         }
     }
