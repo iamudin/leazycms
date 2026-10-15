@@ -1050,8 +1050,9 @@
 
                 // Thumb inner
                 let thumbHtml = '';
+                let fallbackUrl = item.preview_url || item.url;
                 if (isImage) {
-                    thumbHtml = `<img src="${item.thumb_url}" alt="${safeName}" class="mm-thumb-img" loading="lazy" onerror="this.src='${item.url}'">`;
+                    thumbHtml = `<img src="${item.thumb_url}" alt="${safeName}" class="mm-thumb-img" loading="lazy" onerror="this.src='${fallbackUrl}'">`;
                 } else {
                     thumbHtml = `<div class="d-flex flex-column align-items-center justify-content-center h-100 text-center"><i class="fa ${icon}" style="font-size: 42px;"></i></div>`;
                 }
@@ -1059,7 +1060,9 @@
                 // Action Buttons Overlay
                 let editBtn = '';
                 if (isImage && !['SVG', 'ICO'].includes(item.extension)) {
-                    editBtn = `<button type="button" class="mm-action-btn btn-edit" title="Edit Gambar (Crop/Rotate/Resize)" onclick="openImageEditor(${item.id}, ${jsonUrl}, ${jsonName}, event)"><i class="fa fa-pencil"></i></button>`;
+                    let editorUrl = item.preview_url || item.url;
+                    let jsonEditorUrl = JSON.stringify(editorUrl);
+                    editBtn = `<button type="button" class="mm-action-btn btn-edit" title="Edit Gambar (Crop/Rotate/Resize)" onclick="openImageEditor(${item.id}, ${jsonEditorUrl}, ${jsonName}, event)"><i class="fa fa-pencil"></i></button>`;
                 }
 
                 return `
@@ -1314,7 +1317,8 @@
             // ==========================================
             function openPreviewModal(item, e) {
                 if (e) e.stopPropagation();
-                let cleanUrl = item.url.split('?')[0];
+                let cleanUrl = (item.url || item.preview_url || '').split('?')[0];
+                let previewSrc = item.preview_url || item.url;
                 currentPreviewUrl = cleanUrl;
 
                 $('#preview-modal-title').text(item.file_name);
@@ -1334,14 +1338,14 @@
                 area.empty();
 
                 if (item.is_image) {
-                    let sep = item.url.indexOf('?') >= 0 ? '&' : '?';
-                    area.html(`<img src="${item.url}${sep}t=${new Date().getTime()}" class="img-fluid rounded" style="max-height: 480px; object-fit: contain;" alt="${item.file_name}">`);
+                    let sep = previewSrc.indexOf('?') >= 0 ? '&' : '?';
+                    area.html(`<img src="${previewSrc}${sep}t=${new Date().getTime()}" class="img-fluid rounded" style="max-height: 480px; object-fit: contain;" alt="${item.file_name}">`);
                 } else if (item.is_video) {
-                    area.html(`<video controls style="max-width: 100%; max-height: 420px; border-radius: 8px;"><source src="${item.url}" type="${item.file_type}">Browser Anda tidak mendukung tag video.</video>`);
+                    area.html(`<video controls style="max-width: 100%; max-height: 420px; border-radius: 8px;"><source src="${previewSrc}" type="${item.file_type}">Browser Anda tidak mendukung tag video.</video>`);
                 } else if (item.is_audio) {
-                    area.html(`<audio controls style="width: 100%; max-width: 400px;"><source src="${item.url}" type="${item.file_type}">Browser Anda tidak mendukung tag audio.</audio>`);
+                    area.html(`<audio controls style="width: 100%; max-width: 400px;"><source src="${previewSrc}" type="${item.file_type}">Browser Anda tidak mendukung tag audio.</audio>`);
                 } else if (item.is_pdf) {
-                    area.html(`<iframe src="${item.url}" style="width: 100%; height: 500px; border: none; border-radius: 8px;"></iframe>`);
+                    area.html(`<iframe src="${previewSrc}" style="width: 100%; height: 500px; border: none; border-radius: 8px;"></iframe>`);
                 } else {
                     area.html(`
                                         <div class="py-5 text-center">
