@@ -457,6 +457,19 @@ if(!is_main_domain()){
         }
         $lastpublish = $lastpublish->latest('created_at')->limit(5)->get();
 
+        if ($request->ajax() && $request->has('visitor_stats')) {
+            return $this->visitor($request);
+        }
+
+        return view('cms::backend.dashboard', [
+            'latest' => $lastpublish,
+            'type' => $user->isAdmin() ? collect(get_module())->whereIn('name', $type_list)->sortBy('position') : collect(get_module())->whereIn('name', $type_list)->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true)->sortBy('position'),
+            'posts' => $posts,
+        ]);
+    }
+
+    public function visitor(Request $request)
+    {
         $domain = $request->get('domain');
 
         $tenantId = (!is_main_domain() && app()->has('tenant')) ? tenant()->id : null;
@@ -639,7 +652,6 @@ if(!is_main_domain()){
                 ->get();
         }
 
-
         // TOP COUNTRIES
         $topCountriesQuery = (clone $dailyQuery)
             ->where('type', 'country');
@@ -707,11 +719,7 @@ if(!is_main_domain()){
             ->orderByDesc('last_seen_at')
             ->get();
 
-        return view('cms::backend.dashboard', [
-            'latest' => $lastpublish,
-
-            'type' => $user->isAdmin() ? collect(get_module())->whereIn('name', $type_list)->sortBy('position') : collect(get_module())->whereIn('name', $type_list)->whereIn('name', $user->get_modules->pluck('module')->toArray())->where('public', true)->sortBy('position'),
-            'posts' => $posts,
+        return view('cms::backend.visitorchart', [
             'domain' => $domain,
             'realtimeList' => $realtimeList,
             'realtimeVisitors' => $realtimeVisitors,
@@ -736,7 +744,6 @@ if(!is_main_domain()){
             'months' => $months,
             'rangeStart' => $rangeStart,
             'rangeEnd' => $rangeEnd,
-
         ]);
     }
     function generate_key()

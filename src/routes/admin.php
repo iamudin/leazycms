@@ -80,7 +80,7 @@ Route::controller(PanelController::class)->group(function () {
     Route::get('dashboard', 'index')->name('panel.dashboard');
     Route::get('logs', 'logs')->name('panel.logs');
     Route::match(['post', 'get'], 'apikey', 'apikey')->name('apikey');
-    Route::post('dashboard', 'visitor')->name('visitor.data');
+    Route::match(['get', 'post'], 'dashboard/visitor-stats', 'visitor')->name('visitor.data');
     Route::get('admin_path/{path}', 'admin_path')->name('admin_path_changer');
     Route::match(['get', 'post'], 'appearance', 'appearance')->name('appearance');
     Route::get('appearance/template-store', 'templateStore')->name('appearance.template_store');

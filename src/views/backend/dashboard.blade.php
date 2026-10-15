@@ -207,8 +207,17 @@
 
 
     <div class="col-lg-12 mb-3">
-      @include('cms::backend.visitorchart')
-
+      <div id="visitor-analytics-container">
+        <div class="card border-0 shadow-sm p-4 text-center my-3" style="border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+          <div class="py-4">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 2.2rem; height: 2.2rem;">
+              <span class="sr-only">Memuat statistik...</span>
+            </div>
+            <h6 class="font-weight-bold text-dark mb-1">Memuat Statistik Pengunjung...</h6>
+            <small class="text-muted">Sedang mengambil data analitik dan grafik pengunjung.</small>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -253,6 +262,74 @@
           };
           updateCount();
         });
+      });
+
+      // AJAX Visitor Analytics Loader
+      window.loadVisitorAnalytics = function(params) {
+        var $container = $('#visitor-analytics-container');
+        var baseUrl = '{{ route("visitor.data") }}';
+        var queryString = typeof params === 'string' 
+          ? params 
+          : (window.location.search ? window.location.search.replace(/^\?/, '') : '');
+
+        var fetchUrl = baseUrl;
+        if (queryString) {
+          fetchUrl += (fetchUrl.indexOf('?') === -1 ? '?' : '&') + queryString;
+        }
+
+        $container.html(`
+          <div class="card border-0 shadow-sm p-4 text-center my-3" style="border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+            <div class="py-4">
+              <div class="spinner-border text-primary mb-3" role="status" style="width: 2.2rem; height: 2.2rem;">
+                <span class="sr-only">Memuat statistik...</span>
+              </div>
+              <h6 class="font-weight-bold text-dark mb-1">Memuat Statistik Pengunjung...</h6>
+              <small class="text-muted">Sedang mengambil data analitik dan grafik pengunjung.</small>
+            </div>
+          </div>
+        `);
+
+        $.ajax({
+          url: fetchUrl,
+          type: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          success: function(html) {
+            $container.html(html);
+          },
+          error: function(xhr) {
+            $container.html(`
+              <div class="alert alert-warning border text-center p-4 my-3" style="border-radius: 12px;">
+                <i class="fa fa-exclamation-triangle fa-2x text-warning mb-2 d-block"></i>
+                <strong>Gagal memuat statistik pengunjung.</strong><br>
+                <small class="text-muted d-block mb-3">Terjadi kendala saat mengambil data analitik.</small>
+                <button class="btn btn-sm btn-outline-primary" onclick="window.loadVisitorAnalytics()">
+                  <i class="fa fa-refresh mr-1"></i> Coba Lagi
+                </button>
+              </div>
+            `);
+          }
+        });
+      };
+
+      window.handleVisitorFilterChange = function(form) {
+        var $form = $(form);
+        var formData = $form.serialize();
+        if (window.history && window.history.pushState) {
+          var newUrl = window.location.pathname + '?' + formData;
+          window.history.pushState({ path: newUrl }, '', newUrl);
+        }
+        window.loadVisitorAnalytics(formData);
+      };
+
+      window.handleVisitorFilterReset = function() {
+        if (window.history && window.history.pushState) {
+          window.history.pushState({ path: window.location.pathname }, '', window.location.pathname);
+        }
+        window.loadVisitorAnalytics('');
+      };
+
+      $(document).ready(function() {
+        window.loadVisitorAnalytics();
       });
     </script>
   @endpush

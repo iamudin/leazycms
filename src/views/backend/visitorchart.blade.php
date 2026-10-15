@@ -71,7 +71,7 @@
                     </div>
                 </div>
 
-                <form method="GET" action="{{ route('panel.dashboard') }}" class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                <form method="GET" action="{{ route('panel.dashboard') }}" id="visitor-filter-form" onsubmit="if(window.handleVisitorFilterChange){ window.handleVisitorFilterChange(this); return false; }" class="d-flex align-items-center flex-wrap" style="gap: 8px;">
                     {{-- Filter Bulan --}}
                     <div class="input-group input-group-sm" style="width: auto;">
                         <div class="input-group-prepend">
@@ -79,7 +79,7 @@
                                 <i class="fa fa-calendar"></i>
                             </span>
                         </div>
-                        <select name="month" onchange="this.form.submit()" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 130px; height: 32px;" title="Pilih Bulan">
+                        <select name="month" onchange="if(window.handleVisitorFilterChange){ window.handleVisitorFilterChange(this.form); } else { this.form.submit(); }" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 130px; height: 32px;" title="Pilih Bulan">
                             <option value="all" {{ $selectedMonth === 'all' ? 'selected' : '' }}>Semua Bulan</option>
                             @foreach($months as $mNum => $mName)
                                 <option value="{{ $mNum }}" {{ $selectedMonth == $mNum ? 'selected' : '' }}>
@@ -96,7 +96,7 @@
                                 <i class="fa fa-clock-o"></i>
                             </span>
                         </div>
-                        <select name="year" onchange="this.form.submit()" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 90px; height: 32px;" title="Pilih Tahun">
+                        <select name="year" onchange="if(window.handleVisitorFilterChange){ window.handleVisitorFilterChange(this.form); } else { this.form.submit(); }" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 90px; height: 32px;" title="Pilih Tahun">
                             @foreach($availableYears as $y)
                                 <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>
                                     {{ $y }}
@@ -113,7 +113,7 @@
                                     <i class="fa fa-globe"></i>
                                 </span>
                             </div>
-                            <select name="domain" onchange="this.form.submit()" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 140px; height: 32px;" title="Pilih Domain">
+                            <select name="domain" onchange="if(window.handleVisitorFilterChange){ window.handleVisitorFilterChange(this.form); } else { this.form.submit(); }" class="form-control form-control-sm border-left-0" style="border-radius: 0 8px 8px 0; font-size: 12px; font-weight: 500; min-width: 140px; height: 32px;" title="Pilih Domain">
                                 <option value="">Semua Domain</option>
                                 @foreach($domains as $d)
                                     <option value="{{ $d }}" {{ $domain == $d ? 'selected' : '' }}>
@@ -124,8 +124,8 @@
                         </div>
                     @endif
 
-                    @if(request()->has('month') || request()->has('year') || request()->has('domain'))
-                        <a href="{{ route('panel.dashboard') }}" class="btn btn-sm btn-light border text-secondary" style="font-size: 11px; font-weight: 600; border-radius: 8px; padding: 4px 10px; height: 32px; display: inline-flex; align-items: center;" title="Reset Filter">
+                    @if(request()->has('month') || request()->has('year') || request()->has('domain') || (!empty($selectedMonth) && $selectedMonth !== 'all') || (!empty($domain)))
+                        <a href="{{ route('panel.dashboard') }}" onclick="if(window.handleVisitorFilterReset){ event.preventDefault(); window.handleVisitorFilterReset(); }" class="btn btn-sm btn-light border text-secondary" style="font-size: 11px; font-weight: 600; border-radius: 8px; padding: 4px 10px; height: 32px; display: inline-flex; align-items: center;" title="Reset Filter">
                             <i class="fa fa-refresh mr-1"></i> Reset
                         </a>
                     @endif
@@ -418,58 +418,59 @@
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-    const deviceChart = new Chart(document.getElementById('deviceChart'), {
-
-        type: 'doughnut',
-
-        data: {
-
-            labels: {!! json_encode($deviceSummary->pluck('key')) !!},
-
-            datasets: [{
-
-                data: {!! json_encode($deviceSummary->pluck('total')) !!},
-
-                backgroundColor: [
-                    '#007bff',
-                    '#28a745',
-                    '#ffc107'
-                ]
-
-            }]
-
+(function() {
+    function initCharts() {
+        if (typeof Chart === 'undefined') {
+            setTimeout(initCharts, 50);
+            return;
         }
 
-    });
-    const pageChart = new Chart(document.getElementById('pageChart'), {
-
-        type: 'line',
-
-        data: {
-
-            labels: {!! json_encode($chartLabels) !!},
-
-            datasets: [{
-
-                label: 'Page Views',
-
-                data: {!! json_encode($pageChart->pluck('total')) !!},
-
-                borderColor: '#007bff',
-
-                backgroundColor: 'rgba(0,123,255,0.2)',
-
-                tension: 0.4
-
-            }]
-
+        var deviceEl = document.getElementById('deviceChart');
+        if (deviceEl) {
+            if (window.lzDeviceChart && typeof window.lzDeviceChart.destroy === 'function') {
+                window.lzDeviceChart.destroy();
+            }
+            window.lzDeviceChart = new Chart(deviceEl, {
+                type: 'doughnut',
+                data: {
+                    labels: {!! json_encode($deviceSummary->pluck('key')) !!},
+                    datasets: [{
+                        data: {!! json_encode($deviceSummary->pluck('total')) !!},
+                        backgroundColor: [
+                            '#007bff',
+                            '#28a745',
+                            '#ffc107',
+                            '#6f42c1',
+                            '#17a2b8',
+                            '#fd7e14'
+                        ]
+                    }]
+                }
+            });
         }
 
-    });
+        var pageEl = document.getElementById('pageChart');
+        if (pageEl) {
+            if (window.lzPageChart && typeof window.lzPageChart.destroy === 'function') {
+                window.lzPageChart.destroy();
+            }
+            window.lzPageChart = new Chart(pageEl, {
+                type: 'line',
+                data: {
+                    labels: {!! json_encode($chartLabels) !!},
+                    datasets: [{
+                        label: 'Page Views',
+                        data: {!! json_encode($pageChart->pluck('total')) !!},
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0,123,255,0.2)',
+                        tension: 0.4
+                    }]
+                }
+            });
+        }
+    }
 
-
-
+    initCharts();
+})();
 </script>
