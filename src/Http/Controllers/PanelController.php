@@ -74,6 +74,30 @@ class PanelController extends Controller implements HasMiddleware
 
         $paginator = $query->latest()->paginate(40);
 
+        $paginator->getCollection()->transform(function ($item) {
+            $fileSize = (int) ($item->file_size ?? 0);
+            if ($fileSize <= 0 && !empty($item->file_path)) {
+                $disk = $item->disk ?: config('filesystems.default');
+                try {
+                    $physicalSize = null;
+                    if ($disk && \Illuminate\Support\Facades\Storage::disk($disk)->exists($item->file_path)) {
+                        $physicalSize = (int) \Illuminate\Support\Facades\Storage::disk($disk)->size($item->file_path);
+                    } elseif (\Illuminate\Support\Facades\Storage::disk('local')->exists($item->file_path)) {
+                        $physicalSize = (int) \Illuminate\Support\Facades\Storage::disk('local')->size($item->file_path);
+                    } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($item->file_path)) {
+                        $physicalSize = (int) \Illuminate\Support\Facades\Storage::disk('public')->size($item->file_path);
+                    }
+                    if ($physicalSize !== null && $physicalSize >= 0) {
+                        $fileSize = $physicalSize;
+                        $item->file_size = $physicalSize;
+                        \Illuminate\Support\Facades\DB::table('files')->where('id', $item->id)->update(['file_size' => $physicalSize]);
+                    }
+                } catch (\Throwable $e) {}
+            }
+            $item->tag = md5($fileSize);
+            return $item;
+        });
+
         if ($request->filled('search')) {
             $extensions = $query->pluck('file_name')->map(function ($name) {
                 return strtolower(pathinfo($name, PATHINFO_EXTENSION));

@@ -32,7 +32,7 @@
         if (extensions.image.includes(ext)) {
 
             content = `
-            <img src="${url}" class="img-fluid rounded shadow-sm">
+            <img src="${url}?time={{ time() }}" class="img-fluid rounded shadow-sm">
         `;
 
         } else if (extensions.pdf.includes(ext)) {
