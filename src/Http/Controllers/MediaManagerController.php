@@ -103,11 +103,11 @@ class MediaManagerController extends Controller
             if (class_exists(Tenant::class)) {
                 $tenant = Tenant::resolveByHost($fallbackHost);
                 if ($tenant) {
-                    // Saat diakses dari main_domain, selalu gunakan domain utama tenant ($tenant->domain)
-                    // BUKAN parked domain. Hal ini untuk memastikan:
-                    // 1. Gambar dapat dimuat di browser via wildcard SSL tanpa error sertifikat SSL pada parked domain eksternal.
-                    // 2. Tetap mematuhi aturan isolasi bahwa file tenant diakses melalui domain milik tenant.
-                    return $resolvedHostMap[$fallbackHost] = ($tenant->domain ?: $fallbackHost);
+                    $parkedDomain = $this->getTenantParkedDomain($tenant);
+                    if (!empty($parkedDomain)) {
+                        return $resolvedHostMap[$fallbackHost] = $parkedDomain;
+                    }
+                    return $resolvedHostMap[$fallbackHost] = ($fallbackHost ?: $tenant->domain);
                 }
             }
 

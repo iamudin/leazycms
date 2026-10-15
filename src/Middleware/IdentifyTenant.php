@@ -41,10 +41,10 @@ class IdentifyTenant
             $adminPrefix = function_exists('admin_path') ? admin_path() : null;
             $firstSegment = $request->segment(1);
 
-            // Jangan redirect request backend/admin, api, livewire, captcha, media
+            // Jangan redirect request backend/admin, api, livewire, captcha
             if (
                 (!$adminPrefix || $firstSegment !== $adminPrefix)
-                && !in_array($firstSegment, ['api', 'captcha', 'livewire', '_debugbar', 'sanctum', 'media'])
+                && !in_array($firstSegment, ['api', 'captcha', 'livewire', '_debugbar', 'sanctum'])
             ) {
                 $parkedDomain = Cache::rememberForever(
                     "tenant:{$tenant->id}:parked_domain",
@@ -66,10 +66,14 @@ class IdentifyTenant
                 );
 
                 if (!empty($parkedDomain) && $host !== $parkedDomain) {
-                    $scheme = $request->secure() ? 'https://' : 'http://';
+                    $scheme = ($request->secure() || str_starts_with((string) config('app.url'), 'https://')) ? 'https://' : 'http://';
                     $queryString = $request->getQueryString();
                     $targetUrl = $scheme . $parkedDomain . '/' . ltrim($request->path(), '/') . ($queryString ? '?' . $queryString : '');
-                    return redirect()->away($targetUrl, 301);
+                    return redirect()->away($targetUrl, 301)
+                        ->header('Access-Control-Allow-Origin', '*')
+                        ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD')
+                        ->header('Access-Control-Allow-Headers', '*')
+                        ->header('Cross-Origin-Resource-Policy', 'cross-origin');
                 }
             }
         }
