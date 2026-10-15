@@ -679,10 +679,21 @@ if(!is_main_domain()){
             ->get();
 
         $onlineCountries = (clone $visitorsQuery)
-            ->select(DB::raw("COALESCE(NULLIF(country, ''), 'Unknown') as country"), DB::raw('COUNT(*) as total'))
-            ->groupBy(DB::raw("COALESCE(NULLIF(country, ''), 'Unknown')"))
+            ->select('country', DB::raw('COUNT(*) as total'))
+            ->groupBy('country')
             ->orderByDesc('total')
-            ->get();
+            ->get()
+            ->groupBy(function ($item) {
+                return !empty(trim((string) $item->country)) ? $item->country : 'Unknown';
+            })
+            ->map(function ($group, $countryName) {
+                return (object) [
+                    'country' => $countryName,
+                    'total' => $group->sum('total'),
+                ];
+            })
+            ->values()
+            ->sortByDesc('total');
 
         $realtimeList = DB::table('analytics_visitors')
             ->select('domain', 'current_page', 'device', 'referrer', 'ip', 'last_seen_at', 'user_agent', 'country', 'region', 'city')
