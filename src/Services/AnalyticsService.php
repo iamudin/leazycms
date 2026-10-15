@@ -59,8 +59,9 @@ class AnalyticsService
             if (get_post_type() == 'search') {
 
                 $keyword = str(request()->segment(2))->headline();
-
-                $this->incrementDaily($domain, $tenantId, $date, 'search', $keyword);
+                if(!empty($keyword)){
+                    $this->incrementDaily($domain, $tenantId, $date, 'search', $keyword);
+                }
             }
 
             if (!empty($visitorResult['is_new_daily'])) {
