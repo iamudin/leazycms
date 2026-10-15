@@ -460,6 +460,7 @@ class MediaManagerController extends Controller
                 'is_pdf' => $isPdf,
                 'is_doc' => $isDoc,
                 'is_archive' => $isArchive,
+                'tag' => md5($fileSize),
                 'url' => $fileUrl,
                 'thumb_url' => $thumbUrl,
                 'host' => $host,
@@ -867,7 +868,7 @@ class MediaManagerController extends Controller
         // Validasi apakah file adalah gambar
         $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
         $imageExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        if (!in_array($ext, $imageExts) || !str_starts_with((string) $file->file_type, 'image/')) {
+        if (!in_array($ext, $imageExts) && !str_starts_with((string) $file->file_type, 'image/')) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Hanya file gambar (WebP, PNG, JPG) yang dapat diedit.',
@@ -933,8 +934,15 @@ class MediaManagerController extends Controller
 
                 // Bersihkan cache media
                 Cache::forget($file->host . ':media:' . $file->file_name);
+                Cache::forget(request()->getHost() . ':media:' . $file->file_name);
+                Cache::forget('media:' . $file->file_name);
 
                 $host = $this->getActiveHost($file->host);
+                if (!empty($host) && $host !== $file->host) {
+                    Cache::forget($host . ':media:' . $file->file_name);
+                }
+
+                $tag = md5($file->file_size);
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'overwrite',
@@ -953,8 +961,9 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => $this->getFileUrl($file, $host) . '?time=' . time(),
-                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&time=' . time(),
+                        'tag' => $tag,
+                        'url' => $this->getFileUrl($file, $host) . '?tag=' . $tag,
+                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&tag=' . $tag,
                         'host' => $host,
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
@@ -1008,6 +1017,7 @@ class MediaManagerController extends Controller
                 });
 
                 $newFileHost = $this->getActiveHost($newFile->host);
+                $newTag = md5($newFile->file_size);
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'new',
@@ -1027,8 +1037,9 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => $this->getFileUrl($newFile, $newFileHost),
-                        'thumb_url' => $this->getFileUrl($newFile, $newFileHost) . '?size=small&time=' . time(),
+                        'tag' => $newTag,
+                        'url' => $this->getFileUrl($newFile, $newFileHost) . '?tag=' . $newTag,
+                        'thumb_url' => $this->getFileUrl($newFile, $newFileHost) . '?size=small&tag=' . $newTag,
                         'host' => $newFileHost,
                         'uploader' => Auth::user()?->name ?? 'System',
                         'created_at' => $newFile->created_at ? $newFile->created_at->translatedFormat('d M Y H:i') : Carbon::now()->translatedFormat('d M Y H:i'),

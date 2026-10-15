@@ -293,18 +293,19 @@
 
         /* Cropper Editor */
         .cropper-view-container {
-            max-height: 480px;
+            height: 480px;
+            max-height: 70vh;
             background: #0f172a;
             border-radius: 8px;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: relative;
+            text-align: center;
         }
 
         .cropper-view-container img {
             max-width: 100%;
-            max-height: 480px;
+            max-height: 100%;
+            display: block;
         }
 
         .editor-btn-group .btn {
@@ -617,7 +618,7 @@
     <!-- MODAL: PREVIEW FILE LENGKAP -->
     <!-- ==================================================== -->
     <div class="modal fade" id="modalPreviewMedia" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content"
                 style="border-radius: 14px; overflow: hidden; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
                 <div class="modal-header bg-dark text-white py-3 px-4">
@@ -1312,9 +1313,17 @@
             // ==========================================
             // PREVIEW MODAL
             // ==========================================
+            const mmExtensions = {
+                image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'ico', 'svg'],
+                pdf: ['pdf'],
+                video: ['mp4', 'webm', 'ogg', 'mkv', 'avi', 'mov'],
+                audio: ['mp3', 'wav', 'ogg'],
+                office: ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
+            };
+
             function openPreviewModal(item, e) {
                 if (e) e.stopPropagation();
-                let cleanUrl = item.url.split('?')[0];
+                let cleanUrl = (item.url || '').split('?')[0];
                 currentPreviewUrl = cleanUrl;
 
                 $('#preview-modal-title').text(item.file_name);
@@ -1333,28 +1342,93 @@
                 let area = $('#preview-content-area');
                 area.empty();
 
-                if (item.is_image) {
-                    let sep = item.url.indexOf('?') >= 0 ? '&' : '?';
-                    area.html(`<img src="${item.url}${sep}t=${new Date().getTime()}" class="img-fluid rounded" style="max-height: 480px; object-fit: contain;" alt="${item.file_name}">`);
-                } else if (item.is_video) {
-                    area.html(`<video controls style="max-width: 100%; max-height: 420px; border-radius: 8px;"><source src="${item.url}" type="${item.file_type}">Browser Anda tidak mendukung tag video.</video>`);
-                } else if (item.is_audio) {
-                    area.html(`<audio controls style="width: 100%; max-width: 400px;"><source src="${item.url}" type="${item.file_type}">Browser Anda tidak mendukung tag audio.</audio>`);
-                } else if (item.is_pdf) {
-                    area.html(`<iframe src="${item.url}" style="width: 100%; height: 500px; border: none; border-radius: 8px;"></iframe>`);
+                let ext = (item.extension || '').toLowerCase();
+                let url = item.url;
+                let viewerUrl = '';
+
+                if (mmExtensions.image.includes(ext) || item.is_image) {
+                    let tag = item.tag || (typeof gmediaMd5 === 'function' && item.file_size ? gmediaMd5(String(item.file_size)) : '');
+                    let tagParam = tag ? (cleanUrl.includes('?') ? '&tag=' + tag : '?tag=' + tag) : (cleanUrl.includes('?') ? '&t=' + Date.now() : '?t=' + Date.now());
+                    area.html(`<img src="${cleanUrl}${tagParam}" class="img-fluid rounded" style="max-height: 520px; object-fit: contain;" alt="${escapeHtml(item.file_name)}">`);
+                } else if (mmExtensions.video.includes(ext) || item.is_video) {
+                    area.html(`<video controls style="max-width: 100%; max-height: 520px; border-radius: 8px;"><source src="${url}" type="${item.file_type}">Browser Anda tidak mendukung tag video.</video>`);
+                } else if (mmExtensions.audio.includes(ext) || item.is_audio) {
+                    area.html(`<audio controls style="width: 100%; max-width: 450px;"><source src="${url}" type="${item.file_type}">Browser Anda tidak mendukung tag audio.</audio>`);
+                } else if (mmExtensions.pdf.includes(ext) || item.is_pdf) {
+                    area.html(`
+                        <div class="position-relative" style="height: 600px; width: 100%;">
+                            <embed id="dynamicPdfEmbed" data-src="${url}" type="application/pdf" width="100%" height="100%" style="border: none;">
+                        </div>
+                    `);
+                } else if (mmExtensions.office.includes(ext)) {
+                    viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+                    area.html(`
+                        <div class="position-relative" style="min-height: 600px; width: 100%;">
+                            <div id="mediaLoader"
+                                 class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-white" style="z-index: 10;">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </div>
+                            <iframe
+                                data-src="${viewerUrl}"
+                                id="dynamicPdfIframe"
+                                width="100%"
+                                height="600px"
+                                style="border: none; position: relative; z-index: 1;">
+                            </iframe>
+                        </div>
+                    `);
                 } else {
                     area.html(`
-                                        <div class="py-5 text-center">
-                                            <i class="fa fa-file-text-o fa-5x text-secondary mb-3"></i>
-                                            <h5 class="font-weight-bold text-dark">${item.file_name}</h5>
-                                            <p class="text-muted" style="font-size: 13px;">Format ini tidak mendukung preview langsung di browser.</p>
-                                            <a href="${cleanUrl}" download class="btn btn-primary btn-sm"><i class="fa fa-download mr-1"></i> Unduh File</a>
-                                        </div>
-                                    `);
+                        <div class="py-5 text-center">
+                            <i class="fa fa-file-text-o fa-5x text-secondary mb-3"></i>
+                            <h5 class="font-weight-bold text-dark">${escapeHtml(item.file_name)}</h5>
+                            <p class="text-muted" style="font-size: 13px;">Format ini tidak mendukung preview langsung di browser.</p>
+                            <a href="${cleanUrl}" download class="btn btn-primary btn-sm"><i class="fa fa-download mr-1"></i> Unduh File</a>
+                        </div>
+                    `);
                 }
 
                 $('#modalPreviewMedia').modal('show');
             }
+
+            $('#modalPreviewMedia').on('shown.bs.modal', function () {
+                var embed = document.getElementById('dynamicPdfEmbed');
+                if (embed && embed.getAttribute('data-src')) {
+                    embed.src = embed.getAttribute('data-src');
+                }
+
+                var iframe = document.getElementById('dynamicPdfIframe');
+                if (iframe && iframe.getAttribute('data-src')) {
+                    var loader = document.getElementById('mediaLoader');
+                    var iframeLoaded = false;
+
+                    iframe.onload = function () {
+                        iframeLoaded = true;
+                        if (loader) loader.remove();
+                    };
+
+                    iframe.onerror = function () {
+                        iframeLoaded = true;
+                        if (loader) {
+                            loader.classList.remove('d-flex', 'align-items-center');
+                            loader.innerHTML = '<p class="text-danger pt-5">Gagal memuat file.</p>';
+                        }
+                    };
+
+                    // Fallback timeout in case onload fails to fire
+                    setTimeout(function () {
+                        if (!iframeLoaded && loader) {
+                            loader.remove();
+                        }
+                    }, 8000);
+
+                    iframe.src = iframe.getAttribute('data-src');
+                }
+            });
+
+            $('#modalPreviewMedia').on('hidden.bs.modal', function () {
+                $('#preview-content-area').empty();
+            });
 
             function copyCurrentPreviewUrl() {
                 if (currentPreviewUrl) {
@@ -1522,29 +1596,43 @@
             function openImageEditor(id, url, fileName, e) {
                 if (e) e.stopPropagation();
 
-                let cacheBuster = (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + new Date().getTime();
-                let freshUrl = url + cacheBuster;
+                let cleanUrl = (url || '').split('?')[0];
+                let freshUrl = cleanUrl + (cleanUrl.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
 
                 activeEditingFile = { id: id, url: url, fileName: fileName };
                 $('#editor-file-name').text(fileName);
 
                 let img = document.getElementById('editor-image-preview');
-                img.crossOrigin = 'anonymous';
+
+                let isCrossOrigin = false;
+                try {
+                    let u = new URL(freshUrl, window.location.origin);
+                    if (u.origin !== window.location.origin) {
+                        isCrossOrigin = true;
+                    }
+                } catch (ex) {}
+
+                if (isCrossOrigin) {
+                    img.crossOrigin = 'anonymous';
+                } else {
+                    img.removeAttribute('crossorigin');
+                }
 
                 if (cropper) {
                     cropper.destroy();
                     cropper = null;
                 }
 
-                $('#modalImageEditor').modal('show');
-
                 let initCropper = function () {
-                    if (cropper) cropper.destroy();
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
                     cropper = new Cropper(img, {
                         viewMode: 2,
                         dragMode: 'move',
                         autoCropArea: 0.9,
-                        checkCrossOrigin: true,
+                        checkCrossOrigin: isCrossOrigin,
                         restore: false,
                         guides: true,
                         center: true,
@@ -1560,14 +1648,28 @@
                     });
                 };
 
+                $('#modalImageEditor').off('shown.bs.modal').one('shown.bs.modal', function () {
+                    if (img.complete && img.naturalWidth > 0) {
+                        initCropper();
+                    } else {
+                        img.onload = function () {
+                            initCropper();
+                        };
+                    }
+                });
+
                 img.onload = function () {
-                    setTimeout(initCropper, 150);
+                    if ($('#modalImageEditor').hasClass('show')) {
+                        initCropper();
+                    }
+                };
+
+                img.onerror = function () {
+                    notifyAlert('danger', 'Gagal memuat gambar untuk diedit.');
                 };
 
                 img.src = freshUrl;
-                if (img.complete) {
-                    setTimeout(initCropper, 200);
-                }
+                $('#modalImageEditor').modal('show');
             }
 
             function closeImageEditor() {
@@ -1662,10 +1764,8 @@
                                 }
 
                                 if (res.mode === 'overwrite' && res.file) {
-                                    // Reload HANYA gambar yang di-edit di dalam list tanpa me-reload seluruh list
                                     updateEditedMediaCard(res.file);
                                 } else if (res.mode === 'new' && res.file) {
-                                    // Mode file baru: tambahkan kartu baru di awal grid jika sesuai filter
                                     let matchesCategory = (currentCategory === 'all' || currentCategory === 'image');
                                     let matchesExt = (currentExtension === 'all' || currentExtension.toLowerCase() === res.file.extension.toLowerCase());
 
@@ -1700,17 +1800,22 @@
                 formData.append('_token', "{{ csrf_token() }}");
                 formData.append('action', action);
 
+                let fileExt = (activeEditingFile.fileName || '').split('.').pop().toLowerCase();
+                let mimeType = 'image/webp';
+                if (fileExt === 'png') mimeType = 'image/png';
+                else if (fileExt === 'jpg' || fileExt === 'jpeg') mimeType = 'image/jpeg';
+
                 if (canvas.toBlob) {
                     canvas.toBlob(function (blob) {
                         if (blob) {
                             formData.append('image_file', blob, (activeEditingFile.fileName || 'edited.webp'));
                         } else {
-                            formData.append('image_data', canvas.toDataURL('image/webp', 0.92));
+                            formData.append('image_data', canvas.toDataURL(mimeType, 0.92));
                         }
                         sendPayload(formData);
-                    }, 'image/webp', 0.92);
+                    }, mimeType, 0.92);
                 } else {
-                    formData.append('image_data', canvas.toDataURL('image/webp', 0.92));
+                    formData.append('image_data', canvas.toDataURL(mimeType, 0.92));
                     sendPayload(formData);
                 }
             }
