@@ -41,10 +41,10 @@ class IdentifyTenant
             $adminPrefix = function_exists('admin_path') ? admin_path() : null;
             $firstSegment = $request->segment(1);
 
-            // Jangan redirect request backend/admin, api, livewire, captcha
+            // Jangan redirect request backend/admin, api, livewire, captcha, media
             if (
                 (!$adminPrefix || $firstSegment !== $adminPrefix)
-                && !in_array($firstSegment, ['api', 'captcha', 'livewire', '_debugbar', 'sanctum'])
+                && !in_array($firstSegment, ['api', 'captcha', 'livewire', '_debugbar', 'sanctum', 'media'])
             ) {
                 $parkedDomain = Cache::rememberForever(
                     "tenant:{$tenant->id}:parked_domain",
