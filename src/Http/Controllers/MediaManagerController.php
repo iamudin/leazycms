@@ -441,13 +441,9 @@ class MediaManagerController extends Controller
 
             $host = $this->getActiveHost($item->host);
             $fileUrl = $this->getFileUrl($item, $host);
-            $localUrl = url('media/' . ltrim($item->file_name, '/'));
             $version = $item->updated_at ? $item->updated_at->timestamp : ($item->created_at ? $item->created_at->timestamp : '');
             $vParam = $version ? '&v=' . $version : '';
-
-            // Jika di main domain, gunakan localUrl (same-origin) untuk thumbnail dan preview agar bebas CORB / cross-origin block / SSL mismatch
-            $previewBaseUrl = is_main_domain() ? $localUrl : $fileUrl;
-            $thumbUrl = $previewBaseUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? ('?size=small' . $vParam) : ($version ? '?v=' . $version : ''));
+            $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? ('?size=small' . $vParam) : ($version ? '?v=' . $version : ''));
 
             // Pastikan ukuran fisik file tercatat jika sebelumnya belum ada di table files
             $fileSize = $this->resolveAndPersistFileSize($item);
@@ -467,7 +463,6 @@ class MediaManagerController extends Controller
                 'is_doc' => $isDoc,
                 'is_archive' => $isArchive,
                 'url' => $fileUrl,
-                'preview_url' => $previewBaseUrl . ($version ? '?v=' . $version : ''),
                 'thumb_url' => $thumbUrl,
                 'host' => $host,
                 'uploader' => $item->user?->name ?? 'System',
@@ -958,7 +953,6 @@ class MediaManagerController extends Controller
 
                 $version = $file->updated_at ? $file->updated_at->timestamp : time();
 
-                $previewBaseUrl = is_main_domain() ? url('media/' . ltrim($file->file_name, '/')) : $this->getFileUrl($file, $host);
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'overwrite',
@@ -978,8 +972,7 @@ class MediaManagerController extends Controller
                         'is_doc' => false,
                         'is_archive' => false,
                         'url' => $this->getFileUrl($file, $host) . '?v=' . $version,
-                        'preview_url' => $previewBaseUrl . '?v=' . $version,
-                        'thumb_url' => $previewBaseUrl . '?size=small&v=' . $version,
+                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&v=' . $version,
                         'host' => $host,
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
@@ -1033,7 +1026,6 @@ class MediaManagerController extends Controller
                 });
 
                 $newFileHost = $this->getActiveHost($newFile->host);
-                $newPreviewBaseUrl = is_main_domain() ? url('media/' . ltrim($newFile->file_name, '/')) : $this->getFileUrl($newFile, $newFileHost);
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'new',
@@ -1054,8 +1046,7 @@ class MediaManagerController extends Controller
                         'is_doc' => false,
                         'is_archive' => false,
                         'url' => $this->getFileUrl($newFile, $newFileHost),
-                        'preview_url' => $newPreviewBaseUrl . '?time=' . time(),
-                        'thumb_url' => $newPreviewBaseUrl . '?size=small&time=' . time(),
+                        'thumb_url' => $this->getFileUrl($newFile, $newFileHost) . '?size=small&time=' . time(),
                         'host' => $newFileHost,
                         'uploader' => Auth::user()?->name ?? 'System',
                         'created_at' => $newFile->created_at ? $newFile->created_at->translatedFormat('d M Y H:i') : Carbon::now()->translatedFormat('d M Y H:i'),
