@@ -416,24 +416,23 @@
                                     @endif
                                 @endif
                             </div>
-                            @if(isset($diskInfo) && !$diskInfo['is_unmetered'])
+                            <div id="stat-disk-wrap" style="{{ isset($diskInfo) && !$diskInfo['is_unmetered'] ? '' : 'display: none;' }}">
                                 <div class="progress mt-1" style="height: 4px; border-radius: 2px;"
-                                    title="{{ $diskInfo['percent_used'] }}% terpakai">
+                                    title="{{ $diskInfo['percent_used'] ?? 0 }}% terpakai">
                                     <div id="stat-disk-progress"
-                                        class="progress-bar {{ $diskInfo['percent_used'] >= 90 ? 'bg-danger' : ($diskInfo['percent_used'] >= 75 ? 'bg-warning' : 'bg-success') }}"
-                                        role="progressbar" style="width: {{ $diskInfo['percent_used'] }}%;"></div>
+                                        class="progress-bar {{ isset($diskInfo) && $diskInfo['percent_used'] >= 90 ? 'bg-danger' : (isset($diskInfo) && $diskInfo['percent_used'] >= 75 ? 'bg-warning' : 'bg-success') }}"
+                                        role="progressbar" style="width: {{ $diskInfo['percent_used'] ?? 0 }}%;"></div>
                                 </div>
                                 <div id="stat-disk-remaining" class="text-truncate"
-                                    style="font-size: 10px; color: {{ $diskInfo['percent_used'] >= 90 ? '#dc2626' : '#64748b' }}; margin-top: 2px; line-height: 1.2;"
-                                    title="Sisa: {{ $diskInfo['remaining_formatted'] }} ({{ $diskInfo['percent_used'] }}%)">
-                                    Sisa: {{ $diskInfo['remaining_formatted'] }} ({{ $diskInfo['percent_used'] }}%)
+                                    style="font-size: 10px; color: {{ isset($diskInfo) && $diskInfo['percent_used'] >= 90 ? '#dc2626' : '#64748b' }}; margin-top: 2px; line-height: 1.2;"
+                                    title="Sisa: {{ $diskInfo['remaining_formatted'] ?? '' }} ({{ $diskInfo['percent_used'] ?? 0 }}%)">
+                                    Sisa: {{ $diskInfo['remaining_formatted'] ?? '' }} ({{ $diskInfo['percent_used'] ?? 0 }}%)
                                 </div>
-                            @else
-                                <div class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px;"
-                                    title="Kapasitas ruang disk">
-                                    <i class="fa fa-hdd-o mr-1 text-warning"></i>Kapasitas penyimpanan
-                                </div>
-                            @endif
+                            </div>
+                            <div id="stat-disk-default-desc" class="text-muted text-truncate" style="font-size: 10px; margin-top: 3px; {{ isset($diskInfo) && !$diskInfo['is_unmetered'] ? 'display: none;' : '' }}"
+                                title="Kapasitas ruang disk">
+                                <i class="fa fa-hdd-o mr-1 text-warning"></i>Kapasitas penyimpanan
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -550,17 +549,23 @@
                                 <select id="mm-tenant-select" class="form-control form-control-sm border-primary"
                                     style="border-radius: 8px; font-weight: 500; height: 32px;" onchange="onTenantChange()">
                                     <option value="all" {{ (request('host') === 'all' || !request()->filled('host')) ? 'selected' : '' }}>
-                                        🌐 Semua Domain / Tenant ({{ number_format($totalFiles, 0, ',', '.') }})
+                                        🌐 Semua Domain / Tenant ({{ number_format($totalFiles, 0, ',', '.') }} file - {{ $totalSizeFormatted }})
                                     </option>
                                     <option value="main" {{ request('host') === 'main' ? 'selected' : '' }}>
-                                        🏠 Domain Utama: {{ parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost() }} ({{ number_format($mainFileCount ?? 0, 0, ',', '.') }})
+                                        🏠 Domain Utama: {{ parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost() }} ({{ number_format($mainFileCount ?? 0, 0, ',', '.') }} file - {{ $mainSizeFormatted ?? '0 B' }})
                                     </option>
                                     @if(isset($tenants) && $tenants->isNotEmpty())
                                         <optgroup label="Tenant Terdaftar">
                                             @foreach($tenants as $t)
-                                                @php $tc = $tenantFileCounts[$t->domain] ?? 0; @endphp
+                                                @php
+                                                    $st = $formattedTenantStats[$t->domain] ?? null;
+                                                    $tc = $st['files'] ?? 0;
+                                                    $tsFormatted = $st['size_formatted'] ?? '0 B';
+                                                    $limit = (int) ($t->disk_space ?? 0);
+                                                    $limitStr = $limit > 0 ? " / {$limit} MB" : "";
+                                                @endphp
                                                 <option value="{{ $t->domain }}" {{ request('host') === $t->domain ? 'selected' : '' }}>
-                                                    {{ $t->domain }} - {{ $t->name }} ({{ number_format($tc, 0, ',', '.') }})
+                                                    {{ $t->domain }} - {{ $t->name }} ({{ number_format($tc, 0, ',', '.') }} file - {{ $tsFormatted }}{{ $limitStr }})
                                                 </option>
                                             @endforeach
                                         </optgroup>
@@ -568,9 +573,13 @@
                                     @if(isset($otherHosts) && $otherHosts->isNotEmpty())
                                         <optgroup label="Domain / Host Lainnya">
                                             @foreach($otherHosts as $oh)
-                                                @php $oc = $tenantFileCounts[$oh] ?? 0; @endphp
+                                                @php
+                                                    $st = $formattedTenantStats[$oh] ?? null;
+                                                    $oc = $st['files'] ?? 0;
+                                                    $osFormatted = $st['size_formatted'] ?? '0 B';
+                                                @endphp
                                                 <option value="{{ $oh }}" {{ request('host') === $oh ? 'selected' : '' }}>
-                                                    {{ $oh }} ({{ number_format($oc, 0, ',', '.') }})
+                                                    {{ $oh }} ({{ number_format($oc, 0, ',', '.') }} file - {{ $osFormatted }})
                                                 </option>
                                             @endforeach
                                         </optgroup>
@@ -618,7 +627,7 @@
                                 </select>
                             </div>
                             <div class="text-muted" style="font-size: 12px;" id="mm-info-count">
-                                Menampilkan <b id="mm-showing-count">0</b> file
+                                Menampilkan <b id="mm-showing-count">0</b> file <span id="mm-showing-size" class="text-muted ml-1"></span>
                             </div>
                         </div>
                     </div>
@@ -900,11 +909,19 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
 
-            function updateDiskStatsUI(diskInfo) {
-                if (!diskInfo) return;
-                tenantDiskLimit = diskInfo;
-                if (!diskInfo.is_unmetered) {
+            function updateDiskStatsUI(diskInfo, totalSizeFormatted, totalFiles) {
+                if (totalFiles !== undefined && totalFiles !== null) {
+                    $('#stat-total-files').text(new Intl.NumberFormat('id-ID').format(totalFiles));
+                }
+
+                let diskWrap = $('#stat-disk-wrap');
+                let defaultDesc = $('#stat-disk-default-desc');
+
+                if (diskInfo && !diskInfo.is_unmetered) {
+                    tenantDiskLimit = diskInfo;
                     $('#stat-total-size').html(`${diskInfo.used_formatted} <span style="font-size: 12px; font-weight: 600; color: #64748b;"> / ${diskInfo.limit_mb} MB</span>`);
+                    if (diskWrap.length) diskWrap.show();
+                    if (defaultDesc.length) defaultDesc.hide();
                     let progressBar = $('#stat-disk-progress');
                     let remainingText = $('#stat-disk-remaining');
                     if (progressBar.length) {
@@ -918,8 +935,18 @@
                         remainingText.text(`Sisa: ${diskInfo.remaining_formatted} (${diskInfo.percent_used}%)`);
                         remainingText.css('color', diskInfo.percent_used >= 90 ? '#dc2626' : '#64748b');
                     }
-                } else {
+                } else if (diskInfo && diskInfo.is_unmetered) {
+                    tenantDiskLimit = diskInfo;
                     $('#stat-total-size').html(`${diskInfo.used_formatted} <span class="badge badge-light border text-muted ml-1" style="font-size: 10px; font-weight: 600;">Unmetered</span>`);
+                    if (diskWrap.length) diskWrap.hide();
+                    if (defaultDesc.length) defaultDesc.show();
+                } else {
+                    tenantDiskLimit = null;
+                    if (totalSizeFormatted) {
+                        $('#stat-total-size').text(totalSizeFormatted);
+                    }
+                    if (diskWrap.length) diskWrap.hide();
+                    if (defaultDesc.length) defaultDesc.show();
                 }
             }
 
@@ -1023,6 +1050,12 @@
                             lastPage = res.last_page;
 
                             $('#mm-showing-count').text(res.total);
+                            if (res.total_size_formatted) {
+                                $('#mm-showing-size').text('(' + res.total_size_formatted + ')');
+                            } else {
+                                $('#mm-showing-size').text('');
+                            }
+                            updateDiskStatsUI(res.disk_info, res.total_size_formatted, res.total);
 
                             if (res.data.length === 0 && !append) {
                                 $('#mm-empty-state').show();

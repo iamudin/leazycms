@@ -300,11 +300,19 @@ class MediaManagerController extends Controller implements HasMiddleware
      */
     protected function getTenantDiskLimitInfo(Request $request): ?array
     {
-        if (!config('modules.multisite_enabled') || is_main_domain()) {
+        if (!config('modules.multisite_enabled')) {
             return null;
         }
 
-        $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
+        $tenant = null;
+        if (!is_main_domain()) {
+            $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
+        } elseif ($request->filled('host') && $request->host !== 'all' && $request->host !== 'main') {
+            if (class_exists(Tenant::class)) {
+                $tenant = Tenant::resolveByHost($request->host);
+            }
+        }
+
         if (!$tenant) {
             return null;
         }
@@ -363,32 +371,47 @@ class MediaManagerController extends Controller implements HasMiddleware
         $diskInfo = $this->getTenantDiskLimitInfo($request);
 
         $tenants = collect();
-        $tenantFileCounts = collect();
+        $formattedTenantStats = [];
         $mainFileCount = 0;
+        $mainSizeFormatted = '0 B';
         $otherHosts = collect();
 
         if (config('modules.multisite_enabled') && is_main_domain()) {
             $mainHost = parse_url(config('app.url'), PHP_URL_HOST) ?: $request->getHost();
 
-            $tenantFileCounts = File::query()
-                ->selectRaw('host, count(*) as total')
+            $tenantStats = File::query()
+                ->selectRaw('host, count(*) as total_files, sum(file_size) as total_size')
                 ->groupBy('host')
-                ->pluck('total', 'host');
+                ->get()
+                ->keyBy('host');
 
-            $mainFileCount = (int) ($tenantFileCounts[$mainHost] ?? 0)
-                + (int) ($tenantFileCounts[''] ?? 0)
-                + (int) ($tenantFileCounts[null] ?? 0);
+            foreach ($tenantStats as $h => $st) {
+                $formattedTenantStats[$h] = [
+                    'files' => (int) $st->total_files,
+                    'size' => (int) $st->total_size,
+                    'size_formatted' => $this->formatBytes($st->total_size),
+                ];
+            }
+
+            $mainFileCount = (int) ($tenantStats[$mainHost]->total_files ?? 0)
+                + (int) ($tenantStats['']->total_files ?? 0)
+                + (int) ($tenantStats[null]->total_files ?? 0);
+
+            $mainSizeBytes = (int) ($tenantStats[$mainHost]->total_size ?? 0)
+                + (int) ($tenantStats['']->total_size ?? 0)
+                + (int) ($tenantStats[null]->total_size ?? 0);
+            $mainSizeFormatted = $this->formatBytes($mainSizeBytes);
 
             if (class_exists(Tenant::class)) {
                 $tenants = Tenant::whereNotNull('domain')
                     ->where('domain', '<>', '')
                     ->where('domain', '<>', $mainHost)
                     ->orderBy('name')
-                    ->get(['id', 'name', 'domain']);
+                    ->get(['id', 'name', 'domain', 'disk_space']);
             }
 
             $knownDomains = $tenants->pluck('domain')->push($mainHost)->filter()->all();
-            $otherHosts = $tenantFileCounts->keys()
+            $otherHosts = $tenantStats->keys()
                 ->filter(function ($h) use ($knownDomains) {
                     return !empty($h) && !in_array($h, $knownDomains);
                 })
@@ -401,8 +424,9 @@ class MediaManagerController extends Controller implements HasMiddleware
             'extensionsList' => $extensionsList,
             'diskInfo' => $diskInfo,
             'tenants' => $tenants,
-            'tenantFileCounts' => $tenantFileCounts,
+            'formattedTenantStats' => $formattedTenantStats,
             'mainFileCount' => $mainFileCount,
+            'mainSizeFormatted' => $mainSizeFormatted,
             'otherHosts' => $otherHosts,
         ]);
     }
@@ -524,7 +548,12 @@ class MediaManagerController extends Controller implements HasMiddleware
         });
 
         // Hitung statistik ekstensi dinamis untuk query saat ini
-        $allExtensions = $this->baseFileQuery($request)->pluck('file_name')->map(function ($name) {
+        $baseQuery = $this->baseFileQuery($request);
+        $totalSizeBytes = (clone $baseQuery)->sum('file_size');
+        $totalSizeFormatted = $this->formatBytes($totalSizeBytes);
+        $diskInfo = $this->getTenantDiskLimitInfo($request);
+
+        $allExtensions = (clone $baseQuery)->pluck('file_name')->map(function ($name) {
             return strtolower(pathinfo($name, PATHINFO_EXTENSION));
         })->filter()->countBy()->sortDesc();
 
@@ -535,6 +564,9 @@ class MediaManagerController extends Controller implements HasMiddleware
             'last_page' => $paginator->lastPage(),
             'per_page' => $paginator->perPage(),
             'total' => $paginator->total(),
+            'total_size_bytes' => $totalSizeBytes,
+            'total_size_formatted' => $totalSizeFormatted,
+            'disk_info' => $diskInfo,
             'extensions' => $allExtensions,
         ]);
     }
