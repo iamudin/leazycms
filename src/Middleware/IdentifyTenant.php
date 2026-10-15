@@ -66,14 +66,10 @@ class IdentifyTenant
                 );
 
                 if (!empty($parkedDomain) && $host !== $parkedDomain) {
-                    $scheme = ($request->secure() || str_starts_with((string) config('app.url'), 'https://')) ? 'https://' : 'http://';
+                    $scheme = $request->secure() ? 'https://' : 'http://';
                     $queryString = $request->getQueryString();
                     $targetUrl = $scheme . $parkedDomain . '/' . ltrim($request->path(), '/') . ($queryString ? '?' . $queryString : '');
-                    return redirect()->away($targetUrl, 301)
-                        ->header('Access-Control-Allow-Origin', '*')
-                        ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD')
-                        ->header('Access-Control-Allow-Headers', '*')
-                        ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+                    return redirect()->away($targetUrl, 301);
                 }
             }
         }
