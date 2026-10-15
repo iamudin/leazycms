@@ -74,6 +74,42 @@ class PanelController extends Controller implements HasMiddleware
 
         $paginator = $query->latest()->paginate(40);
 
+        foreach ($paginator->items() as $item) {
+            if ((is_null($item->file_size) || $item->file_size === '' || (int) $item->file_size <= 0) && !empty($item->file_path)) {
+                $disk = $item->disk ?: config('filesystems.default');
+                try {
+                    $physicalSize = null;
+                    if ($disk && Storage::disk($disk)->exists($item->file_path)) {
+                        $physicalSize = (int) Storage::disk($disk)->size($item->file_path);
+                    } elseif (Storage::disk('local')->exists($item->file_path)) {
+                        $physicalSize = (int) Storage::disk('local')->size($item->file_path);
+                    } elseif (Storage::disk('public')->exists($item->file_path)) {
+                        $physicalSize = (int) Storage::disk('public')->size($item->file_path);
+                    }
+
+                    if ($physicalSize !== null && $physicalSize >= 0) {
+                        $item->file_size = $physicalSize;
+                        DB::table('files')->where('id', $item->id)->update(['file_size' => $physicalSize]);
+
+                        if (!empty($item->file_name)) {
+                            $cacheKey = ($item->host ?: request()->getHost()) . ':media:' . $item->file_name;
+                            $cached = Cache::get($cacheKey);
+                            if ($cached) {
+                                if (is_array($cached)) {
+                                    $cached['file_size'] = $physicalSize;
+                                    Cache::forever($cacheKey, $cached);
+                                } elseif (is_object($cached)) {
+                                    $cached->file_size = $physicalSize;
+                                    Cache::forever($cacheKey, $cached);
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
+        }
+
         if ($request->filled('search')) {
             $extensions = $query->pluck('file_name')->map(function ($name) {
                 return strtolower(pathinfo($name, PATHINFO_EXTENSION));
