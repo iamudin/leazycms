@@ -155,70 +155,6 @@ class MediaManagerController extends Controller
     }
 
     /**
-     * Dapatkan dan sinkronkan ukuran fisik file ke database jika belum tercatat.
-     *
-     * @param \Leazycms\FLC\Models\File $item
-     * @return int
-     */
-    protected function resolveAndPersistFileSize(File $item): int
-    {
-        $fileSize = (int) $item->file_size;
-        if ($fileSize > 0) {
-            return $fileSize;
-        }
-
-        if (empty($item->file_path)) {
-            return 0;
-        }
-
-        $disk = $item->disk ?: config('filesystems.default');
-
-        try {
-            $physicalSize = null;
-            if ($disk && Storage::disk($disk)->exists($item->file_path)) {
-                $physicalSize = (int) Storage::disk($disk)->size($item->file_path);
-            } elseif (Storage::disk('local')->exists($item->file_path)) {
-                $physicalSize = (int) Storage::disk('local')->size($item->file_path);
-            } elseif (Storage::disk('public')->exists($item->file_path)) {
-                $physicalSize = (int) Storage::disk('public')->size($item->file_path);
-            }
-
-            if ($physicalSize !== null && $physicalSize >= 0) {
-                // Update file_size di database jika sebelumnya null, kosong, atau ada ukuran fisik valid (> 0)
-                if (is_null($item->file_size) || $item->file_size === '' || $physicalSize > 0) {
-                    $item->file_size = $physicalSize;
-
-                    // Update DB tanpa mengubah timestamps
-                    \Illuminate\Support\Facades\DB::table('files')
-                        ->where('id', $item->id)
-                        ->update(['file_size' => $physicalSize]);
-
-                    // Perbarui cache media jika ada
-                    if (!empty($item->file_name)) {
-                        $cacheKey = ($item->host ?: request()->getHost()) . ':media:' . $item->file_name;
-                        $cached = Cache::get($cacheKey);
-                        if ($cached) {
-                            if (is_array($cached)) {
-                                $cached['file_size'] = $physicalSize;
-                                Cache::forever($cacheKey, $cached);
-                            } elseif (is_object($cached)) {
-                                $cached->file_size = $physicalSize;
-                                Cache::forever($cacheKey, $cached);
-                            }
-                        }
-                    }
-                }
-
-                return (int) $physicalSize;
-            }
-        } catch (\Throwable $e) {
-            // Abaikan kegagalan akses storage agar request tetap stabil
-        }
-
-        return 0;
-    }
-
-    /**
      * Dapatkan URL file.
      * Jika multisite enable, panggil via URL host milik file atau host aktif.
      *
@@ -405,10 +341,10 @@ class MediaManagerController extends Controller
                 $query->oldest();
                 break;
             case 'size_desc':
-                $query->orderByRaw('CAST(COALESCE(file_size, 0) AS UNSIGNED) desc');
+                $query->orderBy('file_size', 'desc');
                 break;
             case 'size_asc':
-                $query->orderByRaw('CAST(COALESCE(file_size, 0) AS UNSIGNED) asc');
+                $query->orderBy('file_size', 'asc');
                 break;
             case 'name_asc':
                 $query->orderBy('file_name', 'asc');
@@ -441,20 +377,15 @@ class MediaManagerController extends Controller
 
             $host = $this->getActiveHost($item->host);
             $fileUrl = $this->getFileUrl($item, $host);
-            $version = $item->updated_at ? $item->updated_at->timestamp : ($item->created_at ? $item->created_at->timestamp : '');
-            $vParam = $version ? '&v=' . $version : '';
-            $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? ('?size=small' . $vParam) : ($version ? '?v=' . $version : ''));
-
-            // Pastikan ukuran fisik file tercatat jika sebelumnya belum ada di table files
-            $fileSize = $this->resolveAndPersistFileSize($item);
+            $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? '?size=small&time=' . time() : '');
 
             return [
                 'id' => $item->id,
                 'file_name' => $item->file_name,
                 'file_path' => $item->file_path,
                 'file_type' => $item->file_type,
-                'file_size' => (int) $fileSize,
-                'file_size_formatted' => $this->formatBytes($fileSize),
+                'file_size' => (int) $item->file_size,
+                'file_size_formatted' => $this->formatBytes($item->file_size),
                 'extension' => strtoupper($ext),
                 'is_image' => $isImage,
                 'is_video' => $isVideo,
@@ -776,7 +707,6 @@ class MediaManagerController extends Controller
         abort_if(!Auth::check(), 403);
 
         $file = $this->baseFileQuery($request)->findOrFail($id);
-        $fileSize = $this->resolveAndPersistFileSize($file);
         $fileName = $file->file_name;
 
         $usage = $this->getFileUsageInfo($fileName, 25);
@@ -786,7 +716,7 @@ class MediaManagerController extends Controller
             'status' => 'success',
             'file_id' => $file->id,
             'file_name' => $file->file_name,
-            'file_size' => $this->formatBytes($fileSize),
+            'file_size' => $this->formatBytes($file->file_size),
             'is_used' => $isUsed,
             'can_delete' => !$isUsed,
             'total_post_references' => count($usage['post_usages']),
@@ -933,26 +863,10 @@ class MediaManagerController extends Controller
                 $file->updated_at = now();
                 $file->save();
 
-                // Bersihkan seluruh cache media terkait file ini
-                $cacheKeys = array_unique(array_filter([
-                    $file->host . ':media:' . $file->file_name,
-                    request()->getHost() . ':media:' . $file->file_name,
-                    'media:' . $file->file_name,
-                    $file->host . ':media',
-                    request()->getHost() . ':media',
-                    (app()->has('tenant') && function_exists('tenant') && tenant() ? tenant()->domain . ':media:' . $file->file_name : null),
-                ]));
-                foreach ($cacheKeys as $ck) {
-                    Cache::forget($ck);
-                }
+                // Bersihkan cache media
+                Cache::forget($file->host . ':media:' . $file->file_name);
 
                 $host = $this->getActiveHost($file->host);
-                if ($host && $host !== $file->host) {
-                    Cache::forget($host . ':media:' . $file->file_name);
-                }
-
-                $version = $file->updated_at ? $file->updated_at->timestamp : time();
-
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'overwrite',
@@ -971,8 +885,8 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => $this->getFileUrl($file, $host) . '?v=' . $version,
-                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&v=' . $version,
+                        'url' => $this->getFileUrl($file, $host) . '?time=' . time(),
+                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&time=' . time(),
                         'host' => $host,
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
