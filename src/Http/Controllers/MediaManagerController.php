@@ -263,8 +263,16 @@ class MediaManagerController extends Controller implements HasMiddleware
             }
         } else {
             if ($request->filled('host') && $request->host !== 'all') {
-                $hostFilter = $request->host;
-                if (config('modules.multisite_enabled') && class_exists(Tenant::class)) {
+                $hostFilter = trim($request->host);
+                $mainHost = parse_url(config('app.url'), PHP_URL_HOST) ?: $request->getHost();
+
+                if ($hostFilter === 'main' || $hostFilter === $mainHost) {
+                    $query->where(function ($q) use ($mainHost) {
+                        $q->where('host', $mainHost)
+                            ->orWhereNull('host')
+                            ->orWhere('host', '');
+                    });
+                } elseif (config('modules.multisite_enabled') && class_exists(Tenant::class)) {
                     $tenant = Tenant::resolveByHost($hostFilter);
                     if ($tenant) {
                         $parkedDomain = $this->getTenantParkedDomain($tenant);
@@ -354,11 +362,48 @@ class MediaManagerController extends Controller implements HasMiddleware
 
         $diskInfo = $this->getTenantDiskLimitInfo($request);
 
+        $tenants = collect();
+        $tenantFileCounts = collect();
+        $mainFileCount = 0;
+        $otherHosts = collect();
+
+        if (config('modules.multisite_enabled') && is_main_domain()) {
+            $mainHost = parse_url(config('app.url'), PHP_URL_HOST) ?: $request->getHost();
+
+            $tenantFileCounts = File::query()
+                ->selectRaw('host, count(*) as total')
+                ->groupBy('host')
+                ->pluck('total', 'host');
+
+            $mainFileCount = (int) ($tenantFileCounts[$mainHost] ?? 0)
+                + (int) ($tenantFileCounts[''] ?? 0)
+                + (int) ($tenantFileCounts[null] ?? 0);
+
+            if (class_exists(Tenant::class)) {
+                $tenants = Tenant::whereNotNull('domain')
+                    ->where('domain', '<>', '')
+                    ->where('domain', '<>', $mainHost)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'domain']);
+            }
+
+            $knownDomains = $tenants->pluck('domain')->push($mainHost)->filter()->all();
+            $otherHosts = $tenantFileCounts->keys()
+                ->filter(function ($h) use ($knownDomains) {
+                    return !empty($h) && !in_array($h, $knownDomains);
+                })
+                ->values();
+        }
+
         return view('cms::backend.media-manager.index', [
             'totalFiles' => $totalFiles,
             'totalSizeFormatted' => $totalSizeFormatted,
             'extensionsList' => $extensionsList,
             'diskInfo' => $diskInfo,
+            'tenants' => $tenants,
+            'tenantFileCounts' => $tenantFileCounts,
+            'mainFileCount' => $mainFileCount,
+            'otherHosts' => $otherHosts,
         ]);
     }
 

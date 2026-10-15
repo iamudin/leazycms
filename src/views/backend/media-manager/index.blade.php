@@ -537,6 +537,52 @@
                         </div>
                     </div>
 
+                    <!-- Filter Domain Tenant (Multisite Enabled di Main Domain) -->
+                    @if(config('modules.multisite_enabled') && is_main_domain())
+                        <div class="row align-items-center py-2 px-1 mb-2 mt-1"
+                            style="border-top: 1px dashed #e2e8f0; background: #f8fafc; border-radius: 8px;">
+                            <div class="col-md-auto mb-1 mb-md-0">
+                                <label for="mm-tenant-select" class="font-weight-bold text-dark mb-0" style="font-size: 12px; white-space: nowrap;">
+                                    <i class="fa fa-globe text-primary mr-1"></i> Domain Tenant:
+                                </label>
+                            </div>
+                            <div class="col-md-5 col-lg-4 mb-1 mb-md-0">
+                                <select id="mm-tenant-select" class="form-control form-control-sm border-primary"
+                                    style="border-radius: 8px; font-weight: 500; height: 32px;" onchange="onTenantChange()">
+                                    <option value="all" {{ (request('host') === 'all' || !request()->filled('host')) ? 'selected' : '' }}>
+                                        🌐 Semua Domain / Tenant ({{ number_format($totalFiles, 0, ',', '.') }})
+                                    </option>
+                                    <option value="main" {{ request('host') === 'main' ? 'selected' : '' }}>
+                                        🏠 Domain Utama: {{ parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost() }} ({{ number_format($mainFileCount ?? 0, 0, ',', '.') }})
+                                    </option>
+                                    @if(isset($tenants) && $tenants->isNotEmpty())
+                                        <optgroup label="Tenant Terdaftar">
+                                            @foreach($tenants as $t)
+                                                @php $tc = $tenantFileCounts[$t->domain] ?? 0; @endphp
+                                                <option value="{{ $t->domain }}" {{ request('host') === $t->domain ? 'selected' : '' }}>
+                                                    {{ $t->domain }} - {{ $t->name }} ({{ number_format($tc, 0, ',', '.') }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endif
+                                    @if(isset($otherHosts) && $otherHosts->isNotEmpty())
+                                        <optgroup label="Domain / Host Lainnya">
+                                            @foreach($otherHosts as $oh)
+                                                @php $oc = $tenantFileCounts[$oh] ?? 0; @endphp
+                                                <option value="{{ $oh }}" {{ request('host') === $oh ? 'selected' : '' }}>
+                                                    {{ $oh }} ({{ number_format($oc, 0, ',', '.') }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="col-md-auto text-muted font-italic" style="font-size: 11px;">
+                                <i class="fa fa-info-circle mr-1 text-info"></i> Menampilkan file pustaka media khusus domain terpilih.
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Baris 2: Pencarian & Pengurutan (Waktu / Ukuran) -->
                     <div class="row align-items-center pt-2" style="border-top: 1px solid #f1f5f9;">
                         <div class="col-md-6 mb-2 mb-md-0">
@@ -837,6 +883,7 @@
             let currentExtension = 'all';
             let currentSearch = '';
             let currentSort = 'time_desc';
+            let currentHost = '{{ request('host', 'all') }}';
             let currentPage = 1;
             let lastPage = 1;
             let isLoading = false;
@@ -964,6 +1011,7 @@
                         extension: currentExtension,
                         search: currentSearch,
                         sort: currentSort,
+                        host: currentHost,
                         per_page: 24
                     },
                     success: function (res) {
@@ -1142,6 +1190,15 @@
                 loadMedia(1, false);
             }
 
+            function onTenantChange() {
+                if ($('#mm-tenant-select').length) {
+                    currentHost = $('#mm-tenant-select').val();
+                } else {
+                    currentHost = 'all';
+                }
+                loadMedia(1, false);
+            }
+
             function clearSearch() {
                 $('#mm-search-input').val('');
                 $('#mm-search-clear-wrap').hide();
@@ -1153,6 +1210,10 @@
                 currentCategory = 'all';
                 currentExtension = 'all';
                 currentSearch = '';
+                currentHost = 'all';
+                if ($('#mm-tenant-select').length) {
+                    $('#mm-tenant-select').val('all');
+                }
                 $('#mm-search-input').val('');
                 $('#mm-search-clear-wrap').hide();
                 $('.mm-filter-pill').removeClass('active');
