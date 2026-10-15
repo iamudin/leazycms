@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -16,8 +18,14 @@ use Leazycms\Web\Models\Option;
 use Leazycms\Web\Models\Post;
 use Leazycms\Web\Models\Tenant;
 
-class MediaManagerController extends Controller
+class MediaManagerController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth')
+        ];
+    }
     /**
      * Dapatkan parked domain milik tenant jika valid.
      */
