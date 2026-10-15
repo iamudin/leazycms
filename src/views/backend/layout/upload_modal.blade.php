@@ -585,8 +585,8 @@
                         let fileName = media.file_name;
                         let ext = fileName.split('.').pop().toLowerCase();
                         let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(ext);
-                        let baseUrl = '{{ url("media") }}/' + fileName;
-                        let previewUrl = baseUrl + (isImage && !['svg', 'ico'].includes(ext) ? '?size=small' : '');
+                        let v = media.updated_at ? ('&v=' + new Date(media.updated_at).getTime()) : '';
+                        let previewUrl = baseUrl + (isImage && !['svg', 'ico'].includes(ext) ? ('?size=small' + v) : (v ? '?v=' + new Date(media.updated_at).getTime() : ''));
                         let scheme = '{{ request()->getScheme() }}';
 
                         let icon = 'fa-file';
@@ -1018,7 +1018,7 @@
                         let savedExt = savedFileName.split('.').pop().toLowerCase();
                         let isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(savedExt);
                         let baseUrl = '{{ url("media") }}/' + savedFileName;
-                        let previewUrl = baseUrl + (isImage && !['svg', 'ico'].includes(savedExt) ? '?size=small' : '');
+                        let previewUrl = baseUrl + (isImage && !['svg', 'ico'].includes(savedExt) ? '?size=small&v=' + Date.now() : '?v=' + Date.now());
                         let scheme = '{{ request()->getScheme() }}';
                         let host = window.location.host;
 

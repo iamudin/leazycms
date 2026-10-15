@@ -441,7 +441,9 @@ class MediaManagerController extends Controller
 
             $host = $this->getActiveHost($item->host);
             $fileUrl = $this->getFileUrl($item, $host);
-            $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? '?size=small' : '');
+            $version = $item->updated_at ? $item->updated_at->timestamp : ($item->created_at ? $item->created_at->timestamp : '');
+            $vParam = $version ? '&v=' . $version : '';
+            $thumbUrl = $fileUrl . ($isImage && !in_array($ext, ['svg', 'ico']) ? ('?size=small' . $vParam) : ($version ? '?v=' . $version : ''));
 
             // Pastikan ukuran fisik file tercatat jika sebelumnya belum ada di table files
             $fileSize = $this->resolveAndPersistFileSize($item);
@@ -931,10 +933,26 @@ class MediaManagerController extends Controller
                 $file->updated_at = now();
                 $file->save();
 
-                // Bersihkan cache media
-                Cache::forget($file->host . ':media:' . $file->file_name);
+                // Bersihkan seluruh cache media terkait file ini
+                $cacheKeys = array_unique(array_filter([
+                    $file->host . ':media:' . $file->file_name,
+                    request()->getHost() . ':media:' . $file->file_name,
+                    'media:' . $file->file_name,
+                    $file->host . ':media',
+                    request()->getHost() . ':media',
+                    (app()->has('tenant') && function_exists('tenant') && tenant() ? tenant()->domain . ':media:' . $file->file_name : null),
+                ]));
+                foreach ($cacheKeys as $ck) {
+                    Cache::forget($ck);
+                }
 
                 $host = $this->getActiveHost($file->host);
+                if ($host && $host !== $file->host) {
+                    Cache::forget($host . ':media:' . $file->file_name);
+                }
+
+                $version = $file->updated_at ? $file->updated_at->timestamp : time();
+
                 return response()->json([
                     'status' => 'success',
                     'mode' => 'overwrite',
@@ -953,8 +971,8 @@ class MediaManagerController extends Controller
                         'is_pdf' => false,
                         'is_doc' => false,
                         'is_archive' => false,
-                        'url' => $this->getFileUrl($file, $host) . '?time=' . time(),
-                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&time=' . time(),
+                        'url' => $this->getFileUrl($file, $host) . '?v=' . $version,
+                        'thumb_url' => $this->getFileUrl($file, $host) . '?size=small&v=' . $version,
                         'host' => $host,
                         'uploader' => $file->user?->name ?? 'System',
                         'created_at' => $file->created_at ? $file->created_at->translatedFormat('d M Y H:i') : '-',
