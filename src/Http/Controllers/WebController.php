@@ -933,7 +933,14 @@ class WebController extends Controller
     }
     public function search(Request $request, $slug = null)
     {
+        if (get_option('disable_search') === 'Y') {
+            return app(\Leazycms\Web\Http\Controllers\NotFoundController::class)->error404();
+        }
+
         if ($request->isMethod('post') && $request->keyword) {
+            return redirect('search/' . str($request->keyword)->slug());
+        }
+        if (empty($slug) && $request->filled('keyword')) {
             return redirect('search/' . str($request->keyword)->slug());
         }
         if (empty($slug)) {

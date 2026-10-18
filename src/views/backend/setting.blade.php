@@ -203,10 +203,16 @@
                                     @foreach ($shortcut as $r)
                                         @if($r[1] == 'sub_app_enabled' && config('modules.multisite_enabled'))
                                         @else
-                                            <div class="list-group-item py-2"><strong for="" class="text-muted">{{ $r[0] }}</strong>
-                                                <div class="pull-right"><input name="{{ $r[1] }}" data-width="100" {{ get_option($r[1]) == 'Y' ? 'checked' : '' }} title="Ubah status data publik atau draft" type="checkbox"
+                                            <div class="list-group-item py-2">
+                                                <div class="pull-right">
+                                                    <input name="{{ $r[1] }}" data-width="100" {{ get_option($r[1]) == 'Y' ? 'checked' : '' }} title="Ubah status" type="checkbox"
                                                         class="toggle-status" data-on="Active" data-off="Inactive" data-toggle="toggle"
-                                                        data-onstyle="outline-success" data-offstyle="outline-danger" data-size="sm"></div>
+                                                        data-onstyle="outline-success" data-offstyle="outline-danger" data-size="sm">
+                                                </div>
+                                                <strong for="" class="text-muted">{{ $r[0] }}</strong>
+                                                @if ($r[1] == 'disable_search')
+                                                    <small class="text-muted d-block" style="font-size: 11px;">Jika aktif, fitur pencarian di front end dinonaktifkan &amp; akses langsung ke <code>/search/*</code> otomatis 404.</small>
+                                                @endif
                                             </div>
                                         @endif
                                     @endforeach

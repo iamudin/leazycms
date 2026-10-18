@@ -1067,7 +1067,8 @@ if(!is_main_domain()){
             ['Default JQuery Min', 'default_jquery'],
             ['Jump To Top Button', 'top_button'],
             ['Accesibility Widget', 'accessibility_widget'],
-            ['Float Button Whatsapp', 'float_btn_whatsapp']
+            ['Float Button Whatsapp', 'float_btn_whatsapp'],
+            ['Disable Pencarian Konten', 'disable_search'],
         ), is_main_domain() ? [['Brand Footer Watermark', 'footer_brand_status']] : []);
         $data['security'] = array(
 

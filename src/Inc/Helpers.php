@@ -3097,7 +3097,8 @@ if (!function_exists('init_meta_header')) {
                 } else {
                     $pn = $get_page_name . $page;
                 }
-            } elseif (request()->is('search') || request()->is('search/*')) {
+            } elseif (request()->is('search') || request()->is('search/*') && get_option('disable_search') === 'N')  {
+                
                 $slug = request()->slug ?? request()->segment(2);
                 if ($slug && preg_match('/^[a-zA-Z0-9\-]+$/', $slug)) {
                     $pn = 'Hasil Pencarian "' . ucwords(str_replace('-', ' ', $slug)) . '"' . $page;
@@ -3813,13 +3814,26 @@ if (!function_exists('link_menu')) {
     }
 }
 
+if (!function_exists('is_search_enabled')) {
+    function is_search_enabled()
+    {
+        return get_option('disable_search') !== 'Y';
+    }
+}
+
 if (!function_exists('keyword_search')) {
     function keyword_search($keywords)
     {
-
         $link = null;
+        $searchEnabled = is_search_enabled();
         foreach (explode(',', trim($keywords ?? ' ')) as $row) {
-            $link .= '<a href="' . url('search/' . str($row)->slug()) . '">#' . $row . '</a>, ';
+            $row = trim($row);
+            if (empty($row)) continue;
+            if ($searchEnabled) {
+                $link .= '<a href="' . url('search/' . str($row)->slug()) . '">#' . $row . '</a>, ';
+            } else {
+                $link .= '<span>#' . $row . '</span>, ';
+            }
         }
         return rtrim(trim($link), ',');
     }
