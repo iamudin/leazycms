@@ -76,6 +76,48 @@ class AnalyticsService
 
     }
 
+    public function record404(array|\Illuminate\Http\Request|null $data = null): void
+    {
+        try {
+            if ($data instanceof \Illuminate\Http\Request) {
+                $ua = strtolower((string) $data->userAgent());
+                $domain = $data->getHost();
+                $path = $data->path();
+                $ip = get_client_ip() ?? '0.0.0.0';
+            } elseif (is_array($data)) {
+                $ua = strtolower((string) ($data['user_agent'] ?? ''));
+                $domain = $data['host'] ?? $data['domain'] ?? request()->getHost();
+                $path = $data['path'] ?? request()->path();
+                $ip = $data['ip'] ?? get_client_ip() ?? '0.0.0.0';
+            } else {
+                $req = request();
+                $ua = strtolower((string) $req->userAgent());
+                $domain = $req->getHost();
+                $path = $req->path();
+                $ip = get_client_ip() ?? '0.0.0.0';
+            }
+
+            if (str_contains($ua, 'bot') || str_contains($ua, 'crawler') || str_contains($ua, 'spider')) {
+                return;
+            }
+
+            $cleanPath = str('/' . ltrim($path, '/'))->limit(191)->toString();
+            $tenantId = (!is_main_domain() && app()->has('tenant')) ? tenant()->id : null;
+            $date = now()->toDateString();
+
+            // Throttle duplicate counts from same IP to the same 404 path within 30 seconds
+            $cacheKey = 'analytics_404_lock_' . md5($domain . '|' . $cleanPath . '|' . $ip);
+            if (Cache::has($cacheKey)) {
+                return;
+            }
+            Cache::put($cacheKey, true, now()->addSeconds(30));
+
+            $this->incrementDaily($domain, $tenantId, $date, '404', $cleanPath);
+        } catch (\Throwable $e) {
+            // Fail silently
+        }
+    }
+
     protected function shouldIgnore($data): bool
     {
 

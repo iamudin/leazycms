@@ -3097,8 +3097,15 @@ if (!function_exists('init_meta_header')) {
                 } else {
                     $pn = $get_page_name . $page;
                 }
-            } elseif (request()->is('search/*')) {
-                $pn = 'Hasil Pencarian  "' . ucwords(str_replace('-', ' ', request()->slug)) . '"' . $page;
+            } elseif (request()->is('search') || request()->is('search/*')) {
+                $slug = request()->slug ?? request()->segment(2);
+                if ($slug && preg_match('/^[a-zA-Z0-9\-]+$/', $slug)) {
+                    $pn = 'Hasil Pencarian "' . ucwords(str_replace('-', ' ', $slug)) . '"' . $page;
+                } elseif (empty($slug)) {
+                    $pn = ($get_page_name ?? 'Pencarian') . $page;
+                } else {
+                    $pn = null;
+                }
             } elseif (request()->is('author') || request()->is('author/*')) {
                 $pn = $get_page_name . $page;
             } else {

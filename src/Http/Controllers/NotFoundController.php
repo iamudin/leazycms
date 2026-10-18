@@ -39,6 +39,18 @@ class NotFoundController extends Controller
         }
 
         forbidden($request);
+        try {
+            $data404 = [
+                'host' => $request->getHost(),
+                'path' => $request->path(),
+                'user_agent' => $request->userAgent(),
+                'ip' => get_client_ip(),
+            ];
+            dispatch(function () use ($data404) {
+                app(\Leazycms\Web\Services\AnalyticsService::class)->record404($data404);
+            })->afterResponse();
+        } catch (\Throwable $e) {
+        }
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Not Found'], 404);
         } else {

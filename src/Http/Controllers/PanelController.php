@@ -617,6 +617,28 @@ if(!is_main_domain()){
             ->limit(10)
             ->get();
 
+        $top404Query = (clone $dailyQuery)
+            ->where('type', '404');
+
+        if ($showDomain) {
+            $top404Query
+                ->select('domain', 'key', DB::raw('SUM(count) as total'))
+                ->groupBy('domain', 'key');
+        } else {
+            $top404Query
+                ->select('key', DB::raw('SUM(count) as total'))
+                ->groupBy('key');
+        }
+
+        $top404 = $top404Query
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $total404 = (clone $dailyQuery)
+            ->where('type', '404')
+            ->sum('count') ?? 0;
+
         $topKeywordsQuery = (clone $dailyQuery)
             ->where('type', 'search');
 
@@ -754,6 +776,8 @@ if(!is_main_domain()){
             'totalViews' => $totalViews,
             'uniquePeriod' => $uniquePeriod,
             'topPages' => $topPages,
+            'top404' => $top404,
+            'total404' => $total404,
             'topKeywords' => $topKeywords,
             'topReferrers' => $topReferrers,
             'devices' => $devices,

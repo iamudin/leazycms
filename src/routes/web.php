@@ -40,7 +40,7 @@ foreach ($modules as $modul) {
 }
 Route::match(['get', 'post'], 'tags/{slug}', [WebController::class, 'tags'])->name('tag.posts')->middleware(['public', TrackVisitor::class]);
 Route::match(['get', 'post'], 'author/{slug?}', [WebController::class, 'author'])->name('author.posts')->middleware(['public', TrackVisitor::class]);
-Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->name('search.posts')->middleware(['public', TrackVisitor::class])->withoutMiddleware([VerifyCsrfToken::class]);
+Route::match(['get', 'post'], 'search/{slug?}', [WebController::class, 'search'])->where('slug', '[a-zA-Z0-9\-]+')->name('search.posts')->middleware(['public', TrackVisitor::class])->withoutMiddleware([VerifyCsrfToken::class]);
 Route::match(['get', 'post'], 'sitemap.xml', [ExtController::class, 'sitemap_xml'])->name('sitemap');
 Route::match(['get', 'post'], 'sitemap_{part}.xml', [ExtController::class, 'sitemap_part'])->whereNumber('part')->name('sitemap.part');
 Route::match(['get', 'post'], 'favicon/site.manifest', [ExtController::class, 'manifest'])->name('manifest');

@@ -184,6 +184,15 @@
             </div>
         </div>
 
+        <div class="col-xl col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-danger shadow">
+                <div class="card-body">
+                    <small>Total 404</small>
+                    <h3>{{ $total404 ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 
@@ -320,6 +329,73 @@
             </div>
         </div>
 
+    </div>
+
+    {{-- TOP 10 404 PAGES --}}
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fa fa-exclamation-triangle text-danger mr-1"></i> Top 10 Halaman 404 (Not Found)
+                        <small class="text-muted ml-2 font-weight-normal d-none d-sm-inline">Daftar URL yang paling sering diakses pengunjung namun tidak ditemukan</small>
+                    </div>
+                    <span class="badge badge-danger badge-pill">{{ isset($top404) ? $top404->count() : 0 }} URL Terdeteksi</span>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th style="width: 50px;" class="text-center">#</th>
+                                    @if($showDomain)
+                                        <th style="width: 180px;">Domain</th>
+                                    @endif
+                                    <th>URL / Path 404</th>
+                                    <th style="width: 170px;" class="text-center">Jumlah Ditemukan</th>
+                                    <th style="width: 100px;" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($top404 ?? [] as $index => $p)
+                                    <tr>
+                                        <td class="text-center font-weight-bold text-muted" style="vertical-align: middle;">
+                                            {{ $index + 1 }}
+                                        </td>
+                                        @if($showDomain)
+                                            <td style="vertical-align: middle;">
+                                                <span class="badge badge-light border text-dark">{{ $p->domain ?? '-' }}</span>
+                                            </td>
+                                        @endif
+                                        <td style="vertical-align: middle;">
+                                            <code class="text-danger font-weight-bold" style="font-size: 13px;">{{ $p->key }}</code>
+                                        </td>
+                                        <td class="text-center" style="vertical-align: middle;">
+                                            <span class="badge badge-danger px-2 py-1" style="font-size: 12px; font-weight: 600;">
+                                                <i class="fa fa-times-circle mr-1"></i> {{ number_format($p->total) }} kali
+                                            </span>
+                                        </td>
+                                        <td class="text-center" style="vertical-align: middle;">
+                                            <a href="{{ url($p->key) }}" target="_blank" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Buka URL untuk cek di tab baru">
+                                                <i class="fa fa-external-link"></i> Cek
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="{{ $showDomain ? 5 : 4 }}" class="text-center py-4 text-muted">
+                                            <i class="fa fa-check-circle text-success fa-2x mb-2 d-block"></i>
+                                            Tidak ada halaman 404 yang tercatat pada periode ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="row">
 
