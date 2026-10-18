@@ -57,9 +57,9 @@ class AnalyticsService
             }
 
             if (get_post_type() == 'search') {
-
-                $keyword = str(request()->segment(2))->headline();
-                if(!empty($keyword)){
+                $keyword = trim(request()->segment(2));
+                if (strlen($keyword) > 1) {
+                    $keyword = str($keyword)->headline();
                     $this->incrementDaily($domain, $tenantId, $date, 'search', $keyword);
                 }
             }
