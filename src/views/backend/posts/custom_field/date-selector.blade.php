@@ -60,25 +60,46 @@
     <small class="form-text text-muted mt-1">{{ $meta['helper'] }}</small>
 @endif
 
+<script>
+    if (typeof window.initDateSelectorForm === 'function') {
+        window.initDateSelectorForm('#field_{{ $fieldName }}');
+    }
+</script>
+
 @once
 @push('scripts')
 <script>
-    $(function () {
-        if (typeof $.fn.select2 === 'function') {
-            $('.select2-date-selector-form').each(function () {
-                if (!$(this).hasClass('select2-hidden-accessible')) {
-                    var isTags = $(this).data('tags') === true || $(this).data('tags') === 'true';
-                    $(this).select2({
-                        width: '100%',
-                        placeholder: $(this).data('placeholder') || '-- Pilih Tanggal --',
-                        allowClear: !$(this).prop('disabled'),
-                        tags: isTags,
-                        closeOnSelect: false,
-                        disabled: $(this).prop('disabled')
-                    });
+    if (typeof window.initDateSelectorForm !== 'function') {
+        window.initDateSelectorForm = function (context) {
+            if (typeof $ === 'undefined' || typeof $.fn.select2 !== 'function') return;
+
+            var $scope = context ? $(context).find('.select2-date-selector-form') : $('.select2-date-selector-form');
+            if (!$scope.length && context && $(context).hasClass('select2-date-selector-form')) {
+                $scope = $(context);
+            }
+
+            $scope.each(function () {
+                var $el = $(this);
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    try {
+                        $el.select2('destroy');
+                    } catch (e) {}
                 }
+                var isTags = $el.data('tags') === true || $el.data('tags') === 'true';
+                $el.select2({
+                    width: '100%',
+                    placeholder: $el.data('placeholder') || '-- Pilih Tanggal --',
+                    allowClear: !$el.prop('disabled'),
+                    tags: isTags,
+                    closeOnSelect: false,
+                    disabled: $el.prop('disabled')
+                });
             });
-        }
+        };
+    }
+
+    $(function () {
+        window.initDateSelectorForm();
     });
 
     $(document).on('click', '.btn-date-picker-trigger', function (e) {
@@ -86,9 +107,13 @@
         var $btn = $(this);
         var $picker = $btn.siblings('.hidden-native-datepicker');
         if ($picker.length) {
-            if (typeof $picker[0].showPicker === 'function') {
-                $picker[0].showPicker();
-            } else {
+            try {
+                if (typeof $picker[0].showPicker === 'function') {
+                    $picker[0].showPicker();
+                } else {
+                    $picker.focus().click();
+                }
+            } catch (err) {
                 $picker.focus().click();
             }
         }

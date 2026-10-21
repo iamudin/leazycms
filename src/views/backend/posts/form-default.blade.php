@@ -244,7 +244,35 @@
         border: 1.5px solid #e2e8f0 !important;
         border-radius: 8px !important;
         min-height: 36px !important;
-        padding: 2px 6px !important;
+        padding: 3px 6px !important;
+        background-color: #ffffff !important;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #eff6ff !important;
+        border: 1px solid #bfdbfe !important;
+        color: #1d4ed8 !important;
+        border-radius: 6px !important;
+        padding: 2px 8px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        margin-top: 3px !important;
+        margin-bottom: 3px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #3b82f6 !important;
+        margin-right: 6px !important;
+        font-weight: bold !important;
+        border: none !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #ef4444 !important;
+        background: transparent !important;
     }
     .app-content {
         background-color: #f8f8f8ff !important;
@@ -1102,6 +1130,9 @@
                             if (typeof window.initGlobalFilePickers === 'function') {
                                 window.initGlobalFilePickers();
                             }
+                            if (typeof window.initDateSelectorForm === 'function') {
+                                window.initDateSelectorForm('#custom-fields-container');
+                            }
                         }
 
                         // Update Looping Data Container
@@ -1113,6 +1144,9 @@
                             }
                             if (typeof window.initLoopingDataSortable === 'function') {
                                 window.initLoopingDataSortable();
+                            }
+                            if (typeof window.initDateSelectorForm === 'function') {
+                                window.initDateSelectorForm('#looping-data-container');
                             }
                         }
 

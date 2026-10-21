@@ -358,6 +358,37 @@
         placeholder: 'Pilih Tags',
     });
 
+    window.initDateSelectorForm = function (context) {
+        if (typeof $ === 'undefined' || typeof $.fn.select2 !== 'function') return;
+
+        var $scope = context ? $(context).find('.select2-date-selector-form') : $('.select2-date-selector-form');
+        if (!$scope.length && context && $(context).hasClass('select2-date-selector-form')) {
+            $scope = $(context);
+        }
+
+        $scope.each(function () {
+            var $el = $(this);
+            if ($el.hasClass('select2-hidden-accessible')) {
+                try {
+                    $el.select2('destroy');
+                } catch (e) {}
+            }
+            var isTags = $el.data('tags') === true || $el.data('tags') === 'true';
+            $el.select2({
+                width: '100%',
+                placeholder: $el.data('placeholder') || '-- Pilih Tanggal --',
+                allowClear: !$el.prop('disabled'),
+                tags: isTags,
+                closeOnSelect: false,
+                disabled: $el.prop('disabled')
+            });
+        });
+    };
+
+    $(function () {
+        window.initDateSelectorForm();
+    });
+
     function media_destroy(source) {
         if (confirm('Hapus ? ')) {
             $.post("{{ route('media.destroy') }}", { _token: "{{ csrf_token() }}", media: source })
