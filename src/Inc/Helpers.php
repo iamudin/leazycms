@@ -5182,4 +5182,197 @@ if (!function_exists('media_tag')) {
     }
 }
 
+if (!function_exists('format_indo_date')) {
+    /**
+     * Format tanggal ke dalam format bahasa Indonesia (e.g. 25 Oktober 2026 atau Senin, 25 Oktober 2026).
+     *
+     * @param string|\DateTimeInterface|null $date
+     * @param bool $withDay
+     * @return string
+     */
+    function format_indo_date($date, $withDay = false)
+    {
+        if (empty($date)) {
+            return '';
+        }
+        try {
+            $dt = $date instanceof \DateTimeInterface ? $date : new \DateTime((string)$date);
+            $days = [
+                1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis',
+                5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'
+            ];
+            $months = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            $dayName = $days[(int)$dt->format('N')] ?? '';
+            $dayNum = $dt->format('d');
+            $monthName = $months[(int)$dt->format('n')] ?? $dt->format('m');
+            $year = $dt->format('Y');
+
+            if ($withDay && $dayName) {
+                return "{$dayName}, {$dayNum} {$monthName} {$year}";
+            }
+            return "{$dayNum} {$monthName} {$year}";
+        } catch (\Throwable $e) {
+            return (string)$date;
+        }
+    }
+}
+
+if (!function_exists('get_date_selector_options')) {
+    /**
+     * Dapatkan daftar opsi tanggal untuk custom field date-selector.
+     *
+     * @param array|object $meta
+     * @param array|string|null $currentVal
+     * @return array
+     */
+    function get_date_selector_options($meta, $currentVal = null)
+    {
+        $meta = is_array($meta) ? $meta : (is_object($meta) ? (array)$meta : []);
+        $rawDates = $meta['dates'] ?? $meta['options'] ?? $meta['data'] ?? $meta['values'] ?? [];
+        $withDay = !empty($meta['with_day'] ?? $meta['show_day'] ?? false);
+        $options = [];
+
+        if (is_string($rawDates) && strlen(trim($rawDates)) > 0) {
+            $rawDates = array_map('trim', explode(',', $rawDates));
+        }
+
+        if (is_array($rawDates) && !empty($rawDates)) {
+            $isAssoc = array_keys($rawDates) !== range(0, count($rawDates) - 1);
+            foreach ($rawDates as $k => $v) {
+                if (is_array($v) || is_object($v)) {
+                    $item = (array)$v;
+                    $val = $item['value'] ?? $item['date'] ?? $k;
+                    $label = $item['label'] ?? $item['text'] ?? $item['name'] ?? null;
+                    if (!$label) {
+                        $label = format_indo_date($val, $withDay);
+                    }
+                    $options[(string)$val] = (string)$label;
+                } elseif ($isAssoc) {
+                    $options[(string)$k] = (string)$v;
+                } else {
+                    $val = (string)$v;
+                    $label = format_indo_date($val, $withDay);
+                    $options[$val] = $label ?: $val;
+                }
+            }
+        } elseif (!empty($meta['start_date']) || !empty($meta['from'])) {
+            $startDate = $meta['start_date'] ?? $meta['from'];
+            $endDate = $meta['end_date'] ?? $meta['to'] ?? $startDate;
+            try {
+                $start = new \DateTime($startDate);
+                $end = new \DateTime($endDate);
+                $end->modify('+1 day');
+                $period = new \DatePeriod($start, new \DateInterval('P1D'), $end);
+
+                $allowedDays = $meta['days'] ?? $meta['days_of_week'] ?? null;
+                if (is_string($allowedDays)) {
+                    $allowedDays = array_map('trim', explode(',', $allowedDays));
+                }
+                if (is_array($allowedDays)) {
+                    $allowedDays = array_map(function ($d) {
+                        return strtolower(trim((string)$d));
+                    }, $allowedDays);
+                }
+
+                $dayMap = [
+                    1 => ['senin', 'monday', '1'],
+                    2 => ['selasa', 'tuesday', '2'],
+                    3 => ['rabu', 'wednesday', '3'],
+                    4 => ['kamis', 'thursday', '4'],
+                    5 => ['jumat', "jum'at", 'friday', '5'],
+                    6 => ['sabtu', 'saturday', '6'],
+                    7 => ['minggu', 'ahad', 'sunday', '7'],
+                ];
+
+                foreach ($period as $dt) {
+                    if (!empty($allowedDays)) {
+                        $n = (int)$dt->format('N');
+                        $dayAliases = $dayMap[$n] ?? [];
+                        $matches = false;
+                        foreach ($dayAliases as $alias) {
+                            if (in_array($alias, $allowedDays, true)) {
+                                $matches = true;
+                                break;
+                            }
+                        }
+                        if (!$matches) {
+                            continue;
+                        }
+                    }
+                    $val = $dt->format('Y-m-d');
+                    $options[$val] = format_indo_date($dt, $withDay);
+                }
+            } catch (\Throwable $e) {
+                // Ignore invalid date inputs
+            }
+        } else {
+            // Jika tanggal bebas (tidak ada 'dates' atau 'start_date' yang ditentukan)
+            // Buat opsi tanggal dinamis (rolling dates) dari Hari Ini s/d n hari ke depan (default 30 hari)
+            $autoDates = $meta['auto_dates'] ?? true;
+            if ($autoDates) {
+                $daysAhead = isset($meta['days_ahead']) ? (int)$meta['days_ahead'] : 30;
+                $daysBehind = isset($meta['days_behind']) ? (int)$meta['days_behind'] : 0;
+                $daysBehind = max(0, $daysBehind);
+                $daysAhead = max(1, $daysAhead);
+
+                try {
+                    $today = new \DateTime('today');
+                    $start = $daysBehind > 0 ? (clone $today)->modify("-{$daysBehind} days") : clone $today;
+                    $end = (clone $today)->modify("+{$daysAhead} days");
+                    $end->modify('+1 day');
+                    $period = new \DatePeriod($start, new \DateInterval('P1D'), $end);
+
+                    $todayStr = $today->format('Y-m-d');
+                    $tomorrowStr = (clone $today)->modify('+1 day')->format('Y-m-d');
+                    $yesterdayStr = (clone $today)->modify('-1 day')->format('Y-m-d');
+
+                    foreach ($period as $dt) {
+                        $val = $dt->format('Y-m-d');
+                        $baseLabel = format_indo_date($dt, true);
+                        if ($val === $todayStr) {
+                            $label = "Hari Ini ({$baseLabel})";
+                        } elseif ($val === $tomorrowStr) {
+                            $label = "Besok ({$baseLabel})";
+                        } elseif ($val === $yesterdayStr) {
+                            $label = "Kemarin ({$baseLabel})";
+                        } else {
+                            $label = $baseLabel;
+                        }
+                        $options[$val] = $label;
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore
+                }
+            }
+        }
+
+        if (!empty($currentVal)) {
+            if (is_string($currentVal) && str_starts_with(trim($currentVal), '[') && str_ends_with(trim($currentVal), ']')) {
+                $decoded = json_decode($currentVal, true);
+                $vals = is_array($decoded) ? $decoded : [$currentVal];
+            } elseif (is_array($currentVal)) {
+                $vals = $currentVal;
+            } else {
+                $vals = [$currentVal];
+            }
+
+            foreach ($vals as $cVal) {
+                if (is_string($cVal) || is_numeric($cVal)) {
+                    $cValStr = trim((string)$cVal);
+                    if ($cValStr !== '' && !isset($options[$cValStr])) {
+                        $options[$cValStr] = format_indo_date($cValStr, $withDay) ?: $cValStr;
+                    }
+                }
+            }
+        }
+
+        return $options;
+    }
+}
+
+
 

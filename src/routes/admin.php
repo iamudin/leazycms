@@ -58,6 +58,7 @@ foreach (get_module() as $value) {
 
         Route::post('/post/status', [PostController::class, 'updateStatus'])->name('post.status');
         Route::post('/post/toggle-field', [PostController::class, 'updateToggleField'])->name('post.toggle_field');
+        Route::post('/post/date-selector-field', [PostController::class, 'updateDateSelectorField'])->name('post.date_selector_field');
 
     });
     if ($value->form->category) {

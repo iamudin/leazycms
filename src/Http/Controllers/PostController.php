@@ -749,6 +749,26 @@ class PostController extends Controller implements HasMiddleware
                         }
                         $custom_field[$fieldname] = !empty($cleanRich) ? $cleanRich : $cleanRich;
                         break;
+                    case 'date-selector':
+                        $val = $request->$fieldname;
+                        if (is_array($val)) {
+                            $cleanVals = [];
+                            foreach ($val as $item) {
+                                if (is_string($item) || is_numeric($item)) {
+                                    $trimmed = trim(strip_tags((string)$item));
+                                    if ($trimmed !== '') {
+                                        $cleanVals[] = $trimmed;
+                                    }
+                                }
+                            }
+                            $custom_field[$fieldname] = array_values(array_unique($cleanVals));
+                        } elseif (is_string($val) && strlen(trim($val)) > 0) {
+                            $trimmed = trim(strip_tags($val));
+                            $custom_field[$fieldname] = $trimmed !== '' ? [$trimmed] : [];
+                        } else {
+                            $custom_field[$fieldname] = [];
+                        }
+                        break;
                     default:
                         $custom_field[$fieldname] = strip_tags($request->$fieldname) ?? null;
                         break;
@@ -983,6 +1003,37 @@ class PostController extends Controller implements HasMiddleware
             }
         }
 
+        $date_selector_fields = collect($rawCustomFields)
+            ->filter(function ($field) {
+                $meta = $field[1] ?? null;
+                $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                return $type === 'date-selector';
+            })
+            ->pluck(0)
+            ->map(fn($label) => _us($label))
+            ->values()
+            ->all();
+
+        $date_selector_meta = [];
+        foreach ($rawCustomFields as $cf) {
+            $meta = $cf[1] ?? null;
+            $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+            if ($type === 'date-selector') {
+                $fKey = _us($cf[0]);
+                $metaArr = is_array($meta) ? $meta : (is_object($meta) ? (array)$meta : []);
+                $hasPredefined = !empty($metaArr['dates']) || !empty($metaArr['options']) || !empty($metaArr['data']) || !empty($metaArr['values']) || !empty($metaArr['start_date']) || !empty($metaArr['from']);
+                $allowTags = isset($metaArr['tags']) ? (bool)$metaArr['tags'] : (isset($metaArr['allow_custom']) ? (bool)$metaArr['allow_custom'] : !$hasPredefined);
+                $placeholder = $metaArr['placeholder'] ?? ('-- Pilih ' . $cf[0] . ' --');
+
+                $date_selector_meta[$fKey] = [
+                    'label' => $cf[0],
+                    'meta' => $metaArr,
+                    'placeholder' => $placeholder,
+                    'tags' => $allowTags,
+                ];
+            }
+        }
+
         $summary_columns = get_module_summary_columns($current_module);
         $currency_fields = collect($rawCustomFields)
             ->filter(function ($field) {
@@ -1159,7 +1210,67 @@ class PostController extends Controller implements HasMiddleware
             return '<img class="rounded lazyload" src="/shimmer.gif" style="width:100%" data-src="' . $row->thumbnail . '?size=small"/>';
         });
         foreach ($customColumns as $field) {
-            $dt->addColumn($field, function ($row) use ($field, $custom_field, $badge_fields, $toggle_fields, $toggle_meta, $summary_columns, $currency_fields) {
+            $dt->addColumn($field, function ($row) use ($field, $custom_field, $badge_fields, $toggle_fields, $toggle_meta, $summary_columns, $currency_fields, $date_selector_fields, $date_selector_meta) {
+
+                if (in_array($field, $date_selector_fields)) {
+                    $rawVal = $row->data_field[$field] ?? [];
+                    if (is_string($rawVal) && str_starts_with(trim($rawVal), '[') && str_ends_with(trim($rawVal), ']')) {
+                        $decoded = json_decode($rawVal, true);
+                        if (is_array($decoded)) {
+                            $rawVal = $decoded;
+                        }
+                    }
+                    $selectedValues = is_array($rawVal) ? $rawVal : ($rawVal !== '' && $rawVal !== null ? (array)$rawVal : []);
+                    $selectedValues = array_values(array_filter(array_map('trim', array_map('strval', $selectedValues))));
+                    sort($selectedValues);
+
+                    $metaItem = $date_selector_meta[$field] ?? [];
+                    $meta = $metaItem['meta'] ?? [];
+                    $fieldLabel = $metaItem['label'] ?? $field;
+                    $withDay = !empty($meta['with_day'] ?? $meta['show_day'] ?? true);
+
+                    $html = '<div class="dt-date-cell d-flex flex-wrap align-items-center" style="min-width: 170px; max-width: 320px; gap: 4px;">';
+
+                    if (!empty($selectedValues)) {
+                        $maxBadges = 3;
+                        $count = count($selectedValues);
+                        $slice = array_slice($selectedValues, 0, $maxBadges);
+
+                        foreach ($slice as $dVal) {
+                            $lbl = format_indo_date($dVal, $withDay);
+                            $html .= '<span class="badge badge-info py-1 px-2 text-white font-weight-normal dt-date-badge" style="font-size: 11px; border-radius: 4px; display: inline-flex; align-items: center;">'
+                                . '<i class="fa fa-calendar-check-o mr-1"></i>' . e($lbl)
+                                . '</span>';
+                        }
+
+                        if ($count > $maxBadges) {
+                            $more = $count - $maxBadges;
+                            $allFormatted = array_map(fn($d) => format_indo_date($d, $withDay), $selectedValues);
+                            $html .= '<span class="badge badge-secondary py-1 px-2 font-weight-normal dt-date-more-badge pointer" style="font-size: 11px; border-radius: 4px;" title="' . e(implode(', ', $allFormatted)) . '">+' . $more . ' lainnya</span>';
+                        }
+                    } else {
+                        $html .= '<span class="text-muted small font-italic mr-1"><i class="fa fa-calendar-o text-secondary mr-1"></i>Belum ada jadwal</span>';
+                    }
+
+                    $btnText = empty($selectedValues) ? 'Pilih Tanggal' : 'Ubah';
+                    $btnIcon = empty($selectedValues) ? 'fa-calendar-plus-o' : 'fa-calendar';
+                    $btnClass = empty($selectedValues) ? 'btn-outline-primary' : 'btn-outline-secondary';
+
+                    $html .= '<button type="button" class="btn btn-xs ' . $btnClass . ' btn-open-date-picker-modal py-0.5 px-2 ml-auto" '
+                        . 'data-id="' . $row->id . '" '
+                        . 'data-field="' . e($field) . '" '
+                        . 'data-title="' . e($row->title ?? 'Data') . '" '
+                        . 'data-field-label="' . e($fieldLabel) . '" '
+                        . 'data-dates=\'' . json_encode($selectedValues) . '\' '
+                        . 'data-meta=\'' . json_encode($meta) . '\' '
+                        . 'title="Kelola ' . e($fieldLabel) . '" '
+                        . 'style="font-size: 11px; border-radius: 4px; white-space: nowrap;">'
+                        . '<i class="fa ' . $btnIcon . ' mr-1"></i>' . $btnText
+                        . '</button>';
+
+                    $html .= '</div>';
+                    return $html;
+                }
 
                 if (in_array($field, $toggle_fields)) {
                     $rawVal = $row->data_field[$field] ?? 'false';
@@ -1299,7 +1410,10 @@ class PostController extends Controller implements HasMiddleware
                 }
 
                 // Default
-                return '<span>' . e(Str::limit(strip_tags($value), 30)) . '</span>';
+                if (is_array($value)) {
+                    return '<span>' . e(implode(', ', array_map(fn($v) => is_scalar($v) ? (string)$v : json_encode($v), $value))) . '</span>';
+                }
+                return '<span>' . e(Str::limit(strip_tags((string)$value), 30)) . '</span>';
             });
         }
 
@@ -1599,6 +1713,86 @@ class PostController extends Controller implements HasMiddleware
             'field' => $fieldKey,
             'value' => $boolVal,
             'label' => $boolVal === 'true' ? $onText : $offText
+        ]);
+    }
+
+    public function updateDateSelectorField(Request $request)
+    {
+        $request->validate([
+            'id' => 'required',
+            'field' => 'required|string',
+        ]);
+
+        $post = Post::findOrFail($request->id);
+        $fieldKey = _us($request->field);
+
+        $module = get_module($post->type);
+        $moduleCustomFields = is_array($module?->form?->custom_field ?? null) ? $module->form->custom_field : [];
+
+        if (!empty($moduleCustomFields)) {
+            $allowedFields = collect($moduleCustomFields)
+                ->filter(function ($cf) {
+                    $meta = $cf[1] ?? null;
+                    $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
+                    return $type === 'date-selector';
+                })
+                ->pluck(0)
+                ->map(fn($label) => _us($label))
+                ->values()
+                ->all();
+
+            if (!in_array($fieldKey, $allowedFields)) {
+                return response()->json(['success' => false, 'message' => 'Field bukan bertipe date-selector.'], 422);
+            }
+        }
+
+        $rawVal = $request->input('value', []);
+        if (is_string($rawVal)) {
+            if (str_starts_with(trim($rawVal), '[') && str_ends_with(trim($rawVal), ']')) {
+                $decoded = json_decode($rawVal, true);
+                $rawVal = is_array($decoded) ? $decoded : [$rawVal];
+            } elseif (strlen(trim($rawVal)) > 0) {
+                $rawVal = [$rawVal];
+            } else {
+                $rawVal = [];
+            }
+        } elseif (!is_array($rawVal)) {
+            $rawVal = [];
+        }
+
+        $val = [];
+        foreach ($rawVal as $item) {
+            if (is_string($item) || is_numeric($item)) {
+                $itemClean = trim(strip_tags((string)$item));
+                if ($itemClean !== '') {
+                    $val[] = $itemClean;
+                }
+            }
+        }
+        $val = array_values(array_unique($val));
+
+        $data_field = $post->data_field ?? [];
+        if (!is_array($data_field)) {
+            $data_field = (array) $data_field;
+        }
+
+        $data_field[$fieldKey] = $val;
+
+        if (Auth::check()) {
+            $data_field['last_editor'] = Auth::user()->name;
+        }
+
+        $post->data_field = $data_field;
+        $post->save();
+
+        $this->recache($post->type);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tanggal berhasil diperbarui!',
+            'field' => $fieldKey,
+            'value' => $val,
+            'count' => count($val)
         ]);
     }
     function bulkaction(Request $request)

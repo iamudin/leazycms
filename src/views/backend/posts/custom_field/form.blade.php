@@ -1,7 +1,8 @@
 <div class="row">
 @foreach ($module->form->custom_field as $r)
     @php
-        $type = is_array($r[1]->type ?? null) ? 'option' : ($r[1]->type ?? 'text');
+        $rawType = is_array($r[1] ?? null) ? ($r[1]['type'] ?? null) : (is_object($r[1] ?? null) ? ($r[1]->type ?? null) : null);
+        $type = is_array($rawType) ? 'option' : ($rawType ?: 'text');
         $isFullWidth = in_array($type, ['textarea', 'rich-text', 'break']);
         $colClass = $isFullWidth ? 'col-12' : 'col-md-6';
     @endphp
@@ -38,6 +39,8 @@
                 @include('cms::backend.posts.custom_field.email')
             @elseif ($type == 'date')
                 @include('cms::backend.posts.custom_field.date')
+            @elseif ($type == 'date-selector')
+                @include('cms::backend.posts.custom_field.date-selector')
             @elseif ($type == 'datetime')
                 @include('cms::backend.posts.custom_field.datetime')
             @elseif ($type == 'currency')
@@ -50,7 +53,7 @@
                 @include('cms::backend.posts.custom_field.font-awesome')
             @elseif ($type == 'toggle')
                 @include('cms::backend.posts.custom_field.toggle')
-            @elseif ($type == 'option' || is_array($r[1]->type ?? null))
+            @elseif ($type == 'option' || is_array($rawType))
                 @include('cms::backend.posts.custom_field.option')
             @endif
         </div>
