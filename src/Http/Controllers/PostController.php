@@ -724,6 +724,10 @@ class PostController extends Controller implements HasMiddleware
                 $meta = $value[1] ?? null;
                 $type = is_array($meta) ? ($meta['type'] ?? null) : (is_object($meta) ? ($meta->type ?? null) : null);
                 switch ($type) {
+                    case 'currency':
+                        $val = $request->$fieldname;
+                        $custom_field[$fieldname] = ($val !== null && $val !== '') ? preg_replace('/[^0-9]/', '', (string)$val) : null;
+                        break;
                     case 'toggle':
                         $val = $request->$fieldname;
                         $onText = is_array($meta) ? ($meta['on'] ?? 'True') : ($meta->on ?? 'True');

@@ -443,6 +443,16 @@
             var val = part.substring(colonIdx + 1).trim();
             var valLower = val.toLowerCase();
 
+            // Khusus tag p (terutama sumber paste dari MS Word): bersihkan semua style inline bawaan Word
+            // (margin, padding, font-family, font-size, line-height, color, background, float, dsb).
+            // Hanya pertahankan text-align jika eksplisit center atau right (bukan default left/justify).
+            if (tagName === 'p') {
+                if (prop === 'text-align' && (valLower === 'center' || valLower === 'right')) {
+                    cleanRules.push('text-align: ' + valLower);
+                }
+                continue;
+            }
+
             // 1. Discard MSO properties, expressions, script injections, and invalid Word colors
             if (prop.startsWith('mso-') || prop.startsWith('-mso-') || prop.startsWith('panose-')) continue;
             if (valLower.includes('windowtext') || valLower.includes('expression(') || valLower.includes('javascript:')) continue;
@@ -889,7 +899,13 @@
                         }
                     } else if (attrName === 'align') {
                         var al = attrVal.trim().toLowerCase();
-                        if (['left', 'center', 'right', 'justify'].indexOf(al) === -1) {
+                        if (tagName === 'p') {
+                            if (al === 'center' || al === 'right') {
+                                node.setAttribute('align', al);
+                            } else {
+                                node.removeAttribute('align');
+                            }
+                        } else if (['left', 'center', 'right', 'justify'].indexOf(al) === -1) {
                             node.removeAttribute('align');
                         }
                     }
@@ -942,6 +958,23 @@
             last.remove();
             last = prev;
         }
+
+        // 11. Pembersihan style pada seluruh tag p hasil paste MS Word
+        container.querySelectorAll('p').forEach(function(p) {
+            var styleAttr = p.getAttribute('style');
+            if (styleAttr) {
+                var cleanedPStyle = cleanCssStyle(styleAttr, 'p');
+                if (cleanedPStyle) {
+                    p.setAttribute('style', cleanedPStyle);
+                } else {
+                    p.removeAttribute('style');
+                }
+            }
+            var alignAttr = p.getAttribute('align');
+            if (alignAttr && (alignAttr.toLowerCase() === 'left' || alignAttr.toLowerCase() === 'justify')) {
+                p.removeAttribute('align');
+            }
+        });
 
         return container.innerHTML;
     }
@@ -1437,6 +1470,7 @@
                     var rtfImages = extractImagesFromRtf(rtf);
                     var hasRtfImages = rtfImages.length > 0;
                     var hasTables = /<table[^>]*>[\s\S]*?<\/table>/i.test(html);
+                    var isWordHtml = /class="?Mso|xmlns:o=|xmlns:w=|progid:Word\.|style="[^"]*mso-|<!--\[if\s+gte\s+mso/i.test(html);
 
                     // KASUS 1: Pure Image Paste (Screenshot, Snipping Tool, Salin File Gambar)
                     if ((!html || html.trim().length === 0) && imageFiles.length > 0) {
@@ -1485,8 +1519,8 @@
                         return;
                     }
 
-                    // KASUS 2: Konten Word / HTML yang memiliki Gambar atau Tabel
-                    if (html && (hasHtmlImages || hasRtfImages || imageFiles.length > 0 || hasTables)) {
+                    // KASUS 2: Konten Word / HTML yang memiliki Gambar, Tabel, atau Format Dokumen Word
+                    if (html && (hasHtmlImages || hasRtfImages || imageFiles.length > 0 || hasTables || isWordHtml)) {
                         window.isSummernotePasting = true;
                         window.isPastingHtml = true;
                         window.lastSummernotePasteTime = Date.now();
@@ -1502,6 +1536,21 @@
                                 img.removeAttribute('width');
                                 img.style.height = '';
                                 img.style.width = '';
+                            });
+                            tempContainer.querySelectorAll('p').forEach(function(p) {
+                                var styleAttr = p.getAttribute('style');
+                                if (styleAttr) {
+                                    var cleanedPStyle = cleanCssStyle(styleAttr, 'p');
+                                    if (cleanedPStyle) {
+                                        p.setAttribute('style', cleanedPStyle);
+                                    } else {
+                                        p.removeAttribute('style');
+                                    }
+                                }
+                                var alignAttr = p.getAttribute('align');
+                                if (alignAttr && (alignAttr.toLowerCase() === 'left' || alignAttr.toLowerCase() === 'justify')) {
+                                    p.removeAttribute('align');
+                                }
                             });
                             var finalCleanHtml = tempContainer.innerHTML;
                             setSummernoteEditable(true);
