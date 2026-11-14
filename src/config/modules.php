@@ -1639,3 +1639,4 @@ return [
     'cloud_key' => env('CLOUD_TEMPLATE_KEY', null),
     'allow_parking_domain' => env('ALLOW_PARKING_DOMAIN', true)
 ];
+//hanya untuk configßß
