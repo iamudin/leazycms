@@ -114,8 +114,11 @@ class LoginController extends Controller
         }
 
         // Throttle login attempts
-        $limiterKey = $request->ip() . '|' . $request->username;
-        if ($limiter->tooManyAttempts($limiterKey, get_option('time_limit_login') ?? 5)) {
+        $limiterKey = $request->ip() . '|' . mb_strtolower((string) $request->username);
+        // Limiter tambahan per IP agar tidak bisa menebak banyak username berbeda (password spraying).
+        $ipLimiterKey = 'login_ip|' . $request->ip();
+        $maxLoginAttempts = (int) (get_option('time_limit_login') ?: 5);
+        if ($limiter->tooManyAttempts($limiterKey, $maxLoginAttempts) || $limiter->tooManyAttempts($ipLimiterKey, max(20, $maxLoginAttempts * 4))) {
             if ($request->ajax())
                 return response()->json(['status' => 'error', 'message' => 'Terlalu banyak percobaan login. Silakan coba lagi nanti.']);
             return back()->with('error', 'Terlalu banyak percobaan login. Silakan coba lagi nanti.');
@@ -140,6 +143,7 @@ class LoginController extends Controller
             $user = Auth::user();
 
             if ($user->status === 'active') {
+                $limiter->clear($limiterKey);
                 $ip = e($request->ip());
                 $email = e($request->input('email', $request->username));
                 $url = e($request->fullUrl());
@@ -190,6 +194,7 @@ class LoginController extends Controller
         }
 
         $limiter->hit($limiterKey);
+        $limiter->hit($ipLimiterKey, 600);
         $request->session()->regenerateToken();
         Log::channel('daily')->critical('Gagal login untuk username: ' . $request->username . ' dari IP: ' . get_client_ip() . ' ' . $request->headers->get('User-Agent'));
         $ip = get_client_ip();

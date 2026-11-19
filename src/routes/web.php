@@ -74,7 +74,7 @@ if ($webroute = get_non_domain_routes()) {
 
 Route::match(['get', 'post'], '/', [WebController::class, 'home'])->name('home')->middleware(['public', TrackVisitor::class]);
 Route::get('logo.webp', [Leazycms\Web\Http\Controllers\VisitorStatsController::class, 'logoGenerator'])->name('logo');
-Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit');
+Route::post('pollingentry/submit', [WebController::class, 'pollingsubmit'])->name('pollingsubmit')->middleware('throttle:20,1');
 Route::post('form-submit/{module}', [WebController::class, 'formSubmit'])->name('post.form.submit')->middleware(['public', TrackVisitor::class, 'throttle:20,1']);
 Route::match(['get', 'post'], 'lz-track/{module}', [WebController::class, 'track'])->name('post.track')->middleware(['public', TrackVisitor::class, 'throttle:30,1']);
 

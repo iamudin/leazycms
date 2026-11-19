@@ -85,7 +85,7 @@ class ThemeController extends Controller implements HasMiddleware
     {
         $request->validate([
             'name' => 'required|string|max:100',
-            'path' => 'required|string|max:100|unique:themes,path',
+            'path' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9][A-Za-z0-9._-]*$/', 'not_regex:/\.\./', 'unique:themes,path'],
             'git' => 'required|url',
             'status' => 'required|in:active,inactive',
             'preview' => 'nullable|string',
@@ -94,7 +94,7 @@ class ThemeController extends Controller implements HasMiddleware
             'description' => 'nullable|string',
         ]);
 
-        $theme = Theme::create($request->all());
+        $theme = Theme::create($request->only((new Theme)->getFillable()));
 
         $this->downloadFromGit($theme);
 
@@ -110,7 +110,7 @@ class ThemeController extends Controller implements HasMiddleware
     {
         $request->validate([
             'name' => 'required|string|max:100',
-            'path' => 'required|string|max:100|unique:themes,path,' . $theme->id,
+            'path' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9][A-Za-z0-9._-]*$/', 'not_regex:/\.\./', 'unique:themes,path,' . $theme->id],
             'git' => 'required|url',
             'status' => 'required|in:active,inactive',
               'preview' => 'nullable|string',
@@ -119,7 +119,7 @@ class ThemeController extends Controller implements HasMiddleware
             'description' => 'nullable|string',
         ]);
 
-        $theme->update($request->all());
+        $theme->update($request->only($theme->getFillable()));
 
         return to_route('theme.index')->with('success', 'Tema berhasil diupdate');
     }
@@ -127,6 +127,11 @@ class ThemeController extends Controller implements HasMiddleware
     public function destroy(Theme $theme)
     {
         $themePath = resource_path('views/template/' . $theme->path);
+        // Jangan pernah menghapus di luar folder views/template (path traversal / path kosong).
+        if (!$this->isSafeThemePath($theme->path)) {
+            $theme->delete();
+            return response()->json(['success' => 'Tema berhasil dihapus']);
+        }
         if (File::exists($themePath)) {
             File::deleteDirectory($themePath);
         }
@@ -142,8 +147,16 @@ class ThemeController extends Controller implements HasMiddleware
         return response()->json(['error' => 'Gagal memperbarui tema'], 500);
     }
 
+    private function isSafeThemePath($path): bool
+    {
+        return is_string($path) && preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $path) === 1 && !str_contains($path, '..');
+    }
+
     private function downloadFromGit(Theme $theme)
     {
+        if (!$this->isSafeThemePath($theme->path)) {
+            return false;
+        }
         $themePath = resource_path('views/template/' . $theme->path);
 
         // Buat folder template jika belum ada

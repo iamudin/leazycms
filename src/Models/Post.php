@@ -15,6 +15,7 @@ class Post extends BaseModel
 {
     use SoftDeletes, Commentable;
     protected static $requestCache = [];
+    protected static $registryChecked = [];
     public $selected = ['id', 'description', 'redirect_to', 'short_content', 'type', 'category_id', 'user_id', 'title', 'created_at', 'updated_at', 'deleted_at', 'parent_id', 'media', 'media_description', 'url', 'slug', 'data_field', 'data_loop', 'pinned', 'sort', 'status', 'shortcut', 'shortcut_counter', 'custom_page', 'visited', 'allow_comment', 'password'];
 
     protected $fillable = [
@@ -83,12 +84,7 @@ class Post extends BaseModel
                     }
                 }
             }
-
-            try {
-                self::flushCacheTags(self::postCacheTags($post));
-            } catch (\Exception $e) {
-                Log::warning('Cache flush error on delete: ' . $e->getMessage());
-            }
+            // Flush cache dilakukan sekali di event "deleted" (setelah data benar-benar terhapus).
         });
 
         static::saving(function ($post) {
@@ -112,19 +108,8 @@ class Post extends BaseModel
                     }
                 }
             }
-            try {
-                self::flushCacheTags(self::postCacheTags($post));
-            } catch (\Exception $e) {
-                Log::warning('Cache flush error on save: ' . $e->getMessage());
-            }
-        });
-
-        static::created(function ($post) {
-            try {
-                self::flushCacheTags(self::postCacheTags($post));
-            } catch (\Exception $e) {
-                Log::warning('Cache flush error on create: ' . $e->getMessage());
-            }
+            // Flush cache dilakukan sekali di event "saved" (Eloquent selalu memicu "saved"
+            // setelah "created"/"updated"), sebelumnya cache di-flush 2-3x per penyimpanan.
         });
 
         static::saved(function ($post) {
@@ -560,6 +545,7 @@ class Post extends BaseModel
     private static function flushCacheTags(array $tags): void
     {
         self::$requestCache = [];
+        self::$registryChecked = [];
 
         if (self::cacheSupportsTag()) {
             Cache::tags($tags)->flush();
@@ -587,11 +573,19 @@ class Post extends BaseModel
     {
         foreach ($tags as $tag) {
             $registryKey = "cache_registry:{$tag}";
+            // Hindari membaca registry yang sama berulang kali dalam satu request.
+            if (isset(self::$registryChecked[$registryKey][$cacheKey])) {
+                continue;
+            }
             $keys = Cache::get($registryKey, []);
-            if (!in_array($cacheKey, $keys)) {
+            if (!is_array($keys)) {
+                $keys = [];
+            }
+            if (!in_array($cacheKey, $keys, true)) {
                 $keys[] = $cacheKey;
                 Cache::put($registryKey, $keys, now()->addHours(24));
             }
+            self::$registryChecked[$registryKey][$cacheKey] = true;
         }
     }
 
@@ -611,13 +605,17 @@ class Post extends BaseModel
                 });
             } else {
                 // Non-taggable driver (file, database, array): use plain cache + key registry
-                $cached = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($callback, $cacheKey, $tags) {
+                $registered = false;
+                $cached = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($callback, $cacheKey, $tags, &$registered) {
                     self::registerCacheKey($cacheKey, $tags);
+                    $registered = true;
                     return $this->serializeForCache($callback());
                 });
 
                 // Register key even on cache hit (in case registry expired but data didn't)
-                self::registerCacheKey($cacheKey, $tags);
+                if (!$registered) {
+                    self::registerCacheKey($cacheKey, $tags);
+                }
             }
 
             $result = $this->hydrateFromCache($cached);

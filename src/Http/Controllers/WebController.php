@@ -26,7 +26,12 @@ class WebController extends Controller
         ]);
 
         $polling = PollingTopic::select('id', 'keyword', 'duration')->find((int) $request->topic);
-        if ($polling && empty($request->cookie('polling_' . $request->keyword))) {
+        // Cookie dicek berdasarkan keyword polling dari DB (sebelumnya memakai input user,
+        // sehingga cek "sudah memilih" bisa dilewati), dan opsi harus milik topik tsb.
+        $optionValid = $polling && \Leazycms\Web\Models\PollingOption::where('id', (int) $request->answer)
+            ->where('polling_topic_id', $polling->id)
+            ->exists();
+        if ($polling && $optionValid && empty($request->cookie('polling_' . $polling->keyword))) {
             PollingResponse::create([
                 'polling_option_id' => (int) $request->answer,
                 'ip' => $request->ip(),
@@ -727,7 +732,7 @@ class WebController extends Controller
         $tag->timestamps = false;
         $tag->increment('visited');
 
-        $post = Post::selectedColumn()->whereHas('tags', function ($query) use ($slug) {
+        $post = Post::selectedColumn()->with(['user', 'category'])->whereHas('tags', function ($query) use ($slug) {
             $query->where('slug', $slug)->whereStatus('publish');
         })->published()->latest('created_at')->paginate(get_option('post_perpage'));
 
@@ -749,7 +754,8 @@ class WebController extends Controller
             }
             config(['modules.page_name' => 'Author: ' . $user->name]);
             $data = [
-                'index' => $user->posts()->paginate(10)
+                // Hanya post yang terbit (sebelumnya draft ikut tampil di halaman publik author).
+                'index' => $user->posts()->published()->with(['user', 'category'])->latest('created_at')->paginate(10)
             ];
             return view('cms::layouts.master', $data);
         } else {
@@ -805,7 +811,7 @@ class WebController extends Controller
                 'email' => strip_tags(substr($request->email, 0, 50) ?? null),
                 'ip' => get_client_ip(),
                 'content' => nl2br(strip_tags(substr($request->comment_content, 0, 500) ?? null)),
-                'link' => strip_tags($request->link ?? null),
+                'link' => $this->safeCommentLink($request->link),
                 'comment_meta' => $meta,
             ]);
 
@@ -881,14 +887,27 @@ class WebController extends Controller
                     'secret_key' => 'required|digits:4'
                 ]);
 
+                // Batasi percobaan PIN (4 digit mudah di-brute force).
+                $pinLimiterKey = 'post_pin:' . $detail->id . ':' . get_client_ip();
+                if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($pinLimiterKey, 5)) {
+                    $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($pinLimiterKey);
+                    return response(protectedContentView(
+                        $slug,
+                        null,
+                        'Terlalu banyak percobaan. Coba lagi dalam ' . $seconds . ' detik.'
+                    ), 429);
+                }
+
                 // Cek password
-                if ($request->secret_key !== dec64($detail->password)) {
+                if (!hash_equals((string) dec64($detail->password), (string) $request->secret_key)) {
+                    \Illuminate\Support\Facades\RateLimiter::hit($pinLimiterKey, 300);
                     return response(protectedContentView(
                         $slug,
                         null,
                         'Kode salah, coba lagi.'
                     ));
                 }
+                \Illuminate\Support\Facades\RateLimiter::clear($pinLimiterKey);
 
                 session([
                     $sessionKey => Carbon::now()->addMinutes(1)
@@ -955,6 +974,7 @@ class WebController extends Controller
             ->pluck('name')->toArray();
 
         $index = Post::selectedColumn()
+            ->with(['user', 'category'])
             ->whereIn('type', $type)
             ->where('type', '!=', 'page')
             ->published()
@@ -1043,5 +1063,22 @@ class WebController extends Controller
         );
         config(['modules.page_name' => $data['title']]);
         return view('cms::layouts.master', $data);
+    }
+
+    /**
+     * Link komentar hanya boleh URL http(s) agar tidak bisa disisipi "javascript:".
+     */
+    protected function safeCommentLink($link): ?string
+    {
+        $link = trim(strip_tags((string) $link));
+        if ($link === '') {
+            return null;
+        }
+        $link = mb_substr($link, 0, 255);
+        $scheme = strtolower((string) parse_url($link, PHP_URL_SCHEME));
+        if (!in_array($scheme, ['http', 'https'], true) || !filter_var($link, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+        return $link;
     }
 }

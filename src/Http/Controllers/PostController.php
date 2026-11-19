@@ -498,8 +498,10 @@ class PostController extends Controller implements HasMiddleware
     }
     public function destroy(Request $request)
     {
-        $request->user()->hasRole(get_post_type(), 'delete');
-        $post = Post::withTrashed()->find($request->post);
+        // hasRole(..., 'delete') mengembalikan true bila TIDAK berhak (tanpa redirect),
+        // sebelumnya nilai ini diabaikan sehingga cek role delete tidak berlaku.
+        abort_if($request->user()->hasRole(get_post_type(), 'delete'), 403, 'Akses terbatas');
+        $post = Post::withTrashed()->findOrFail($request->post);
         if ($post->trashed() && $request->user()->isAdmin()) {
             $post->forceDelete();
         }
@@ -1166,10 +1168,11 @@ class PostController extends Controller implements HasMiddleware
                     $query->orderBy('sort', 'asc')->orderBy('id', 'desc');
                 } elseif ($req->has('order') && !empty($req->order)) {
                     $columns = $req->columns;
-                    foreach ($req->order as $order) {
-                        $column = $columns[$order['column']]['data'] ?? null;
-                        $dir = $order['dir'];
-                        if ($column && !in_array($column, ['checkbox', 'drag_handle', 'action'])) {
+                    foreach ((array) $req->order as $order) {
+                        $column = is_array($order) && isset($order['column']) && is_array($columns) ? ($columns[$order['column']]['data'] ?? null) : null;
+                        $dir = strtolower((string) ($order['dir'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
+                        // Hanya nama kolom sederhana / json path (data_field->x) yang boleh dipakai untuk sort.
+                        if (is_string($column) && preg_match('/^[A-Za-z_][A-Za-z0-9_]*(->[A-Za-z0-9_]+)*$/', $column) && !in_array($column, ['checkbox', 'drag_handle', 'action', 'password'])) {
                             $query->orderBy($column, $dir);
                         }
                     }
@@ -1638,9 +1641,31 @@ class PostController extends Controller implements HasMiddleware
         return $dt->toJson(JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
     }
 
+    /**
+     * Pastikan user boleh mengubah post: admin / punya role "admin" modul, atau pemilik post
+     * yang memiliki role "update". Sebelumnya endpoint AJAX ini bisa dipakai user login
+     * mana pun untuk mengubah post milik orang lain.
+     */
+    protected function authorizePostWrite(Request $request, Post $post): void
+    {
+        $user = $request->user();
+        if ($user->isAdmin()) {
+            return;
+        }
+        $canManageAll = !$user->hasRole($post->type, 'admin', true);
+        $isOwner = (int) $post->user_id === (int) $user->id;
+        abort_if(!$canManageAll && !$isOwner, 403, 'Akses terbatas');
+        abort_if($user->hasRole($post->type, 'update', true), 403, 'Akses terbatas');
+    }
+
     public function updateStatus(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer',
+            'status' => 'required|string|max:50|alpha_dash',
+        ]);
         $post = Post::findOrFail($request->id);
+        $this->authorizePostWrite($request, $post);
 
         $post->status = $request->status;
         $post->save();
@@ -1657,6 +1682,7 @@ class PostController extends Controller implements HasMiddleware
         ]);
 
         $post = Post::findOrFail($request->id);
+        $this->authorizePostWrite($request, $post);
 
         $fieldKey = _us($request->field);
 
@@ -1728,6 +1754,7 @@ class PostController extends Controller implements HasMiddleware
         ]);
 
         $post = Post::findOrFail($request->id);
+        $this->authorizePostWrite($request, $post);
         $fieldKey = _us($request->field);
 
         $module = get_module($post->type);
@@ -1849,7 +1876,9 @@ class PostController extends Controller implements HasMiddleware
     public function deleteAll(Request $request)
     {
         $postType = get_post_type();
-        $request->user()->hasRole($postType, 'delete');
+        if ($request->user()->hasRole($postType, 'delete')) {
+            return response()->json(['message' => 'Akses terbatas.'], 403);
+        }
 
         $deleteType = $request->input('delete_type', 'trash'); // 'trash' atau 'permanent'
         $scope = $request->input('scope', 'all'); // 'all' atau 'filtered'

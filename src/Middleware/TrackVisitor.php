@@ -61,6 +61,12 @@ class TrackVisitor
     }
     protected function cleanupVisitors(): void
     {
+        // Jalankan DELETE paling banyak sekali per menit (per tenant), bukan pada setiap kunjungan.
+        $lockKey = 'analytics_cleanup_lock' . (app()->has('tenant') ? ':' . tenant()->id : '');
+        if (!Cache::add($lockKey, true, now()->addMinute())) {
+            return;
+        }
+
         $query = DB::table('analytics_visitors')
             ->where('last_seen_at', '<', now()->subMinutes(5));
 

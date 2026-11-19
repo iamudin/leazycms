@@ -33,6 +33,23 @@ class RateLimit
         'update('
     ];
 
+    /**
+     * Field yang tidak boleh ikut tertulis ke log.
+     */
+    public const SENSITIVE_KEYS = [
+        '_token',
+        'password',
+        'password_confirmation',
+        'current_password',
+        'new_password',
+        'old_password',
+        'secret_key',
+        'captcha',
+        'token',
+        'api_key',
+        'apikey',
+    ];
+
     public function handle(Request $request, Closure $next)
     {
 
@@ -306,15 +323,20 @@ class RateLimit
         $payload = collect($request->all())
             ->reject(fn($v) => $v instanceof \Illuminate\Http\UploadedFile)
             ->toArray();
-        $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        if (empty($payload)) {
+            return;
+        }
+        // stripos() sudah case-insensitive; sebelumnya payload di-lowercase ulang
+        // untuk setiap fungsi (21x per request).
+        $content = (string) json_encode($payload, JSON_UNESCAPED_UNICODE);
         foreach ($dangerousFunctions as $function) {
-            if (stripos(str($content)->lower(), $function) !== false) {
+            if (stripos($content, $function) !== false) {
                 Log::channel('daily')->critical('Potentially dangerous code detected in request.', [
                     'info' => 'Dangerous function detected: ' . $function,
                     'ip' => get_client_ip(),
                     'url' => $request->fullUrl(),
                     'referer' => $request->headers->get('referer'),
-                    'payload' => $request->except(['_token', 'password', 'password_confirmation']),
+                    'payload' => $request->except(self::SENSITIVE_KEYS),
                 ]);
                 abort('403', 'Request contains potentially dangerous code');
             }
@@ -349,11 +371,7 @@ class RateLimit
         $user = Auth::user();
 
         // Payload dibatasi & disaring
-        $payload = $request->except([
-            '_token',
-            'password',
-            'password_confirmation',
-        ]);
+        $payload = $request->except(self::SENSITIVE_KEYS);
 
         Log::channel('daily')->{$level}($message, [
             'method' => $method,

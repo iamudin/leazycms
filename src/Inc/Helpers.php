@@ -1194,6 +1194,10 @@ if (!function_exists('isNotInSession')) {
     function isNotInSession($request)
     {
         $user = $request->user();
+        // Belum login: biarkan middleware 'auth' (controller) yang menangani redirect ke login.
+        if (!$user) {
+            return;
+        }
         if (get_option('allow_multi_login') == $user->isAdmin()) {
             return;
         }

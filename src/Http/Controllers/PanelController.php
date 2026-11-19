@@ -333,8 +333,20 @@ class PanelController extends Controller implements HasMiddleware
             ->limit(10)
             ->get();
     }
+    /**
+     * Admin boleh mengelola semua komentar; user lain hanya komentar pada post miliknya.
+     */
+    protected function canManageCommentsOf($commentable, $user): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+        return $commentable instanceof Post && (int) $commentable->user_id === (int) $user->id;
+    }
+
     function get_comments(Request $request, Post $post)
     {
+        abort_if(!$this->canManageCommentsOf($post, $request->user()), 403, 'Akses terbatas');
         $comments = $post->comments()->latest()->paginate(2);
         return response()->json([
             'title' => $post->title,
@@ -346,7 +358,10 @@ class PanelController extends Controller implements HasMiddleware
     }
     function comments(Request $request, Comment $comment)
     {
+        $authUser = $request->user();
         if ($request->isMethod('delete')) {
+            abort_if(!$comment->exists, 404);
+            abort_if(!$this->canManageCommentsOf($comment->commentable, $authUser), 403, 'Akses terbatas');
             $comment->delete();
         }
 
@@ -358,9 +373,12 @@ class PanelController extends Controller implements HasMiddleware
                     'content' => 'required|string|max:500',
                 ]);
                 $parent = Comment::findOrFail($request->parent_id);
+                abort_if(!$this->canManageCommentsOf($parent->commentable, $authUser), 403, 'Akses terbatas');
                 $parent->childs()->create([
                     'user_id' => Auth::id(),
-                    'content' => $validated['content'],
+                    // Disimpan dengan format yang sama seperti komentar publik (tanpa HTML)
+                    // karena dirender mentah di tabel admin dan halaman publik.
+                    'content' => nl2br(strip_tags($validated['content'])),
                     'name' => Auth::user()->name,
                     'email' => Auth::user()->email,
                     'reference' => $parent->reference,
@@ -377,11 +395,16 @@ class PanelController extends Controller implements HasMiddleware
                     'comment_id' => 'required|exists:comments,id',
                 ]);
                 $target = Comment::findOrFail($validated['comment_id']);
+                abort_if(!$this->canManageCommentsOf($target->commentable, $authUser), 403, 'Akses terbatas');
                 $target->status = $target->status === 'publish' ? 'draft' : 'publish';
                 $target->save();
                 return response()->json(['success' => true, 'new_status' => $target->status]);
             }
             $data = Comment::with('user', 'childs')->whereNull('parent_id')->latest();
+            if (!$authUser->isAdmin()) {
+                $data->where('commentable_type', Post::class)
+                    ->whereIn('commentable_id', Post::query()->select('id')->where('user_id', $authUser->id));
+            }
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
                 ->filter(
@@ -398,7 +421,7 @@ class PanelController extends Controller implements HasMiddleware
                             $html .= '<div class="ml-2 mt-2 pl-1 border-l-2 border-info" id="reply-' . $child->id . '">';
                             $html .= '<div class="d-flex align-items-center mb-1">';
                             $html .= '<small class="text-info mr-2"><i class="fa fa-reply"></i> Admin</small>';
-                            $html .= '<span class="badge ' . $statusBadge . '">' . strtoupper($child->status) . '</span>';
+                            $html .= '<span class="badge ' . $statusBadge . '">' . e(strtoupper((string) $child->status)) . '</span>';
                             $html .= '</div>';
                             $html .= '<p class="mb-1 small">' . $child->content . '</p>';
                             $html .= '<div class="small">';
@@ -412,14 +435,16 @@ class PanelController extends Controller implements HasMiddleware
                     return $html;
                 })
                 ->addColumn('reference', function ($row) {
-                    return '<a target="_blank" href="' . $row->reference . '">' . $row->reference . '</a>';
+                    $ref = (string) $row->reference;
+                    $safeHref = preg_match('#^https?://#i', $ref) ? e($ref) : '#';
+                    return '<a target="_blank" rel="noopener noreferrer" href="' . $safeHref . '">' . e($ref) . '</a>';
                 })
                 ->addColumn('sender', function ($row) {
                     $sender = "<small>";
-                    $sender .= '<i class="fa fa-user"></i> ' . $row->name;
-                    $sender .= '<br><i class="fa fa-envelope"></i> ' . ($row->email ?? '-');
-                    $sender .= '<br><i class="fa fa-link"></i> ' . ($row->link ?? '-');
-                    $sender .= '<br><i class="fa fa-globe"></i> ' . ($row->ip ?? '-');
+                    $sender .= '<i class="fa fa-user"></i> ' . e($row->name);
+                    $sender .= '<br><i class="fa fa-envelope"></i> ' . e($row->email ?? '-');
+                    $sender .= '<br><i class="fa fa-link"></i> ' . e($row->link ?? '-');
+                    $sender .= '<br><i class="fa fa-globe"></i> ' . e($row->ip ?? '-');
                     $sender .= "</small>";
 
                     return $sender;
