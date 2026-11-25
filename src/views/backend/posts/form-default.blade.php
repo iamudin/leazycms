@@ -753,7 +753,8 @@
                             <div class="form-group mb-0">
                                 <label class="soft-label">Kata Kunci {!! help('Kata kunci tentang konten yang dapat ditelusuri oleh mesin pencarian') !!}</label>
                                 <input placeholder="Keyword1, Keyword2..." type="text" class="form-control soft-control"
-                                    name="keyword" value="{{ !empty(old('keyword')) ? old('keyword') : ($post->keyword ?? '') }}">
+                                    name="keyword" value="{{ !empty(old('keyword')) ? old('keyword') : ($post->keyword ?? '') }}"
+                                    oninput="var clean = this.value.replace(/[^a-zA-Z0-9, ]/g, ''); if (this.value !== clean) { var pos = this.selectionStart - (this.value.length - clean.length); this.value = clean; if (pos >= 0) this.setSelectionRange(pos, pos); }">
                             </div>
                         </div>
                     @endif

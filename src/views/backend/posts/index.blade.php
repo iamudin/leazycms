@@ -119,8 +119,8 @@
     </div>
     <div class="col-lg-12">
       @include('cms::backend.layout.error')
-      <div>
-        <div class="mb-2 bulkaction float-left" style="display: none">
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="position: relative; z-index: 10; gap: 10px;">
+        <div class="bulkaction" style="display: none;">
           <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
             <span class="badge badge-primary px-2 py-1 font-weight-bold" id="bulk-selected-badge"
               style="font-size: 12px;">
@@ -139,31 +139,95 @@
             </button>
           </div>
         </div>
-        <div class="mb-4 text-right ">
-          <div class="btn-group">
-            @if(need_sync_dummy())
-              <button type="button" class="btn btn-success btn-sm btn-sync-dummy">
-                <i class="fas fa-sync" aria-hidden="true"></i> Sinkron Data Dummy
-              </button>
+        <div class="ml-auto d-flex flex-wrap align-items-center justify-content-end" style="gap: 8px;">
+          @if(need_sync_dummy())
+            <button type="button" class="btn btn-success btn-sm btn-sync-dummy d-inline-flex align-items-center">
+              <i class="fas fa-sync mr-1" aria-hidden="true"></i> Sinkron Data Dummy
+            </button>
+          @endif
+          @if(Route::has(get_post_type() . '.create'))
+            @if(auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'create', true))
+              <a href="{{route(get_post_type() . '.create')}}" class="btn btn-primary btn-sm d-inline-flex align-items-center">
+                <i class="fa fa-plus mr-1" aria-hidden="true"></i> Tambah {{ $module->title }} Baru
+              </a>
             @endif
-            @if(Route::has(get_post_type() . '.create'))
-              @if(auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'create', true))
-                <a href="{{route(get_post_type() . '.create')}}" class="btn btn-primary btn-sm"> <i class=" fa fa-plus"
-                    aria-hidden></i> Tambah {{ $module->title }} Baru</a>
-              @endif
-            @endif
+          @endif
+          <div class="btn-group filter-action-group" role="group">
+            <button type="button" class="btn btn-sm btn-warning d-inline-flex align-items-center" data-toggle="modal" data-target="#filter-modal">
+              <i class="fas fa-filter mr-1"></i> Filter
+            </button>
             @if(in_array('delete', $module->route) && (auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'delete', true)))
-              <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#modal-delete-all"
-                title="Hapus semua data modul ini">
-                <i class="fas fa-trash-alt"></i> Hapus Semua Data
+              <button type="button" class="btn btn-sm btn-warning dropdown-toggle dropdown-toggle-split d-inline-flex align-items-center justify-content-center"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Opsi lainnya">
+                <span class="sr-only">Toggle Dropdown</span>
               </button>
+              <div class="dropdown-menu dropdown-menu-right filter-dropdown-menu">
+                <button type="button" class="dropdown-item" data-toggle="modal" data-target="#filter-modal">
+                  <i class="fas fa-filter text-warning mr-2"></i> Filter Data
+                </button>
+                <div class="dropdown-divider my-1"></div>
+                <button type="button" class="dropdown-item text-danger delete-all-item" data-toggle="modal"
+                  data-target="#modal-delete-all" title="Hapus semua data modul ini">
+                  <i class="fas fa-trash-alt mr-2"></i> Hapus Semua Data
+                </button>
+              </div>
             @endif
-            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#filter-modal"> <i
-                class="fas fa-filter"></i> Filter</button>
-
           </div>
         </div>
       </div>
+      <style>
+        .filter-action-group {
+          background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-action-group > .btn-warning {
+          background: transparent !important;
+          color: #212529 !important;
+          box-shadow: none !important;
+          margin-right: 0 !important;
+          transition: background-color 0.2s ease;
+        }
+
+        .filter-action-group > .btn-warning:hover,
+        .filter-action-group > .btn-warning:focus {
+          background: rgba(0, 0, 0, 0.07) !important;
+        }
+
+        .filter-action-group > .dropdown-toggle-split {
+          margin-left: 0 !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.14) !important;
+          padding-left: 0.5rem !important;
+          padding-right: 0.5rem !important;
+        }
+
+        .filter-dropdown-menu {
+          border-radius: 10px !important;
+          padding: 6px !important;
+          min-width: 195px;
+          border: 1px solid rgba(0, 0, 0, 0.08) !important;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+          margin-top: 6px !important;
+        }
+
+        .filter-dropdown-menu .dropdown-item {
+          border-radius: 6px !important;
+          padding: 8px 12px !important;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          transition: background-color 0.15s ease;
+        }
+
+        .filter-dropdown-menu .dropdown-item.delete-all-item:hover,
+        .filter-dropdown-menu .dropdown-item.delete-all-item:focus {
+          background-color: #fff5f5 !important;
+          color: #dc3545 !important;
+        }
+      </style>
       <style>
         .dataTables_wrapper {
           background: rgba(255, 255, 255, 0.3) !important;

@@ -652,7 +652,7 @@ class PostController extends Controller implements HasMiddleware
             ],
             'sort' => 'nullable|numeric',
             'parent_id' => 'nullable|exists:posts,id',
-            'keyword' => 'nullable|string|regex:/^[a-zA-Z,]+$/u|max:200',
+            'keyword' => 'nullable|string|regex:/^[a-zA-Z0-9 ,]+$/u|max:200',
             'description' => 'nullable|string|regex:/^[0-9a-zA-Z\s\p{P}]+$/u|max:200',
             'redirect_to' => 'nullable|url|max:200',
             'category_id' => 'nullable|string',

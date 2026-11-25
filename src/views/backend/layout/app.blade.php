@@ -192,26 +192,33 @@
         }
 
         /* Fix for btn-group border radius */
-        .btn-group .btn {
+        .btn-group > .btn,
+        .btn-group > .btn-group > .btn {
             border-radius: 0 !important;
             margin-right: -1px;
             /* Overlap borders slightly to avoid double borders */
         }
 
-        .btn-group .btn:first-child {
+        .btn-group > .btn:first-child,
+        .btn-group > .btn-group:first-child > .btn:first-child {
             border-top-left-radius: 8px !important;
             border-bottom-left-radius: 8px !important;
         }
 
-        .btn-group .btn:last-child {
+        .btn-group > .btn:last-child,
+        .btn-group > .btn.dropdown-toggle:nth-last-child(2),
+        .btn-group > .btn-group:last-child > .btn:last-child,
+        .btn-group > .btn-group:last-child > .btn.dropdown-toggle:nth-last-child(2) {
             border-top-right-radius: 8px !important;
             border-bottom-right-radius: 8px !important;
             margin-right: 0;
         }
 
-        .btn-group .btn:hover {
+        .btn-group > .btn:hover,
+        .btn-group > .btn-group > .btn:hover {
             z-index: 2;
             /* Ensure the hovered button overlaps properly */
+            transform: none;
         }
 
         /* Responsive DataTables */
