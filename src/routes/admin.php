@@ -51,6 +51,7 @@ foreach (get_module() as $value) {
             Route::delete($value->name . '/{post}/edit', 'destroy')->name($value->name . '.destroyer');
             Route::post($value->name . '/bulkaction', 'bulkaction')->name($value->name . '.bulkaction');
             Route::post($value->name . '/delete-all', 'deleteAll')->name($value->name . '.delete_all');
+            Route::post($value->name . '/restore-all', 'restoreAll')->name($value->name . '.restore_all');
             Route::post($value->name . '/reorder', 'reorder')->name($value->name . '.reorder');
             Route::post($value->name . '/sync-dummy', 'syncDummy')->name($value->name . '.sync_dummy');
             Route::match(['get', 'post'], $value->name . '/{post}/restore', 'restore')->name($value->name . '.restore');

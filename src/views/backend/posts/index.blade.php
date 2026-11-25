@@ -152,6 +152,14 @@
               </a>
             @endif
           @endif
+          @if(in_array('delete', $module->route) && (auth()->user()->isAdmin() || !auth()->user()->hasRole(get_post_type(), 'delete', true)))
+            <button type="button" id="btn-restore-all-trigger"
+              class="btn btn-info btn-sm d-none align-items-center"
+              data-toggle="modal" data-target="#modal-restore-all"
+              title="Pulihkan semua data yang berada di kotak sampah">
+              <i class="fas fa-trash-restore mr-1"></i> Pulihkan Semua Data
+            </button>
+          @endif
           <div class="btn-group filter-action-group" role="group">
             <button type="button" class="btn btn-sm btn-warning d-inline-flex align-items-center" data-toggle="modal" data-target="#filter-modal">
               <i class="fas fa-filter mr-1"></i> Filter
@@ -462,6 +470,8 @@
   @include('cms::backend.posts.filter')
   @include('cms::backend.posts.datatable')
   @include('cms::backend.posts.delete_all_modal')
+  @include('cms::backend.posts.restore_all_modal')
+  @include('cms::backend.posts.bulk_action_modal')
   @if(need_sync_dummy())
     @include('cms::backend.posts.sync_dummy')
   @endif
@@ -767,6 +777,299 @@
           updateCheckboxUI();
         });
 
+        function updateBatchBarUI(prefix, pct, detailText, processed, total) {
+          var safePct = Math.max(0, Math.min(100, pct));
+          $('#' + prefix + '-progress-bar')
+            .css('width', safePct + '%')
+            .attr('aria-valuenow', safePct);
+          $('#' + prefix + '-pct-badge').text(safePct + '%');
+          if (detailText) {
+            $('#' + prefix + '-status-detail').text(detailText);
+          }
+          $('#' + prefix + '-counter').text(processed + ' / ' + total);
+        }
+
+        function appendBatchActivityLog(prefix, titles, iconClass) {
+          var $log = $('#' + prefix + '-activity-log');
+          if ($log.find('.text-center').length) {
+            $log.empty();
+          }
+          if (!Array.isArray(titles)) return;
+
+          titles.forEach(function (title) {
+            var safeTitle = $('<div>').text(title).html();
+            $log.prepend('<div class="text-truncate py-1 text-dark" style="border-bottom: 1px dashed #edf2f7;"><i class="' + iconClass + ' mr-1"></i> ' + safeTitle + '</div>');
+          });
+          var $children = $log.children();
+          if ($children.length > 50) {
+            $children.slice(50).remove();
+          }
+        }
+
+        // Bulk Action Progress Runner (Publish, Draft, Hapus Terpilih)
+        var bulkActionState = {
+          isRunning: false,
+          isCancelled: false,
+          chunks: [],
+          chunkIndex: 0,
+          totalSelected: 0,
+          attemptedCount: 0,
+          processedCount: 0,
+          retryCount: 0,
+          action: '',
+          config: null
+        };
+
+        var bulkActionMeta = {
+          publish: {
+            title: 'Mempublikasikan Data Terpilih',
+            stageText: 'Mempublikasikan data terpilih...',
+            itemVerb: 'Dipublikasikan',
+            headerClass: 'modal-header bg-primary text-white py-2 px-3',
+            closeClass: 'close text-white',
+            iconClass: 'fas fa-globe mr-1',
+            barClass: 'bg-primary',
+            badgeClass: 'badge badge-pill badge-primary font-weight-bold px-2 py-1',
+            spinnerClass: 'fas fa-circle-notch fa-spin text-primary mr-1',
+            logIconClass: 'fas fa-globe text-primary',
+            doneVerb: 'dipublikasikan'
+          },
+          draft: {
+            title: 'Mengubah Status ke Draft',
+            stageText: 'Mengubah status ke draft...',
+            itemVerb: 'Diubah ke Draft',
+            headerClass: 'modal-header bg-warning text-dark py-2 px-3',
+            closeClass: 'close text-dark',
+            iconClass: 'fas fa-save mr-1',
+            barClass: 'bg-warning',
+            badgeClass: 'badge badge-pill badge-warning text-dark font-weight-bold px-2 py-1',
+            spinnerClass: 'fas fa-circle-notch fa-spin text-warning mr-1',
+            logIconClass: 'fas fa-save text-warning',
+            doneVerb: 'diubah menjadi draft'
+          },
+          delete: {
+            title: 'Menghapus Data Terpilih',
+            stageText: 'Menghapus data terpilih...',
+            itemVerb: 'Dihapus',
+            headerClass: 'modal-header bg-danger text-white py-2 px-3',
+            closeClass: 'close text-white',
+            iconClass: 'fas fa-trash-alt mr-1',
+            barClass: 'bg-danger',
+            badgeClass: 'badge badge-pill badge-danger font-weight-bold px-2 py-1',
+            spinnerClass: 'fas fa-circle-notch fa-spin text-danger mr-1',
+            logIconClass: 'fas fa-trash-alt text-danger',
+            doneVerb: 'dihapus'
+          }
+        };
+
+        function switchBulkActionView(stage) {
+          $('#bulk-action-progress-view').toggle(stage === 'progress');
+          $('#bulk-action-done-view').toggle(stage === 'done');
+          $('#bulk-action-footer-progress').toggleClass('d-flex', stage === 'progress').toggleClass('d-none', stage !== 'progress');
+          $('#bulk-action-footer-done').toggleClass('d-flex', stage === 'done').toggleClass('d-none', stage !== 'done');
+        }
+
+        function finishBulkActionModal(iconClass, title, summary, clearAll) {
+          bulkActionState.isRunning = false;
+          $('#bulk-action-header-close').prop('disabled', false);
+          $('#bulk-action-done-icon').attr('class', iconClass);
+          $('#bulk-action-done-title').text(title);
+          $('#bulk-action-done-summary').text(summary);
+          switchBulkActionView('done');
+
+          if (clearAll) {
+            selectedPostIds.clear();
+            $('#bulkAction').val('');
+          }
+          $('#select-all').prop('checked', false);
+          updateCheckboxUI();
+          $(".datatable").DataTable().ajax.reload(null, false);
+        }
+
+        function finalizeBulkAction(cancelled) {
+          var bulkUrl = "{{ Route::has(get_post_type() . '.bulkaction') ? route(get_post_type() . '.bulkaction') : '' }}";
+          var meta = bulkActionState.config;
+          updateBatchBarUI('bulk-action', 98, 'Memperbarui cache modul...', bulkActionState.processedCount, bulkActionState.totalSelected);
+
+          $.ajax({
+            url: bulkUrl,
+            type: 'POST',
+            timeout: 60000,
+            data: {
+              _token: $('meta[name="csrf-token"]').attr('content'),
+              action: bulkActionState.action,
+              step: 'finish'
+            },
+            complete: function () {
+              $('#bulk-action-progress-bar')
+                .removeClass('progress-bar-striped progress-bar-animated ' + meta.barClass)
+                .addClass('bg-success');
+              updateBatchBarUI('bulk-action', 100, 'Selesai', bulkActionState.processedCount, bulkActionState.totalSelected);
+
+              if (cancelled) {
+                finishBulkActionModal(
+                  'fas fa-exclamation-circle text-warning',
+                  'Proses Dihentikan',
+                  'Proses dihentikan oleh pengguna. ' + bulkActionState.processedCount + ' dari ' + bulkActionState.totalSelected + ' data telah ' + meta.doneVerb + '.',
+                  false
+                );
+              } else {
+                finishBulkActionModal(
+                  'fas fa-check-circle text-success',
+                  'Proses Selesai!',
+                  'Berhasil memproses ' + bulkActionState.processedCount + ' data (' + meta.doneVerb + ').',
+                  true
+                );
+              }
+            }
+          });
+        }
+
+        function runNextBulkActionChunk() {
+          if (bulkActionState.isCancelled) {
+            finalizeBulkAction(true);
+            return;
+          }
+
+          if (bulkActionState.chunkIndex >= bulkActionState.chunks.length) {
+            finalizeBulkAction(false);
+            return;
+          }
+
+          var bulkUrl = "{{ Route::has(get_post_type() . '.bulkaction') ? route(get_post_type() . '.bulkaction') : '' }}";
+          var meta = bulkActionState.config;
+          var chunk = bulkActionState.chunks[bulkActionState.chunkIndex];
+          var currentPct = bulkActionState.totalSelected > 0
+            ? Math.min(97, Math.round((bulkActionState.attemptedCount / bulkActionState.totalSelected) * 100))
+            : 0;
+
+          updateBatchBarUI('bulk-action', currentPct, meta.stageText, bulkActionState.processedCount, bulkActionState.totalSelected);
+
+          $.ajax({
+            url: bulkUrl,
+            type: 'POST',
+            timeout: 60000,
+            data: {
+              _token: $('meta[name="csrf-token"]').attr('content'),
+              id: chunk,
+              action: bulkActionState.action,
+              step: 'batch'
+            },
+            success: function (res) {
+              bulkActionState.retryCount = 0;
+              chunk.forEach(function (id) {
+                selectedPostIds.delete(String(id));
+                selectedPostIds.delete(id);
+              });
+
+              bulkActionState.attemptedCount += chunk.length;
+              bulkActionState.processedCount += parseInt((res && res.processed) || chunk.length, 10);
+              bulkActionState.chunkIndex++;
+
+              if (res && Array.isArray(res.titles)) {
+                appendBatchActivityLog('bulk-action', res.titles, meta.logIconClass);
+              }
+
+              var nextPct = bulkActionState.totalSelected > 0
+                ? Math.min(98, Math.round((bulkActionState.attemptedCount / bulkActionState.totalSelected) * 100))
+                : 98;
+              var lastTitle = (res && Array.isArray(res.titles) && res.titles.length) ? res.titles[res.titles.length - 1] : '';
+              updateBatchBarUI(
+                'bulk-action',
+                nextPct,
+                lastTitle ? (meta.itemVerb + ': ' + lastTitle) : meta.stageText,
+                bulkActionState.processedCount,
+                bulkActionState.totalSelected
+              );
+
+              if (bulkActionState.isCancelled) {
+                finalizeBulkAction(true);
+                return;
+              }
+
+              setTimeout(runNextBulkActionChunk, 60);
+            },
+            error: function (xhr) {
+              if (bulkActionState.isCancelled) {
+                finalizeBulkAction(true);
+                return;
+              }
+              if (bulkActionState.retryCount < 3) {
+                bulkActionState.retryCount++;
+                updateBatchBarUI(
+                  'bulk-action',
+                  currentPct,
+                  'Koneksi terganggu, mencoba ulang (' + bulkActionState.retryCount + '/3)...',
+                  bulkActionState.processedCount,
+                  bulkActionState.totalSelected
+                );
+                setTimeout(runNextBulkActionChunk, 1500);
+                return;
+              }
+              var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Tindakan gagal dilakukan.';
+              finishBulkActionModal(
+                'fas fa-times-circle text-danger',
+                'Proses Terhenti',
+                errMsg + (bulkActionState.processedCount > 0 ? ' (' + bulkActionState.processedCount + ' data telah diproses sebelum terhenti).' : ''),
+                false
+              );
+            }
+          });
+        }
+
+        function startBulkActionBatch(selectedIds, action) {
+          var meta = bulkActionMeta[action] || bulkActionMeta.publish;
+          var chunkSize = Math.min(25, Math.max(5, Math.ceil(selectedIds.length / 5)));
+          var chunks = [];
+          for (var i = 0; i < selectedIds.length; i += chunkSize) {
+            chunks.push(selectedIds.slice(i, i + chunkSize));
+          }
+
+          bulkActionState.isRunning = true;
+          bulkActionState.isCancelled = false;
+          bulkActionState.chunks = chunks;
+          bulkActionState.chunkIndex = 0;
+          bulkActionState.totalSelected = selectedIds.length;
+          bulkActionState.attemptedCount = 0;
+          bulkActionState.processedCount = 0;
+          bulkActionState.retryCount = 0;
+          bulkActionState.action = action;
+          bulkActionState.config = meta;
+
+          $('#bulk-action-modal-header').attr('class', meta.headerClass);
+          $('#bulk-action-header-close').attr('class', meta.closeClass).prop('disabled', true);
+          $('#bulk-action-header-icon').attr('class', meta.iconClass);
+          $('#bulk-action-modal-title').text(meta.title);
+          $('#bulk-action-stage-text').text(meta.stageText);
+          $('#bulk-action-pct-badge').attr('class', meta.badgeClass);
+          $('#bulk-action-status-spinner').attr('class', meta.spinnerClass);
+          $('#bulk-action-progress-bar')
+            .attr('class', 'progress-bar progress-bar-striped progress-bar-animated ' + meta.barClass)
+            .css('width', '0%')
+            .attr('aria-valuenow', 0);
+          $('#bulk-action-activity-log').html('<div class="text-muted text-center py-2">Menunggu pemrosesan batch...</div>');
+          $('#btn-abort-bulk-action').prop('disabled', false).html('<i class="fas fa-stop mr-1"></i> Hentikan');
+
+          updateBatchBarUI('bulk-action', 0, meta.stageText, 0, selectedIds.length);
+          switchBulkActionView('progress');
+          $('#modal-bulk-action').modal('show');
+
+          runNextBulkActionChunk();
+        }
+
+        $('#modal-bulk-action').on('hide.bs.modal', function (e) {
+          if (bulkActionState.isRunning) {
+            e.preventDefault();
+          }
+        });
+
+        $('#btn-abort-bulk-action').on('click', function () {
+          if (!bulkActionState.isRunning) return;
+          bulkActionState.isCancelled = true;
+          $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menghentikan...');
+          $('#bulk-action-status-detail').text('Menghentikan setelah batch saat ini selesai...');
+        });
+
         // Eksekusi Bulk Action (termasuk item dari page lain)
         $('#applyAction').click(function () {
           var selectedIds = Array.from(selectedPostIds);
@@ -800,32 +1103,14 @@
               showCancelButton: true,
               confirmButtonText: "Iya, Lakukan!",
               cancelButtonText: "Tidak, Batalkan!",
-              closeOnConfirm: false,
+              closeOnConfirm: true,
               closeOnCancel: false,
             },
             function (isConfirm) {
               if (isConfirm) {
-                $.ajax({
-                  url: "{{ route(get_post_type() . '.bulkaction') }}",
-                  type: 'POST',
-                  data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    id: selectedIds,
-                    action: action,
-                  },
-                  success: function (response) {
-                    swal("Berhasil", selectedIds.length + " data berhasil diproses.", "success");
-                    selectedPostIds.clear();
-                    $('#select-all').prop('checked', false);
-                    $('#bulkAction').val('');
-                    updateCheckboxUI();
-                    $(".datatable").DataTable().ajax.reload(null, false);
-                  },
-                  error: function (xhr) {
-                    var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Tindakan gagal dilakukan";
-                    swal("Gagal", errMsg, "error");
-                  }
-                });
+                setTimeout(function () {
+                  startBulkActionBatch(selectedIds, action);
+                }, 150);
               } else {
                 swal("Dibatalkan", "Tindakan dibatalkan", "error");
               }
@@ -836,26 +1121,14 @@
         // Handler Konfirmasi Input Kata HAPUS pada Modal Delete All
         $('#confirmDeleteAllText').on('input', function () {
           var val = $(this).val().trim().toUpperCase();
-          if (val === 'HAPUS') {
-            $('#btn-execute-delete-all').prop('disabled', false);
-          } else {
-            $('#btn-execute-delete-all').prop('disabled', true);
-          }
+          $('#btn-execute-delete-all').prop('disabled', val !== 'HAPUS');
         });
 
-        // Eksekusi Hapus Semua Data
-        $('#btn-execute-delete-all').click(function () {
-          var deleteType = $('input[name="delete_all_type"]:checked').val();
-          var scope = $('input[name="delete_all_scope"]:checked').val();
-          var $btn = $(this);
-
-          $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Sedang Menghapus...');
-
-          var postData = {
+        function collectActiveFilterParams(scope, baseData) {
+          var postData = Object.assign({
             _token: $('meta[name="csrf-token"]').attr('content'),
-            delete_type: deleteType,
-            scope: scope,
-          };
+            scope: scope
+          }, baseData || {});
 
           if (scope === 'filtered') {
             postData.status = $("#status").val();
@@ -875,34 +1148,306 @@
             @if(config('modules.multisite_enabled') && is_main_domain())
               postData.tenant_id = $("#tenant_id").val();
             @endif
-                                                          }
+          }
+          return postData;
+        }
 
-          $.ajax({
-            url: "{{ route(get_post_type() . '.delete_all') }}",
-            type: 'POST',
-            data: postData,
-            success: function (response) {
-              $('#modal-delete-all').modal('hide');
-              $('#confirmDeleteAllText').val('');
-              $btn.prop('disabled', true).html('<i class="fas fa-trash-alt mr-1"></i> Hapus Semua Data');
+        function initMassBatchModal(cfg) {
+          var prefix = cfg.prefix;
+          var $modal = $('#modal-' + prefix);
+          if (!$modal.length || !cfg.url) return;
 
-              swal("Berhasil!", response.message, "success");
+          var state = {
+            isRunning: false,
+            isCancelled: false,
+            total: 0,
+            processed: 0,
+            batchSize: 30,
+            retryCount: 0,
+            lastParams: null
+          };
 
-              selectedPostIds.clear();
-              $('#select-all').prop('checked', false);
-              updateCheckboxUI();
+          function switchView(stage) {
+            $('#' + prefix + '-form-view').toggle(stage === 'form');
+            $('#' + prefix + '-progress-view').toggle(stage === 'progress');
+            $('#' + prefix + '-done-view').toggle(stage === 'done');
 
-              $(".datatable").DataTable().ajax.reload();
-            },
-            error: function (xhr) {
-              $btn.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i> Hapus Semua Data');
-              var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Gagal menghapus data.";
-              swal("Gagal!", errMsg, "error");
+            $('#' + prefix + '-footer-form').toggleClass('d-flex', stage === 'form').toggleClass('d-none', stage !== 'form');
+            $('#' + prefix + '-footer-progress').toggleClass('d-flex', stage === 'progress').toggleClass('d-none', stage !== 'progress');
+            $('#' + prefix + '-footer-done').toggleClass('d-flex', stage === 'done').toggleClass('d-none', stage !== 'done');
+          }
+
+          function showDone(iconClass, title, summary) {
+            state.isRunning = false;
+            $('#' + prefix + '-header-close').prop('disabled', false);
+            $('#' + prefix + '-done-icon').attr('class', iconClass);
+            $('#' + prefix + '-done-title').text(title);
+            $('#' + prefix + '-done-summary').text(summary);
+            switchView('done');
+
+            selectedPostIds.clear();
+            $('#select-all').prop('checked', false);
+            updateCheckboxUI();
+            $(".datatable").DataTable().ajax.reload(null, false);
+          }
+
+          function resetModal() {
+            state.isRunning = false;
+            state.isCancelled = false;
+            state.total = 0;
+            state.processed = 0;
+            state.retryCount = 0;
+            $('#' + prefix + '-header-close').prop('disabled', false);
+            $('#' + prefix + '-progress-bar')
+              .addClass('progress-bar-striped progress-bar-animated ' + cfg.barClass)
+              .removeClass('bg-success')
+              .css('width', '0%')
+              .attr('aria-valuenow', 0);
+            $('#' + prefix + '-pct-badge').text('0%');
+            $('#' + prefix + '-stage-text').text(cfg.initStageText);
+            $('#' + prefix + '-status-detail').text(cfg.initDetailText);
+            $('#' + prefix + '-counter').text('0 / 0');
+            $('#' + prefix + '-activity-log').html('<div class="text-muted text-center py-2">Menunggu pemrosesan batch...</div>');
+            switchView('form');
+            if (typeof cfg.onReset === 'function') cfg.onReset();
+          }
+
+          function finalizeOperation(cancelled) {
+            updateBatchBarUI(prefix, 98, 'Memperbarui cache modul...', state.processed, state.total);
+            $.ajax({
+              url: cfg.url,
+              type: 'POST',
+              timeout: 60000,
+              data: Object.assign({}, state.lastParams, { action: 'finish' }),
+              complete: function () {
+                $('#' + prefix + '-progress-bar')
+                  .removeClass('progress-bar-striped progress-bar-animated ' + cfg.barClass)
+                  .addClass('bg-success');
+                updateBatchBarUI(prefix, 100, 'Selesai', state.processed, state.total);
+                if (cancelled) {
+                  showDone('fas fa-exclamation-circle text-warning', cfg.abortedTitle, cfg.formatAbortedSummary(state.processed, state.total));
+                } else {
+                  showDone('fas fa-check-circle text-success', cfg.doneTitle, cfg.formatDoneSummary(state.processed, state.lastParams));
+                }
+              }
+            });
+          }
+
+          function runNextBatch() {
+            if (state.isCancelled) {
+              finalizeOperation(true);
+              return;
+            }
+
+            var currentPct = state.total > 0 ? Math.min(97, Math.round((state.processed / state.total) * 100)) : 0;
+            updateBatchBarUI(prefix, currentPct, cfg.processingText, state.processed, state.total);
+
+            $.ajax({
+              url: cfg.url,
+              type: 'POST',
+              timeout: 60000,
+              data: Object.assign({}, state.lastParams, { action: 'batch', batch_size: state.batchSize }),
+              success: function (res) {
+                if (!res || !res.success) {
+                  handleBatchError((res && res.message) ? res.message : cfg.errorMessage);
+                  return;
+                }
+
+                state.retryCount = 0;
+                var processedNow = parseInt(res.processed || 0, 10);
+                state.processed += processedNow;
+                var remainingNow = parseInt(res.remaining || 0, 10);
+                state.total = Math.max(state.total, state.processed + remainingNow);
+
+                appendBatchActivityLog(prefix, res.titles, cfg.logIconClass);
+
+                var nextPct = state.total > 0 ? Math.min(98, Math.round((state.processed / state.total) * 100)) : 98;
+                var lastTitle = (Array.isArray(res.titles) && res.titles.length) ? res.titles[res.titles.length - 1] : '';
+                updateBatchBarUI(prefix, nextPct, lastTitle ? (cfg.itemVerb + ': ' + lastTitle) : cfg.processingText, state.processed, state.total);
+
+                if (state.isCancelled) {
+                  finalizeOperation(true);
+                  return;
+                }
+
+                if (res.has_more) {
+                  setTimeout(runNextBatch, 60);
+                } else {
+                  finalizeOperation(false);
+                }
+              },
+              error: function (xhr) {
+                if (state.isCancelled) {
+                  finalizeOperation(true);
+                  return;
+                }
+                if (state.retryCount < 3) {
+                  state.retryCount++;
+                  updateBatchBarUI(prefix, currentPct, 'Koneksi terganggu, mencoba ulang (' + state.retryCount + '/3)...', state.processed, state.total);
+                  setTimeout(runNextBatch, 1500);
+                  return;
+                }
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : cfg.errorMessage;
+                handleBatchError(errMsg);
+              }
+            });
+          }
+
+          function handleBatchError(errMsg) {
+            state.isRunning = false;
+            $('#' + prefix + '-header-close').prop('disabled', false);
+            showDone('fas fa-times-circle text-danger', 'Proses Terhenti', errMsg + (state.processed > 0 ? ' (' + state.processed + ' data telah diproses sebelum terhenti).' : ''));
+          }
+
+          $modal.on('show.bs.modal', function () {
+            if (!state.isRunning) {
+              resetModal();
             }
           });
+
+          $modal.on('hide.bs.modal', function (e) {
+            if (state.isRunning) {
+              e.preventDefault();
+            }
+          });
+
+          $('#btn-execute-' + prefix).on('click', function () {
+            if (state.isRunning) return;
+            state.lastParams = cfg.getParams();
+            state.isRunning = true;
+            state.isCancelled = false;
+            state.processed = 0;
+            state.retryCount = 0;
+
+            $('#' + prefix + '-header-close').prop('disabled', true);
+            switchView('progress');
+            updateBatchBarUI(prefix, 0, 'Menghitung total data...', 0, 0);
+
+            $.ajax({
+              url: cfg.url,
+              type: 'POST',
+              timeout: 60000,
+              data: Object.assign({}, state.lastParams, { action: 'init' }),
+              success: function (res) {
+                if (!res || !res.success) {
+                  handleBatchError((res && res.message) ? res.message : cfg.errorMessage);
+                  return;
+                }
+                state.total = parseInt(res.total || 0, 10);
+                state.batchSize = parseInt(res.batch_size || 30, 10);
+
+                if (state.total <= 0) {
+                  showDone('fas fa-info-circle text-warning', 'Tidak Ada Data', cfg.getEmptyMessage(state.lastParams));
+                  return;
+                }
+
+                $('#' + prefix + '-stage-text').text(cfg.getRunningStageText(state.lastParams));
+                updateBatchBarUI(prefix, 0, cfg.processingText, 0, state.total);
+                runNextBatch();
+              },
+              error: function (xhr) {
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : cfg.errorMessage;
+                handleBatchError(errMsg);
+              }
+            });
+          });
+
+          $('#btn-abort-' + prefix).on('click', function () {
+            if (!state.isRunning) return;
+            state.isCancelled = true;
+            $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menghentikan...');
+            $('#' + prefix + '-status-detail').text('Menghentikan setelah batch saat ini selesai...');
+          });
+
+          $modal.on('hidden.bs.modal', function () {
+            if (!state.isRunning) {
+              $('#btn-abort-' + prefix).prop('disabled', false).html('<i class="fas fa-stop mr-1"></i> Hentikan');
+              resetModal();
+            }
+          });
+        }
+
+        // Inisialisasi Progress Bar Hapus Semua Data
+        initMassBatchModal({
+          prefix: 'delete-all',
+          url: "{{ Route::has(get_post_type() . '.delete_all') ? route(get_post_type() . '.delete_all') : '' }}",
+          barClass: 'bg-danger',
+          initStageText: 'Menyiapkan penghapusan...',
+          initDetailText: 'Menghitung jumlah data...',
+          processingText: 'Menghapus data...',
+          itemVerb: 'Dihapus',
+          logIconClass: 'fas fa-trash-alt text-danger',
+          doneTitle: 'Penghapusan Selesai!',
+          abortedTitle: 'Penghapusan Dihentikan',
+          errorMessage: 'Gagal menghapus data.',
+          getParams: function () {
+            var deleteType = $('input[name="delete_all_type"]:checked').val();
+            var scope = $('input[name="delete_all_scope"]:checked').val();
+            return collectActiveFilterParams(scope, { delete_type: deleteType });
+          },
+          getRunningStageText: function (params) {
+            return params.delete_type === 'permanent' ? 'Menghapus Data Permanen...' : 'Memindahkan Data ke Sampah...';
+          },
+          getEmptyMessage: function (params) {
+            if (params.delete_type !== 'permanent' && params.scope === 'filtered' && params.status === 'sampah') {
+              return 'Data di tab Sampah sudah berada di kotak sampah. Pilih "Hapus Permanen" untuk menghapus selamanya.';
+            }
+            return 'Tidak ada data yang memenuhi kriteria untuk dihapus.';
+          },
+          formatDoneSummary: function (count, params) {
+            var actionText = params.delete_type === 'permanent' ? 'secara permanen' : 'ke kotak sampah';
+            return 'Berhasil menghapus ' + count + ' data ' + actionText + '.';
+          },
+          formatAbortedSummary: function (processed, total) {
+            return 'Proses dihentikan oleh pengguna. ' + processed + ' dari ' + total + ' data telah dihapus.';
+          },
+          onReset: function () {
+            $('#confirmDeleteAllText').val('');
+            $('#btn-execute-delete-all').prop('disabled', true);
+          }
+        });
+
+        // Inisialisasi Progress Bar Pulihkan Semua Data (Trashed)
+        initMassBatchModal({
+          prefix: 'restore-all',
+          url: "{{ Route::has(get_post_type() . '.restore_all') ? route(get_post_type() . '.restore_all') : '' }}",
+          barClass: 'bg-info',
+          initStageText: 'Menyiapkan pemulihan...',
+          initDetailText: 'Menghitung data di kotak sampah...',
+          processingText: 'Memulihkan data...',
+          itemVerb: 'Dipulihkan',
+          logIconClass: 'fas fa-check text-success',
+          doneTitle: 'Pemulihan Selesai!',
+          abortedTitle: 'Pemulihan Dihentikan',
+          errorMessage: 'Gagal memulihkan data.',
+          getParams: function () {
+            var restoreStatus = $('input[name="restore_all_status"]:checked').val();
+            var scope = $('input[name="restore_all_scope"]:checked').val();
+            return collectActiveFilterParams(scope, { restore_status: restoreStatus });
+          },
+          getRunningStageText: function () {
+            return 'Memulihkan Data dari Kotak Sampah...';
+          },
+          getEmptyMessage: function () {
+            return 'Tidak ada data di kotak sampah yang memenuhi kriteria untuk dipulihkan.';
+          },
+          formatDoneSummary: function (count) {
+            return 'Berhasil memulihkan ' + count + ' data dari kotak sampah.';
+          },
+          formatAbortedSummary: function (processed, total) {
+            return 'Proses dihentikan oleh pengguna. ' + processed + ' dari ' + total + ' data telah dipulihkan.';
+          }
         });
       });
 
+
+      function toggleTrashRestoreButton() {
+        var isTrashedFilter = ($('#status').val() === 'sampah');
+        var $restoreBtn = $('#btn-restore-all-trigger');
+        if ($restoreBtn.length) {
+          $restoreBtn.toggleClass('d-none', !isTrashedFilter).toggleClass('d-inline-flex', isTrashedFilter);
+        }
+      }
 
       window.filterStatusCard = function (status) {
         @if(config('modules.multisite_enabled') && is_main_domain())
@@ -915,10 +1460,15 @@
           }
         @endif
         $('#status').val(status).trigger('change');
+        toggleTrashRestoreButton();
       };
 
       $(document).ready(function () {
+        $(document).on('change', '#status, #tenant_id', toggleTrashRestoreButton);
+        toggleTrashRestoreButton();
+
         $('.datatable').on('xhr.dt', function (e, settings, json, xhr) {
+          toggleTrashRestoreButton();
           if (json && json.counts) {
             $('#count-publish').text(json.counts.publish);
             $('#count-draft').text(json.counts.draft);

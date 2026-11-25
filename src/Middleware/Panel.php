@@ -103,6 +103,15 @@ class Panel
                     ]
                 ]);
             }
+            if ($request->is($admin_path . '/' . $modul->name . '/restore-all')) {
+
+                config([
+                    'modules.current' => [
+                        'post_type' => $modul->name,
+                        'title_crud' => 'Pulihkan Semua ' . $modul->title,
+                    ]
+                ]);
+            }
             if ($request->is($admin_path . '/' . $modul->name . '/reorder')) {
                 config([
                     'modules.current' => [

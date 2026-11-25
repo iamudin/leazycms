@@ -1826,66 +1826,85 @@ class PostController extends Controller implements HasMiddleware
             'count' => count($val)
         ]);
     }
+    protected function processBulkActionItems($baseQuery, string $action): array
+    {
+        $posts = (clone $baseQuery)->get(['id', 'title', 'status', 'deleted_at']);
+        $titles = $posts->map(fn($p) => $p->title ?: ('#' . $p->id))->values()->all();
+
+        switch ($action) {
+            case 'delete':
+                foreach ($posts as $post) {
+                    if ($post->trashed() || (empty($post->title) && $post->status == 'draft')) {
+                        $post->forceDelete();
+                    } else {
+                        $post->delete();
+                    }
+                }
+                break;
+            case 'draft':
+            case 'publish':
+                $baseQuery->update(['status' => $action, 'deleted_at' => null]);
+                break;
+        }
+
+        return $titles;
+    }
+
     function bulkaction(Request $request)
     {
         $ids = $request->id;
         $action = $request->action;
+        $step = $request->input('step');
+        $postType = get_post_type();
 
         if ($action === 'delete_all') {
             return $this->deleteAll($request);
+        }
+
+        if ($action === 'delete' && $request->user()->hasRole($postType, 'delete')) {
+            return response()->json(['message' => 'Akses terbatas.'], 403);
+        }
+
+        if ($step === 'finish') {
+            $this->recache($postType);
+            return response()->json(['success' => true, 'message' => 'Success'], 200);
         }
 
         if (is_array($ids) && count($ids) > 0) {
             @ini_set('max_execution_time', '300');
             @set_time_limit(300);
             @ini_set('memory_limit', '512M');
+            \Illuminate\Support\Facades\DB::disableQueryLog();
 
-            $baseQuery = query()->withTrashed()->onType(get_post_type())->whereIn('id', $ids);
+            $baseQuery = query()->withTrashed()->onType($postType)->whereIn('id', $ids);
             if (!$request->user()->isAdmin()) {
                 $baseQuery->whereBelongsTo($request->user());
             }
 
-            switch ($action) {
-                case 'delete':
-                    $posts = $baseQuery->get();
-                    foreach ($posts as $post) {
-                        if ($post->trashed() || (empty($post->title) && $post->status == 'draft')) {
-                            $post->forceDelete();
-                        } else {
-                            $post->delete();
-                        }
-                    }
-                    break;
-                case 'draft':
-                    $baseQuery->update(['status' => 'draft', 'deleted_at' => null]);
-                    break;
-                case 'publish':
-                    $baseQuery->update(['status' => 'publish', 'deleted_at' => null]);
-                    break;
-                default:
-                    break;
-            }
-            $this->recache(get_post_type());
-            return response()->json(['message' => 'Success'], 200);
+            $titles = $this->processBulkActionItems($baseQuery, (string) $action);
 
+            if ($step === 'batch') {
+                return response()->json([
+                    'success' => true,
+                    'processed' => count($titles),
+                    'titles' => $titles,
+                ], 200);
+            }
+
+            $this->recache($postType);
+            return response()->json(['message' => 'Success'], 200);
         }
 
         return response()->json(['message' => 'No files selected.'], 400);
     }
 
-    public function deleteAll(Request $request)
+    /**
+     * Bangun query dasar untuk operasi massal (deleteAll / restoreAll) berdasarkan hak akses dan filter aktif.
+     */
+    protected function buildMassActionQuery(Request $request, string $postType, string $scope = 'all', ?string $forcedStatus = null)
     {
-        $postType = get_post_type();
-        if ($request->user()->hasRole($postType, 'delete')) {
-            return response()->json(['message' => 'Akses terbatas.'], 403);
-        }
-
-        $deleteType = $request->input('delete_type', 'trash'); // 'trash' atau 'permanent'
-        $scope = $request->input('scope', 'all'); // 'all' atau 'filtered'
-
         $query = query()->withTrashed()->onType($postType);
 
-        // Multisite / Tenant scope
         if (config('modules.multisite_enabled') && is_main_domain()) {
             $tenant = $request->input('tenant_id');
             if ($tenant === 'main') {
@@ -1895,23 +1914,22 @@ class PostController extends Controller implements HasMiddleware
             }
         }
 
-        // Jika bukan admin, hanya data miliknya sendiri
         if (!$request->user()->isAdmin()) {
             $query->whereBelongsTo($request->user());
         }
 
-        // Scope filter
-        if ($scope === 'filtered') {
-            $status = $request->input('status');
-            if ($status) {
-                if ($status === 'sampah') {
-                    $query->onlyTrashed();
-                } elseif ($status === 'disematkan') {
-                    $query->whereNull('deleted_at')->where('pinned', 1);
-                } else {
-                    $query->whereNull('deleted_at')->where('status', $status);
-                }
+        $effectiveStatus = $forcedStatus ?? ($scope === 'filtered' ? $request->input('status') : null);
+        if ($effectiveStatus) {
+            if ($effectiveStatus === 'sampah') {
+                $query->onlyTrashed();
+            } elseif ($effectiveStatus === 'disematkan') {
+                $query->whereNull('deleted_at')->where('pinned', 1);
+            } else {
+                $query->whereNull('deleted_at')->where('status', $effectiveStatus);
             }
+        }
+
+        if ($scope === 'filtered') {
             if ($request->filled('category_id')) {
                 $query->where('category_id', $request->category_id);
             }
@@ -1940,39 +1958,146 @@ class PostController extends Controller implements HasMiddleware
             }
         }
 
+        return $query;
+    }
+
+    /**
+     * Menjalankan operasi massal per batch (init/batch/finish) atau langsung untuk fallback legacy.
+     */
+    protected function handleBatchPostOperation(
+        Request $request,
+        string $postType,
+        $targetQuery,
+        int $defaultBatchSize,
+        callable $itemHandler,
+        callable $legacyMessageFormatter
+    ) {
         @ini_set('max_execution_time', '300');
         @set_time_limit(300);
         @ini_set('memory_limit', '512M');
         \Illuminate\Support\Facades\DB::disableQueryLog();
 
-        $totalDeleted = 0;
-        if ($deleteType === 'permanent') {
-            // Hapus permanen menggunakan chunkById
-            $query->chunkById(200, function ($posts) use (&$totalDeleted) {
-                foreach ($posts as $post) {
-                    $post->forceDelete();
-                    $totalDeleted++;
-                }
-            });
-        } else {
-            // Soft delete (pindahkan ke sampah untuk data aktif)
-            $nonTrashed = (clone $query)->whereNull('deleted_at');
-            $nonTrashed->chunkById(200, function ($posts) use (&$totalDeleted) {
-                foreach ($posts as $post) {
-                    $post->delete();
-                    $totalDeleted++;
-                }
-            });
+        $action = $request->input('action');
+
+        if ($action === 'init') {
+            $total = (clone $targetQuery)->count();
+            return response()->json([
+                'success' => true,
+                'total' => $total,
+                'batch_size' => $defaultBatchSize,
+            ]);
         }
+
+        if ($action === 'batch') {
+            $batchSize = max(1, min(200, (int) $request->input('batch_size', $defaultBatchSize)));
+            $posts = (clone $targetQuery)->orderBy('id')->limit($batchSize)->get();
+            $processed = 0;
+            $titles = [];
+
+            foreach ($posts as $post) {
+                $titles[] = $post->title ?: ('#' . $post->id);
+                $itemHandler($post);
+                $processed++;
+            }
+
+            $remaining = (clone $targetQuery)->count();
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'remaining' => $remaining,
+                'has_more' => $remaining > 0 && $processed > 0,
+                'titles' => $titles,
+            ]);
+        }
+
+        if ($action === 'finish') {
+            $this->recache($postType);
+            return response()->json([
+                'success' => true,
+                'message' => 'Cache modul diperbarui.',
+            ]);
+        }
+
+        $totalProcessed = 0;
+        (clone $targetQuery)->chunkById(200, function ($posts) use (&$totalProcessed, $itemHandler) {
+            foreach ($posts as $post) {
+                $itemHandler($post);
+                $totalProcessed++;
+            }
+        });
 
         $this->recache($postType);
 
-        $actionText = $deleteType === 'permanent' ? 'secara permanen' : 'ke kotak sampah';
         return response()->json([
             'success' => true,
-            'message' => "Berhasil menghapus {$totalDeleted} data {$actionText}.",
-            'total' => $totalDeleted
+            'message' => $legacyMessageFormatter($totalProcessed),
+            'total' => $totalProcessed,
         ]);
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $postType = get_post_type();
+        if ($request->user()->hasRole($postType, 'delete')) {
+            return response()->json(['message' => 'Akses terbatas.'], 403);
+        }
+
+        $deleteType = $request->input('delete_type', 'trash'); // 'trash' atau 'permanent'
+        $scope = $request->input('scope', 'all'); // 'all' atau 'filtered'
+
+        $targetQuery = $this->buildMassActionQuery($request, $postType, $scope);
+        if ($deleteType !== 'permanent') {
+            $targetQuery->whereNull('deleted_at');
+        }
+
+        $batchSize = $deleteType === 'permanent' ? 20 : 40;
+        $actionText = $deleteType === 'permanent' ? 'secara permanen' : 'ke kotak sampah';
+
+        return $this->handleBatchPostOperation(
+            $request,
+            $postType,
+            $targetQuery,
+            $batchSize,
+            function ($post) use ($deleteType) {
+                if ($deleteType === 'permanent') {
+                    $post->forceDelete();
+                } else {
+                    $post->delete();
+                }
+            },
+            fn($total) => "Berhasil menghapus {$total} data {$actionText}."
+        );
+    }
+
+    public function restoreAll(Request $request)
+    {
+        $postType = get_post_type();
+        if ($request->user()->hasRole($postType, 'delete')) {
+            return response()->json(['message' => 'Akses terbatas.'], 403);
+        }
+
+        $scope = $request->input('scope', 'all'); // 'all' atau 'filtered'
+        $restoreStatus = $request->input('restore_status', 'draft');
+        if (!in_array($restoreStatus, ['draft', 'publish', 'keep'], true)) {
+            $restoreStatus = 'draft';
+        }
+
+        $targetQuery = $this->buildMassActionQuery($request, $postType, $scope, 'sampah')->onlyTrashed();
+
+        return $this->handleBatchPostOperation(
+            $request,
+            $postType,
+            $targetQuery,
+            30,
+            function ($post) use ($restoreStatus) {
+                if ($restoreStatus !== 'keep') {
+                    $post->status = $restoreStatus;
+                }
+                $post->restore();
+            },
+            fn($total) => "Berhasil memulihkan {$total} data dari kotak sampah."
+        );
     }
 
     public function reorder(Request $request)
